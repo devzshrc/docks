@@ -1,0 +1,39 @@
+{
+  "id": "drizzle-team__drizzle-orm__5475",
+  "repo": "drizzle-team/drizzle-orm",
+  "number": 5475,
+  "url": "https://github.com/drizzle-team/drizzle-orm/pull/5475",
+  "headSha": "8a36f93d1863518b54f0ca36c6008604f8614665",
+  "title": "support node sqlite for kit",
+  "body": null,
+  "files": [
+    {
+      "filename": "drizzle-kit/src/cli/commands/studio.ts",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 1,
+      "patch": "@@ -74,7 +74,8 @@ export type Setup = {\n \t\t| '@tursodatabase/database'\n \t\t| 'bun'\n \t\t| 'duckdb'\n-\t\t| '@duckdb/node-api';\n+\t\t| '@duckdb/node-api'\n+\t\t| 'node:sqlite';\n \tdriver?: 'aws-data-api' | 'd1-http' | 'turso' | 'pglite' | 'sqlite-cloud';\n \tdatabaseName?: string; // for planetscale (driver remove database name from connection string)\n \tproxy: Proxy;"
+    },
+    {
+      "filename": "drizzle-kit/src/cli/connections.ts",
+      "status": "modified",
+      "additions": 82,
+      "deletions": 2,
+      "patch": "@@ -1742,7 +1742,8 @@ export const connectToSQLite = async (\n \t\t\t| 'better-sqlite3'\n \t\t\t| '@sqlitecloud/drivers'\n \t\t\t| '@tursodatabase/database'\n-\t\t\t| 'bun';\n+\t\t\t| 'bun'\n+\t\t\t| 'node:sqlite';\n \t\tmigrate: (config: string | MigrationConfig) => Promise<void | MigratorInitFailResponse>;\n \t\tproxy: Proxy;\n \t\ttransactionProxy: TransactionProxy;\n@@ -2228,8 +2229,87 @@ export const connectToSQLite = async (\n \t\t};\n \t}\n \n+\tif (await checkPackage('node:sqlite')) {\n+\t\tconsole.log(withStyle.info(`Using 'node:sqlite' driver for database querying`));\n+\t\tconst { DatabaseSync } = await import('node:sqlite');\n+\t\tconst { drizzle } = await import('drizzle-orm/node-sqlite');\n+\t\tconst { migrate } = await import('drizzle-orm/node-sqlite/migrator');\n+\n+\t\tconst client = new DatabaseSync(credentials.url);\n+\n+\t\tconst db = drizzle({ client });\n+\t\tconst migrateFn = async (config: MigrationConfig) => {\n+\t\t\treturn migrate(db, config);\n+\t\t};\n+\n+\t\tconst query = async <T>(sql: string, params?: any[]) => {\n+\t\t\tconst result = client.prepare(sql).all(...(params || []));\n+\t\t\treturn result as T[];\n+\t\t};\n+\t\tconst run = async (sql: string) => {\n+\t\t\tclient.prepare(sql).run();\n+\t\t};\n+\n+\t\tconst proxy: Proxy = async (params) => {\n+\t\t\tconst preparedParams = prepareSqliteParams(params.params || []);\n+\n+\t\t\tconst stmt = client.prepare(params.sql);\n+\t\t\tif (\n+\t\t\t\tparams.method === 'values'\n+\t\t\t\t|| params.method === 'get'\n+\t\t\t\t|| params.method === 'all'\n+\t\t\t) {\n+\t\t\t\tstmt.setReturnArrays(params.mode === 'array');\n+\t\t\t\treturn stmt.all(...preparedParams);\n+\t\t\t}\n+\n+\t\t\tstmt.run(...preparedParams);\n+\n+\t\t\treturn [];\n+\t\t};\n+\n+\t\tconst transactionProxy: TransactionProxy = async (queries) => {\n+\t\t\tconst results: (any[] | Error)[] = [];\n+\n+\t\t\ttry {\n+\t\t\t\tclient.prepare('BEGIN').run();\n+\n+\t\t\t\tfor (const query of queries) {\n+\t\t\t\t\tconst stmt = client.prepare(query.sql);\n+\t\t\t\t\tif (\n+\t\t\t\t\t\tquery.method === 'values'\n+\t\t\t\t\t\t|| query.method === 'get'\n+\t\t\t\t\t\t|| query.method === 'all'\n+\t\t\t\t\t) {\n+\t\t\t\t\t\tconst res = stmt.all();\n+\t\t\t\t\t\tresults.push(res);\n+\t\t\t\t\t} else {\n+\t\t\t\t\t\tstmt.run();\n+\t\t\t\t\t}\n+\t\t\t\t}\n+\t\t\t\tclient.prepare('COMMIT').run();\n+\t\t\t} catch (error: any) {\n+\t\t\t\tclient.prepare('ROLLBACK').run();\n+\t\t\t\tresults.push(error as Error);\n+\t\t\t}\n+\n+\t\t\treturn results;\n+\t\t};\n+\n+\t\treturn {\n+\t\t\tpackageName: 'node:sqlite',\n+\t\t\tquery,\n+\t\t\trun,\n+\t\t\tproxy,\n+\t\t\ttransactionProxy,\n+\t\t\tmigrate: migrateFn,\n+\t\t};\n+\t}\n+\n \tconsole.log(\n-\t\t\"Please install either 'better-sqlite3', 'bun', '@libsql/client' or '@tursodatabase/database' for Drizzle Kit to connect to SQLite databases\",\n+\t\t\"Please install either 'better-sqlite3', 'bun', '@libsql/client' or '@tursodatabase/database' for Drizzle Kit to connect to SQLite databases\"\n+\t\t\t+ '\\n'\n+\t\t\t+ \"To use 'node:sqlite' driver, ensure you're running Node.js v22.5.0 or higher\",\n \t);\n \tconsole.warn(\"For the 'bun' driver, run your script using: bun --bun\");\n \tprocess.exit(1);"
+    },
+    {
+      "filename": "drizzle-kit/src/cli/utils.ts",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 1,
+      "patch": "@@ -74,7 +74,7 @@ export const assertEitherPackage = async (\n \tprocess.exit(1);\n };\n \n-const requiredApiVersion = 12;\n+const requiredApiVersion = 13;\n export const assertOrmCoreVersion = async () => {\n \ttry {\n \t\tconst { compatibilityVersion } = await import('drizzle-orm/version');"
+    },
+    {
+      "filename": "drizzle-orm/src/version.ts",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 1,
+      "patch": "@@ -2,4 +2,5 @@\n export { version as npmVersion } from '../package.json';\n // In version 7, we changed the PostgreSQL indexes API\n // In version 12, we changed the migration folder structure and migrate function\n-export const compatibilityVersion = 12;\n+// In version 13, we added node-sqlite driver support in orm and kit\n+export const compatibilityVersion = 13;"
+    }
+  ]
+}

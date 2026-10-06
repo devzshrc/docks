@@ -1,0 +1,46 @@
+{
+  "id": "calcom__cal.com__29282",
+  "repo": "calcom/cal.com",
+  "number": 29282,
+  "url": "https://github.com/calcom/cal.diy/pull/29282",
+  "headSha": "6045ef814cc0f95e0ab9a94f4f6101c804014619",
+  "title": "fix: persist requiresCancellationReason selection",
+  "body": "## What does this PR do?\r\n\r\n- Fixes #29263\r\n\r\nThis PR fixes an event type settings persistence issue for `Require cancellation reason` on the event type edit page.\r\n\r\nWhen a host selected `Mandatory for attendee only` and saved the event, the value was not being rehydrated correctly after refresh/reopen. The saved setting existed, but the Advanced Settings UI fell back to the default `Mandatory for host only`.\r\n\r\nThis PR is intentionally scoped only to the dropdown persistence issue. It ensures the saved `requiresCancellationReason` value is:\r\n- returned in the event type edit fetch path\r\n- included in the event type form defaults\r\n- shown correctly in the Advanced tab after refresh/reopen\r\n\r\nIt also adds a regression test covering the event type fetch path for `requiresCancellationReason`.\r\n\r\n### Video Demo\r\n\r\n1. Before fix\r\n\r\nhttps://github.com/user-attachments/assets/2be7454c-ab2d-4ba3-be6f-ca8802e1b399\r\n\r\nShows:\r\n- Open Event Type \u2192 Advanced\r\n- Select `Mandatory for attendee only`\r\n- Save the event\r\n- Refresh or reopen the event\r\n- UI incorrectly shows `Mandatory for host only`\r\n\r\n2. After fix\r\n\r\nhttps://github.com/user-attachments/assets/fc695974-2729-4106-8d8d-62c0ae53e3ba\r\n\r\nShows:\r\n- Open Event Type \u2192 Advanced\r\n- Select `Mandatory for attendee only`\r\n- Save the event\r\n- Refresh or reopen the event\r\n- UI correctly continues to show the saved option\r\n\r\n## Mandatory Tasks (DO NOT REMOVE)\r\n\r\n- [x] I have self-reviewed the code (A decent size PR without self-review might be rejected).\r\n- [x] I have updated the developer docs if this PR makes changes that would require a documentation change. If N/A, write N/A here and check the checkbox.\r\n  N/A\r\n- [x] I confirm automated tests are in place that prove my fix is effective or that my feature works.\r\n\r\n## How should this be tested?\r\n\r\n- No special environment variables are required beyond the normal local setup for editing event types.\r\n- Minimal test data:\r\n  - 1 user account\r\n  - 1 event type owned by that user\r\n\r\nTest steps:\r\n\r\n1. Open an event type.\r\n2. Go to `Advanced`.\r\n3. Under `Require cancellation reason`, select `Mandatory for attendee only` or any other options.\r\n4. Save the event type.\r\n5. Refresh the page or leave and reopen the same event type.\r\n6. Confirm the dropdown still shows `Mandatory for attendee only` or any other choosen option that persists after refresh . \r\n\r\nExpected result:\r\n- The selected dropdown option persists after save and reload.\r\n- The UI matches the saved backend value instead of falling back to the default option.\r\n\r\nAutomated coverage:\r\n- Added a regression test for the event type fetch path to ensure `requiresCancellationReason` is returned when configured.\r\n\r\n## Checklist\r\n\r\n- I have read the [contributing guide](https://github.com/calcom/cal.diy/blob/main/CONTRIBUTING.md)\r\n- My code follows the style guidelines of this project\r\n- I have checked that my changes generate no new warnings relevant to this fix\r\n- My PR is small and focused\r\n",
+  "files": [
+    {
+      "filename": "apps/web/modules/event-types/components/tabs/advanced/EventAdvancedTab.tsx",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "patch": "@@ -669,6 +669,7 @@ export const EventAdvancedTab = ({\n       {!isPlatform && (\n         <Controller\n           name=\"requiresCancellationReason\"\n+          defaultValue={eventType.requiresCancellationReason ?? CancellationReasonRequirement.MANDATORY_HOST_ONLY}\n           render={({ field: { value, onChange } }) => {\n             const cancellationReasonOptions = [\n               { value: CancellationReasonRequirement.MANDATORY_BOTH, label: t(\"mandatory_for_both\") },"
+    },
+    {
+      "filename": "packages/features/eventtypes/lib/getEventTypeById.integration-test.ts",
+      "status": "modified",
+      "additions": 29,
+      "deletions": 1,
+      "patch": "@@ -1,5 +1,6 @@\n import { prisma } from \"@calcom/prisma\";\n import type { PrismaClient } from \"@calcom/prisma\";\n+import { CancellationReasonRequirement } from \"@calcom/prisma/enums\";\n import i18nMock from \"@calcom/testing/lib/__mocks__/libServerI18n\";\n \n // import { mockNoTranslations } from \"@calcom/testing/lib/bookingScenario/bookingScenario\";\n@@ -46,14 +47,22 @@ describe(\"getRawEventType\", () => {\n     return user;\n   };\n \n-  const createTestEventType = async (userId: number, overrides?: { slug?: string; title?: string }) => {\n+  const createTestEventType = async (\n+    userId: number,\n+    overrides?: {\n+      slug?: string;\n+      title?: string;\n+      requiresCancellationReason?: CancellationReasonRequirement | null;\n+    }\n+  ) => {\n     const timestamp = Date.now() + Math.random();\n     const eventType = await prisma.eventType.create({\n       data: {\n         title: overrides?.title ?? \"Test Event Type\",\n         slug: overrides?.slug ?? `test-event-${timestamp}`,\n         length: 30,\n         userId,\n+        requiresCancellationReason: overrides?.requiresCancellationReason,\n         users: {\n           connect: [{ id: userId }],\n         },\n@@ -104,6 +113,25 @@ describe(\"getRawEventType\", () => {\n       expect(result?.userId).toBe(user.id);\n     });\n \n+    test(\"should fetch requiresCancellationReason when it is configured\", async () => {\n+      const user = await createTestUser();\n+      const eventType = await createTestEventType(user.id, {\n+        requiresCancellationReason: CancellationReasonRequirement.MANDATORY_ATTENDEE_ONLY,\n+      });\n+\n+      const result = await getRawEventType({\n+        userId: user.id,\n+        eventTypeId: eventType.id,\n+        isUserOrganizationAdmin: false,\n+        currentOrganizationId: null,\n+        prisma: prisma as unknown as PrismaClient,\n+      });\n+\n+      expect(result?.requiresCancellationReason).toBe(\n+        CancellationReasonRequirement.MANDATORY_ATTENDEE_ONLY\n+      );\n+    });\n+\n     test.skip(\"should return null when user doesn't have access to event type\", async () => {\n       // note(Lauris): test skipped because somehow when creating event type eventType.users includes otherUser\n       const owner = await prisma.user.create({"
+    },
+    {
+      "filename": "packages/features/eventtypes/lib/types.ts",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "patch": "@@ -185,6 +185,7 @@ export type FormValues = {\n   calVideoSettings?: CalVideoSettings;\n   maxActiveBookingPerBookerOfferReschedule: boolean;\n   enablePerHostLocations: boolean;\n+  requiresCancellationReason?: CancellationReasonRequirement | null;\n };\n \n export type LocationFormValues = Pick<FormValues, \"id\" | \"locations\" | \"bookingFields\" | \"seatsPerTimeSlot\">;"
+    },
+    {
+      "filename": "packages/features/eventtypes/repositories/eventTypeRepository.ts",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 0,
+      "patch": "@@ -599,6 +599,7 @@ export class EventTypeRepository implements IEventTypesRepository {\n       disableGuests: true,\n       disableCancelling: true,\n       disableRescheduling: true,\n+      requiresCancellationReason: true,\n       minimumRescheduleNotice: true,\n       allowReschedulingCancelledBookings: true,\n       minimumBookingNotice: true,\n@@ -878,6 +879,7 @@ export class EventTypeRepository implements IEventTypesRepository {\n       disableGuests: true,\n       disableCancelling: true,\n       disableRescheduling: true,\n+      requiresCancellationReason: true,\n       minimumRescheduleNotice: true,\n       allowReschedulingCancelledBookings: true,\n       minimumBookingNotice: true,"
+    },
+    {
+      "filename": "packages/platform/atoms/event-types/hooks/useEventTypeForm.ts",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "patch": "@@ -134,6 +134,7 @@ export const useEventTypeForm = ({\n       maxActiveBookingPerBookerOfferReschedule: eventType.maxActiveBookingPerBookerOfferReschedule,\n       showOptimizedSlots: eventType.showOptimizedSlots ?? false,\n       enablePerHostLocations: eventType.enablePerHostLocations ?? false,\n+      requiresCancellationReason: eventType.requiresCancellationReason || null,\n     };\n   }, [eventType, periodDates]);\n "
+    }
+  ]
+}

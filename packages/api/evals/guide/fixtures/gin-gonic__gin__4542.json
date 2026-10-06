@@ -1,0 +1,39 @@
+{
+  "id": "gin-gonic__gin__4542",
+  "repo": "gin-gonic/gin",
+  "number": 4542,
+  "url": "https://github.com/gin-gonic/gin/pull/4542",
+  "headSha": "7df2142389e94cbab3296158bd9ac590f1f5429c",
+  "title": "test(context): use http.StatusContinue constant instead of magic number 100",
+  "body": "Replace magic number \\`100\\` with \\`http.StatusContinue\\` constant for better code clarity and maintainability in \\`bodyAllowedForStatus\\` function.\n\nFixes #4489",
+  "files": [
+    {
+      "filename": "context.go",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "patch": "@@ -1056,6 +1056,7 @@ func (c *Context) requestHeader(key string) string {\n /************************************/\n \n // bodyAllowedForStatus is a copy of http.bodyAllowedForStatus non-exported function.\n+// Uses http.StatusContinue constant for better code clarity.\n func bodyAllowedForStatus(status int) bool {\n \tswitch {\n \tcase status >= http.StatusContinue && status < http.StatusOK:"
+    },
+    {
+      "filename": "context_test.go",
+      "status": "modified",
+      "additions": 29,
+      "deletions": 0,
+      "patch": "@@ -1031,6 +1031,7 @@ func TestContextGetCookie(t *testing.T) {\n }\n \n func TestContextBodyAllowedForStatus(t *testing.T) {\n+\tassert.False(t, bodyAllowedForStatus(http.StatusContinue))\n \tassert.False(t, bodyAllowedForStatus(http.StatusProcessing))\n \tassert.False(t, bodyAllowedForStatus(http.StatusNoContent))\n \tassert.False(t, bodyAllowedForStatus(http.StatusNotModified))\n@@ -2947,6 +2948,16 @@ func TestContextGetRawData(t *testing.T) {\n \tassert.Equal(t, \"Fetch binary post data\", string(data))\n }\n \n+func TestContextGetRawDataNilBody(t *testing.T) {\n+\tc, _ := CreateTestContext(httptest.NewRecorder())\n+\tc.Request, _ = http.NewRequest(http.MethodPost, \"/\", nil)\n+\n+\tdata, err := c.GetRawData()\n+\tassert.Nil(t, data)\n+\trequire.Error(t, err)\n+\tassert.Equal(t, \"cannot read nil body\", err.Error())\n+}\n+\n func TestContextRenderDataFromReader(t *testing.T) {\n \tw := httptest.NewRecorder()\n \tc, _ := CreateTestContext(w)\n@@ -3535,6 +3546,24 @@ func TestContextSetCookieData(t *testing.T) {\n \t\tsetCookie := c.Writer.Header().Get(\"Set-Cookie\")\n \t\tassert.Contains(t, setCookie, \"SameSite=None\")\n \t})\n+\n+\t// Test that SameSiteDefaultMode inherits from context's sameSite\n+\tt.Run(\"SameSiteDefaultMode inherits context sameSite\", func(t *testing.T) {\n+\t\tc, _ := CreateTestContext(httptest.NewRecorder())\n+\t\tc.SetSameSite(http.SameSiteStrictMode)\n+\t\tcookie := &http.Cookie{\n+\t\t\tName:     \"user\",\n+\t\t\tValue:    \"gin\",\n+\t\t\tPath:     \"/\",\n+\t\t\tDomain:   \"localhost\",\n+\t\t\tSecure:   true,\n+\t\t\tHttpOnly: true,\n+\t\t\tSameSite: http.SameSiteDefaultMode,\n+\t\t}\n+\t\tc.SetCookieData(cookie)\n+\t\tsetCookie := c.Writer.Header().Get(\"Set-Cookie\")\n+\t\tassert.Contains(t, setCookie, \"SameSite=Strict\")\n+\t})\n }\n \n func TestGetMapFromFormData(t *testing.T) {"
+    },
+    {
+      "filename": "logger_test.go",
+      "status": "modified",
+      "additions": 9,
+      "deletions": 8,
+      "patch": "@@ -318,20 +318,21 @@ func TestColorForStatus(t *testing.T) {\n }\n \n func TestColorForLatency(t *testing.T) {\n-\tcolorForLantency := func(latency time.Duration) string {\n+\tcolorForLatency := func(latency time.Duration) string {\n \t\tp := LogFormatterParams{\n \t\t\tLatency: latency,\n \t\t}\n \t\treturn p.LatencyColor()\n \t}\n \n-\tassert.Equal(t, white, colorForLantency(time.Duration(0)), \"0 should be white\")\n-\tassert.Equal(t, white, colorForLantency(time.Millisecond*20), \"20ms should be white\")\n-\tassert.Equal(t, green, colorForLantency(time.Millisecond*150), \"150ms should be green\")\n-\tassert.Equal(t, cyan, colorForLantency(time.Millisecond*250), \"250ms should be cyan\")\n-\tassert.Equal(t, yellow, colorForLantency(time.Millisecond*600), \"600ms should be yellow\")\n-\tassert.Equal(t, magenta, colorForLantency(time.Millisecond*1500), \"1.5s should be magenta\")\n-\tassert.Equal(t, red, colorForLantency(time.Second*3), \"other things should be red\")\n+\tassert.Equal(t, white, colorForLatency(time.Duration(0)), \"0 should be white\")\n+\tassert.Equal(t, white, colorForLatency(time.Millisecond*20), \"20ms should be white\")\n+\tassert.Equal(t, green, colorForLatency(time.Millisecond*150), \"150ms should be green\")\n+\tassert.Equal(t, cyan, colorForLatency(time.Millisecond*250), \"250ms should be cyan\")\n+\tassert.Equal(t, blue, colorForLatency(time.Millisecond*400), \"400ms should be blue\")\n+\tassert.Equal(t, yellow, colorForLatency(time.Millisecond*600), \"600ms should be yellow\")\n+\tassert.Equal(t, magenta, colorForLatency(time.Millisecond*1500), \"1.5s should be magenta\")\n+\tassert.Equal(t, red, colorForLatency(time.Second*3), \"other things should be red\")\n }\n \n func TestResetColor(t *testing.T) {"
+    },
+    {
+      "filename": "utils_test.go",
+      "status": "modified",
+      "additions": 12,
+      "deletions": 0,
+      "patch": "@@ -13,6 +13,7 @@ import (\n \t\"testing\"\n \n \t\"github.com/stretchr/testify/assert\"\n+\t\"github.com/stretchr/testify/require\"\n )\n \n func init() {\n@@ -145,6 +146,17 @@ func TestMarshalXMLforH(t *testing.T) {\n \tassert.Error(t, e)\n }\n \n+func TestMarshalXMLforHSuccess(t *testing.T) {\n+\th := H{\n+\t\t\"key1\": \"value1\",\n+\t\t\"key2\": 123,\n+\t}\n+\tdata, err := xml.Marshal(h)\n+\trequire.NoError(t, err)\n+\tassert.Contains(t, string(data), \"<key1>value1</key1>\")\n+\tassert.Contains(t, string(data), \"<key2>123</key2>\")\n+}\n+\n func TestIsASCII(t *testing.T) {\n \tassert.True(t, isASCII(\"test\"))\n \tassert.False(t, isASCII(\"\ud83e\udde1\ud83d\udc9b\ud83d\udc9a\ud83d\udc99\ud83d\udc9c\"))"
+    }
+  ]
+}

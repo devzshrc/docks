@@ -1,0 +1,132 @@
+"use client"
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import Link from "next/link"
+
+import { AppShell } from "@/components/app-shell"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { useWorkspace } from "@/hooks/use-workspace"
+import { useTRPC } from "@/trpc/react"
+
+function Repositories({ workspaceId }: { workspaceId: string }) {
+  const trpc = useTRPC()
+  const queryClient = useQueryClient()
+  const repos = useQuery(trpc.workspace.repos.queryOptions({ workspaceId }))
+  const setRepo = useMutation(
+    trpc.workspace.setRepo.mutationOptions({
+      onSettled: () => queryClient.invalidateQueries(trpc.workspace.repos.queryFilter()),
+    })
+  )
+
+  if (repos.isPending) return <Skeleton className="h-24 w-full" />
+  if (repos.error) return <p className="text-destructive text-sm">{repos.error.message}</p>
+  if (!repos.data.length) {
+    return (
+      <p className="text-muted-foreground text-sm">
+        No repositories yet.{" "}
+        <Link href="/settings/integrations" className="underline">
+          Install the GitHub App
+        </Link>{" "}
+        to add some.
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+    {setRepo.error && <p className="text-destructive text-sm">{setRepo.error.message}</p>}
+    <div className="overflow-x-auto">
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Repository</TableHead>
+          <TableHead className="w-28">Enabled</TableHead>
+          <TableHead className="w-28">AI guide</TableHead>
+          <TableHead className="w-40">Auto-assign</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {repos.data.map((r) => (
+          <TableRow key={r.id}>
+            <TableCell className="font-medium">
+              {r.fullName}
+              {r.suspended && (
+                <Badge variant="destructive" className="ml-2">
+                  suspended
+                </Badge>
+              )}
+            </TableCell>
+            <TableCell>
+              <input
+                type="checkbox"
+                className="size-4"
+                aria-label={`Enable ${r.fullName}`}
+                checked={r.enabled}
+                onChange={(e) => setRepo.mutate({ repoId: r.id, enabled: e.target.checked })}
+              />
+            </TableCell>
+            <TableCell>
+              <input
+                type="checkbox"
+                className="size-4"
+                aria-label={`AI guide for ${r.fullName}`}
+                checked={r.aiEnabled}
+                onChange={(e) => setRepo.mutate({ repoId: r.id, aiEnabled: e.target.checked })}
+              />
+            </TableCell>
+            <TableCell>
+              <select
+                className="border-input bg-background h-8 rounded-md border px-2 text-sm"
+                aria-label={`Auto-assign reviewers for ${r.fullName}`}
+                value={r.autoAssign}
+                onChange={(e) => setRepo.mutate({ repoId: r.id, autoAssign: Number(e.target.value) })}
+              >
+                <option value={0}>Off</option>
+                {[1, 2, 3].map((n) => (
+                  <option key={n} value={n}>
+                    {n} reviewer{n > 1 ? "s" : ""}
+                  </option>
+                ))}
+              </select>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+    </div>
+    </div>
+  )
+}
+
+function Content() {
+  const { workspace, isPending } = useWorkspace()
+  if (isPending) return null
+  if (!workspace) {
+    return (
+      <p className="text-muted-foreground text-sm">
+        <Link href="/settings/integrations" className="underline">
+          Create a workspace
+        </Link>{" "}
+        first.
+      </p>
+    )
+  }
+  return <Repositories workspaceId={workspace.id} />
+}
+
+export default function Page() {
+  return (
+    <AppShell title="Repositories">
+      <Content />
+    </AppShell>
+  )
+}

@@ -1,0 +1,74 @@
+{
+  "id": "withastro__astro__18164",
+  "repo": "withastro/astro",
+  "number": 18164,
+  "url": "https://github.com/withastro/astro/pull/18164",
+  "headSha": "6555092e11166bbf7ad1c19c7556e61a2034e9d4",
+  "title": "Stable CSS Module class names in dev to prevent HMR stale class name mismatch",
+  "body": "## Changes\n\n- In dev mode, Astro now sets a `css.modules.generateScopedName` function that hashes `filename + classname` instead of CSS content. Vite's default generator incorporates stylesheet content into the hash, so any declaration change (e.g. a color edit) produces new class names. When a component is rendered both as a server-rendered island and a hydrated island, the client HMR path updates the hydrated instance but the static DOM retains the old class names, which no longer match any selector in the updated stylesheet. Stable names fix this by keeping selectors consistent across edits.\n- The override applies only when `command === 'dev'` and is skipped if the user has already configured their own `generateScopedName`. Production builds are unaffected and continue to use Vite's content-based default.\n\n## Testing\n\n- Added a unit test (`test/units/dev/css-module-scoped-name.test.ts`) verifying that the generated scoped name is stable across CSS content changes for the same filename and class name, and that it differs across filenames or class names.\n- Added an integration test covering the HMR scenario where a CSS Module is shared by a server-rendered component and a hydrated island, confirming both receive updated styles without a full page reload.\n\n## Docs\n\n- No docs update needed; this is an internal dev-server behavior fix with no new configuration surface.\n\nCloses #18105",
+  "files": [
+    {
+      "filename": ".changeset/fancy-spies-jog.md",
+      "status": "added",
+      "additions": 5,
+      "deletions": 0,
+      "patch": "@@ -0,0 +1,5 @@\n+---\n+'astro': patch\n+---\n+\n+Fixes CSS Module HMR in dev when a component is rendered both with and without hydration on the same page. Astro now uses path-based class name hashing in dev mode so that editing CSS declarations no longer changes the generated selectors, allowing Vite's CSS HMR to update styles without a full page reload."
+    },
+    {
+      "filename": "packages/astro/e2e/fixtures/hmr/src/pages/scss-module-ssr-and-island.astro",
+      "status": "added",
+      "additions": 17,
+      "deletions": 0,
+      "patch": "@@ -0,0 +1,17 @@\n+---\n+import ScssModuleHeading from '../components/ScssModuleHeading.jsx';\n+---\n+\n+<html>\n+\t<head>\n+\t\t<title>Test</title>\n+\t</head>\n+\t<body>\n+\t\t<div id=\"ssr\">\n+\t\t\t<ScssModuleHeading />\n+\t\t</div>\n+\t\t<div id=\"island\">\n+\t\t\t<ScssModuleHeading client:load />\n+\t\t</div>\n+\t</body>\n+</html>"
+    },
+    {
+      "filename": "packages/astro/e2e/hmr.test.ts",
+      "status": "modified",
+      "additions": 29,
+      "deletions": 0,
+      "patch": "@@ -110,6 +110,35 @@ test.describe('Styles', () => {\n \t\tawait expect(h).toHaveCSS('color', 'rgb(255, 0, 0)');\n \t});\n \n+\ttest('SCSS modules shared by SSR and hydrated island refresh with HMR', async ({ page, astro }) => {\n+\t\tawait page.goto(astro.resolveUrl('/scss-module-ssr-and-island'));\n+\t\tawait waitForViteToSettle(page);\n+\n+\t\tpage.once('load', throwPageShouldNotReload);\n+\n+\t\tconst ssr = page.locator('#ssr h1');\n+\t\tconst island = page.locator('#island h1');\n+\n+\t\tawait expect(ssr).toHaveCSS('color', 'rgb(0, 0, 255)');\n+\t\tawait expect(island).toHaveCSS('color', 'rgb(0, 0, 255)');\n+\n+\t\tconst ssrClass = await ssr.getAttribute('class');\n+\t\tconst islandClass = await island.getAttribute('class');\n+\t\texpect(ssrClass).toBe(islandClass);\n+\n+\t\tawait astro.editFile('./src/styles/scss-module.module.scss', (original) =>\n+\t\t\toriginal.replace('blue', 'red'),\n+\t\t);\n+\n+\t\tawait expect(ssr).toHaveCSS('color', 'rgb(255, 0, 0)');\n+\t\tawait expect(island).toHaveCSS('color', 'rgb(255, 0, 0)');\n+\n+\t\tconst ssrClassAfter = await ssr.getAttribute('class');\n+\t\tconst islandClassAfter = await island.getAttribute('class');\n+\t\texpect(ssrClassAfter).toBe(ssrClass);\n+\t\texpect(islandClassAfter).toBe(islandClass);\n+\t});\n+\n \ttest('external SCSS refresh with HMR', async ({ page, astro }) => {\n \t\tawait page.goto(astro.resolveUrl('/scss-external'));\n "
+    },
+    {
+      "filename": "packages/astro/src/core/create-vite.ts",
+      "status": "modified",
+      "additions": 19,
+      "deletions": 0,
+      "patch": "@@ -1,3 +1,4 @@\n+import { createHash } from 'node:crypto';\n import nodeFs from 'node:fs';\n import { fileURLToPath } from 'node:url';\n import * as vite from 'vite';\n@@ -288,6 +289,24 @@ export async function createVite(\n \t\t\t],\n \t\t},\n \t\tbuild: { assetsDir: settings.config.build.assets },\n+\t\tcss: !isBuild\n+\t\t\t? {\n+\t\t\t\t\tmodules: {\n+\t\t\t\t\t\t// Vite's default postcss-modules scoped-name generator hashes the CSS\n+\t\t\t\t\t\t// *content*, so every declaration edit changes class names. In dev this\n+\t\t\t\t\t\t// breaks HMR for server-rendered HTML because the DOM still references\n+\t\t\t\t\t\t// the previous names. Use a path-based hash instead so selectors stay\n+\t\t\t\t\t\t// stable and Vite's CSS HMR can swap rules without a full page reload.\n+\t\t\t\t\t\tgenerateScopedName(name, filename) {\n+\t\t\t\t\t\t\tconst hash = createHash('sha256')\n+\t\t\t\t\t\t\t\t.update(filename + '\\0' + name)\n+\t\t\t\t\t\t\t\t.digest('base64url')\n+\t\t\t\t\t\t\t\t.substring(0, 5);\n+\t\t\t\t\t\t\treturn `_${name}_${hash}`;\n+\t\t\t\t\t\t},\n+\t\t\t\t\t},\n+\t\t\t\t}\n+\t\t\t: undefined,\n \t\tenvironments: {\n \t\t\t[ASTRO_VITE_ENVIRONMENT_NAMES.astro]: {\n \t\t\t\t// This is all that's needed to create a new RunnableDevEnvironment"
+    },
+    {
+      "filename": "packages/astro/test/0-css.test.ts",
+      "status": "modified",
+      "additions": 61,
+      "deletions": 0,
+      "patch": "@@ -394,6 +394,7 @@ describe('CSS', function () {\n \n \t\tafter(async () => {\n \t\t\tawait devServer.stop();\n+\t\t\tfixture.resetAllFiles();\n \t\t});\n \n \t\tit('resolves CSS in public/', async () => {\n@@ -479,5 +480,65 @@ describe('CSS', function () {\n \t\t\tconst el = $('#css-raw');\n \t\t\tassert.equal(el.text(), '.foo {color: red;}');\n \t\t});\n+\n+\t\tit('keeps CSS Module class names stable for SSR and hydrated island after style edits', async () => {\n+\t\t\tconst initialRes = await fixture.fetch('/css-module-hmr');\n+\t\t\tassert.equal(initialRes.status, 200);\n+\t\t\tconst initialHtml = await initialRes.text();\n+\t\t\tconst $initial = cheerio.load(initialHtml);\n+\n+\t\t\tconst ssrClass = $initial('#ssr h1').attr('class');\n+\t\t\tconst islandClass = $initial('#island h1').attr('class');\n+\n+\t\t\tassert.ok(ssrClass, 'SSR instance should have a generated class name');\n+\t\t\tassert.equal(\n+\t\t\t\tssrClass,\n+\t\t\t\tislandClass,\n+\t\t\t\t'SSR and hydrated island should use the same generated class name',\n+\t\t\t);\n+\n+\t\t\tconst initialStyles = $initial('style').text();\n+\t\t\tassert.match(\n+\t\t\t\tinitialStyles,\n+\t\t\t\t/font-family:\\s*fantasy/,\n+\t\t\t\t'initial inline styles should contain the original declaration',\n+\t\t\t);\n+\n+\t\t\tawait fixture.editFile('/src/components/CssModuleHmr.module.css', (contents) =>\n+\t\t\t\tcontents.replace('font-family: fantasy', 'font-family: monospace'),\n+\t\t\t);\n+\t\t\tawait new Promise((resolve) => setTimeout(resolve, 500));\n+\n+\t\t\tconst updatedRes = await fixture.fetch('/css-module-hmr');\n+\t\t\tassert.equal(updatedRes.status, 200);\n+\t\t\tconst updatedHtml = await updatedRes.text();\n+\t\t\tconst $updated = cheerio.load(updatedHtml);\n+\n+\t\t\tconst ssrClassAfter = $updated('#ssr h1').attr('class');\n+\t\t\tconst islandClassAfter = $updated('#island h1').attr('class');\n+\n+\t\t\tassert.equal(\n+\t\t\t\tssrClassAfter,\n+\t\t\t\tssrClass,\n+\t\t\t\t'SSR class name should stay stable after the CSS edit',\n+\t\t\t);\n+\t\t\tassert.equal(\n+\t\t\t\tislandClassAfter,\n+\t\t\t\tssrClass,\n+\t\t\t\t'hydrated island class name should stay stable after the CSS edit',\n+\t\t\t);\n+\n+\t\t\tconst updatedStyles = $updated('style').text();\n+\t\t\tassert.doesNotMatch(\n+\t\t\t\tupdatedStyles,\n+\t\t\t\t/font-family:\\s*fantasy/,\n+\t\t\t\t'updated inline styles should no longer contain the original declaration',\n+\t\t\t);\n+\t\t\tassert.match(\n+\t\t\t\tupdatedStyles,\n+\t\t\t\t/font-family:\\s*monospace/,\n+\t\t\t\t'updated inline styles should contain the new declaration',\n+\t\t\t);\n+\t\t});\n \t});\n });"
+    },
+    {
+      "filename": "packages/astro/test/fixtures/0-css/src/components/CssModuleHmr.jsx",
+      "status": "added",
+      "additions": 7,
+      "deletions": 0,
+      "patch": "@@ -0,0 +1,7 @@\n+import Styles from './CssModuleHmr.module.css';\n+\n+export default function CssModuleHmr() {\n+\treturn (\n+\t\t<h1 className={Styles.title}>CSS Module HMR</h1>\n+\t);\n+}"
+    },
+    {
+      "filename": "packages/astro/test/fixtures/0-css/src/components/CssModuleHmr.module.css",
+      "status": "added",
+      "additions": 3,
+      "deletions": 0,
+      "patch": "@@ -0,0 +1,3 @@\n+.title {\n+\tfont-family: fantasy;\n+}"
+    },
+    {
+      "filename": "packages/astro/test/fixtures/0-css/src/pages/css-module-hmr.astro",
+      "status": "added",
+      "additions": 17,
+      "deletions": 0,
+      "patch": "@@ -0,0 +1,17 @@\n+---\n+import CssModuleHmr from '../components/CssModuleHmr.jsx';\n+---\n+\n+<html>\n+\t<head>\n+\t\t<title>CSS Module HMR</title>\n+\t</head>\n+\t<body>\n+\t\t<div id=\"ssr\">\n+\t\t\t<CssModuleHmr />\n+\t\t</div>\n+\t\t<div id=\"island\">\n+\t\t\t<CssModuleHmr client:load />\n+\t\t</div>\n+\t</body>\n+</html>"
+    },
+    {
+      "filename": "packages/astro/test/units/dev/css-module-scoped-name.test.ts",
+      "status": "added",
+      "additions": 82,
+      "deletions": 0,
+      "patch": "@@ -0,0 +1,82 @@\n+import * as assert from 'node:assert/strict';\n+import { describe, it } from 'node:test';\n+import { createVite } from '../../../dist/core/create-vite.js';\n+import { createBasicSettings, defaultLogger } from '../test-utils.ts';\n+\n+type GenerateScopedName = (name: string, filename: string, css: string) => string;\n+\n+describe('CSS module scoped name in dev', () => {\n+\tit('provides a stable generateScopedName in dev mode', async () => {\n+\t\tconst settings = await createBasicSettings();\n+\t\tconst routesList = { routes: [] };\n+\t\tconst config = await createVite(\n+\t\t\t{},\n+\t\t\t{\n+\t\t\t\tsettings,\n+\t\t\t\tlogger: defaultLogger,\n+\t\t\t\tmode: 'development',\n+\t\t\t\tcommand: 'dev',\n+\t\t\t\troutesList,\n+\t\t\t\tsync: false,\n+\t\t\t},\n+\t\t);\n+\n+\t\tconst generateScopedName = config.css?.modules\n+\t\t\t? (config.css.modules as { generateScopedName?: GenerateScopedName }).generateScopedName\n+\t\t\t: undefined;\n+\n+\t\tassert.ok(\n+\t\t\ttypeof generateScopedName === 'function',\n+\t\t\t'dev config should have generateScopedName',\n+\t\t);\n+\n+\t\t// Same file + class name should produce the same result regardless of CSS content\n+\t\tconst name1 = generateScopedName('card', '/src/Card.module.css', '.card { color: red; }');\n+\t\tconst name2 = generateScopedName('card', '/src/Card.module.css', '.card { color: blue; }');\n+\t\tassert.equal(name1, name2, 'class name should be stable across CSS content changes');\n+\n+\t\t// Different files should produce different names for the same class\n+\t\tconst nameA = generateScopedName('card', '/src/A.module.css', '.card { color: red; }');\n+\t\tconst nameB = generateScopedName('card', '/src/B.module.css', '.card { color: red; }');\n+\t\tassert.notEqual(nameA, nameB, 'different files should produce different class names');\n+\n+\t\t// Different class names in the same file should produce different names\n+\t\tconst nameCard = generateScopedName('card', '/src/Card.module.css', '');\n+\t\tconst nameTitle = generateScopedName('title', '/src/Card.module.css', '');\n+\t\tassert.notEqual(\n+\t\t\tnameCard,\n+\t\t\tnameTitle,\n+\t\t\t'different classes in the same file should produce different names',\n+\t\t);\n+\n+\t\t// Name should include the local class name for debuggability\n+\t\tassert.ok(name1.includes('card'), 'generated name should include the local class name');\n+\t});\n+\n+\tit('does not set generateScopedName in build mode', async () => {\n+\t\tconst settings = await createBasicSettings();\n+\t\tconst routesList = { routes: [] };\n+\t\tconst config = await createVite(\n+\t\t\t{},\n+\t\t\t{\n+\t\t\t\tsettings,\n+\t\t\t\tlogger: defaultLogger,\n+\t\t\t\tmode: 'production',\n+\t\t\t\tcommand: 'build',\n+\t\t\t\troutesList,\n+\t\t\t\tsync: false,\n+\t\t\t},\n+\t\t);\n+\n+\t\tconst modules = config.css?.modules;\n+\t\tconst generateScopedName = modules\n+\t\t\t? (modules as { generateScopedName?: GenerateScopedName }).generateScopedName\n+\t\t\t: undefined;\n+\n+\t\tassert.equal(\n+\t\t\tgenerateScopedName,\n+\t\t\tundefined,\n+\t\t\t'build config should not override generateScopedName',\n+\t\t);\n+\t});\n+});"
+    }
+  ]
+}

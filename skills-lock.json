@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "better-auth-best-practices": {
+      "source": "better-auth/skills",
+      "sourceType": "github",
+      "skillPath": "better-auth/best-practices/SKILL.md",
+      "computedHash": "0c30be0e118c2b7a0c4c57bd9e63bf110c7e420a79ec6ce7997153f3b1e066ee"
+    },
+    "drizzle": {
+      "source": "lobehub/lobehub",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/drizzle/SKILL.md",
+      "computedHash": "a51a3da4e421ae171d1b3aea0953cd63241b48a5f2fff59ad7ed0f6ff6d9a459"
+    },
+    "hugeicons": {
+      "source": "hugeicons/hugeicons",
+      "sourceType": "github",
+      "skillPath": "skills/hugeicons/SKILL.md",
+      "computedHash": "4e65a89ca4417259b58c4e5c079d83fb977da214028334f504f18af820bbadcf"
+    },
+    "trpc": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "trpc/SKILL.md",
+      "computedHash": "c806ba379dcdbf2020d02ad36f24811d8b7435f34338d896a0fcb91db03ab0b5"
+    },
+    "turborepo-monorepo": {
+      "source": "giuseppe-trisciuoglio/developer-kit",
+      "sourceType": "github",
+      "skillPath": "plugins/developer-kit-typescript/skills/turborepo-monorepo/SKILL.md",
+      "computedHash": "dd24a9f0e1ba7586ca6ce85732b6f3388d2c2760307d4316596ab0cb155f8173"
+    }
+  }
+}

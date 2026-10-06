@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev:web",
+      "type": "shell",
+      "command": "pnpm dev:web",
+      "isBackground": true,
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false,
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev:server",
+      "type": "shell",
+      "command": "pnpm dev:server",
+      "isBackground": true,
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false,
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev (tabs)",
+      "dependsOn": ["dev:web", "dev:server"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}

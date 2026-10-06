@@ -1,0 +1,535 @@
+import { randomUUID } from "node:crypto";
+import { db, schema } from "@docks/db";
+import { TRPCError } from "@trpc/server";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { z } from "zod";
+import { assertMember, audit, can, repoForAction, repoForUser } from "../access.js";
+import { enqueue } from "../jobs.js";
+import { boardFilters, filterBoard, sizeOf } from "../review/board.js";
+import { latestVerdicts } from "../review/columns.js";
+import { GitHubError } from "../review/github.js";
+import { fallbackGuide, guideKey } from "../review/guide.js";
+import { githubAs, githubIdentity } from "../review/github-user.js";
+import { loginsToUsers, suggestReviewers } from "../review/reviewers.js";
+import { syncPr } from "../review/sync.js";
+import type { BoardCard, Guide, RankedFile, RiskTier } from "../review/types.js";
+import { protectedProcedure, router } from "../trpc.js";
+
+const TIER_ORDER: Record<RiskTier, number> = { core: 0, config: 1, test: 2, noise: 3 };
+
+/** Surface GitHub's own reason (branch protection, conflicts, permissions). */
+function githubFailure(err: unknown): never {
+  if (err instanceof GitHubError) {
+    const reason = err.message.match(/"message":"([^"]+)"/)?.[1] ?? "GitHub rejected the request";
+    throw new TRPCError({
+      code: err.status === 403 || err.status === 404 ? "FORBIDDEN" : "BAD_REQUEST",
+      message: reason,
+    });
+  }
+  throw err;
+}
+
+/** Refresh the mirror right away so the UI reflects the action; webhook is the backstop. */
+async function refreshPr(repoId: number, number: number) {
+  try {
+    await syncPr(repoId, number);
+  } catch {
+    await enqueue("sync_pr", { repoId, number });
+  }
+}
+
+export type GuideState =
+  | { status: "pending" }
+  | { status: "ready"; guide: Guide; model: string | null };
+
+/** Must match the key order used by syncPr so enqueue() dedupes. */
+const guideJobPayload = (repoId: number, number: number, headSha: string) => ({
+  repoId,
+  number,
+  headSha,
+});
+
+async function loadPull(userId: string, input: { repo: string; number: number }) {
+  const repoRow = await repoForUser(userId, input.repo);
+  const [pull] = await db
+    .select({ headSha: schema.pullRequest.headSha })
+    .from(schema.pullRequest)
+    .where(and(eq(schema.pullRequest.repoId, repoRow.id), eq(schema.pullRequest.number, input.number)))
+    .limit(1);
+  if (!pull) throw new TRPCError({ code: "NOT_FOUND", message: "Pull request not synced yet" });
+  return { repoRow, pull };
+}
+
+async function guideState(
+  userId: string,
+  input: { repo: string; number: number },
+): Promise<GuideState> {
+  const { repoRow, pull } = await loadPull(userId, input);
+  const [cached] = await db
+    .select({ guide: schema.reviewGuide.guide, model: schema.reviewGuide.model })
+    .from(schema.reviewGuide)
+    .where(guideKey(repoRow.fullName, input.number, pull.headSha))
+    .limit(1);
+  if (cached) return { status: "ready", guide: cached.guide as Guide, model: cached.model };
+
+  const files = await db
+    .select({
+      filename: schema.prFile.path,
+      tier: schema.prFile.tier,
+      additions: schema.prFile.additions,
+      deletions: schema.prFile.deletions,
+    })
+    .from(schema.prFile)
+    .where(
+      and(
+        eq(schema.prFile.repoId, repoRow.id),
+        eq(schema.prFile.prNumber, input.number),
+        eq(schema.prFile.headSha, pull.headSha),
+      ),
+    );
+  const fallback = (reason: string): GuideState => ({
+    status: "ready",
+    guide: fallbackGuide(files, reason),
+    model: null,
+  });
+
+  const [settings] = await db
+    .select({ aiEnabled: schema.repository.aiEnabled })
+    .from(schema.repository)
+    .where(eq(schema.repository.id, repoRow.id))
+    .limit(1);
+  if (!settings?.aiEnabled) {
+    return fallback("The AI guide is off for this repository. Files are grouped by folder, riskiest first.");
+  }
+
+  // Lazy path: no job yet (e.g. guide turned on after the last push) -> queue one.
+  const payload = guideJobPayload(repoRow.id, input.number, pull.headSha);
+  const [job] = await db
+    .select({ status: schema.jobs.status })
+    .from(schema.jobs)
+    .where(
+      and(
+        eq(schema.jobs.type, "generate_guide"),
+        sql`${schema.jobs.payload} = ${JSON.stringify(payload)}::jsonb`,
+      ),
+    )
+    .orderBy(desc(schema.jobs.id))
+    .limit(1);
+  if (job?.status === "failed" || job?.status === "done") {
+    // "done" without a cached guide means it was skipped (no files) or lost a race.
+    return fallback("The AI guide isn't available for this commit. Files are grouped by folder, riskiest first.");
+  }
+  if (!job) await enqueue("generate_guide", payload);
+  return { status: "pending" };
+}
+
+const repo = z.string().regex(/^[\w.-]+\/[\w.-]+$/);
+const pr = z.object({ repo, number: z.number().int().positive() });
+
+export const reviewRouter = router({
+  /**
+   * The board across every repo the person can open (plan M5). Returns the
+   * filtered cards plus the options the filter bar offers.
+   */
+  board: protectedProcedure
+    .input(z.object({ workspaceId: z.string(), filters: boardFilters.default({ sort: "oldest" }) }))
+    .query(async ({ ctx, input }) => {
+      const member = await assertMember(ctx.user.id, input.workspaceId);
+      const [repos, visible, ws, identity] = await Promise.all([
+        db
+          .select({ id: schema.repository.id, fullName: schema.repository.fullName })
+          .from(schema.repository)
+          .innerJoin(schema.githubInstallation, eq(schema.githubInstallation.id, schema.repository.installationId))
+          .where(and(eq(schema.githubInstallation.workspaceId, input.workspaceId), eq(schema.repository.enabled, true))),
+        db
+          .select({ repoId: schema.githubRepoAccess.repoId })
+          .from(schema.githubRepoAccess)
+          .where(eq(schema.githubRepoAccess.userId, ctx.user.id)),
+        db.select({ stuckHours: schema.workspace.stuckHours }).from(schema.workspace).where(eq(schema.workspace.id, input.workspaceId)),
+        githubIdentity(ctx.user.id),
+      ]);
+      const onGithub = new Set(visible.map((v) => v.repoId));
+      const mine = repos.filter((r) => onGithub.has(r.id) && (!member.repoIds || member.repoIds.includes(r.id)));
+      const repoName = new Map(mine.map((r) => [r.id, r.fullName]));
+      const empty = { cards: [] as BoardCard[], repos: mine, authors: [] as string[], labels: [] as string[], teams: [] as { id: string; name: string }[], stuckHours: ws[0]?.stuckHours ?? 24, me: identity?.login ?? null };
+      if (!mine.length) return empty;
+
+      const pulls = await db
+        .select()
+        .from(schema.pullRequest)
+        .where(and(inArray(schema.pullRequest.repoId, [...repoName.keys()]), eq(schema.pullRequest.state, "open")));
+      const checks = pulls.length
+        ? await db
+            .select({ repoId: schema.prCheck.repoId, headSha: schema.prCheck.headSha, status: schema.prCheck.status, conclusion: schema.prCheck.conclusion })
+            .from(schema.prCheck)
+            .where(inArray(schema.prCheck.headSha, pulls.map((p) => p.headSha)))
+        : [];
+      const ciOf = (repoId: number, sha: string): BoardCard["ci"] => {
+        const runs = checks.filter((c) => c.repoId === repoId && c.headSha === sha);
+        if (!runs.length) return "none";
+        if (runs.some((c) => c.conclusion === "failure" || c.conclusion === "timed_out")) return "fail";
+        if (runs.some((c) => c.status !== "completed")) return "pending";
+        return "pass";
+      };
+
+      const teams = await db
+        .select({ id: schema.team.id, name: schema.team.name })
+        .from(schema.team)
+        .where(eq(schema.team.workspaceId, input.workspaceId));
+      let teamLogins: Set<string> | null = null;
+      if (input.filters.teamId) {
+        const rows = await db
+          .select({ login: schema.githubIdentity.githubLogin })
+          .from(schema.teamMember)
+          .innerJoin(schema.githubIdentity, eq(schema.githubIdentity.userId, schema.teamMember.userId))
+          .where(eq(schema.teamMember.teamId, input.filters.teamId));
+        teamLogins = new Set(rows.map((r) => r.login.toLowerCase()));
+      }
+
+      const claimerIds = [...new Set(pulls.map((p) => p.claimedBy).filter((x): x is string => Boolean(x)))];
+      const claimers = new Map(
+        claimerIds.length
+          ? (await db.select({ id: schema.user.id, name: schema.user.name }).from(schema.user).where(inArray(schema.user.id, claimerIds))).map((u) => [u.id, u.name])
+          : [],
+      );
+      const avatar = (l: string) => ({ login: l, avatar_url: `https://github.com/${l}.png?size=40` });
+      const rows = filterBoard(
+        pulls.map((p) => ({ ...p, ci: ciOf(p.repoId, p.headSha) })),
+        input.filters,
+        { me: identity?.login ?? null, teamLogins, stuckHours: ws[0]?.stuckHours ?? 24 },
+      );
+
+      return {
+        ...empty,
+        teams,
+        authors: [...new Set(pulls.map((p) => p.authorLogin))].sort(),
+        labels: [...new Set(pulls.flatMap((p) => p.labels))].sort(),
+        cards: rows.map(
+          (p): BoardCard => ({
+            repo: repoName.get(p.repoId)!,
+            number: p.number,
+            title: p.title,
+            url: `https://github.com/${repoName.get(p.repoId)}/pull/${p.number}`,
+            author: avatar(p.authorLogin),
+            reviewers: p.requestedReviewers.map(avatar),
+            column: p.column,
+            stuck: p.stuck,
+            updatedAt: p.lastActivityAt.toISOString(),
+            additions: p.additions,
+            deletions: p.deletions,
+            ci: p.ci,
+            claimedBy: p.claimedBy ? { userId: p.claimedBy, name: claimers.get(p.claimedBy) ?? "Someone" } : null,
+            labels: p.labels,
+            priority: p.priority,
+            draft: p.draft,
+            size: sizeOf(p),
+          }),
+        ),
+      };
+    }),
+
+  /** App-only flag; doesn't touch GitHub. */
+  setPriority: protectedProcedure.input(pr.extend({ priority: z.boolean() })).mutation(async ({ ctx, input }) => {
+    const repoRow = await repoForAction(ctx.user.id, input.repo, "review.act");
+    await db
+      .update(schema.pullRequest)
+      .set({ priority: input.priority })
+      .where(and(eq(schema.pullRequest.repoId, repoRow.id), eq(schema.pullRequest.number, input.number)));
+    await audit(repoRow.workspaceId, ctx.user.id, "review.priority", `${repoRow.fullName}#${input.number}`, { priority: input.priority });
+  }),
+
+  /** Replace the PR's labels on GitHub, as the signed-in person. */
+  setLabels: protectedProcedure
+    .input(pr.extend({ labels: z.array(z.string().trim().min(1).max(50)).max(20) }))
+    .mutation(async ({ ctx, input }) => {
+      const repoRow = await repoForAction(ctx.user.id, input.repo, "review.act");
+      await githubAs(ctx.user.id).setLabels(repoRow.fullName, input.number, input.labels).catch(githubFailure);
+      await audit(repoRow.workspaceId, ctx.user.id, "review.labels", `${repoRow.fullName}#${input.number}`, { labels: input.labels });
+      await refreshPr(repoRow.id, input.number);
+    }),
+
+  savedViews: protectedProcedure.input(z.object({ workspaceId: z.string() })).query(async ({ ctx, input }) => {
+    await assertMember(ctx.user.id, input.workspaceId);
+    return db
+      .select({ id: schema.savedView.id, name: schema.savedView.name, query: schema.savedView.query })
+      .from(schema.savedView)
+      .where(and(eq(schema.savedView.userId, ctx.user.id), eq(schema.savedView.workspaceId, input.workspaceId)))
+      .orderBy(asc(schema.savedView.name));
+  }),
+
+  saveView: protectedProcedure
+    .input(z.object({ workspaceId: z.string(), name: z.string().trim().min(1).max(60), query: z.string().max(2000) }))
+    .mutation(async ({ ctx, input }) => {
+      await assertMember(ctx.user.id, input.workspaceId);
+      const id = randomUUID();
+      await db.insert(schema.savedView).values({ id, userId: ctx.user.id, ...input });
+      return { id };
+    }),
+
+  deleteView: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
+    await db.delete(schema.savedView).where(and(eq(schema.savedView.id, input.id), eq(schema.savedView.userId, ctx.user.id)));
+  }),
+
+  /** Everything the guided review view needs, from the mirror (plan.md §5.3). */
+  get: protectedProcedure.input(pr).query(async ({ ctx, input }) => {
+    const repoRow = await repoForUser(ctx.user.id, input.repo);
+    const [pull] = await db
+      .select()
+      .from(schema.pullRequest)
+      .where(
+        and(
+          eq(schema.pullRequest.repoId, repoRow.id),
+          eq(schema.pullRequest.number, input.number),
+        ),
+      )
+      .limit(1);
+    if (!pull) throw new TRPCError({ code: "NOT_FOUND", message: "Pull request not synced yet" });
+
+    const [files, reviews, checks, progress, identity] = await Promise.all([
+      db
+        .select()
+        .from(schema.prFile)
+        .where(
+          and(
+            eq(schema.prFile.repoId, repoRow.id),
+            eq(schema.prFile.prNumber, input.number),
+            eq(schema.prFile.headSha, pull.headSha),
+          ),
+        ),
+      db
+        .select()
+        .from(schema.prReview)
+        .where(
+          and(eq(schema.prReview.repoId, repoRow.id), eq(schema.prReview.prNumber, input.number)),
+        )
+        .orderBy(asc(schema.prReview.submittedAt)),
+      db
+        .select()
+        .from(schema.prCheck)
+        .where(
+          and(eq(schema.prCheck.repoId, repoRow.id), eq(schema.prCheck.headSha, pull.headSha)),
+        )
+        .orderBy(asc(schema.prCheck.name)),
+      db
+        .select({ path: schema.reviewProgress.path, fileSha: schema.reviewProgress.fileSha })
+        .from(schema.reviewProgress)
+        .where(
+          and(
+            eq(schema.reviewProgress.userId, ctx.user.id),
+            eq(schema.reviewProgress.repo, repoRow.fullName),
+            eq(schema.reviewProgress.prNumber, input.number),
+          ),
+        ),
+      githubIdentity(ctx.user.id),
+    ]);
+
+    const seen = new Map(progress.map((p) => [p.path, p.fileSha]));
+    const ranked: RankedFile[] = files
+      .map((f) => ({
+        filename: f.path,
+        sha: f.blobSha,
+        status: f.status,
+        patch: f.patch ?? undefined,
+        additions: f.additions,
+        deletions: f.deletions,
+        tier: f.tier,
+        viewed: seen.get(f.path) === f.blobSha,
+        changedSinceViewed: seen.has(f.path) && seen.get(f.path) !== f.blobSha,
+      }))
+      .sort(
+        (a, b) =>
+          TIER_ORDER[a.tier] - TIER_ORDER[b.tier] ||
+          b.additions + b.deletions - (a.additions + a.deletions) ||
+          a.filename.localeCompare(b.filename),
+      );
+
+    // Latest verdict per reviewer, for the header.
+    const verdictBy = new Map<string, string>();
+    for (const r of reviews) {
+      if (latestVerdicts([r]).length) verdictBy.set(r.reviewerLogin, r.state);
+      else if (r.state === "DISMISSED") verdictBy.delete(r.reviewerLogin);
+    }
+
+    return {
+      pr: {
+        number: pull.number,
+        title: pull.title,
+        body: pull.body,
+        url: `https://github.com/${repoRow.fullName}/pull/${pull.number}`,
+        author: pull.authorLogin,
+        state: pull.state,
+        draft: pull.draft,
+        headRef: pull.headRef,
+        baseRef: pull.baseRef,
+        headSha: pull.headSha,
+        additions: pull.additions,
+        deletions: pull.deletions,
+        column: pull.reviewColumn,
+      },
+      canAct: can(repoRow.role, "review.act"),
+      files: ranked,
+      reviewers: [
+        ...pull.requestedReviewers.map((login) => ({ login, state: "PENDING" })),
+        ...[...verdictBy].map(([login, state]) => ({ login, state })),
+      ],
+      checks: checks.map((c) => ({ name: c.name, status: c.status, conclusion: c.conclusion })),
+      me: identity?.login ?? null,
+    };
+  }),
+  /**
+   * Guide for the PR's current head commit. Generation runs in the job
+   * queue; the client polls while status is "pending" (plan.md §6.3).
+   */
+  guide: protectedProcedure.input(pr).query(async ({ ctx, input }) => guideState(ctx.user.id, input)),
+  markViewed: protectedProcedure
+    .input(pr.extend({ path: z.string(), fileSha: z.string(), viewed: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const repoRow = await repoForUser(ctx.user.id, input.repo);
+      const key = and(
+        eq(schema.reviewProgress.userId, ctx.user.id),
+        eq(schema.reviewProgress.repo, repoRow.fullName),
+        eq(schema.reviewProgress.prNumber, input.number),
+        eq(schema.reviewProgress.path, input.path),
+      );
+      if (!input.viewed) {
+        await db.delete(schema.reviewProgress).where(key);
+        return;
+      }
+      await db
+        .insert(schema.reviewProgress)
+        .values({
+          userId: ctx.user.id,
+          repo: repoRow.fullName,
+          prNumber: input.number,
+          path: input.path,
+          fileSha: input.fileSha,
+        })
+        .onConflictDoUpdate({
+          target: [
+            schema.reviewProgress.userId,
+            schema.reviewProgress.repo,
+            schema.reviewProgress.prNumber,
+            schema.reviewProgress.path,
+          ],
+          set: { fileSha: input.fileSha },
+        });
+    }),
+  submit: protectedProcedure
+    .input(
+      pr.extend({
+        event: z.enum(["APPROVE", "REQUEST_CHANGES", "COMMENT"]),
+        body: z.string().default(""),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const repoRow = await repoForAction(ctx.user.id, input.repo, "review.act");
+      if (input.event !== "APPROVE" && !input.body.trim()) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Add a comment explaining your review" });
+      }
+      await githubAs(ctx.user.id)
+        .submitReview(repoRow.fullName, input.number, input.event, input.body)
+        .catch(githubFailure);
+      await audit(repoRow.workspaceId, ctx.user.id, `review.${input.event.toLowerCase()}`, `${repoRow.fullName}#${input.number}`);
+      await refreshPr(repoRow.id, input.number);
+    }),
+  merge: protectedProcedure
+    .input(pr.extend({ method: z.enum(["merge", "squash", "rebase"]).default("squash") }))
+    .mutation(async ({ ctx, input }) => {
+      const repoRow = await repoForAction(ctx.user.id, input.repo, "review.act");
+      const result = await githubAs(ctx.user.id)
+        .merge(repoRow.fullName, input.number, input.method)
+        .catch(githubFailure);
+      await audit(repoRow.workspaceId, ctx.user.id, "review.merge", `${repoRow.fullName}#${input.number}`, { method: input.method });
+      await refreshPr(repoRow.id, input.number);
+      return { merged: result.merged };
+    }),
+  /** Drop the cached guide and queue a fresh one; at most once a minute per PR. */
+  regenerateGuide: protectedProcedure.input(pr).mutation(async ({ ctx, input }) => {
+    const { repoRow, pull } = await loadPull(ctx.user.id, input);
+    if (!can(repoRow.role, "review.act")) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Your role doesn't allow this" });
+    }
+    const [cached] = await db
+      .select({ createdAt: schema.reviewGuide.createdAt })
+      .from(schema.reviewGuide)
+      .where(guideKey(repoRow.fullName, input.number, pull.headSha))
+      .limit(1);
+    if (cached && Date.now() - cached.createdAt.getTime() < 60_000) {
+      throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Wait a minute before regenerating" });
+    }
+    await db.delete(schema.reviewGuide).where(guideKey(repoRow.fullName, input.number, pull.headSha));
+    await db
+      .delete(schema.jobs)
+      .where(
+        and(
+          eq(schema.jobs.type, "generate_guide"),
+          inArray(schema.jobs.status, ["failed", "done"]),
+          sql`${schema.jobs.payload} = ${JSON.stringify(guideJobPayload(repoRow.id, input.number, pull.headSha))}::jsonb`,
+        ),
+      );
+    await enqueue("generate_guide", guideJobPayload(repoRow.id, input.number, pull.headSha));
+    return guideState(ctx.user.id, input);
+  }),
+
+  /** Ranked reviewer suggestions plus who's already requested (plan M4). */
+  reviewerOptions: protectedProcedure.input(pr).query(async ({ ctx, input }) => {
+    const repoRow = await repoForUser(ctx.user.id, input.repo);
+    const [pull] = await db
+      .select({ requested: schema.pullRequest.requestedReviewers, claimedBy: schema.pullRequest.claimedBy })
+      .from(schema.pullRequest)
+      .where(and(eq(schema.pullRequest.repoId, repoRow.id), eq(schema.pullRequest.number, input.number)));
+    if (!pull) throw new TRPCError({ code: "NOT_FOUND", message: "Pull request not synced yet" });
+    const [suggestions, names] = await Promise.all([
+      suggestReviewers(repoRow.id, input.number),
+      loginsToUsers(repoRow.workspaceId, pull.requested),
+    ]);
+    const [claimer] = pull.claimedBy
+      ? await db.select({ id: schema.user.id, name: schema.user.name }).from(schema.user).where(eq(schema.user.id, pull.claimedBy))
+      : [];
+    return {
+      requested: pull.requested.map((login) => ({ login, name: names.get(login) ?? null })),
+      suggestions: suggestions.slice(0, 8).map((s) => ({
+        login: s.login,
+        name: s.name,
+        reasons: s.reasons,
+        openReviews: s.openReviews,
+        atLimit: s.atLimit,
+      })),
+      claimedBy: claimer ? { userId: claimer.id, name: claimer.name, isMe: claimer.id === ctx.user.id } : null,
+      canAct: can(repoRow.role, "review.act"),
+    };
+  }),
+
+  /** Add or remove requested reviewers on GitHub, as the signed-in person. */
+  setReviewers: protectedProcedure
+    .input(pr.extend({ add: z.array(z.string()).default([]), remove: z.array(z.string()).default([]) }))
+    .mutation(async ({ ctx, input }) => {
+      const repoRow = await repoForAction(ctx.user.id, input.repo, "review.act");
+      const gh = githubAs(ctx.user.id);
+      if (input.add.length) await gh.requestReviewers(repoRow.fullName, input.number, input.add).catch(githubFailure);
+      if (input.remove.length) await gh.removeReviewers(repoRow.fullName, input.number, input.remove).catch(githubFailure);
+      await audit(repoRow.workspaceId, ctx.user.id, "review.reviewers", `${repoRow.fullName}#${input.number}`, {
+        add: input.add,
+        remove: input.remove,
+      });
+      await refreshPr(repoRow.id, input.number);
+    }),
+
+  /** "I'm on it": visible to the team, stops the PR counting as unowned. */
+  claim: protectedProcedure.input(pr.extend({ claim: z.boolean() })).mutation(async ({ ctx, input }) => {
+    const repoRow = await repoForAction(ctx.user.id, input.repo, "review.act");
+    const [pull] = await db
+      .select({ claimedBy: schema.pullRequest.claimedBy })
+      .from(schema.pullRequest)
+      .where(and(eq(schema.pullRequest.repoId, repoRow.id), eq(schema.pullRequest.number, input.number)));
+    if (!pull) throw new TRPCError({ code: "NOT_FOUND", message: "Pull request not synced yet" });
+    if (!input.claim && pull.claimedBy && pull.claimedBy !== ctx.user.id && !can(repoRow.role, "members.manage")) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Only the person who claimed it, or an admin, can release it" });
+    }
+    await db
+      .update(schema.pullRequest)
+      .set({ claimedBy: input.claim ? ctx.user.id : null })
+      .where(and(eq(schema.pullRequest.repoId, repoRow.id), eq(schema.pullRequest.number, input.number)));
+    await audit(repoRow.workspaceId, ctx.user.id, input.claim ? "review.claim" : "review.unclaim", `${repoRow.fullName}#${input.number}`);
+  }),
+});

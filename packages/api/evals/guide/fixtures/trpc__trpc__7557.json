@@ -1,0 +1,39 @@
+{
+  "id": "trpc__trpc__7557",
+  "repo": "trpc/trpc",
+  "number": 7557,
+  "url": "https://github.com/trpc/trpc/pull/7557",
+  "headSha": "d1d8e30cb7d940ebf69910038dd9113d6d69bda8",
+  "title": "fix(server): keep middleware factory declarations portable",
+  "body": "Closes #6889\n\n## \ud83c\udfaf Changes\n\nExport a stable `TRPCUnwrap` alias from `@trpc/server` so declaration emit can name the return type of generic middleware factories.\n\nWithout the alias, TypeScript falls back to a hashed internal declaration chunk and reports TS2742. The existing declaration fixture did not catch this because importing `@trpc/client` or `@trpc/next` in the same program makes the internal type reachable. The added server-only config keeps that masking import out of the regression test.\n\n## \u2705 Checklist\n\n- [x] I have followed the steps listed in the Contributing guide.\n- [x] I have added or updated tests related to the changes.\n- [ ] If necessary, I have added documentation related to the changes made.\n\n## Test plan\n\n- `pnpm --filter @trpc/server lint`\n- `pnpm --filter @trpc/server typecheck`\n- `pnpm --dir examples/.test/internal-types-export build`\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n- **New Features**\n  - Added a reusable authentication middleware example that rejects unauthenticated requests and makes the signed-in user available to subsequent procedures.\n  - Added an exported utility type to improve type handling for server-side integrations.\n\n- **Build Improvements**\n  - Updated the example project\u2019s build process to include a dedicated server-only TypeScript compilation step.\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+  "files": [
+    {
+      "filename": "examples/.test/internal-types-export/package.json",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 1,
+      "patch": "@@ -3,7 +3,7 @@\n   \"private\": true,\n   \"type\": \"module\",\n   \"scripts\": {\n-    \"build\": \"rm -rf build && tsc && tsdown\"\n+    \"build\": \"rm -rf build && tsc && tsc -p tsconfig.server-only.json && tsdown\"\n   },\n   \"devDependencies\": {\n     \"@tsconfig/esm\": \"^1.0.3\","
+    },
+    {
+      "filename": "examples/.test/internal-types-export/src/middleware-factory.ts",
+      "status": "added",
+      "additions": 20,
+      "deletions": 0,
+      "patch": "@@ -0,0 +1,20 @@\n+import { initTRPC, TRPCError } from '@trpc/server';\n+\n+interface AuthNContext {\n+  user?: { id: string };\n+}\n+\n+export function createAuthenticationMiddleware<\n+  TContext extends AuthNContext = AuthNContext,\n+>() {\n+  return initTRPC\n+    .context<TContext>()\n+    .create()\n+    .procedure.use(({ ctx, next }) => {\n+      if (!ctx.user) {\n+        throw new TRPCError({ code: 'UNAUTHORIZED' });\n+      }\n+\n+      return next({ ctx: { user: ctx.user } });\n+    });\n+}"
+    },
+    {
+      "filename": "examples/.test/internal-types-export/tsconfig.server-only.json",
+      "status": "added",
+      "additions": 7,
+      "deletions": 0,
+      "patch": "@@ -0,0 +1,7 @@\n+{\n+  \"extends\": \"./tsconfig.json\",\n+  \"compilerOptions\": {\n+    \"outDir\": \"build/server-only\"\n+  },\n+  \"include\": [\"src/middleware-factory.ts\"]\n+}"
+    },
+    {
+      "filename": "packages/server/src/@trpc/server/index.ts",
+      "status": "modified",
+      "additions": 4,
+      "deletions": 0,
+      "patch": "@@ -79,6 +79,10 @@ export {\n    * @internal\n    */\n   type UnsetMarker as TRPCUnsetMarker,\n+  /**\n+   * @internal\n+   */\n+  type Unwrap as TRPCUnwrap,\n } from '../../unstable-core-do-not-import';\n \n export type {"
+    }
+  ]
+}

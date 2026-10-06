@@ -1,0 +1,46 @@
+{
+  "id": "honojs__hono__5510",
+  "repo": "honojs/hono",
+  "number": 5510,
+  "url": "https://github.com/honojs/hono/pull/5510",
+  "headSha": "aecb4a568b68f0f7e148418ada4153bfe7898e09",
+  "title": "fix(router): respect strict trailing-slash routing",
+  "body": "`LinearRouter` and `PatternRouter` now distinguish paths with and without a trailing slash, consistent with the other routers under `strict: true`. Routes registered with a trailing slash require it, and optional root parameters such as `/:id?` continue to match `/`.\r\n\r\nSome changes overlap with #5407, #5410, and #5461, but I couldn't adopt any of those PRs as-is. This PR provides a separate implementation and consolidates regression coverage in the shared router tests.\r\n\r\nFixes #5406.\r\n\r\n### The author should do the following, if applicable\r\n\r\n- [x] Add tests\r\n- [x] Run tests\r\n- [x] `pnpm run check:fix` to format and lint the code\r\n",
+  "files": [
+    {
+      "filename": "src/router/common.case.test.ts",
+      "status": "modified",
+      "additions": 39,
+      "deletions": 1,
+      "patch": "@@ -121,9 +121,12 @@ export const runTest = ({\n \n       it('Wildcard', async () => {\n         router.add('GET', '/wild/*/card', 'get wildcard')\n-        const res = match('GET', '/wild/xxx/card')\n+        let res = match('GET', '/wild/xxx/card')\n         expect(res.length).toBe(1)\n         expect(res[0].handler).toEqual('get wildcard')\n+\n+        res = match('GET', '/wild/xxx/card/')\n+        expect(res.length).toBe(0)\n       })\n \n       it('Default', async () => {\n@@ -589,6 +592,16 @@ export const runTest = ({\n       })\n     })\n \n+    describe('Optional parameters at the root', () => {\n+      it.each(['/:id?', '/:id?/:action?'])('matches %s with omitted parameters', (path) => {\n+        router.add('GET', path, 'optional')\n+\n+        expect(match('GET', '/')).toEqual([{ handler: 'optional', params: {} }])\n+        expect(match('GET', '/42')).toEqual([{ handler: 'optional', params: { id: '42' } }])\n+        expect(match('GET', '/42/')).toEqual([])\n+      })\n+    })\n+\n     describe('All', () => {\n       beforeEach(() => {\n         router.add('GET', '/hello', 'get hello')\n@@ -876,6 +889,31 @@ export const runTest = ({\n         const res = match('GET', '/book/')\n         expect(res.length).toBe(0)\n       })\n+      it('GET /book/42', () => {\n+        const res = match('GET', '/book/42')\n+        expect(res.length).toBe(1)\n+        expect(res[0].handler).toEqual('GET /book/:id')\n+        expect(res[0].params['id']).toBe('42')\n+      })\n+      it('GET /book/42/', () => {\n+        const res = match('GET', '/book/42/')\n+        expect(res.length).toBe(0)\n+      })\n+    })\n+\n+    describe('Routes registered with a trailing slash', () => {\n+      it.each([\n+        ['/slash/', '/slash/', {}],\n+        ['/users/:id/', '/users/42/', { id: '42' }],\n+        ['/users/:id{[0-9]+}/', '/users/42/', { id: '42' }],\n+        ['/users/:id/profile/', '/users/42/profile/', { id: '42' }],\n+      ])('matches %s only with its trailing slash', (route, path, params) => {\n+        router.add('GET', route, 'user')\n+\n+        expect(match('GET', path)).toEqual([{ handler: 'user', params }])\n+        expect(match('GET', path.slice(0, -1))).toEqual([])\n+        expect(match('GET', path + '/')).toEqual([])\n+      })\n     })\n \n     describe('Empty path segment', () => {"
+    },
+    {
+      "filename": "src/router/linear-router/router.test.ts",
+      "status": "modified",
+      "additions": 0,
+      "deletions": 19,
+      "patch": "@@ -24,10 +24,6 @@ describe('LinearRouter', () => {\n           'Complex > Parameter with {.*} regexp',\n         ],\n       },\n-      {\n-        reason: 'LinearRouter allows trailing slashes',\n-        tests: ['Trailing slash > GET /book/'],\n-      },\n     ],\n     newRouter: () => new LinearRouter(),\n   })\n@@ -50,21 +46,6 @@ describe('LinearRouter', () => {\n     })\n   })\n \n-  describe('Trailing slash', () => {\n-    const router = new LinearRouter<string>()\n-\n-    beforeEach(() => {\n-      router.add('GET', '/book', 'GET /book')\n-      router.add('GET', '/book/:id', 'GET /book/:id')\n-    })\n-\n-    it('GET /book/', () => {\n-      const [res] = router.match('GET', '/book/')\n-      expect(res.length).toBe(1)\n-      expect(res[0][0]).toBe('GET /book')\n-    })\n-  })\n-\n   describe('Skip part', () => {\n     const router = new LinearRouter<string>()\n "
+    },
+    {
+      "filename": "src/router/linear-router/router.ts",
+      "status": "modified",
+      "additions": 5,
+      "deletions": 14,
+      "patch": "@@ -6,7 +6,7 @@ type RegExpMatchArrayWithIndices = RegExpMatchArray & { indices: [number, number\n \n const emptyParams = Object.create(null)\n \n-const splitPathRe = /\\/(:\\w+(?:{(?:(?:{[\\d,]+})|[^}])+})?)|\\/[^\\/\\?]+|(\\?)/g\n+const splitPathRe = /\\/(:\\w+(?:{(?:(?:{[\\d,]+})|[^}])+})?)|\\/[^\\/\\?]+|\\/$|(\\?)/g\n const splitByStarRe = /\\*/\n export class LinearRouter<T> implements Router<T> {\n   name: string = 'LinearRouter'\n@@ -35,7 +35,7 @@ export class LinearRouter<T> implements Router<T> {\n         const hasStar = routePath.indexOf('*') !== -1\n         const hasLabel = routePath.indexOf(':') !== -1\n         if (!hasStar && !hasLabel) {\n-          if (routePath === path || routePath + '/' === path) {\n+          if (routePath === path) {\n             handlers.push([handler, emptyParams])\n           }\n         } else if (hasStar && !hasLabel) {\n@@ -58,11 +58,7 @@ export class LinearRouter<T> implements Router<T> {\n                 if (pos !== path.length && path.charCodeAt(pos) !== 47) {\n                   continue ROUTES_LOOP\n                 }\n-              } else if (\n-                !endsWithStar &&\n-                pos !== path.length &&\n-                !(pos === path.length - 1 && path.charCodeAt(pos) === 47)\n-              ) {\n+              } else if (!endsWithStar && pos !== path.length) {\n                 continue ROUTES_LOOP\n               }\n             } else {\n@@ -130,13 +126,8 @@ export class LinearRouter<T> implements Router<T> {\n               pos += part.length\n             }\n \n-            if (j === lastIndex) {\n-              if (\n-                pos !== path.length &&\n-                !(pos === path.length - 1 && path.charCodeAt(pos) === 47)\n-              ) {\n-                continue ROUTES_LOOP\n-              }\n+            if (j === lastIndex && pos !== path.length) {\n+              continue ROUTES_LOOP\n             }\n           }\n "
+    },
+    {
+      "filename": "src/router/pattern-router/router.test.ts",
+      "status": "modified",
+      "additions": 0,
+      "deletions": 18,
+      "patch": "@@ -9,10 +9,6 @@ describe('Pattern', () => {\n         reason: 'UnsupportedPath',\n         tests: ['Duplicate param name > self'],\n       },\n-      {\n-        reason: 'PatternRouter allows trailing slashes',\n-        tests: ['Trailing slash > GET /book/'],\n-      },\n     ],\n     newRouter: () => new PatternRouter(),\n   })\n@@ -25,18 +21,4 @@ describe('Pattern', () => {\n       }).toThrowError(UnsupportedPathError)\n     })\n   })\n-  describe('Trailing slash', () => {\n-    const router = new PatternRouter<string>()\n-\n-    beforeEach(() => {\n-      router.add('GET', '/book', 'GET /book')\n-      router.add('GET', '/book/:id', 'GET /book/:id')\n-    })\n-\n-    it('GET /book/', () => {\n-      const [res] = router.match('GET', '/book/')\n-      expect(res.length).toBe(1)\n-      expect(res[0][0]).toBe('GET /book')\n-    })\n-  })\n })"
+    },
+    {
+      "filename": "src/router/pattern-router/router.ts",
+      "status": "modified",
+      "additions": 8,
+      "deletions": 2,
+      "patch": "@@ -10,11 +10,17 @@ export class PatternRouter<T> implements Router<T> {\n   #routes: Route<T>[] = []\n \n   add(method: string, path: string, handler: T) {\n-    const suffix = path.endsWith('/*') ? '(?:$|/)' : path.endsWith('*') ? '' : '/?$'\n+    const suffix = path.endsWith('/*')\n+      ? '(?:$|/)'\n+      : path.endsWith('*')\n+        ? ''\n+        : path.endsWith('/')\n+          ? '/$'\n+          : '$'\n     path = path.replace(/\\*$/, '')\n     if (path.at(-1) === '?') {\n       path = path.slice(0, -1)\n-      this.add(method, path.replace(/\\/[^/]+$/, ''), handler)\n+      this.add(method, path.replace(/\\/[^/]+$/, '') || '/', handler)\n     }\n \n     const parts = (path.match(/\\/?(:\\w+(?:{(?:(?:{[\\d,]+})|[^}])+})?)|\\/?[^\\/\\?]+/g) || []).map("
+    }
+  ]
+}

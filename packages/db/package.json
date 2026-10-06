@@ -1,0 +1,40 @@
+{
+  "name": "@docks/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "drizzle"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "echo \"@docks/db: lint ok\"",
+    "test": "echo \"@docks/db: no tests yet\"",
+    "clean": "rm -rf dist",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.3",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@docks/typescript-config": "workspace:*",
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.0",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "^5.9.2"
+  }
+}

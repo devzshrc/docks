@@ -1,0 +1,36 @@
+{
+  "name": "docks",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.17.0",
+  "engines": {
+    "node": ">=18.18.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "concurrently -n web,server -c cyan,magenta \"pnpm dev:web\" \"pnpm dev:server\"",
+    "dev:tabs": "ttab -t docks-web pnpm dev:web && ttab -t docks-server pnpm dev:server",
+    "dev:tmux": "sh scripts/dev-tmux.sh",
+    "dev:web": "pnpm --filter @docks/web dev",
+    "dev:server": "pnpm --filter @docks/server dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose stop db",
+    "db:push": "pnpm --filter @docks/db db:push",
+    "db:migrate": "pnpm --filter @docks/db db:migrate",
+    "db:generate": "pnpm --filter @docks/db db:generate",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\" --ignore-path .prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\" --ignore-path .prettierignore"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5",
+    "prettier": "^3.3.3",
+    "ttab": "^0.9.0",
+    "turbo": "^2.5.4",
+    "typescript": "^5.9.2"
+  }
+}

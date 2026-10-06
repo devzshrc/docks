@@ -1,0 +1,275 @@
+{
+  "description": "30 merged public PRs for the review-guide eval (plan.md \u00a714.2). Frozen; fixtures/ holds the diffs as fetched.",
+  "prs": [
+    {
+      "id": "TanStack__query__11905",
+      "repo": "TanStack/query",
+      "number": 11905,
+      "title": "refactor(vue-query): add the 'override' modifier to members that override a base class member",
+      "kind": "feature",
+      "files": 5,
+      "lines": 173
+    },
+    {
+      "id": "better-auth__better-auth__11316",
+      "repo": "better-auth/better-auth",
+      "number": 11316,
+      "title": "fix(client): preserve auth query snapshots during hydration",
+      "kind": "bugfix",
+      "files": 7,
+      "lines": 289
+    },
+    {
+      "id": "better-auth__better-auth__11333",
+      "repo": "better-auth/better-auth",
+      "number": 11333,
+      "title": "fix(db): preserve model identity across adapters",
+      "kind": "bugfix",
+      "files": 18,
+      "lines": 1431
+    },
+    {
+      "id": "better-auth__better-auth__11374",
+      "repo": "better-auth/better-auth",
+      "number": 11374,
+      "title": "fix(kysely-adapter): detect SQLite rowid aliases correctly",
+      "kind": "bugfix",
+      "files": 7,
+      "lines": 381
+    },
+    {
+      "id": "calcom__cal.com__29282",
+      "repo": "calcom/cal.com",
+      "number": 29282,
+      "title": "fix: persist requiresCancellationReason selection",
+      "kind": "bugfix",
+      "files": 5,
+      "lines": 35
+    },
+    {
+      "id": "calcom__cal.com__29561",
+      "repo": "calcom/cal.com",
+      "number": 29561,
+      "title": "refactor: use userRepository class methods for signup handlers",
+      "kind": "refactor",
+      "files": 5,
+      "lines": 505
+    },
+    {
+      "id": "calcom__cal.com__29593",
+      "repo": "calcom/cal.com",
+      "number": 29593,
+      "title": "fix: user table to load on scroll",
+      "kind": "bugfix",
+      "files": 4,
+      "lines": 325
+    },
+    {
+      "id": "documenso__documenso__3277",
+      "repo": "documenso/documenso",
+      "number": 3277,
+      "title": "feat: allow admin recipient search",
+      "kind": "feature",
+      "files": 5,
+      "lines": 380
+    },
+    {
+      "id": "documenso__documenso__3372",
+      "repo": "documenso/documenso",
+      "number": 3372,
+      "title": "feat: add inbox filters",
+      "kind": "feature",
+      "files": 8,
+      "lines": 942
+    },
+    {
+      "id": "documenso__documenso__3409",
+      "repo": "documenso/documenso",
+      "number": 3409,
+      "title": "fix: embed signing completion and reload states",
+      "kind": "bugfix",
+      "files": 5,
+      "lines": 141
+    },
+    {
+      "id": "drizzle-team__drizzle-orm__5475",
+      "repo": "drizzle-team/drizzle-orm",
+      "number": 5475,
+      "title": "support node sqlite for kit",
+      "kind": "feature",
+      "files": 4,
+      "lines": 92
+    },
+    {
+      "id": "drizzle-team__drizzle-orm__5490",
+      "repo": "drizzle-team/drizzle-orm",
+      "number": 5490,
+      "title": "Kit updates",
+      "kind": "other",
+      "files": 14,
+      "lines": 1375
+    },
+    {
+      "id": "drizzle-team__drizzle-orm__6141",
+      "repo": "drizzle-team/drizzle-orm",
+      "number": 6141,
+      "title": "Reject unknown values in the table extra config array",
+      "kind": "other",
+      "files": 22,
+      "lines": 511
+    },
+    {
+      "id": "excalidraw__excalidraw__11841",
+      "repo": "excalidraw/excalidraw",
+      "number": 11841,
+      "title": "fix(editor): viewportportStatusFrame UI fixes",
+      "kind": "bugfix",
+      "files": 8,
+      "lines": 336
+    },
+    {
+      "id": "excalidraw__excalidraw__12197",
+      "repo": "excalidraw/excalidraw",
+      "number": 12197,
+      "title": "refactor(editor): move the clipboard out of App into AppClipboard (app.clipboard)",
+      "kind": "refactor",
+      "files": 5,
+      "lines": 1264
+    },
+    {
+      "id": "excalidraw__excalidraw__12219",
+      "repo": "excalidraw/excalidraw",
+      "number": 12219,
+      "title": "feat(editor): alt-drag the text being edited to duplicate it",
+      "kind": "feature",
+      "files": 7,
+      "lines": 370
+    },
+    {
+      "id": "fastapi__fastapi__16224",
+      "repo": "fastapi/fastapi",
+      "number": 16224,
+      "title": "\ud83d\udc77 Update translation PR branches with PR Push",
+      "kind": "other",
+      "files": 5,
+      "lines": 243
+    },
+    {
+      "id": "gin-gonic__gin__4542",
+      "repo": "gin-gonic/gin",
+      "number": 4542,
+      "title": "test(context): use http.StatusContinue constant instead of magic number 100",
+      "kind": "tests",
+      "files": 4,
+      "lines": 59
+    },
+    {
+      "id": "gin-gonic__gin__4806",
+      "repo": "gin-gonic/gin",
+      "number": 4806,
+      "title": "feat: add support for the HTTP QUERY method (RFC 10008)",
+      "kind": "feature",
+      "files": 6,
+      "lines": 156
+    },
+    {
+      "id": "gin-gonic__gin__4832",
+      "repo": "gin-gonic/gin",
+      "number": 4832,
+      "title": "fix(deps)!: patch x/crypto vulnerabilities",
+      "kind": "dependencies",
+      "files": 4,
+      "lines": 30
+    },
+    {
+      "id": "honojs__hono__5447",
+      "repo": "honojs/hono",
+      "number": 5447,
+      "title": "feat(adapters): add @hono/bun as a workspace package",
+      "kind": "feature",
+      "files": 27,
+      "lines": 898
+    },
+    {
+      "id": "honojs__hono__5510",
+      "repo": "honojs/hono",
+      "number": 5510,
+      "title": "fix(router): respect strict trailing-slash routing",
+      "kind": "bugfix",
+      "files": 5,
+      "lines": 106
+    },
+    {
+      "id": "honojs__hono__5532",
+      "repo": "honojs/hono",
+      "number": 5532,
+      "title": "feat(request)!: `query()` and `queries()` may return `undefined`",
+      "kind": "feature",
+      "files": 5,
+      "lines": 33
+    },
+    {
+      "id": "payloadcms__payload__18397",
+      "repo": "payloadcms/payload",
+      "number": 18397,
+      "title": "fix(richtext-lexical)!: upgrade lexical to 0.52.0 and tsx to 4.23.15",
+      "kind": "dependencies",
+      "files": 29,
+      "lines": 1035
+    },
+    {
+      "id": "payloadcms__payload__18439",
+      "repo": "payloadcms/payload",
+      "number": 18439,
+      "title": "fix(ui): use hover submenus in UserMenu",
+      "kind": "bugfix",
+      "files": 13,
+      "lines": 459
+    },
+    {
+      "id": "payloadcms__payload__18453",
+      "repo": "payloadcms/payload",
+      "number": 18453,
+      "title": "feat!: add database copy method",
+      "kind": "feature",
+      "files": 6,
+      "lines": 283
+    },
+    {
+      "id": "trpc__trpc__7557",
+      "repo": "trpc/trpc",
+      "number": 7557,
+      "title": "fix(server): keep middleware factory declarations portable",
+      "kind": "bugfix",
+      "files": 4,
+      "lines": 33
+    },
+    {
+      "id": "trpc__trpc__7580",
+      "repo": "trpc/trpc",
+      "number": 7580,
+      "title": "build(deps): patch security advisories in packages/*",
+      "kind": "dependencies",
+      "files": 13,
+      "lines": 1273
+    },
+    {
+      "id": "withastro__astro__18164",
+      "repo": "withastro/astro",
+      "number": 18164,
+      "title": "Stable CSS Module class names in dev to prevent HMR stale class name mismatch",
+      "kind": "other",
+      "files": 9,
+      "lines": 240
+    },
+    {
+      "id": "withastro__astro__18176",
+      "repo": "withastro/astro",
+      "number": 18176,
+      "title": "Deduplicate CSS for components used both statically and with client:only on the same page",
+      "kind": "other",
+      "files": 4,
+      "lines": 92
+    }
+  ]
+}

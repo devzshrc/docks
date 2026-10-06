@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: docks-postgres
+    restart: unless-stopped
+    ports:
+      # Host 5433 — 5432 is commonly taken by other local projects.
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: docks
+      POSTGRES_PASSWORD: docks
+      POSTGRES_DB: docks
+    volumes:
+      - docks-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docks -d docks"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  docks-pgdata:
