@@ -112,35 +112,33 @@ export function Landing() {
     <div className="bg-background text-foreground min-h-svh">
       <SkipIfSignedIn />
 
-      <header className="bg-background/80 border-hairline sticky top-0 z-40 border-b backdrop-blur">
-        <div className={`${section} flex h-14 items-center justify-between`}>
-          <Link href="/" className="flex items-center gap-2.5 text-sm font-medium">
-            <span className="bg-foreground text-background flex size-6 items-center justify-center rounded-md text-xs font-medium" aria-hidden>
-              D
-            </span>
-            Docks
+      {/* Floating pill nav */}
+      <header className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4">
+        <nav aria-label="Primary" className="pointer-events-auto flex items-center gap-1.5">
+          <Link href="/" aria-label="Docks home" className="bg-foreground text-background flex size-10 items-center justify-center rounded-full text-sm font-medium shadow-sm">
+            D
           </Link>
-          <nav aria-label="Primary" className="text-muted-foreground hidden items-center gap-6 text-sm md:flex">
-            <a href="#how" className="hover:text-foreground transition-colors">
-              How it works
-            </a>
-            <a href="#everything" className="hover:text-foreground transition-colors">
-              What&apos;s inside
-            </a>
-            <a href="#tools" className="hover:text-foreground transition-colors">
-              Integrations
-            </a>
-          </nav>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Button asChild variant="ghost" size="sm" className="max-sm:hidden">
-              <Link href="/login">Sign in</Link>
-            </Button>
-            <Button size="sm" onClick={start} pending={pending}>
-              Get started
-            </Button>
+          <div className="bg-background/80 border-hairline hidden h-10 items-center rounded-full border px-1.5 text-sm backdrop-blur md:flex">
+            {[
+              ["How it works", "#how"],
+              ["Product", "#product"],
+              ["Integrations", "#tools"],
+            ].map(([label, href]) => (
+              <a key={href} href={href} className="text-muted-foreground hover:text-foreground hover:bg-hover rounded-full px-3 py-1.5 transition-colors">
+                {label}
+              </a>
+            ))}
+            <Link href="/login" className="text-muted-foreground hover:text-foreground hover:bg-hover rounded-full px-3 py-1.5 transition-colors">
+              Sign in
+            </Link>
           </div>
-        </div>
+          <button type="button" onClick={start} disabled={pending} className={cn(primaryPill, "shadow-sm")}>
+            Get started
+          </button>
+          <span className="bg-background/80 border-hairline flex h-10 items-center rounded-full border px-1 backdrop-blur">
+            <ThemeToggle />
+          </span>
+        </nav>
       </header>
 
       <main>
