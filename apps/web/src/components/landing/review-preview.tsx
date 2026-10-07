@@ -37,6 +37,12 @@ export function ReviewPreview({ className }: { className?: string }) {
         <span className="border-input size-3.5 rounded border" />
         Does every caller pass the client IP?
       </div>
+      <div className="border-hairline flex items-center gap-2 border-t bg-muted/40 px-4 py-3">
+        <span className="bg-success text-white rounded-full px-2.5 py-1 text-[11px] font-medium">Approve</span>
+        <span className="border-hairline text-muted-foreground rounded-full border px-2.5 py-1 text-[11px]">Request changes</span>
+        <span className="border-hairline text-muted-foreground rounded-full border px-2.5 py-1 text-[11px]">Merge</span>
+        <span className="text-text-3 ml-auto text-[11px]">without leaving the page</span>
+      </div>
     </div>
   )
 }
