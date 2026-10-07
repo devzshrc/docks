@@ -349,11 +349,6 @@ pre, code, kbd { font-family: var(--font-code); }
   dialog[open] { animation: dialog-in 160ms cubic-bezier(0.16, 1, 0.3, 1); }
   dialog[open]::backdrop { animation: fade-in 160ms ease-out; }
 
-  /* Claude → Codex → Cursor loop for "Fix with agent". 6s cycle, 2s per mark. */
-  .agent-cycle > svg { opacity: 0; animation: agent-cycle 6s ease-in-out infinite; }
-  .agent-cycle > svg:nth-child(2) { animation-delay: 2s; }
-  .agent-cycle > svg:nth-child(3) { animation-delay: 4s; }
-
   /* Self-drawing tick (SVG path with pathLength=1). */
   .draw-tick path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw-tick 320ms 80ms ease-out forwards; }
 
@@ -397,8 +392,6 @@ pre, code, kbd { font-family: var(--font-code); }
   @media (prefers-reduced-motion: reduce) {
     dialog[open], dialog[open]::backdrop, [role="alert"], .anim-pop, .anim-pulse-once, .anim-shake, .anim-reveal,
     input[type="checkbox"]:checked, [data-slot="sidebar-menu-button"][data-active="true"]::before { animation: none !important; }
-    .agent-cycle > svg { animation: none; }
-    .agent-cycle > svg:first-child { opacity: 1; }
     .draw-tick path { animation: none; stroke-dashoffset: 0; }
     .anim-spin { animation-duration: 1.6s; }
     html.theme-fade, html.theme-fade * { transition: none !important; }
@@ -407,11 +400,6 @@ pre, code, kbd { font-family: var(--font-code); }
 
 @keyframes dialog-in { from { opacity: 0; transform: translateY(4px) scale(0.98); } to { opacity: 1; transform: none; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes agent-cycle {
-  0% { opacity: 0; transform: scale(0.6) rotate(-10deg); filter: blur(2px); }
-  6%, 33% { opacity: 1; transform: scale(1) rotate(0); filter: blur(0); }
-  39%, 100% { opacity: 0; transform: scale(0.6) rotate(10deg); filter: blur(2px); }
-}
 @keyframes draw-tick { to { stroke-dashoffset: 0; } }
 @keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
 @keyframes pulse-once { 0% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 45%, transparent); } 100% { box-shadow: 0 0 0 8px transparent; } }

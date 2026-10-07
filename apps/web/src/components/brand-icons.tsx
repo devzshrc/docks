@@ -35,14 +35,19 @@ export function BrandIcon({ brand, className }: P & { brand: Brand }) {
   )
 }
 
-const CYCLE: Brand[] = ["claude", "codex", "cursor"]
+const STACK: Brand[] = ["claude", "codex", "cursor"]
 
-/** Claude → Codex → Cursor, crossfading in a loop (pure CSS; see .agent-cycle in globals.css). */
-export function AgentCycleIcon({ className }: P) {
+/** The three supported agents as a quiet overlapping stack; fans out a little when the parent `.group` is hovered. */
+export function AgentStackIcon({ className }: P) {
   return (
-    <span className={cn("agent-cycle relative inline-block size-4 shrink-0", className)} aria-hidden>
-      {CYCLE.map((b) => (
-        <BrandIcon key={b} brand={b} className="absolute inset-0 size-4" />
+    <span className={cn("flex items-center -space-x-1.5", className)} aria-hidden>
+      {STACK.map((b) => (
+        <span
+          key={b}
+          className="bg-background text-muted-foreground group-hover/agent:text-foreground ring-background flex size-[18px] items-center justify-center rounded-full border transition-[margin,color] duration-200 first:ml-0 group-hover/agent:ml-0.5 group-hover/agent:first:ml-0"
+        >
+          <BrandIcon brand={b} className="size-2.5" />
+        </span>
       ))}
     </span>
   )

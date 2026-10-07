@@ -4,7 +4,7 @@ import { ComputerTerminal01Icon, Copy01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useState } from "react"
 
-import { AgentCycleIcon, BrandIcon, Px0Icon, type Brand } from "@/components/brand-icons"
+import { AgentStackIcon, BrandIcon, Px0Icon, type Brand } from "@/components/brand-icons"
 import { DrawTick } from "@/components/motion"
 import { Button } from "@/components/ui/button"
 import {
@@ -81,8 +81,8 @@ export function FixWithAgent({ context, label = "Fix with agent" }: { context: F
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="ghost" className="h-7 gap-1.5 px-2 text-xs">
-          {copied ? <DrawTick className="size-3.5 text-emerald-600 dark:text-emerald-400" /> : <AgentCycleIcon />}
+        <Button size="sm" variant="ghost" className="group/agent h-7 gap-2 px-2 text-xs">
+          {copied ? <DrawTick className="size-3.5 text-emerald-600 dark:text-emerald-400" /> : <AgentStackIcon />}
           {copied ? "Copied" : label}
         </Button>
       </DropdownMenuTrigger>
