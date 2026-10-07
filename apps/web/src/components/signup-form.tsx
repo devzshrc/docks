@@ -87,7 +87,8 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
           Enter your information below to create your account
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-5">
+        <GitHubSignIn label="Sign up with GitHub" />
         <form onSubmit={onSubmit}>
           <FieldGroup>
             <Field>
@@ -142,7 +143,6 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 {pending ? "Creating…" : "Create Account"}
               </Button>
               {error && <FieldError>{error}</FieldError>}
-              <GitHubSignIn />
               <FieldDescription className="px-6 text-center">
                 Already have an account?{" "}
                 <Link href={altHref} className="underline underline-offset-4">
