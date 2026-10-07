@@ -158,7 +158,6 @@ function Issues({ workspaceId }: { workspaceId: string }) {
       </nav>
 
       {needsGithub && <p className="text-muted-foreground text-sm">Connect your GitHub account (Integrations) to use this view.</p>}
-      {list.data?.syncing && isList && <p className="text-muted-foreground text-sm">Importing issues from GitHub… this takes a moment.</p>}
 
       {filters.view === "insights" ? (
         <IssueInsights workspaceId={workspaceId} />
@@ -174,10 +173,17 @@ function Issues({ workspaceId }: { workspaceId: string }) {
             closedView={filters.view === "closed"}
             me={me}
             empty={
-              <div className="bg-card border-hairline rounded-xl border px-6 py-14 text-center">
-                <p className="font-medium">{filtered ? "No issues match these filters" : empty.title}</p>
-                <p className="text-muted-foreground mt-1 text-sm">{filtered ? "Try clearing a filter." : empty.hint}</p>
-              </div>
+              list.data?.syncing ? (
+                <div className="bg-card border-hairline rounded-xl border px-6 py-14 text-center">
+                  <p className="font-medium">Importing issues from GitHub…</p>
+                  <p className="text-muted-foreground mt-1 text-sm">This takes a moment the first time. They'll appear here on their own.</p>
+                </div>
+              ) : (
+                <div className="bg-card border-hairline rounded-xl border px-6 py-14 text-center">
+                  <p className="font-medium">{filtered ? "No issues match these filters" : empty.title}</p>
+                  <p className="text-muted-foreground mt-1 text-sm">{filtered ? "Try clearing a filter." : empty.hint}</p>
+                </div>
+              )
             }
           />
           {list.data && list.data.total > list.data.items.length && (
