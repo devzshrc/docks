@@ -190,7 +190,7 @@ function Frame({ title, description, actions, width, children }: { title?: strin
       </div>
     )
   ) : (
-    description && <p className="text-muted-foreground -mt-2 max-w-2xl text-sm">{description}</p>
+    description && <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">{description}</p>
   )
 
   return (
@@ -219,7 +219,7 @@ function Frame({ title, description, actions, width, children }: { title?: strin
         className="h-dvh"
       >
         {/* Left-aligned with the header and the toolbar (all at 16px), so every page shares one left edge. */}
-        <div className={cn("animate-in fade-in slide-in-from-bottom-1 flex w-full min-w-0 flex-col gap-6 px-4 py-4 duration-200 md:py-6", WIDTH[width])}>
+        <div className={cn("animate-in fade-in slide-in-from-bottom-1 flex w-full min-w-0 flex-col gap-8 px-5 py-6 duration-200 md:px-8 md:py-8", WIDTH[width])}>
           {intro}
           {children}
         </div>

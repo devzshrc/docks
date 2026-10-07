@@ -12,3 +12,5 @@ Copied from the ObsidianUI registry (`https://www.obsidianui.dev/r/{name}.json`)
 - Confirm the library's licence terms before shipping.
 
 - Edits to `dashboard-shell`: buttons scale on press; the active nav and tab pill use a 15% tint of the brand accent (#2D6E9E) with an accent-coloured icon; the sidebar count badge has no border.
+
+- The title bar, tab row and filter toolbar each have a hairline under them and share the page gutter (20px, 32px from the md breakpoint), so header, toolbar and content line up.

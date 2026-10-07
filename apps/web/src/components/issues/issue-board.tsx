@@ -18,25 +18,25 @@ const HINT: Record<IssueStatus, string> = {
 /** Status comes from GitHub (assignee, linked PR, closed), so there is nothing to drag. */
 export function IssueBoard({ columns, loading }: { columns: Record<IssueStatus, IssueItem[]> | undefined; loading: boolean }) {
   return (
-    <div className="stagger -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
+    <div className="-mx-5 flex snap-x gap-5 overflow-x-auto px-5 pb-2 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
       {LANES.map((lane) => {
         const items = columns?.[lane] ?? []
         return (
-          <section key={lane} aria-label={STATUS_LABEL[lane]} className="w-[80vw] max-w-sm shrink-0 snap-start md:w-auto md:max-w-none">
-            <header className="border-hairline mb-3 border-b pb-2.5">
+          <section key={lane} aria-label={STATUS_LABEL[lane]} className="bg-muted/60 min-h-[26rem] w-[80vw] max-w-sm shrink-0 snap-start rounded-2xl p-3 md:w-auto md:max-w-none">
+            <header className="mb-3 px-1.5 pt-1">
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-foreground text-sm font-medium">{STATUS_LABEL[lane]}</h2>
-                {columns && <span className="text-muted-foreground text-xs tabular-nums">{items.length}</span>}
+                {columns && <span className="bg-card text-muted-foreground rounded-full px-2 py-0.5 text-xs tabular-nums">{items.length}</span>}
               </div>
               <p className="text-text-3 mt-0.5 text-xs">{HINT[lane]}</p>
             </header>
-            <div className="stagger flex flex-col gap-2.5">
+            <div className="stagger flex flex-col gap-3">
               {loading && [0, 1].map((n) => <Skeleton key={n} className="h-24 w-full rounded-xl" />)}
               {!loading && items.length === 0 && <p className="text-muted-foreground rounded-xl bg-muted/50 px-3 py-6 text-center text-xs">Nothing here</p>}
               {items.map((i) => {
                 const pr = i.prs.find((p) => p.state === "open") ?? i.prs.find((p) => p.state === "merged")
                 return (
-                  <article key={`${i.repo}#${i.number}`} className="bg-card surface-hover relative rounded-xl p-3.5 text-sm">
+                  <article key={`${i.repo}#${i.number}`} className="bg-card border-hairline surface-hover relative rounded-xl border p-4 text-sm">
                     <Link href={`/issues/${i.repo}/${i.number}`} className="block outline-none after:absolute after:inset-0 after:content-[''] focus-visible:underline">
                       <div className="text-muted-foreground truncate font-mono text-xs">{i.repo}</div>
                       <div className="mt-1 line-clamp-2 leading-snug font-medium">

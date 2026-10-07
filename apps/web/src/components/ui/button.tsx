@@ -15,7 +15,7 @@ const VARIANTS: Record<Variant, { obsidian: "primary" | "secondary" | "ghost" | 
     obsidian: "primary",
     extra: "bg-destructive text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25)] hover:bg-destructive hover:brightness-105 focus-visible:ring-destructive/40",
   },
-  link: { obsidian: "ghost", extra: "btn-plain h-auto rounded-none p-0 text-primary-text underline-offset-4 hover:bg-transparent hover:text-primary-text hover:underline" },
+  link: { obsidian: "ghost", extra: "h-auto rounded-none p-0 text-primary-text underline-offset-4 hover:bg-transparent hover:text-primary-text hover:underline" },
 }
 
 const SIZES: Record<Size, string> = {
