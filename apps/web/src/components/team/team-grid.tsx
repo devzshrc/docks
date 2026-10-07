@@ -23,17 +23,17 @@ export function TeamGrid({ people }: { people: TeamMember[] }) {
   return (
     <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
       {people.map((p) => (
-        <div key={p.userId} className="group relative pt-2 transition-all duration-300 hover:-translate-y-1">
-          <Card className="bg-card relative mt-8 overflow-visible py-0 pt-16 text-center transition-all duration-300 hover:shadow-md">
+        <div key={p.userId} className="group relative pt-2">
+          <Card className="bg-card hover:border-border-control relative mt-8 overflow-visible py-0 pt-16 text-center transition-colors duration-200">
             <div className="absolute inset-x-0 -top-8 flex justify-center">
-              <div className="border-hairline bg-background rounded-full border p-1.5 shadow-md transition-transform duration-300 group-hover:-translate-y-1">
+              <div className="bg-background ring-hairline rounded-full p-1.5 ring-1">
                 <PersonAvatar seed={p.userId} name={p.name} githubLogin={p.githubLogin} className="size-24 border-2" />
               </div>
             </div>
             <CardContent className="flex flex-col items-center p-6">
-              <h3 className="text-foreground mb-1 text-xl font-medium">{p.name}</h3>
+              <h3 className="text-foreground mb-1 text-lg font-medium tracking-tight">{p.name}</h3>
               {p.githubLogin && (
-                <Link href={`https://github.com/${p.githubLogin}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground mb-3 font-mono text-xs">
+                <Link href={`https://github.com/${p.githubLogin}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground mb-3 font-mono text-xs underline-offset-4 hover:underline">
                   @{p.githubLogin}
                 </Link>
               )}
@@ -46,7 +46,7 @@ export function TeamGrid({ people }: { people: TeamMember[] }) {
                 ))}
               </div>
               <div className="border-hairline w-full border-t pt-4 text-center">
-                <span className={cn("mb-1 block text-3xl font-medium tabular-nums", p.overLimit ? "text-warning-text" : "text-foreground")}>
+                <span className={cn("mb-0.5 block text-2xl font-medium tabular-nums", p.overLimit ? "text-warning-text" : "text-foreground")}>
                   {p.openReviews}
                   {p.maxOpenReviews ? <span className="text-text-3 text-xl"> / {p.maxOpenReviews}</span> : null}
                 </span>
