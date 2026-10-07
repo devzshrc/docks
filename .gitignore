@@ -14,3 +14,4 @@ coverage/
 .dev.vars
 .wrangler/
 .open-next/
+apps/server/.supabase.secrets
