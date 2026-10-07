@@ -8,7 +8,9 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 import { BrandIcon, Px0Icon } from "@/components/brand-icons"
+import { OrderDiagram } from "@/components/landing/order-diagram"
 import { ProductPreview } from "@/components/landing/product-preview"
+import { ReviewPreview } from "@/components/landing/review-preview"
 import { useGithubStart } from "@/components/landing/use-github-start"
 import { DiscoverButton } from "@/components/obsidian/discover-button"
 import { DraggableMarquee } from "@/components/obsidian/draggable-marquee"
@@ -19,6 +21,36 @@ import { TextStream } from "@/components/obsidian/text-stream"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { useSession } from "@/lib/auth-client"
+import { cn } from "@/lib/utils"
+
+/* ─── Layout primitives: one ruled grid for the whole page ─────────────────────────── */
+
+/** A small "+" sitting on the grid lines, like registration marks on a drawing. */
+function Cross({ className }: { className?: string }) {
+  return (
+    <span aria-hidden className={cn("pointer-events-none absolute z-10 size-[9px]", className)}>
+      <span className="bg-border-control absolute top-1/2 left-0 h-px w-full -translate-y-1/2" />
+      <span className="bg-border-control absolute top-0 left-1/2 h-full w-px -translate-x-1/2" />
+    </span>
+  )
+}
+
+/** A full-width band of the grid: ruled underneath, with marks where it meets the rails. */
+function Band({ id, className, children }: { id?: string; className?: string; children: React.ReactNode }) {
+  return (
+    <section id={id} className={cn("border-hairline relative scroll-mt-24 border-b", className)}>
+      {children}
+      <Cross className="-bottom-[5px] -left-[5px]" />
+      <Cross className="-right-[5px] -bottom-[5px]" />
+    </section>
+  )
+}
+
+const pill = "inline-flex h-10 items-center justify-center gap-2 rounded-full px-5 text-sm font-medium transition-[background-color,transform,box-shadow] active:scale-[0.98]"
+const primaryPill = `${pill} bg-foreground text-background hover:bg-foreground/90`
+const secondaryPill = `${pill} tex-neutral`
+
+/* ─── Content ────────────────────────────────────────────────────────────────────────── */
 
 const AREAS = [
   { title: "Board", label: "See what's waiting, who has it, what's stuck", imageSrc: "/landing/board.svg" },
@@ -27,10 +59,16 @@ const AREAS = [
   { title: "Insights", label: "Know where review time goes", imageSrc: "/landing/insights.svg" },
 ]
 
+const FACTS = [
+  { k: "One board", v: "Every open pull request, across every repository, by where it is in review." },
+  { k: "A reading order", v: "Each PR arrives as steps: what changed, why it matters, what to check." },
+  { k: "Zero setup", v: "Sign in with GitHub, pick repositories. Reviews still post to GitHub as you." },
+]
+
 const STEPS = [
-  { n: "1", title: "Connect GitHub", body: "Sign in with GitHub and pick the repositories. No new accounts, no configuration." },
-  { n: "2", title: "See what's waiting", body: "Every open pull request lands on one board by review state, with the stuck ones flagged." },
-  { n: "3", title: "Read it in order", body: "A guide groups the changes, explains why each matters, and gives you a checklist before you approve." },
+  { n: "01", title: "Connect GitHub", body: "One click. Docks reads your repositories through a GitHub App; nothing moves." },
+  { n: "02", title: "See what's waiting", body: "Pull requests land on one board, with the stuck ones flagged and owners clear." },
+  { n: "03", title: "Read, then decide", body: "Follow the guide step by step, tick the checklist, approve or request changes." },
 ]
 
 function LinearMark({ className }: { className?: string }) {
@@ -42,13 +80,13 @@ function LinearMark({ className }: { className?: string }) {
 }
 
 const TOOLS: { id: string; name: string; icon: React.ReactNode }[] = [
-  { id: "github", name: "GitHub", icon: <IconBrandGithub className="size-5" /> },
-  { id: "slack", name: "Slack", icon: <IconBrandSlack className="size-5" /> },
-  { id: "linear", name: "Linear", icon: <LinearMark className="size-5" /> },
-  { id: "claude", name: "Claude Code", icon: <BrandIcon brand="claude" className="size-5" /> },
-  { id: "codex", name: "Codex", icon: <BrandIcon brand="codex" className="size-5" /> },
-  { id: "cursor", name: "Cursor", icon: <BrandIcon brand="cursor" className="size-5" /> },
-  { id: "px0", name: "px0", icon: <Px0Icon className="h-4" /> },
+  { id: "github", name: "GitHub", icon: <IconBrandGithub className="size-4" /> },
+  { id: "slack", name: "Slack", icon: <IconBrandSlack className="size-4" /> },
+  { id: "linear", name: "Linear", icon: <LinearMark className="size-4" /> },
+  { id: "claude", name: "Claude Code", icon: <BrandIcon brand="claude" className="size-4" /> },
+  { id: "codex", name: "Codex", icon: <BrandIcon brand="codex" className="size-4" /> },
+  { id: "cursor", name: "Cursor", icon: <BrandIcon brand="cursor" className="size-4" /> },
+  { id: "px0", name: "px0", icon: <Px0Icon className="h-3.5" /> },
 ]
 
 /** Signed-in visitors skip the landing page. */
@@ -59,6 +97,10 @@ function SkipIfSignedIn() {
     if (data?.user) router.replace("/review")
   }, [data, router])
   return null
+}
+
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <p className="text-text-3 font-mono text-[11px] tracking-[0.14em] uppercase">{children}</p>
 }
 
 const section = "mx-auto w-full max-w-6xl px-5 sm:px-8"
