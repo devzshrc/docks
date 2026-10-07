@@ -99,26 +99,7 @@ export function changedSymbols(lines: DiffLine[]): { name: string; hunk: number 
   return [...seen].map(([name, h]) => ({ name, hunk: h }))
 }
 
-/** Subsequence fuzzy match; higher is better, null when not a match. Favours file-name hits and runs. */
-export function fuzzyScore(query: string, path: string): number | null {
-  const q = query.toLowerCase().replace(/\s+/g, "")
-  if (!q) return 0
-  const p = path.toLowerCase()
-  const nameStart = p.lastIndexOf("/") + 1
-  let score = 0
-  let pi = 0
-  let prev = -2
-  for (const ch of q) {
-    const at = p.indexOf(ch, pi)
-    if (at === -1) return null
-    score += at === prev + 1 ? 3 : 1
-    if (at >= nameStart) score += 2
-    if (at === nameStart || p[at - 1] === "/" || p[at - 1] === "." || p[at - 1] === "-" || p[at - 1] === "_") score += 2
-    prev = at
-    pi = at + 1
-  }
-  return score - p.length * 0.01
-}
+export { fuzzyScore } from "@docks/api/issue"
 
 /** Pairs each removed line with the added line that replaced it (i-th del ↔ i-th add in a run). */
 export function pairChanges(lines: DiffLine[]): Map<DiffLine, DiffLine> {

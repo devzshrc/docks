@@ -11,8 +11,9 @@ import { latestVerdicts } from "../review/columns.js";
 import { askPr } from "../review/ask.js";
 import { decrypt } from "../crypto.js";
 import { linearIssues } from "../linear.js";
-import { issueMentions, linearIdFromBranch, linearIds } from "../review/links.js";
-import { type BlameRange, GitHubError, type GhIssue, installationClient } from "../review/github.js";
+import { issueFromBranch, issueMentions, linearIdFromBranch, linearIds } from "../review/links.js";
+import { githubFailure } from "../review/errors.js";
+import { type BlameRange, type GhIssue, installationClient } from "../review/github.js";
 import { fallbackGuide, guideKey } from "../review/guide.js";
 import { githubAs, githubIdentity } from "../review/github-user.js";
 import { loginsToUsers, suggestReviewers } from "../review/reviewers.js";
@@ -21,22 +22,6 @@ import type { BoardCard, Guide, RankedFile, RiskTier } from "../review/types.js"
 import { protectedProcedure, router } from "../trpc.js";
 
 const TIER_ORDER: Record<RiskTier, number> = { core: 0, config: 1, test: 2, noise: 3 };
-
-/** Surface GitHub's own reason (branch protection, conflicts, permissions). */
-function githubFailure(err: unknown): never {
-  if (err instanceof GitHubError) {
-    const reason = err.message.match(/"message":"([^"]+)"/)?.[1] ?? "GitHub rejected the request";
-    throw new TRPCError({
-      code: err.status === 403 || err.status === 404 ? "FORBIDDEN" : "BAD_REQUEST",
-      message: reason,
-    });
-  }
-  // Our own errors (permissions, reconnect prompts) are already user-facing.
-  if (err instanceof TRPCError) throw err;
-  // Anything else is config or network trouble: log the detail, show a plain message.
-  console.error(`[github] ${(err as Error).message}`);
-  throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Couldn't reach GitHub. Try again in a moment." });
-}
 
 /** Refresh the mirror right away so the UI reflects the action; webhook is the backstop. */
 async function refreshPr(repoId: number, number: number) {
@@ -719,8 +704,9 @@ export const reviewRouter = router({
     const known = new Set(closing.map((i) => i.number));
     const mentioned = (
       await Promise.all(
-        issueMentions(`${p.title}\n${p.body ?? ""}`, input.number)
-          .filter((n) => !known.has(n))
+        [...new Set([...(issueFromBranch(p.headRef) ? [issueFromBranch(p.headRef)!] : []), ...issueMentions(`${p.title}\n${p.body ?? ""}`, input.number)])]
+          .filter((n) => n !== input.number && !known.has(n))
+          .slice(0, 5)
           .map((n) => gh.issue(repoRow.fullName, n).catch(() => null)),
       )
     ).flatMap((i) => (i ? [i] : []));

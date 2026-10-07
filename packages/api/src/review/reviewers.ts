@@ -144,6 +144,53 @@ export function rankReviewers(
 
 // ---- Data gathering -----------------------------------------------------------------
 
+/** Members who could actually take this repo's work: linked GitHub, access to the repo, allowed to act. */
+export async function reviewCandidates(repoId: number, workspaceId: string): Promise<Candidate[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const members = await db
+    .select({
+      userId: schema.user.id,
+      name: schema.user.name,
+      login: schema.githubIdentity.githubLogin,
+      role: schema.workspaceMember.role,
+      repoIds: schema.workspaceMember.repoIds,
+      awayUntil: schema.workspaceMember.awayUntil,
+      expertise: schema.workspaceMember.expertise,
+      maxOpenReviews: schema.workspaceMember.maxOpenReviews,
+    })
+    .from(schema.workspaceMember)
+    .innerJoin(schema.user, eq(schema.user.id, schema.workspaceMember.userId))
+    .innerJoin(schema.githubIdentity, eq(schema.githubIdentity.userId, schema.user.id))
+    .innerJoin(
+      schema.githubRepoAccess,
+      and(eq(schema.githubRepoAccess.userId, schema.user.id), eq(schema.githubRepoAccess.repoId, repoId)),
+    )
+    .where(eq(schema.workspaceMember.workspaceId, workspaceId));
+  const load = await reviewLoad(workspaceId);
+  return members
+    .filter((m) => m.role !== "viewer" && (!m.repoIds || m.repoIds.includes(repoId)))
+    .map((m) => ({
+      userId: m.userId,
+      login: m.login,
+      name: m.name,
+      away: Boolean(m.awayUntil && m.awayUntil >= today),
+      openReviews: load.get(m.login)?.open ?? 0,
+      maxOpenReviews: m.maxOpenReviews,
+      expertise: m.expertise,
+    }));
+}
+
+
+/** Logins that CODEOWNERS names for any of these paths (empty when there is no CODEOWNERS or no access). */
+export async function codeownerLogins(repo: { id: number; fullName: string; installationId: number }, paths: string[]) {
+  try {
+    const rules = await codeownersFor(repo);
+    return new Set(paths.flatMap((p) => ownersFor(rules, p)));
+  } catch {
+    return new Set<string>();
+  }
+}
+
 /** Ranked suggestions for one PR. `withCodeowners: false` skips the GitHub call (tests, demo). */
 export async function suggestReviewers(repoId: number, number: number, opts: { withCodeowners?: boolean } = {}) {
   const [row] = await db
@@ -168,39 +215,7 @@ export async function suggestReviewers(repoId: number, number: number, opts: { w
       .where(and(eq(schema.prFile.repoId, repoId), eq(schema.prFile.prNumber, number), eq(schema.prFile.headSha, row.headSha)))
   ).map((r) => r.path);
 
-  // Members who could actually review: linked GitHub, access to this repo, allowed to act.
-  const today = new Date().toISOString().slice(0, 10);
-  const members = await db
-    .select({
-      userId: schema.user.id,
-      name: schema.user.name,
-      login: schema.githubIdentity.githubLogin,
-      role: schema.workspaceMember.role,
-      repoIds: schema.workspaceMember.repoIds,
-      awayUntil: schema.workspaceMember.awayUntil,
-      expertise: schema.workspaceMember.expertise,
-      maxOpenReviews: schema.workspaceMember.maxOpenReviews,
-    })
-    .from(schema.workspaceMember)
-    .innerJoin(schema.user, eq(schema.user.id, schema.workspaceMember.userId))
-    .innerJoin(schema.githubIdentity, eq(schema.githubIdentity.userId, schema.user.id))
-    .innerJoin(
-      schema.githubRepoAccess,
-      and(eq(schema.githubRepoAccess.userId, schema.user.id), eq(schema.githubRepoAccess.repoId, repoId)),
-    )
-    .where(eq(schema.workspaceMember.workspaceId, row.workspaceId));
-  const load = await reviewLoad(row.workspaceId);
-  const candidates: Candidate[] = members
-    .filter((m) => m.role !== "viewer" && (!m.repoIds || m.repoIds.includes(repoId)))
-    .map((m) => ({
-      userId: m.userId,
-      login: m.login,
-      name: m.name,
-      away: Boolean(m.awayUntil && m.awayUntil >= today),
-      openReviews: load.get(m.login)?.open ?? 0,
-      maxOpenReviews: m.maxOpenReviews,
-      expertise: m.expertise,
-    }));
+  const candidates = await reviewCandidates(repoId, row.workspaceId);
 
   // Past reviews on PRs touching the same top-level folders.
   const folders = [...new Set(paths.map((p) => p.split("/").slice(0, 2).join("/")))];

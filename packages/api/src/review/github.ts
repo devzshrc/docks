@@ -87,6 +87,8 @@ export interface GhInstallation {
   id: number;
   account: { login: string; type: "Organization" | "User" };
   suspended_at: string | null;
+  /** What the installation has granted the App, e.g. { issues: "write" }. */
+  permissions?: Record<string, string>;
 }
 
 export interface GhRepo {
@@ -325,6 +327,39 @@ export function installationClient(installationId: number) {
         throw err;
       }
     },
+    /** Repo flags the "New issue" panel needs. */
+    repoMeta: async (repo: string) => {
+      const r = await call<{ has_issues: boolean; archived: boolean; disabled: boolean; default_branch: string }>(`/repos/${repo}`);
+      const ref = await call<{ object: { sha: string } }>(`/repos/${repo}/git/ref/heads/${r.default_branch.split("/").map(encodeURIComponent).join("/")}`);
+      return { hasIssues: r.has_issues, archived: r.archived || r.disabled, defaultBranch: r.default_branch, headSha: ref.object.sha };
+    },
+    /** Every file path at a commit. `truncated` when GitHub cut the listing (huge repos). */
+    tree: async (repo: string, sha: string) => {
+      const t = await call<{ tree: { path: string; type: string }[]; truncated: boolean }>(`/repos/${repo}/git/trees/${sha}?recursive=1`);
+      return { paths: t.tree.filter((e) => e.type === "blob").map((e) => e.path), truncated: t.truncated };
+    },
+    listLabels: async (repo: string) =>
+      (await paginate<{ name: string; color: string }>(`/repos/${repo}/labels?per_page=100`)).map((l) => ({ name: l.name, color: l.color })),
+    /** Logins GitHub allows as assignees on this repo. */
+    listAssignees: async (repo: string) =>
+      (await paginate<{ login: string }>(`/repos/${repo}/assignees?per_page=100`)).map((a) => a.login),
+    /** Files in .github/ISSUE_TEMPLATE (empty when the folder doesn't exist). */
+    issueTemplateFiles: async (repo: string) => {
+      try {
+        const list = await call<{ name: string; type: string }[]>(`/repos/${repo}/contents/.github/ISSUE_TEMPLATE`);
+        return Array.isArray(list) ? list.filter((f) => f.type === "file").map((f) => f.name) : [];
+      } catch (err) {
+        if (err instanceof GitHubError && err.status === 404) return [];
+        throw err;
+      }
+    },
+    searchIssues: async (repo: string, terms: string[]) => {
+      const q = encodeURIComponent(`repo:${repo} is:issue is:open in:title ${terms.join(" ")}`);
+      const res = await call<{ items: { number: number; title: string; html_url: string; labels: { name: string }[]; comments: number; updated_at: string }[] }>(
+        `/search/issues?q=${q}&per_page=5&sort=updated`,
+      );
+      return res.items.map((i) => ({ number: i.number, title: i.title, url: i.html_url, labels: i.labels.map((l) => l.name), comments: i.comments, updatedAt: i.updated_at }));
+    },
     /** Routing rules post as the App. */
     addLabels: (repo: string, n: number, labels: string[]) =>
       call(`/repos/${repo}/issues/${n}/labels`, { method: "POST", body: JSON.stringify({ labels }) }),
@@ -439,6 +474,12 @@ export function userClient(getToken: () => Promise<string>) {
       }),
     setLabels: (repo: string, n: number, labels: string[]) =>
       call(`/repos/${repo}/issues/${n}/labels`, { method: "PUT", body: JSON.stringify({ labels }) }),
+    /** Created as the person, so GitHub attributes it to them and applies their own permissions. */
+    createIssue: (repo: string, input: { title: string; body: string; labels: string[]; assignees: string[] }) =>
+      call<{ number: number; html_url: string; labels: ({ name: string } | string)[]; assignees: { login: string }[] | null }>(
+        `/repos/${repo}/issues`,
+        { method: "POST", body: JSON.stringify(input) },
+      ),
     removeReviewers: (repo: string, n: number, logins: string[]) =>
       call(`/repos/${repo}/pulls/${n}/requested_reviewers`, {
         method: "DELETE",

@@ -76,7 +76,7 @@ function useCopied() {
 const BRAND: Record<string, Brand> = { claude: "claude", codex: "codex", cursor: "cursor" }
 
 /** "Fix with agent": copies a ready-to-run command for a local coding agent. */
-export function FixWithAgent({ context, label = "Fix with agent" }: { context: FixContext; label?: string }) {
+export function FixWithAgent({ context, prompt, label = "Fix with agent" }: { context?: FixContext; prompt?: string; label?: string }) {
   const { copied, run } = useCopied()
   return (
     <DropdownMenu>
@@ -92,7 +92,7 @@ export function FixWithAgent({ context, label = "Fix with agent" }: { context: F
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {AGENTS.map((a) => (
-          <DropdownMenuItem key={a.id} onSelect={() => void run(a.id, a.cmd(fixPrompt(context)))}>
+          <DropdownMenuItem key={a.id} onSelect={() => void run(a.id, a.cmd(prompt ?? fixPrompt(context!)))}>
             {a.id in BRAND ? (
               <BrandIcon brand={BRAND[a.id]!} />
             ) : (

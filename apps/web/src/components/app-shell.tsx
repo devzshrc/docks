@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar"
+import { NewIssueProvider } from "@/components/new-issue/provider"
 import { CommandPalette } from "@/components/command-palette"
 import { RequireAuth } from "@/components/auth-guard"
 import { SiteHeader } from "@/components/site-header"
@@ -31,6 +32,7 @@ export function AppShell({
 }) {
   return (
     <RequireAuth>
+      <NewIssueProvider>
       <SidebarProvider
         style={
           {
@@ -57,6 +59,7 @@ export function AppShell({
           <CommandPalette />
         </SidebarInset>
       </SidebarProvider>
+      </NewIssueProvider>
     </RequireAuth>
   )
 }

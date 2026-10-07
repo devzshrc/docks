@@ -4,6 +4,7 @@ import { billingRouter } from "./billing.js";
 import { healthRouter } from "./health.js";
 import { insightsRouter } from "./insights.js";
 import { integrationRouter } from "./integration.js";
+import { issueRouter } from "./issue.js";
 import { peopleRouter } from "./people.js";
 import { reviewRouter } from "./review.js";
 import { userRouter } from "./user.js";
@@ -15,6 +16,7 @@ export const appRouter = router({
   workspace: workspaceRouter,
   review: reviewRouter,
   integration: integrationRouter,
+  issue: issueRouter,
   people: peopleRouter,
   insights: insightsRouter,
   admin: adminRouter,
