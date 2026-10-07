@@ -75,7 +75,7 @@ export function BlameLine({
                 href={r.pr.url}
                 target="_blank"
                 rel="noreferrer"
-                className="block truncate text-sky-600 hover:underline dark:text-sky-400"
+                className="block truncate text-primary hover:underline"
                 onClick={(e) => e.stopPropagation()}
               >
                 #{r.pr.number} {r.pr.title}

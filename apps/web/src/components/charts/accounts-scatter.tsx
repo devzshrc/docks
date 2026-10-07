@@ -8,7 +8,7 @@ import { tooltip } from "@tanstack/charts/tooltip"
 import { useMemo, useState } from "react"
 
 const SEGMENTS = ["Free", "Team"] as const
-const SEGMENT_COLORS = ["#94a3b8", "#2563eb"]
+const SEGMENT_COLORS = ["#94a3b8", "#3581B8"]
 const R_MIN = 4
 const R_MAX = 22
 

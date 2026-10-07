@@ -87,7 +87,7 @@ function Insights({ workspaceId }: { workspaceId: string }) {
                 rows={data.data.trend.map((w) => ({ label: w.week.slice(5), value: w.medianHoursToFirstReview }))}
                 label="Median hours"
                 format={(v) => fmt(v)}
-                color="#0d9488"
+                color="#1f567d"
                 ariaLabel="Line chart of median hours to first review per week over the last 12 weeks"
               />
             </Panel>

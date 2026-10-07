@@ -43,7 +43,7 @@ export function BoardCard({ pr, canAct }: { pr: BoardCardData; canAct: boolean }
   return (
     <div
       className={cn(
-        "group bg-card border-hairline hover:border-border-control animate-in fade-in slide-in-from-bottom-1 relative rounded-xl border p-3.5 text-sm transition-colors duration-200 focus-within:ring-2 focus-within:ring-ring/40"
+        "group bg-card surface-hover relative rounded-xl p-3.5 text-sm focus-within:ring-2 focus-within:ring-ring/40"
       )}
     >
       {canAct && (

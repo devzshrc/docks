@@ -29,7 +29,7 @@
   --obsidian-dashboard-shell-accent-shadow: var(--ring-primary);
   --obsidian-dashboard-shell-menu: color-mix(in oklab, var(--popover) 84%, transparent);
   --obsidian-dashboard-shell-menu-highlight: color-mix(in oklab, var(--foreground) 7%, transparent);
-  --obsidian-dashboard-shell-menu-shadow: 0 0 0 1px var(--hairline), var(--shadow-lg);
+  --obsidian-dashboard-shell-menu-shadow: var(--shadow-lg);
 }
 
 :root:root .obsidian-active-sessions {
@@ -50,5 +50,5 @@
   --obsidian-discover-fill: var(--primary);
   --obsidian-discover-text: var(--foreground);
   --obsidian-discover-active-text: var(--primary-foreground);
-  border-color: var(--hairline);
+  border-color: transparent;
 }

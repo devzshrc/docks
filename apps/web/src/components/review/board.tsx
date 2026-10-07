@@ -64,7 +64,7 @@ export function ReviewBoard({
         </p>
       )}
       <div
-        className="-mx-4 flex snap-x scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:overflow-visible md:px-0"
+        className="stagger -mx-4 flex snap-x scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:overflow-visible md:px-0"
         style={{ gridTemplateColumns: `repeat(${lanes.length}, minmax(0, 1fr))` }}
       >
         {lanes.map((lane) => {
@@ -82,9 +82,9 @@ export function ReviewBoard({
               {loading ? (
                 <Skeleton className="h-28 w-full rounded-xl" />
               ) : items.length === 0 ? (
-                <p className="border-hairline text-text-3 animate-in fade-in rounded-xl border border-dashed px-3 py-8 text-center text-xs duration-300">Nothing here</p>
+                <p className="text-text-3 animate-in fade-in rounded-xl bg-muted/50 px-3 py-8 text-center text-xs duration-300">Nothing here</p>
               ) : (
-                <div className="flex flex-col gap-2.5">
+                <div className="stagger flex flex-col gap-2.5">
                   {items.map((pr) => (
                     <BoardCard key={`${pr.repo}#${pr.number}`} pr={pr} canAct={canAct} />
                   ))}

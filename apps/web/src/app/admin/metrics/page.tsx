@@ -41,7 +41,7 @@ function Metrics() {
           <TrendChart
             rows={m.data.weeks.map((w) => ({ label: w.week.slice(5), value: w.reviews }))}
             label="Reviews"
-            color="#0d9488"
+            color="#1f567d"
             ariaLabel="Line chart of reviews submitted in the app per week over the last 8 weeks"
           />
         </Panel>

@@ -1,38 +1,39 @@
 import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import { dashboardButtonVariants } from "@/components/obsidian/dashboard-shell"
 import { cn } from "@/lib/utils"
 import { Slot } from "radix-ui"
 
-const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-[background,box-shadow,transform,filter] active:translate-y-px outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-  {
-    variants: {
-      variant: {
-        default: "tex-primary",
-        destructive:
-          "bg-destructive text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_0_0_1px_rgb(0_0_0/0.3)] hover:brightness-105 focus-visible:ring-destructive/30",
-        outline: "tex-neutral text-foreground",
-        secondary: "tex-neutral text-foreground",
-        ghost: "text-muted-foreground hover:bg-hover hover:text-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-      },
-      size: {
-        default: "h-8 px-3.5 has-[>svg]:px-3",
-        xs: "h-6 gap-1 px-2.5 has-[>svg]:px-2 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-7 gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 px-5 text-sm has-[>svg]:px-4",
-        icon: "size-8",
-        "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-7",
-        "icon-lg": "size-10",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-)
+type Variant = "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+type Size = "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg"
+
+const VARIANTS: Record<Variant, { obsidian: "primary" | "secondary" | "ghost" | "muted"; extra?: string }> = {
+  default: { obsidian: "primary" },
+  secondary: { obsidian: "secondary" },
+  outline: { obsidian: "secondary" },
+  ghost: { obsidian: "ghost" },
+  destructive: {
+    obsidian: "primary",
+    extra: "bg-destructive text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25)] hover:bg-destructive hover:brightness-105 focus-visible:ring-destructive/40",
+  },
+  link: { obsidian: "ghost", extra: "h-auto rounded-none p-0 text-primary underline-offset-4 hover:bg-transparent hover:text-primary hover:underline" },
+}
+
+const SIZES: Record<Size, string> = {
+  default: "h-8 px-3 text-xs has-[>svg]:px-2.5 [&_svg:not([class*='size-'])]:size-4",
+  xs: "h-6 gap-1 px-2 text-xs [&_svg:not([class*='size-'])]:size-3",
+  sm: "h-7 px-2.5 text-xs [&_svg:not([class*='size-'])]:size-3.5",
+  lg: "h-10 px-5 text-sm [&_svg:not([class*='size-'])]:size-4",
+  icon: "size-8 p-0 [&_svg:not([class*='size-'])]:size-4",
+  "icon-xs": "size-6 p-0 [&_svg:not([class*='size-'])]:size-3",
+  "icon-sm": "size-7 p-0 [&_svg:not([class*='size-'])]:size-4",
+  "icon-lg": "size-10 p-0 [&_svg:not([class*='size-'])]:size-5",
+}
+
+/** ObsidianUI's own button recipe, with this app's sizes and a destructive/link variant on top. */
+function buttonVariants({ variant = "default", size = "default", className }: { variant?: Variant | null; size?: Size | null; className?: string } = {}) {
+  const v = VARIANTS[variant ?? "default"]
+  return cn(dashboardButtonVariants({ variant: v.obsidian }), SIZES[size ?? "default"], v.extra, "aria-invalid:ring-destructive/40", className)
+}
 
 function Button({
   className,
@@ -43,8 +44,9 @@ function Button({
   children,
   disabled,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
+}: React.ComponentProps<"button"> & {
+    variant?: Variant | null
+    size?: Size | null
     asChild?: boolean
     /** Shows a spinner over the label without changing the button's width. */
     pending?: boolean

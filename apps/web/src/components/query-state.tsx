@@ -39,6 +39,6 @@ export function QueryState({
 }) {
   if (isPending) return <>{skeleton ?? <Skeleton className="h-24 w-full" />}</>
   if (error) return <QueryError error={error} onRetry={onRetry} />
-  if (isEmpty) return <>{empty ?? <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-8 text-center text-sm">Nothing here yet.</p>}</>
+  if (isEmpty) return <>{empty ?? <p className="text-muted-foreground rounded-lg bg-muted/50 px-3 py-8 text-center text-sm">Nothing here yet.</p>}</>
   return <>{children}</>
 }

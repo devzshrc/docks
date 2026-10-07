@@ -140,7 +140,7 @@ export function RulesEditor({ workspaceId, repo }: { workspaceId: string; repo: 
         </SheetHeader>
         <div className="space-y-4 px-4 pb-6">
           {rules.length === 0 && (
-            <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
+            <p className="text-muted-foreground rounded-lg bg-muted/50 p-4 text-sm">
               Examples: touches <code className="font-code">billing/</code> → label &ldquo;billing&rdquo; and request the payments team. Over 800 lines → comment asking to split.
             </p>
           )}

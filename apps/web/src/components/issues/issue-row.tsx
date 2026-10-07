@@ -56,7 +56,7 @@ export function IssueRow({
     <li
       data-selected={selected || undefined}
       className={cn(
-        "group border-hairline hover:bg-hover/60 relative flex items-start gap-3 border-b px-4 py-3 text-sm last:border-b-0",
+        "group hover:bg-hover relative flex items-start gap-3 rounded-lg px-3 py-3 text-sm transition-colors duration-150",
         selected && "bg-primary/5",
         focused && "ring-ring/40 ring-2 ring-inset"
       )}

@@ -15,7 +15,7 @@ export function RankedBars({
   label,
   ariaLabel,
   format = (v) => String(v),
-  color = "#2563eb",
+  color = "#3581B8",
 }: {
   rows: RankedRow[]
   label: string

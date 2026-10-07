@@ -102,7 +102,7 @@ export function IssueList({
 
   if (loading) {
     return (
-      <div className="bg-card border-hairline overflow-hidden rounded-xl border">
+      <div className="bg-card overflow-hidden rounded-xl p-1.5">
         {[0, 1, 2, 3, 4].map((n) => (
           <Skeleton key={n} className="border-hairline h-[68px] w-full rounded-none border-b" />
         ))}
@@ -151,7 +151,7 @@ export function IssueList({
           </Button>
         </div>
       )}
-      <ul ref={root} className="bg-card border-hairline overflow-hidden rounded-xl border">
+      <ul ref={root} className="stagger bg-card flex flex-col gap-px rounded-xl p-1.5">
         {items.map((i) => (
           <IssueRow key={key(i)} issue={i} selected={selected.has(key(i))} focused={focusKey === key(i)} onToggle={() => toggle(i)} canAct={canAct} triage={triage} me={me} />
         ))}
