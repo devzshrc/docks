@@ -246,7 +246,7 @@ export function IssueDetail({ repo, number }: { repo: string; number: number }) 
           >
             {editingBody ? (
               <div className="space-y-2 p-4">
-                <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={12} aria-label="Issue description" className="border-border-control bg-background w-full rounded-lg border p-3 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40" />
+                <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={12} aria-label="Issue description" className="bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border p-3 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40" />
                 <div className="flex gap-2">
                   <Button size="sm" disabled={update.isPending} onClick={() => { patch({ body }); setEditingBody(false) }}>
                     Save
@@ -297,7 +297,7 @@ export function IssueDetail({ repo, number }: { repo: string; number: number }) 
                   rows={4}
                   placeholder="Leave a comment (⌘↵ to send)"
                   aria-label="Comment"
-                  className="border-border-control bg-background w-full rounded-lg border p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  className="bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                 />
                 <Button size="sm" type="submit" disabled={comment.isPending || !draft.trim()}>
                   {comment.isPending ? "Sending…" : "Comment"}
