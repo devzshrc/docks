@@ -27,28 +27,29 @@ function Insights({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="space-y-6">
       <Toolbar>
-        <FilterSelect label="Range" value={String(days)} onChange={(v) => setDays(Number(v))}>
-          <option value={7}>Last 7 days</option>
-          <option value={30}>Last 30 days</option>
-          <option value={90}>Last 90 days</option>
-        </FilterSelect>
-        <FilterSelect label="Repository" value={String(repoId ?? "")} onChange={(v) => setRepoId(v ? Number(v) : undefined)}>
-          <option value="">All</option>
-          {data.data?.repoOptions.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.fullName}
-            </option>
-          ))}
-        </FilterSelect>
+        <FilterSelect
+          label="Range"
+          value={String(days)}
+          onChange={(v) => setDays(Number(v))}
+          options={[
+            { value: "7", label: "Last 7 days" },
+            { value: "30", label: "Last 30 days" },
+            { value: "90", label: "Last 90 days" },
+          ]}
+        />
+        <FilterSelect
+          label="Repository"
+          value={String(repoId ?? "")}
+          onChange={(v) => setRepoId(v ? Number(v) : undefined)}
+          options={[{ value: "", label: "All" }, ...(data.data?.repoOptions.map((r) => ({ value: String(r.id), label: r.fullName })) ?? [])]}
+        />
         {teams.data && teams.data.length > 0 && (
-          <FilterSelect label="Team" value={teamId ?? ""} onChange={(v) => setTeamId(v || undefined)}>
-            <option value="">All</option>
-            {teams.data.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </FilterSelect>
+          <FilterSelect
+            label="Team"
+            value={teamId ?? ""}
+            onChange={(v) => setTeamId(v || undefined)}
+            options={[{ value: "", label: "All" }, ...teams.data.map((t) => ({ value: t.id, label: t.name }))]}
+          />
         )}
         {data.data?.canSeePeople && <ToggleChip on={perPerson} label="Per person" onChange={setPerPerson} />}
       </Toolbar>

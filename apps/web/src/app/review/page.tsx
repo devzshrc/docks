@@ -6,7 +6,6 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 
 import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
-import { NewIssueButton } from "@/components/new-issue/button"
 import { GettingStarted } from "@/components/getting-started"
 import { ReviewBoard } from "@/components/review/board"
 import { fromParams, serverFilters, toParams, type UiFilters } from "@/components/review/board-filters"
@@ -90,49 +89,55 @@ function Board({ workspaceId }: { workspaceId: string }) {
           </span>
         </button>
         <div className={cn("animate-in fade-in contents duration-150", !filtersOpen && "max-md:hidden")}>
-          <FilterSelect label="Repository" value={String(filters.repoIds[0] ?? "")} onChange={(v) => set({ repoIds: v ? [Number(v)] : [] })}>
-            <option value="">All</option>
-            {data?.repos.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.fullName}
-              </option>
-            ))}
-          </FilterSelect>
-          <FilterSelect label="Author" value={filters.author ?? ""} onChange={(v) => set({ author: v || undefined })}>
-            <option value="">Anyone</option>
-            {data?.authors.map((a) => (
-              <option key={a}>{a}</option>
-            ))}
-          </FilterSelect>
+          <FilterSelect
+            label="Repository"
+            value={String(filters.repoIds[0] ?? "")}
+            onChange={(v) => set({ repoIds: v ? [Number(v)] : [] })}
+            options={[{ value: "", label: "All" }, ...(data?.repos.map((r) => ({ value: String(r.id), label: r.fullName })) ?? [])]}
+          />
+          <FilterSelect
+            label="Author"
+            value={filters.author ?? ""}
+            onChange={(v) => set({ author: v || undefined })}
+            options={[{ value: "", label: "Anyone" }, ...(data?.authors.map((a) => ({ value: a, label: a })) ?? [])]}
+          />
           {data && data.labels.length > 0 && (
-            <FilterSelect label="Label" value={filters.label ?? ""} onChange={(v) => set({ label: v || undefined })}>
-              <option value="">Any</option>
-              {data.labels.map((l) => (
-                <option key={l}>{l}</option>
-              ))}
-            </FilterSelect>
+            <FilterSelect
+              label="Label"
+              value={filters.label ?? ""}
+              onChange={(v) => set({ label: v || undefined })}
+              options={[{ value: "", label: "Any" }, ...data.labels.map((l) => ({ value: l, label: l }))]}
+            />
           )}
           {data && data.teams.length > 0 && (
-            <FilterSelect label="Team" value={filters.teamId ?? ""} onChange={(v) => set({ teamId: v || undefined })}>
-              <option value="">Any</option>
-              {data.teams.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </FilterSelect>
+            <FilterSelect
+              label="Team"
+              value={filters.teamId ?? ""}
+              onChange={(v) => set({ teamId: v || undefined })}
+              options={[{ value: "", label: "Any" }, ...data.teams.map((t) => ({ value: t.id, label: t.name }))]}
+            />
           )}
-          <FilterSelect label="Size" value={filters.size ?? ""} onChange={(v) => set({ size: (v || undefined) as UiFilters["size"] })}>
-            <option value="">Any</option>
-            <option value="S">Small (&lt;100 lines)</option>
-            <option value="M">Medium</option>
-            <option value="L">Large (500+)</option>
-          </FilterSelect>
-          <FilterSelect label="Sort" value={filters.sort} onChange={(v) => set({ sort: v as UiFilters["sort"] })}>
-            <option value="oldest">Oldest first</option>
-            <option value="biggest">Biggest first</option>
-            <option value="risk">Most at risk</option>
-          </FilterSelect>
+          <FilterSelect
+            label="Size"
+            value={filters.size ?? ""}
+            onChange={(v) => set({ size: (v || undefined) as UiFilters["size"] })}
+            options={[
+              { value: "", label: "Any" },
+              { value: "S", label: "Small (<100 lines)" },
+              { value: "M", label: "Medium" },
+              { value: "L", label: "Large (500+)" },
+            ]}
+          />
+          <FilterSelect
+            label="Sort"
+            value={filters.sort}
+            onChange={(v) => set({ sort: v as UiFilters["sort"] })}
+            options={[
+              { value: "oldest", label: "Oldest first" },
+              { value: "biggest", label: "Biggest first" },
+              { value: "risk", label: "Most at risk" },
+            ]}
+          />
           <span className="bg-hairline mx-1 hidden h-5 w-px md:block" aria-hidden />
           <ToggleChip on={filters.mine} label="Mine" onChange={(v) => set({ mine: v })} />
           <ToggleChip on={filters.waitingOnMe} label="Waiting on me" onChange={(v) => set({ waitingOnMe: v })} />
@@ -207,7 +212,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Reviews" description="Open pull requests across your repositories, grouped by where they are in review." width="wide" actions={<NewIssueButton />}>
+    <AppShell title="Reviews" description="Open pull requests across your repositories, grouped by where they are in review." width="wide">
       <Content />
     </AppShell>
   )

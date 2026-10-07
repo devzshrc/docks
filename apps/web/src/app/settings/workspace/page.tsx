@@ -18,11 +18,11 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  DashboardMenu,
+  DashboardMenuContent,
+  DashboardMenuItem,
+  DashboardMenuTrigger,
+} from "@/components/obsidian/dashboard-shell"
 import { Input } from "@/components/ui/input"
 import {
   Table,
@@ -262,18 +262,18 @@ function MembersCard({
                     )}
                     <TableCell className="w-10 text-right">
                       {((isOwner && !me && m.role !== "owner") || editable || me) && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                        <DashboardMenu>
+                          <DashboardMenuTrigger asChild>
                             <Button size="icon-sm" variant="ghost" aria-label={`Actions for ${m.name}`}>
                               <IconDots className="size-4" />
                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem asChild>
+                          </DashboardMenuTrigger>
+                          <DashboardMenuContent align="end" className="w-44">
+                            <DashboardMenuItem asChild>
                               <Link href={`/people/${m.userId}`}>View profile</Link>
-                            </DropdownMenuItem>
+                            </DashboardMenuItem>
                             {isOwner && !me && m.role !== "owner" && (
-                              <DropdownMenuItem
+                              <DashboardMenuItem
                                 disabled={transfer.isPending}
                                 onSelect={() => {
                                   setError(undefined)
@@ -283,11 +283,11 @@ function MembersCard({
                                 }}
                               >
                                 Make owner
-                              </DropdownMenuItem>
+                              </DashboardMenuItem>
                             )}
                             {(editable || me) && (
-                              <DropdownMenuItem
-                                variant="destructive"
+                              <DashboardMenuItem
+                                className="text-(--obsidian-dashboard-shell-danger)"
                                 disabled={remove.isPending}
                                 onSelect={() => {
                                   setError(undefined)
@@ -297,10 +297,10 @@ function MembersCard({
                                 }}
                               >
                                 {me ? "Leave workspace" : "Remove from workspace"}
-                              </DropdownMenuItem>
+                              </DashboardMenuItem>
                             )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                          </DashboardMenuContent>
+                        </DashboardMenu>
                       )}
                     </TableCell>
                   </TableRow>

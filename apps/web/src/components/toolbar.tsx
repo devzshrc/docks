@@ -3,6 +3,7 @@
 import { Search01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
+import { DashboardFilterMenu } from "@/components/obsidian/dashboard-shell"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
@@ -20,30 +21,33 @@ export function ToolbarSearch({ className, ...props }: React.ComponentProps<type
   )
 }
 
-/** "Label  Value ▾": a pill that wraps a native select, so it stays accessible and keyboard friendly. */
+const ALL = "__all__"
+
+/**
+ * "Label | Value ▾" filter pill, ObsidianUI's DashboardFilterMenu: an animated menu with a hover highlight that
+ * follows the pointer. An empty string value ("any") is mapped to a sentinel because radio items need a value.
+ */
 export function FilterSelect({
   label,
   value,
   onChange,
-  children,
+  options,
   className,
 }: {
   label: string
   value: string
   onChange: (value: string) => void
-  children: React.ReactNode
+  options: { value: string; label: string }[]
   className?: string
 }) {
   return (
-    <label className={cn("tex-neutral relative inline-flex h-8 items-center gap-1.5 rounded-full pr-7 pl-3 text-xs", className)}>
-      <span className="text-muted-foreground">{label}</span>
-      <select className="select-bare" aria-label={label} value={value} onChange={(e) => onChange(e.target.value)}>
-        {children}
-      </select>
-      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-3 pointer-events-none absolute right-2.5" aria-hidden>
-        <path d="m6 9 6 6 6-6" />
-      </svg>
-    </label>
+    <DashboardFilterMenu
+      label={label}
+      value={value === "" ? ALL : value}
+      options={options.map((o) => ({ value: o.value === "" ? ALL : o.value, label: o.label }))}
+      onValueChange={(v) => onChange(v === ALL ? "" : v)}
+      className={className}
+    />
   )
 }
 

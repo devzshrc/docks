@@ -8,6 +8,7 @@ import { Check, ChevronDown, Menu, X } from "lucide-react";
 import { animate, AnimatePresence, motion, useMotionValue, useReducedMotion } from "motion/react";
 import { createContext, memo, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ComponentProps, CSSProperties, ElementType, FocusEvent, KeyboardEvent, PointerEvent, ReactNode, Ref } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import "./dashboard-shell.css";
 
@@ -900,9 +901,9 @@ function NavItem({ item, isActive, isQuiet, pillId, onSelect }: NavItemProps) {
   return (
     <li>
       {item.href ? (
-        <a href={item.href} {...shared}>
+        <Link href={item.href} {...(shared as Omit<typeof shared, "onPointerEnter"> & { onPointerEnter: (event: PointerEvent<HTMLAnchorElement>) => void })}>
           {content}
-        </a>
+        </Link>
       ) : (
         <button type="button" {...shared}>
           {content}

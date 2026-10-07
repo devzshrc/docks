@@ -9,13 +9,13 @@ import { DrawTick } from "@/components/motion"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  DashboardMenu,
+  DashboardMenuContent,
+  DashboardMenuItem,
+  DashboardMenuLabel,
+  DashboardMenuSeparator,
+  DashboardMenuTrigger,
+} from "@/components/obsidian/dashboard-shell"
 
 /** POSIX single-quote: safe to paste into any shell. */
 export const shq = (s: string) => `'${s.replace(/'/g, `'\\''`)}'`
@@ -80,30 +80,30 @@ const BRAND: Record<string, Brand> = { claude: "claude", codex: "codex", cursor:
 export function FixWithAgent({ context, prompt, label = "Fix with agent", compact = false }: { context?: FixContext; prompt?: string; label?: string; compact?: boolean }) {
   const { copied, run } = useCopied()
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <DashboardMenu>
+      <DashboardMenuTrigger asChild>
         <Button size={compact ? "sm" : "default"} variant={compact ? "ghost" : "outline"} className={cn("group/agent gap-2", compact && "px-2")}>
           {copied ? <DrawTick className="size-3.5 text-emerald-600 dark:text-emerald-400" /> : <AgentStackIcon />}
           {copied ? "Copied" : label}
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
-          Copy a command, run it in your checkout
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+      </DashboardMenuTrigger>
+      <DashboardMenuContent align="end" className="w-56">
+        <DashboardMenuLabel>
+          Run in your checkout
+        </DashboardMenuLabel>
+        <DashboardMenuSeparator />
         {AGENTS.map((a) => (
-          <DropdownMenuItem key={a.id} onSelect={() => void run(a.id, a.cmd(prompt ?? fixPrompt(context!)))}>
+          <DashboardMenuItem key={a.id} onSelect={() => void run(a.id, a.cmd(prompt ?? fixPrompt(context!)))}>
             {a.id in BRAND ? (
               <BrandIcon brand={BRAND[a.id]!} />
             ) : (
               <HugeiconsIcon icon={a.id === "prompt" ? Copy01Icon : ComputerTerminal01Icon} size={15} aria-hidden />
             )}
             {a.label}
-          </DropdownMenuItem>
+          </DashboardMenuItem>
         ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </DashboardMenuContent>
+    </DashboardMenu>
   )
 }
 
@@ -111,39 +111,39 @@ export function FixWithAgent({ context, prompt, label = "Fix with agent", compac
 export function OpenInPx0({ prUrl, branch }: { prUrl: string; branch: string }) {
   const { copied, run } = useCopied()
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <DashboardMenu>
+      <DashboardMenuTrigger asChild>
         <button type="button" className="tex-neutral flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium">
           {copied ? <DrawTick className="size-3.5 text-emerald-600 dark:text-emerald-400" /> : <Px0Icon className="h-3.5" />}
           {copied ? "Copied" : "Review in px0"}
         </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-72">
-        <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
-          Comments you post from px0 sync back here.
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => void run("pr", `px0 ${prUrl}`)}>
+      </DashboardMenuTrigger>
+      <DashboardMenuContent align="start" className="w-72">
+        <DashboardMenuLabel>
+          Comments sync back here
+        </DashboardMenuLabel>
+        <DashboardMenuSeparator />
+        <DashboardMenuItem onSelect={() => void run("pr", `px0 ${prUrl}`)}>
           <Px0Icon className="h-3.5" />
           <span className="flex flex-col">
             Copy review command
             <span className="text-muted-foreground font-code text-[11px]">px0 {prUrl.replace("https://github.com/", "…/")}</span>
           </span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => void run("local", `git fetch origin ${shq(branch)} && git switch ${shq(branch)} && px0 .`)}>
+        </DashboardMenuItem>
+        <DashboardMenuItem onSelect={() => void run("local", `git fetch origin ${shq(branch)} && git switch ${shq(branch)} && px0 .`)}>
           <HugeiconsIcon icon={ComputerTerminal01Icon} size={15} aria-hidden />
           <span className="flex flex-col">
             Copy checkout + open
             <span className="text-muted-foreground text-[11px]">Switches your local clone to this branch</span>
           </span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
+        </DashboardMenuItem>
+        <DashboardMenuSeparator />
+        <DashboardMenuItem asChild>
           <a href="https://px0.ai/docs" target="_blank" rel="noreferrer" className="text-muted-foreground text-xs">
             Install px0 →
           </a>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DashboardMenuItem>
+      </DashboardMenuContent>
+    </DashboardMenu>
   )
 }
