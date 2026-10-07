@@ -39,14 +39,14 @@ function Issues({ workspaceId }: { workspaceId: string }) {
   const filters = useMemo(() => fromParams(new URLSearchParams(params.toString())), [params])
   const settings = useWorkspaceSettings(workspaceId)
   const canAct = settings.data?.can["review.act"] ?? false
-  const account = useQuery(trpc.integration.githubAccount.queryOptions())
+  const account = useQuery({ ...trpc.integration.githubAccount.queryOptions(), staleTime: 5 * 60_000 })
   const me = account.data?.login ?? null
   const [limit, setLimit] = useState(PAGE)
   const search = useRef<HTMLInputElement>(null)
 
   const isList = filters.view !== "board" && filters.view !== "insights"
   const counts = useQuery({ ...trpc.issues.counts.queryOptions({ workspaceId }), refetchInterval: 60_000 })
-  const facets = useQuery(trpc.issues.facets.queryOptions({ workspaceId }))
+  const facets = useQuery({ ...trpc.issues.facets.queryOptions({ workspaceId }), staleTime: 2 * 60_000 })
   const list = useQuery({
     ...trpc.issues.list.queryOptions({ workspaceId, filters: serverFilters(filters), limit }),
     enabled: isList,

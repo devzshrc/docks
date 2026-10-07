@@ -44,6 +44,7 @@ export function createApp(opts: { afterWebhook?: () => void } = {}) {
     cors({
       origin: (origin) => (origins().includes(origin) ? origin : null),
       credentials: true,
+      maxAge: 86_400, // browsers skip the OPTIONS round trip before each save for a day
     }),
   );
   app.use("*", async (c, next) => {

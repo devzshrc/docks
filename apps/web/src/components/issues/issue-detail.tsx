@@ -14,7 +14,7 @@ import { Panel } from "@/components/panel"
 import { QueryError } from "@/components/query-state"
 import { FixWithAgent } from "@/components/review/agent-handoff"
 import { MarkdownPreview } from "@/components/review/markdown-preview"
-import { toast } from "@/components/toast"
+import { optimistic } from "@/lib/optimistic"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -132,13 +132,17 @@ export function IssueDetail({ repo, number }: { repo: string; number: number }) 
   const queryClient = useQueryClient()
   const { update } = useIssueActions()
   const q = useQuery({ ...trpc.issues.get.queryOptions({ repo, number }), refetchInterval: 30_000 })
-  const account = useQuery(trpc.integration.githubAccount.queryOptions())
+  const account = useQuery({ ...trpc.integration.githubAccount.queryOptions(), staleTime: 5 * 60_000 })
   const me = account.data?.login ?? null
   const comment = useMutation(
-    trpc.issues.comment.mutationOptions({
-      onSuccess: () => void queryClient.invalidateQueries(trpc.issues.get.queryFilter({ repo, number })),
-      onError: (e) => toast(e.message, "error"),
-    }),
+    trpc.issues.comment.mutationOptions(
+      optimistic<{ repo: string; number: number; body: string }>(queryClient, [
+        {
+          filter: trpc.issues.get.queryFilter({ repo, number }),
+          patch: (d: Issue, v) => ({ ...d, comments: [...d.comments, { id: -Date.now(), author: me ?? "you", body: v.body, createdAt: new Date().toISOString(), association: null }] }),
+        },
+      ]),
+    ),
   )
   const [editingTitle, setEditingTitle] = useState(false)
   const [title, setTitle] = useState("")
@@ -279,7 +283,9 @@ export function IssueDetail({ repo, number }: { repo: string; number: number }) 
                 onSubmit={(e) => {
                   e.preventDefault()
                   if (!draft.trim()) return
-                  comment.mutate({ ...ref, body: draft }, { onSuccess: () => setDraft("") })
+                  const text = draft
+                  setDraft("")
+                  comment.mutate({ ...ref, body: text }, { onError: () => setDraft(text) })
                 }}
               >
                 <textarea

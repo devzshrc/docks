@@ -104,6 +104,9 @@ export const auth = betterAuth({
   plugins: [twoFactor({ issuer: "Docks" })],
   // Web and API live on sibling subdomains in production (app.<domain> / api.<domain>):
   // set COOKIE_DOMAIN=.<domain> so the session cookie is shared between them.
+  // Sessions ride in a signed cookie for 5 minutes, so most requests skip the database lookup.
+  // (Revoking a session elsewhere can take up to 5 minutes to reach this device.)
+  session: { cookieCache: { enabled: true, maxAge: 5 * 60 } },
   advanced: {
     ipAddress: { ipAddressHeaders: ["cf-connecting-ip", "x-forwarded-for"] },
     ...(process.env.COOKIE_DOMAIN

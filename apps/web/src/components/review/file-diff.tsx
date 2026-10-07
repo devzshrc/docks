@@ -1,7 +1,7 @@
 "use client"
 
 import type { RankedFile } from "@docks/api"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { IconChevronDown, IconChevronRight, IconMessagePlus } from "@tabler/icons-react"
 import hljs from "highlight.js/lib/common"
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
@@ -12,8 +12,10 @@ import { FixWithAgent } from "@/components/review/agent-handoff"
 import { BlameLine, useBlame } from "@/components/review/blame-popover"
 import { Collapse, flash } from "@/components/motion"
 import { MarkdownPreview } from "@/components/review/markdown-preview"
+import { toast } from "@/components/toast"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { optimistic } from "@/lib/optimistic"
 import {
   addedLines,
   changedSymbols,
@@ -189,8 +191,35 @@ function ThreadView({ thread, repo, number, branch, canAct, onChanged }: { threa
   // Resolving folds the thread away; unresolving opens it again.
   useEffect(() => setOpen(!thread.isResolved), [thread.isResolved])
   const [reply, setReply] = useState("")
-  const send = useMutation(trpc.review.reply.mutationOptions({ onSuccess: () => { setReply(""); onChanged() } }))
-  const resolve = useMutation(trpc.review.resolveThread.mutationOptions({ onSuccess: onChanged }))
+  const queryClient = useQueryClient()
+  const threadsFilter = trpc.review.threads.queryFilter({ repo, number })
+  // Reply and resolve show up at once; GitHub's answer replaces them when it arrives.
+  const send = useMutation(
+    trpc.review.reply.mutationOptions(
+      optimistic<{ commentId: number; body: string }>(
+        queryClient,
+        [
+          {
+            filter: threadsFilter,
+            patch: (d: { threads: Thread[] }, v) => ({
+              ...d,
+              threads: d.threads.map((t) => (t.id === thread.id ? { ...t, comments: [...t.comments, { id: -Date.now(), author: "You", body: v.body, createdAt: new Date().toISOString() }] } : t)),
+            }),
+          },
+        ],
+        { settled: onChanged, onError: (e) => toast(e.message, "error") },
+      ),
+    ),
+  )
+  const resolve = useMutation(
+    trpc.review.resolveThread.mutationOptions(
+      optimistic<{ threadId: string; resolve: boolean }>(
+        queryClient,
+        [{ filter: threadsFilter, patch: (d: { threads: Thread[] }, v) => ({ ...d, threads: d.threads.map((t) => (t.id === v.threadId ? { ...t, isResolved: v.resolve } : t)) }) }],
+        { settled: onChanged },
+      ),
+    ),
+  )
   const { open: openIssue, canCreate } = useNewIssue()
   /** Follow-up: turn this thread into an issue that links back to the comment. */
   function followUp() {
@@ -241,7 +270,7 @@ function ThreadView({ thread, repo, number, branch, canAct, onChanged }: { threa
             <div className="space-y-2">
               <MentionTextarea value={reply} onChange={setReply} rows={2} placeholder="Reply" aria-label="Reply" />
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" disabled={!reply.trim()} pending={send.isPending} onClick={() => send.mutate({ repo, number, commentId: thread.comments[0]!.id, body: reply })}>
+                <Button size="sm" variant="outline" disabled={!reply.trim()} pending={send.isPending} onClick={() => { const text = reply; setReply(""); send.mutate({ repo, number, commentId: thread.comments[0]!.id, body: text }, { onError: () => setReply(text) }) }}>
                   Reply
                 </Button>
                 <Button size="sm" variant="ghost" pending={resolve.isPending} onClick={() => resolve.mutate({ repo, number, threadId: thread.id, resolve: !thread.isResolved })}>

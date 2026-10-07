@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 
+import { optimistic } from "@/lib/optimistic"
 import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { RulesEditor } from "@/components/rules-editor"
@@ -26,7 +27,12 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
   const setRepo = useMutation(
     trpc.workspace.setRepo.mutationOptions({
       meta: { toast: "Saved" },
-      onSettled: () => queryClient.invalidateQueries(trpc.workspace.repos.queryFilter()),
+      ...optimistic<{ repoId: number; enabled?: boolean; aiEnabled?: boolean; autoAssign?: number }>(queryClient, [
+        {
+          filter: trpc.workspace.repos.queryFilter(),
+          patch: (rows: { id: number }[], { repoId, ...change }) => rows.map((r) => (r.id === repoId ? { ...r, ...change } : r)),
+        },
+      ]),
     })
   )
 

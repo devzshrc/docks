@@ -6,6 +6,7 @@ import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { optimistic } from "@/lib/optimistic"
 import { useTRPC } from "@/trpc/react"
 
 /** Requested reviewers, add/remove with suggestions, and "I'm on it" (plan M4). */
@@ -21,9 +22,39 @@ export function ReviewerPicker({ repo, number }: { repo: string; number: number 
       queryClient.invalidateQueries(trpc.review.get.queryFilter({ repo, number })),
       queryClient.invalidateQueries(trpc.review.board.queryFilter()),
     ])
-  const onError = (e: { message: string }) => setError(e.message)
-  const setReviewers = useMutation(trpc.review.setReviewers.mutationOptions({ onSuccess: refresh, onError }))
-  const claim = useMutation(trpc.review.claim.mutationOptions({ onSuccess: refresh, onError }))
+  type Options = NonNullable<typeof options.data>
+  const optionsFilter = trpc.review.reviewerOptions.queryFilter({ repo, number })
+  // Reviewers and "I'm on it" change on screen at once; the refresh below reconciles with GitHub.
+  const setReviewers = useMutation(
+    trpc.review.setReviewers.mutationOptions({
+      ...optimistic<{ add?: string[]; remove?: string[] }>(
+        queryClient,
+        [
+          {
+            filter: optionsFilter,
+            patch: (d: Options, v) => {
+              const added = d.suggestions.filter((s) => v.add?.includes(s.login)).map((s) => ({ login: s.login, name: s.name as string | null }))
+              return {
+                ...d,
+                requested: [...d.requested.filter((r) => !v.remove?.includes(r.login)), ...added],
+                suggestions: d.suggestions.filter((s) => !v.add?.includes(s.login)),
+              }
+            },
+          },
+        ],
+        { settled: () => void refresh(), onError: (e) => setError(e.message) },
+      ),
+    }),
+  )
+  const claim = useMutation(
+    trpc.review.claim.mutationOptions({
+      ...optimistic<{ claim: boolean }>(
+        queryClient,
+        [{ filter: optionsFilter, patch: (d: Options, v) => ({ ...d, claimedBy: v.claim ? { userId: "me", name: "You", isMe: true } : null }) }],
+        { settled: () => void refresh(), onError: (e) => setError(e.message) },
+      ),
+    }),
+  )
 
   if (!options.data) return null
   const { requested, suggestions, claimedBy, canAct } = options.data

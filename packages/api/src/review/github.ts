@@ -1,4 +1,5 @@
-import { createSign } from "node:crypto";
+import { createHash, createSign } from "node:crypto";
+import { cacheGet, cacheSet } from "../cache.js";
 
 /**
  * GitHub REST client using GitHub App installation tokens — plan.md §9.2.
@@ -38,8 +39,17 @@ function appJwt(): string {
   return `${unsigned}.${signature}`;
 }
 
+/** Reads GitHub answers with 304 Not Modified for (and which don't count against the rate limit). */
+const CONDITIONAL = /^\/(repos\/[^/?]+\/[^/?]+(\/(labels|assignees|milestones|issues\/\d+))?|installation\/repositories)(\?|$)/;
+const ETAG_TTL_MS = 6 * 3_600_000;
+
 async function request<T>(path: string, token: string, init: RequestInit = {}) {
-  const res = await fetch(path.startsWith("http") ? path : `${API}${path}`, {
+  const url = path.startsWith("http") ? path : `${API}${path}`;
+  const conditional = !init.method && CONDITIONAL.test(path);
+  // Keyed by token so an answer one person may see is never replayed to someone with less access.
+  const etagKey = conditional ? `etag:${createHash("sha256").update(token).digest("hex").slice(0, 16)}:${path}` : "";
+  const prior = conditional ? await cacheGet<{ etag: string; body: unknown; link: string | null }>(etagKey) : undefined;
+  const res = await fetch(url, {
     ...init,
     headers: {
       Accept: "application/vnd.github+json",
@@ -47,13 +57,19 @@ async function request<T>(path: string, token: string, init: RequestInit = {}) {
       "X-GitHub-Api-Version": "2022-11-28",
       // GitHub rejects requests without one (Workers' fetch doesn't add a default).
       "User-Agent": "docks",
+      ...(prior ? { "If-None-Match": prior.etag } : {}),
       ...init.headers,
     },
   });
+  if (res.status === 304 && prior) return { body: prior.body as T, next: nextLink(prior.link) };
   if (!res.ok) {
     throw new GitHubError(res.status, `GitHub ${res.status} ${path}: ${await res.text()}`);
   }
   const body = res.status === 204 ? undefined : await res.json();
+  const etag = res.headers.get("etag");
+  if (conditional && etag && JSON.stringify(body).length < 500_000) {
+    await cacheSet(etagKey, ETAG_TTL_MS, { etag, body, link: res.headers.get("link") });
+  }
   return { body: body as T, next: nextLink(res.headers.get("link")) };
 }
 
