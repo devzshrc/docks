@@ -73,7 +73,15 @@ function GitHubCard({ workspaceId }: { workspaceId: string }) {
   const trpc = useTRPC()
   const params = useSearchParams()
   const status = params.get("github")
+  const queryClient = useQueryClient()
   const install = useQuery(trpc.integration.githubInstallUrl.queryOptions({ workspaceId }))
+  const existing = useQuery(trpc.integration.githubInstallations.queryOptions({ workspaceId }))
+  const link = useMutation(
+    trpc.integration.linkGithubInstallation.mutationOptions({
+      onSuccess: () => void queryClient.invalidateQueries(),
+    }),
+  )
+  const unlinked = existing.data?.filter((i) => !i.linked) ?? []
 
   return (
     <Card>
@@ -98,6 +106,27 @@ function GitHubCard({ workspaceId }: { workspaceId: string }) {
           <Button asChild disabled={!install.data}>
             <a href={install.data?.url}>Install GitHub App</a>
           </Button>
+        )}
+        {unlinked.length > 0 && (
+          <div className="space-y-2 border-t pt-3">
+            <p className="text-muted-foreground text-sm">
+              Already installed on GitHub? Link it to this workspace:
+            </p>
+            {unlinked.map((i) => (
+              <div key={i.id} className="flex items-center justify-between gap-3">
+                <span className="text-sm font-medium">{i.login}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={link.isPending}
+                  onClick={() => link.mutate({ workspaceId, installationId: i.id })}
+                >
+                  Link
+                </Button>
+              </div>
+            ))}
+            {link.error && <p className="text-destructive text-sm">{link.error.message}</p>}
+          </div>
         )}
       </CardContent>
     </Card>
