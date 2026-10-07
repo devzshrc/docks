@@ -300,7 +300,9 @@ export function FileDiff({
   useEffect(() => {
     const el = section.current
     if (!el || near) return
-    const io = new IntersectionObserver((e) => e.some((x) => x.isIntersecting) && setNear(true), { rootMargin: "1200px 0px" })
+    // The page scrolls inside the app shell, not the window, so observe against that scroller.
+    const root = el.closest(".obsidian-dashboard-shell-scroll")
+    const io = new IntersectionObserver((e) => e.some((x) => x.isIntersecting) && setNear(true), { root, rootMargin: "1200px 0px" })
     io.observe(el)
     return () => io.disconnect()
   }, [near])
