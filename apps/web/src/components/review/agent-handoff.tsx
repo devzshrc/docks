@@ -31,18 +31,20 @@ export type FixContext = {
   repo: string
   number: number
   branch: string
-  path: string
+  path: string | null
   line: number | null
-  comments: { author: string; body: string }[]
+  comments: { author: string; body: string; path?: string; line?: number | null }[]
 }
 
 /** The prompt an agent gets: where, what reviewers said, and to keep the change scoped. */
 export function fixPrompt(c: FixContext) {
-  const where = c.line ? `${c.path}:${c.line}` : c.path
-  const said = c.comments.map((m) => `- ${m.author}: ${m.body.trim()}`).join("\n")
+  const where = c.path ? (c.line ? `${c.path}:${c.line}` : c.path) : "the changed files"
+  const said = c.comments.map((m) => `- ${m.author}${m.path ? ` on ${m.path}${m.line ? `:${m.line}` : ""}` : ""}: ${m.body.trim()}`).join("\n")
   return [
-    `Address review feedback on ${c.repo}#${c.number} (branch ${c.branch}) at ${where}.`,
-    `Reviewer comments:\n${said}`,
+    `Work on ${c.repo}#${c.number} (branch ${c.branch}), focusing on ${where}.`,
+    said
+      ? `Address these open review comments:\n${said}`
+      : `There are no open review comments yet. Review the diff against the base branch for bugs, missing tests and risky changes, and fix what you find.`,
     `Make the smallest change that resolves this, keep the existing style, run the relevant tests, and summarise what you changed.`,
   ].join("\n\n")
 }
@@ -70,14 +72,14 @@ function useCopied() {
 }
 
 /** "Fix with agent": copies a ready-to-run command for a local coding agent. */
-export function FixWithAgent({ context }: { context: FixContext }) {
+export function FixWithAgent({ context, label = "Fix with agent" }: { context: FixContext; label?: string }) {
   const { copied, run } = useCopied()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button size="sm" variant="ghost" className="h-7 gap-1.5 px-2 text-xs">
           <HugeiconsIcon icon={copied ? Tick02Icon : AiMagicIcon} size={14} aria-hidden />
-          {copied ? "Copied" : "Fix with agent"}
+          {copied ? "Copied" : label}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

@@ -15,7 +15,7 @@ import { useEffect, useState } from "react"
 import { FileIcon } from "@/components/file-icon"
 import { Checklist } from "@/components/review/checklist"
 import { AskPanel } from "@/components/review/ask-panel"
-import { OpenInPx0 } from "@/components/review/agent-handoff"
+import { FixWithAgent, OpenInPx0 } from "@/components/review/agent-handoff"
 import { FileFinder } from "@/components/review/file-finder"
 import { FileDiff, type PendingComment } from "@/components/review/file-diff"
 import { GuidePanel } from "@/components/review/guide-panel"
@@ -132,6 +132,14 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
               View on GitHub <IconExternalLink className="size-3.5" aria-hidden />
             </a>
             <OpenInPx0 prUrl={pr.url} branch={pr.headRef} />
+            <FixWithAgent
+              context={{
+                repo, number, branch: pr.headRef, path: null, line: null,
+                comments: (threads.data?.threads ?? [])
+                  .filter((t) => !t.isResolved)
+                  .flatMap((t) => t.comments.map((c) => ({ ...c, path: t.path, line: t.line }))),
+              }}
+            />
           </div>
         </div>
         {/* Aligned label column: the eye scans down one edge instead of hunting. */}

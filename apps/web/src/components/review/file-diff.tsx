@@ -394,6 +394,13 @@ export function FileDiff({
             ))}
           </div>
         )}
+        <FixWithAgent
+          label="Agent"
+          context={{
+            repo, number, branch, path: file.filename, line: null,
+            comments: threads.filter((t) => !t.isResolved).flatMap((t) => t.comments.map((c) => ({ ...c, line: t.line }))),
+          }}
+        />
         <label className="flex items-center gap-1.5 text-xs whitespace-nowrap">
           <input
             type="checkbox"
