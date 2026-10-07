@@ -7,14 +7,17 @@ import { usePathname } from "next/navigation"
 import {
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
 export function NavMain({
+  label,
   items,
 }: {
+  label?: string
   items: {
     title: string
     url: string
@@ -25,6 +28,7 @@ export function NavMain({
 
   return (
     <SidebarGroup>
+      {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {items.map((item) => {

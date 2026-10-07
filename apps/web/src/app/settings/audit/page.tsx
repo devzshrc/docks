@@ -111,7 +111,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Audit log">
+    <AppShell title="Audit log" description="Who changed what in this workspace, newest first.">
       <Content />
     </AppShell>
   )

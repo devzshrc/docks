@@ -141,7 +141,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Repositories">
+    <AppShell title="Repositories" description="Choose which repositories appear on the board and how their pull requests are reviewed.">
       <Content />
     </AppShell>
   )

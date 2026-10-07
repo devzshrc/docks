@@ -71,10 +71,7 @@ function Load({ workspaceId }: { workspaceId: string }) {
   ].filter((g) => g.people.length)
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <p className="text-muted-foreground text-sm">
-        Open review requests per person across your repositories. Amber means they&apos;re at their limit.
-      </p>
+    <div className="space-y-8">
       {groups.map((g) => (
         <section key={g.name}>
           <h2 className="mb-1 text-sm font-medium">{g.name}</h2>
@@ -100,7 +97,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Team">
+    <AppShell title="Team" description="Open review requests per person. Amber means someone has reached their limit.">
       <Content />
     </AppShell>
   )

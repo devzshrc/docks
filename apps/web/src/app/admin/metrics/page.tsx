@@ -16,7 +16,7 @@ function Metrics() {
   if (m.isPending) return <Skeleton className="h-48 w-full max-w-3xl" />
   if (m.error) return <p className="text-muted-foreground text-sm">This page isn&apos;t available.</p>
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="space-y-8">
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="bg-muted/50 rounded-lg p-4">
           <p className="text-muted-foreground text-sm">Signups (30 days)</p>
@@ -70,7 +70,7 @@ function Metrics() {
 
 export default function Page() {
   return (
-    <AppShell title="Metrics">
+    <AppShell title="Metrics" description="Internal product metrics for the beta.">
       <Metrics />
     </AppShell>
   )

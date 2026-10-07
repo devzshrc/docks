@@ -32,7 +32,6 @@ export function ReviewerPicker({ repo, number }: { repo: string; number: number 
   return (
     <div className="space-y-2 text-sm">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-muted-foreground mr-1">Requested</span>
         {requested.length === 0 && <span className="text-muted-foreground">nobody yet</span>}
         {requested.map((r) => (
           <Badge key={r.login} variant="outline" className="gap-1">

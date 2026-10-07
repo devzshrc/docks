@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { IconCopy } from "@tabler/icons-react"
+import { IconCopy, IconDots } from "@tabler/icons-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -16,6 +16,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import {
   Table,
@@ -196,7 +202,7 @@ function MembersCard({
                 <TableHead>GitHub</TableHead>
                 <TableHead className="w-36">Role</TableHead>
                 {canManage && <TableHead>Repositories</TableHead>}
-                <TableHead className="w-28" />
+                <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -248,36 +254,47 @@ function MembersCard({
                         )}
                       </TableCell>
                     )}
-                    <TableCell className="text-right whitespace-nowrap">
-                      {isOwner && !me && m.role !== "owner" && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          disabled={transfer.isPending}
-                          onClick={() => {
-                            setError(undefined)
-                            if (confirm(`Make ${m.name} the owner? You'll become an admin.`)) {
-                              transfer.mutate({ workspaceId, userId: m.userId })
-                            }
-                          }}
-                        >
-                          Make owner
-                        </Button>
-                      )}
-                      {(editable || me) && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          disabled={remove.isPending}
-                          onClick={() => {
-                            setError(undefined)
-                            if (confirm(me ? "Leave this workspace?" : `Remove ${m.name}?`)) {
-                              remove.mutate({ workspaceId, userId: m.userId })
-                            }
-                          }}
-                        >
-                          {me ? "Leave" : "Remove"}
-                        </Button>
+                    <TableCell className="w-10 text-right">
+                      {((isOwner && !me && m.role !== "owner") || editable || me) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon-sm" variant="ghost" aria-label={`Actions for ${m.name}`}>
+                              <IconDots className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem asChild>
+                              <Link href={`/people/${m.userId}`}>View profile</Link>
+                            </DropdownMenuItem>
+                            {isOwner && !me && m.role !== "owner" && (
+                              <DropdownMenuItem
+                                disabled={transfer.isPending}
+                                onSelect={() => {
+                                  setError(undefined)
+                                  if (confirm(`Make ${m.name} the owner? You'll become an admin.`)) {
+                                    transfer.mutate({ workspaceId, userId: m.userId })
+                                  }
+                                }}
+                              >
+                                Make owner
+                              </DropdownMenuItem>
+                            )}
+                            {(editable || me) && (
+                              <DropdownMenuItem
+                                variant="destructive"
+                                disabled={remove.isPending}
+                                onSelect={() => {
+                                  setError(undefined)
+                                  if (confirm(me ? "Leave this workspace?" : `Remove ${m.name}?`)) {
+                                    remove.mutate({ workspaceId, userId: m.userId })
+                                  }
+                                }}
+                              >
+                                {me ? "Leave workspace" : "Remove from workspace"}
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       )}
                     </TableCell>
                   </TableRow>
@@ -662,7 +679,7 @@ function Content() {
   if (settings.error) return <p className="text-destructive text-sm">{settings.error.message}</p>
   const can = settings.data!.can
   return (
-    <div className="flex max-w-4xl flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <NameCard workspaceId={workspace.id} name={workspace.name} isOwner={can["workspace.manage"]} />
       <MembersCard workspaceId={workspace.id} canManage={can["members.manage"]} myRole={settings.data!.role} />
       {can["members.manage"] && <InvitesCard workspaceId={workspace.id} />}
@@ -678,7 +695,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Workspace">
+    <AppShell title="Workspace" description="Name, members, invites, teams and security settings.">
       <Content />
     </AppShell>
   )

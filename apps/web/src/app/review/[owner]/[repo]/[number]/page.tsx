@@ -12,7 +12,7 @@ export default async function Page({
   const n = Number(number)
   if (!Number.isInteger(n) || n < 1) notFound()
   return (
-    <AppShell title="Review">
+    <AppShell width="wide">
       <GuidedReview repo={`${owner}/${repo}`} number={n} />
     </AppShell>
   )
