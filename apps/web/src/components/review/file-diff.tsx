@@ -8,6 +8,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 
 import { MentionTextarea } from "@/components/mention-textarea"
 import { FixWithAgent } from "@/components/review/agent-handoff"
+import { Collapse, flash } from "@/components/motion"
 import { MarkdownPreview } from "@/components/review/markdown-preview"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -139,7 +140,7 @@ function Composer({
   const [body, setBody] = useState("")
   const post = useMutation(trpc.review.comment.mutationOptions({ onSuccess: onPosted }))
   return (
-    <div className="bg-muted/40 space-y-2 border-y p-2 font-sans">
+    <div className="bg-muted/40 animate-in fade-in slide-in-from-top-1 space-y-2 border-y p-2 font-sans duration-150">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-muted-foreground mr-1 text-xs">{startLine ? `Lines ${startLine}–${line}` : `Line ${line}`}</span>
         {COMMENT_LABELS.map((l) => (
@@ -163,7 +164,7 @@ function Composer({
         <Button size="sm" disabled={!body.trim()} onClick={() => onAddPending({ path, line, startLine, side, body })}>
           Add to review
         </Button>
-        <Button size="sm" variant="outline" disabled={!body.trim() || post.isPending} onClick={() => post.mutate({ repo, number, path, line, startLine, side, body })}>
+        <Button size="sm" variant="outline" disabled={!body.trim()} pending={post.isPending} onClick={() => post.mutate({ repo, number, path, line, startLine, side, body })}>
           Comment now
         </Button>
         {side === "RIGHT" && (
@@ -174,7 +175,7 @@ function Composer({
         <Button size="sm" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
-        {post.error && <span className="text-destructive text-sm">{post.error.message}</span>}
+        {post.error && <span role="alert" className="text-destructive text-sm">{post.error.message}</span>}
       </div>
     </div>
   )
@@ -183,11 +184,13 @@ function Composer({
 function ThreadView({ thread, repo, number, branch, canAct, onChanged }: { thread: Thread; repo: string; number: number; branch: string; canAct: boolean; onChanged: () => void }) {
   const trpc = useTRPC()
   const [open, setOpen] = useState(!thread.isResolved)
+  // Resolving folds the thread away; unresolving opens it again.
+  useEffect(() => setOpen(!thread.isResolved), [thread.isResolved])
   const [reply, setReply] = useState("")
   const send = useMutation(trpc.review.reply.mutationOptions({ onSuccess: () => { setReply(""); onChanged() } }))
   const resolve = useMutation(trpc.review.resolveThread.mutationOptions({ onSuccess: onChanged }))
   return (
-    <div className="bg-background m-2 rounded-md border font-sans text-sm">
+    <div className={cn("bg-background m-2 rounded-md border font-sans text-sm transition-opacity duration-300", thread.isResolved && "opacity-70")}>
       <div className="flex items-center gap-2 pr-1.5">
         <button type="button" className="text-muted-foreground flex flex-1 items-center gap-2 px-3 py-1.5 text-left text-xs" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
           {open ? <IconChevronDown className="size-3" aria-hidden /> : <IconChevronRight className="size-3" aria-hidden />}
@@ -200,7 +203,7 @@ function ThreadView({ thread, repo, number, branch, canAct, onChanged }: { threa
           <FixWithAgent context={{ repo, number, branch, path: thread.path, line: thread.line, comments: thread.comments }} />
         )}
       </div>
-      {open && (
+      <Collapse open={open}>
         <div className="space-y-3 border-t px-3 py-2">
           {thread.comments.map((c) => (
             <div key={c.id}>
@@ -215,18 +218,18 @@ function ThreadView({ thread, repo, number, branch, canAct, onChanged }: { threa
             <div className="space-y-2">
               <MentionTextarea value={reply} onChange={setReply} rows={2} placeholder="Reply" aria-label="Reply" />
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" disabled={!reply.trim() || send.isPending} onClick={() => send.mutate({ repo, number, commentId: thread.comments[0]!.id, body: reply })}>
+                <Button size="sm" variant="outline" disabled={!reply.trim()} pending={send.isPending} onClick={() => send.mutate({ repo, number, commentId: thread.comments[0]!.id, body: reply })}>
                   Reply
                 </Button>
-                <Button size="sm" variant="ghost" disabled={resolve.isPending} onClick={() => resolve.mutate({ repo, number, threadId: thread.id, resolve: !thread.isResolved })}>
+                <Button size="sm" variant="ghost" pending={resolve.isPending} onClick={() => resolve.mutate({ repo, number, threadId: thread.id, resolve: !thread.isResolved })}>
                   {thread.isResolved ? "Unresolve" : "Resolve"}
                 </Button>
-                {(send.error ?? resolve.error) && <span className="text-destructive">{(send.error ?? resolve.error)!.message}</span>}
+                {(send.error ?? resolve.error) && <span role="alert" className="text-destructive">{(send.error ?? resolve.error)!.message}</span>}
               </div>
             </div>
           )}
         </div>
-      )}
+      </Collapse>
     </div>
   )
 }
@@ -261,6 +264,10 @@ export function FileDiff({
 }) {
   const trpc = useTRPC()
   const [open, setOpen] = useState(file.tier !== "noise" && !file.viewed)
+  const [everOpen, setEverOpen] = useState(open)
+  useEffect(() => {
+    if (open) setEverOpen(true)
+  }, [open])
   const [view, setView] = useState<"diff" | "full" | "preview">("diff")
   const full = view !== "diff"
   const [showAll, setShowAll] = useState(false)
@@ -280,6 +287,7 @@ export function FileDiff({
       if (decodeURIComponent(location.hash) === `#file-${file.filename}`) {
         setOpen(true)
         setNear(true)
+        if (document.readyState === "complete") flash(section.current)
       }
     }
     onHash()
@@ -305,7 +313,7 @@ export function FileDiff({
     return other ? wordRange(l.text, other.text) : null
   }
   const selected = (side: Side, n?: number) =>
-    composer?.startLine !== undefined && n !== undefined && composer.side === side && n >= composer.startLine && n <= composer.line
+    composer !== null && n !== undefined && composer.side === side && n >= (composer.startLine ?? composer.line) && n <= composer.line
   const tier = TIER_LABEL[file.tier]
 
   const at = (side: Side, line?: number) =>
@@ -332,7 +340,7 @@ export function FileDiff({
             onClick={(e) => pick(e, n, side)}
             data-text={text}
           >
-            <IconMessagePlus className="absolute top-0.5 -left-1 hidden size-3.5 text-sky-500 group-hover:block" aria-hidden />
+            <IconMessagePlus className="absolute top-0.5 -left-1 size-3.5 text-sky-500 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />
             {n}
           </button>
         ) : (
@@ -440,7 +448,7 @@ export function FileDiff({
           const n = side === "LEFT" ? line.oldNo : line.newNo
           return (
             <Fragment key={i}>
-              <tr className={cn(ROW[line.kind], line.extra && "text-muted-foreground bg-muted/30")}>
+              <tr className={cn(ROW[line.kind], line.extra && "text-muted-foreground bg-muted/30 animate-in fade-in duration-300")}>
                 <NumberCell n={line.kind === "add" ? undefined : line.oldNo} side="LEFT" text={line.text} extra={line.extra} />
                 <NumberCell n={line.kind === "del" ? undefined : line.newNo} side="RIGHT" text={line.text} extra={line.extra} />
                 <td className="px-2 whitespace-pre">
@@ -555,7 +563,9 @@ export function FileDiff({
           Viewed
         </label>
       </header>
-      {open && view === "diff" && symbols.length > 0 && (
+      {everOpen && (
+        <Collapse open={open}>
+      {view === "diff" && symbols.length > 0 && (
         <nav aria-label="Changed symbols" className="flex flex-wrap items-center gap-1.5 border-b px-3 py-1.5">
           <span className="text-muted-foreground mr-1 text-[11px]">Outline</span>
           {symbols.map((s) => (
@@ -570,11 +580,10 @@ export function FileDiff({
           ))}
         </nav>
       )}
-      {open && !near && (
+      {!near && (
         <div aria-hidden style={{ height: Math.min(lines.length, ROW_CAP) * 20 }} />
       )}
-      {open &&
-        near &&
+      {near &&
         (full || file.patch ? (
           <div className={cn(view !== "preview" && "overflow-x-auto")}>
             {view === "preview" ? (
@@ -599,6 +608,8 @@ export function FileDiff({
             {file.status === "renamed" ? "File renamed without changes." : "Diff not shown (binary file or too large for GitHub to include)."}
           </p>
         ))}
+        </Collapse>
+      )}
     </section>
   )
 }

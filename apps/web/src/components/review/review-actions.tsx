@@ -7,6 +7,7 @@ import { useState } from "react"
 import { MentionTextarea } from "@/components/mention-textarea"
 import type { PendingComment } from "@/components/review/file-diff"
 import { Button } from "@/components/ui/button"
+import { DrawTick } from "@/components/motion"
 import { useDraft } from "@/hooks/use-draft"
 import { useTRPC } from "@/trpc/react"
 
@@ -116,13 +117,13 @@ export function ReviewActions({
         aria-label="Review comment"
       />
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" disabled={busy} onClick={() => send("APPROVE")}>
+        <Button size="sm" disabled={busy} pending={submit.isPending && submit.variables?.event === "APPROVE"} onClick={() => send("APPROVE")}>
           Approve
         </Button>
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => send("REQUEST_CHANGES")}>
+        <Button size="sm" variant="outline" disabled={busy} pending={submit.isPending && submit.variables?.event === "REQUEST_CHANGES"} onClick={() => send("REQUEST_CHANGES")}>
           Request changes
         </Button>
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => send("COMMENT")}>
+        <Button size="sm" variant="outline" disabled={busy} pending={submit.isPending && submit.variables?.event === "COMMENT"} onClick={() => send("COMMENT")}>
           Comment
         </Button>
         {canMerge && (
@@ -141,6 +142,7 @@ export function ReviewActions({
               size="sm"
               variant="secondary"
               disabled={busy || Boolean(blocked)}
+              pending={merge.isPending}
               title={blocked}
               onClick={() => {
                 setError(undefined)
@@ -162,8 +164,12 @@ export function ReviewActions({
           </span>
         )}
         <span className="text-muted-foreground text-xs">as {githubLogin}</span>
-        {error && <span className="text-destructive text-sm">{error}</span>}
-        {done && <span className="text-sm text-emerald-600">{done}</span>}
+        {error && <span role="alert" className="text-destructive text-sm">{error}</span>}
+        {done && (
+          <span className="animate-in fade-in zoom-in-95 flex items-center gap-1 text-sm text-emerald-600 duration-200">
+            <DrawTick className="size-3.5" /> {done}
+          </span>
+        )}
       </div>
     </div>
   )

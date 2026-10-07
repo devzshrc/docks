@@ -35,20 +35,20 @@ export function BoardCard({ pr, canAct }: { pr: BoardCardData; canAct: boolean }
   return (
     <div
       className={cn(
-        "bg-background focus-within:ring-ring relative rounded-lg border p-3 text-sm focus-within:ring-2",
+        "bg-background focus-within:ring-ring animate-in fade-in slide-in-from-bottom-1 relative rounded-lg border p-3 text-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-px hover:shadow-md focus-within:ring-2 active:translate-y-0 active:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0",
         pr.stuck && "border-amber-500"
       )}
     >
       {canAct && (
         <button
           type="button"
-          className="text-muted-foreground hover:text-foreground absolute top-2 right-2 z-10"
+          className="text-muted-foreground hover:text-foreground absolute top-2 right-2 z-10 transition-transform duration-150 hover:scale-110 active:scale-90"
           aria-label={pr.priority ? "Remove priority" : "Mark as priority"}
           aria-pressed={pr.priority}
           disabled={priority.isPending}
           onClick={() => priority.mutate({ repo: pr.repo, number: pr.number, priority: !pr.priority })}
         >
-          {pr.priority ? <IconStarFilled className="size-4 text-amber-500" /> : <IconStar className="size-4" />}
+          {pr.priority ? <IconStarFilled className="anim-pop size-4 text-amber-500" /> : <IconStar className="size-4" />}
         </button>
       )}
       <Link

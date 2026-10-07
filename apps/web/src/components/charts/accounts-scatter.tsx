@@ -73,12 +73,14 @@ export function AccountsScatter({ accounts }: { accounts: Account[] }) {
 
   return (
     <div className="space-y-2">
+      <div className="anim-reveal">
       <Chart
         definition={definition}
         height={360}
         ariaLabel={`Scatterplot of ${accounts.length} accounts: monthly revenue on the x-axis, 28-day seat retention on the y-axis, point size by seats, color by segment (Free or Team).`}
         onFocusChange={(point) => setFocused(point?.datum ?? null)}
       />
+      </div>
       <p className="text-muted-foreground text-sm" aria-live="polite">
         {focused
           ? `${focused.name}: ${focused.segment}, ${focused.seats} seats, ${usd(focused.monthlyRevenue)}/mo, ${pct(focused.retention)} retention`

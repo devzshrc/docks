@@ -1,9 +1,11 @@
 "use client"
 
-import { AiProgrammingIcon, ComputerTerminal01Icon, Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons"
+import { ComputerTerminal01Icon, Copy01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useState } from "react"
 
+import { AgentCycleIcon, BrandIcon, Px0Icon, type Brand } from "@/components/brand-icons"
+import { DrawTick } from "@/components/motion"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -71,6 +73,8 @@ function useCopied() {
   }
 }
 
+const BRAND: Record<string, Brand> = { claude: "claude", codex: "codex", cursor: "cursor" }
+
 /** "Fix with agent": copies a ready-to-run command for a local coding agent. */
 export function FixWithAgent({ context, label = "Fix with agent" }: { context: FixContext; label?: string }) {
   const { copied, run } = useCopied()
@@ -78,7 +82,7 @@ export function FixWithAgent({ context, label = "Fix with agent" }: { context: F
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button size="sm" variant="ghost" className="h-7 gap-1.5 px-2 text-xs">
-          <HugeiconsIcon icon={copied ? Tick02Icon : AiProgrammingIcon} size={14} aria-hidden />
+          {copied ? <DrawTick className="size-3.5 text-emerald-600 dark:text-emerald-400" /> : <AgentCycleIcon />}
           {copied ? "Copied" : label}
         </Button>
       </DropdownMenuTrigger>
@@ -89,7 +93,11 @@ export function FixWithAgent({ context, label = "Fix with agent" }: { context: F
         <DropdownMenuSeparator />
         {AGENTS.map((a) => (
           <DropdownMenuItem key={a.id} onSelect={() => void run(a.id, a.cmd(fixPrompt(context)))}>
-            <HugeiconsIcon icon={a.id === "prompt" ? Copy01Icon : ComputerTerminal01Icon} size={15} aria-hidden />
+            {a.id in BRAND ? (
+              <BrandIcon brand={BRAND[a.id]!} />
+            ) : (
+              <HugeiconsIcon icon={a.id === "prompt" ? Copy01Icon : ComputerTerminal01Icon} size={15} aria-hidden />
+            )}
             {a.label}
           </DropdownMenuItem>
         ))}
@@ -105,7 +113,7 @@ export function OpenInPx0({ prUrl, branch }: { prUrl: string; branch: string }) 
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button type="button" className="hover:text-foreground flex items-center gap-1">
-          <HugeiconsIcon icon={copied ? Tick02Icon : ComputerTerminal01Icon} size={14} aria-hidden />
+          {copied ? <DrawTick className="size-3.5 text-emerald-600 dark:text-emerald-400" /> : <Px0Icon className="h-3.5" />}
           {copied ? "Copied" : "Review in px0"}
         </button>
       </DropdownMenuTrigger>
@@ -115,14 +123,14 @@ export function OpenInPx0({ prUrl, branch }: { prUrl: string; branch: string }) 
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void run("pr", `px0 ${prUrl}`)}>
-          <HugeiconsIcon icon={Copy01Icon} size={15} aria-hidden />
+          <Px0Icon className="h-3.5" />
           <span className="flex flex-col">
             Copy review command
             <span className="text-muted-foreground font-code text-[11px]">px0 {prUrl.replace("https://github.com/", "…/")}</span>
           </span>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void run("local", `git fetch origin ${shq(branch)} && git switch ${shq(branch)} && px0 .`)}>
-          <HugeiconsIcon icon={Copy01Icon} size={15} aria-hidden />
+          <HugeiconsIcon icon={ComputerTerminal01Icon} size={15} aria-hidden />
           <span className="flex flex-col">
             Copy checkout + open
             <span className="text-muted-foreground text-[11px]">Switches your local clone to this branch</span>

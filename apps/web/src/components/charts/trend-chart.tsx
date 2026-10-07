@@ -47,5 +47,9 @@ export function TrendChart({
       }),
     [rows, label, format, color]
   )
-  return <Chart definition={definition} height={height} ariaLabel={ariaLabel} />
+  return (
+    <div className="anim-reveal">
+      <Chart definition={definition} height={height} ariaLabel={ariaLabel} />
+    </div>
+  )
 }

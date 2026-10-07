@@ -4,6 +4,7 @@ import type { Guide } from "@docks/api"
 import { IconFileCode } from "@tabler/icons-react"
 import { useEffect, useState } from "react"
 
+import { Count, DrawTick, useJustBecame } from "@/components/motion"
 import { cn } from "@/lib/utils"
 
 /**
@@ -35,8 +36,9 @@ export function Checklist({
     } catch {}
   }
 
+  const complete = items.length > 0 && done.length === items.length
+  const justDone = useJustBecame(complete)
   if (!items.length) return null
-  const complete = done.length === items.length
 
   return (
     <section aria-labelledby="checklist-heading" className="space-y-3">
@@ -51,12 +53,20 @@ export function Checklist({
               complete ? "font-medium text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
             )}
           >
-            {complete ? "All checked" : `${done.length} of ${items.length}`}
+            {complete ? (
+              <span className="inline-flex items-center gap-1">
+                <DrawTick className="size-3.5" /> All checked
+              </span>
+            ) : (
+              <>
+                <Count value={done.length} /> of {items.length}
+              </>
+            )}
           </span>
         </div>
         <div className="bg-muted h-1 overflow-hidden rounded-full" aria-hidden>
           <div
-            className={cn("h-full rounded-full transition-[width] duration-300", complete ? "bg-emerald-500" : "bg-primary")}
+            className={cn("h-full rounded-full transition-[width,background-color] duration-300", complete ? "bg-emerald-500" : "bg-primary", justDone && "anim-pulse-once")}
             style={{ width: `${(done.length / items.length) * 100}%` }}
           />
         </div>

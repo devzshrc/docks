@@ -40,10 +40,15 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
+  pending = false,
+  children,
+  disabled,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    /** Shows a spinner over the label without changing the button's width. */
+    pending?: boolean
   }) {
   const Comp = asChild ? Slot.Root : "button"
 
@@ -52,9 +57,24 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, className }), pending && "relative")}
+      disabled={disabled || pending}
+      aria-busy={pending || undefined}
       {...props}
-    />
+    >
+      {asChild || !pending ? (
+        children
+      ) : (
+        <>
+          <span className="invisible inline-flex items-center gap-[inherit]">{children}</span>
+          <span className="absolute inset-0 flex items-center justify-center" aria-hidden>
+            <svg viewBox="0 0 24 24" className="anim-spin size-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
+              <path d="M12 3a9 9 0 1 0 9 9" opacity={0.9} />
+            </svg>
+          </span>
+        </>
+      )}
+    </Comp>
   )
 }
 

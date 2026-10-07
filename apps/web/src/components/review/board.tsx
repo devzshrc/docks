@@ -3,6 +3,7 @@
 import type { BoardCard as BoardCardData } from "@docks/api"
 import { useEffect, useRef } from "react"
 
+import { Count } from "@/components/motion"
 import { BoardCard } from "@/components/review/board-card"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -73,15 +74,15 @@ export function ReviewBoard({
               <h2 className="mb-3 flex items-center gap-2 px-1 text-sm font-medium">
                 {lane.title}
                 {cards && (
-                  <span className="bg-background text-muted-foreground rounded-full border px-2 text-xs tabular-nums">
-                    {items.length}
+                  <span className="bg-background text-muted-foreground overflow-hidden rounded-full border px-2 text-xs">
+                    <Count value={items.length} />
                   </span>
                 )}
               </h2>
               {loading ? (
                 <Skeleton className="h-20 w-full" />
               ) : items.length === 0 ? (
-                <p className="text-muted-foreground rounded-md border border-dashed px-3 py-6 text-center text-xs">Nothing here</p>
+                <p className="text-muted-foreground animate-in fade-in rounded-md border border-dashed px-3 py-6 text-center text-xs duration-300">Nothing here</p>
               ) : (
                 <div className="space-y-2">
                   {items.map((pr) => (
