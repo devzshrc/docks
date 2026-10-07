@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useMemo, useRef } from "react"
 
 import { AppShell } from "@/components/app-shell"
+import { NewIssueButton } from "@/components/new-issue/button"
 import { GettingStarted } from "@/components/getting-started"
 import { ReviewBoard } from "@/components/review/board"
 import { fromParams, serverFilters, toParams, type UiFilters } from "@/components/review/board-filters"
@@ -226,7 +227,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Reviews" description="Open pull requests across your repositories, grouped by where they are in review." width="wide">
+    <AppShell title="Reviews" description="Open pull requests across your repositories, grouped by where they are in review." width="wide" actions={<NewIssueButton />}>
       <Content />
     </AppShell>
   )

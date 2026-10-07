@@ -28,3 +28,9 @@ export function issueMentions(text: string | null | undefined, self: number): nu
   }
   return [...out].slice(0, 5);
 }
+
+/** Issue number from a branch like `fix/123-login-bug`, `feat/123`, `issue-123-x` (what "New issue" suggests). */
+export function issueFromBranch(branch: string): number | null {
+  const m = branch.match(/^(?:fix|feat|feature|chore|bug|bugfix|hotfix)\/(\d{1,7})(?:-|$)/i) ?? branch.match(/(?:^|\/)(?:issue|gh)-(\d{1,7})(?:-|$)/i);
+  return m ? Number(m[1]) : null;
+}

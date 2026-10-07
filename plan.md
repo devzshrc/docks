@@ -264,6 +264,8 @@ type RankedFile = {
 
 **GitHub App permissions:** Pull requests read/write, Contents read, Checks read, Metadata read. Members read (for reviewer suggestions in v1.1).
 
+**Added for "New issue":** Issues read/write. Existing installations must accept the permission update before issue creation works; until then the panel shows an admin-facing message (`issue.options.issuesPermission`).
+
 ### 9.3 Web routes (`apps/web`)
 
 | Route | Screen |

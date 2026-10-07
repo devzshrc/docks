@@ -12,7 +12,8 @@ export type EventName =
   | "pr_opened"
   | "guide_viewed"
   | "review_submitted"
-  | "merged";
+  | "merged"
+  | "issue_created";
 
 export async function track(
   userId: string | null,

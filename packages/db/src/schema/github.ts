@@ -7,6 +7,7 @@ import {
   pgTable,
   primaryKey,
   text,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { timestamps, timestamptz } from "./_helpers.js";
 import { user } from "./auth.js";
@@ -181,4 +182,26 @@ export const githubRepoAccess = pgTable(
     syncedAt: timestamptz("synced_at").defaultNow().notNull(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.repoId] })],
+);
+
+/**
+ * Issues created through "New issue". The client key (one per opened form) makes a retry or double
+ * click return the first issue instead of creating a second.
+ */
+export const issueCreation = pgTable(
+  "issue_creation",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    repoId: bigint("repo_id", { mode: "number" })
+      .notNull()
+      .references(() => repository.id, { onDelete: "cascade" }),
+    clientKey: text("client_key").notNull(),
+    number: integer("number").notNull(),
+    url: text("url").notNull(),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("issue_creation_key_idx").on(t.userId, t.clientKey)],
 );

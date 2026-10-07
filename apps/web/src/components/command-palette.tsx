@@ -10,6 +10,7 @@ import {
   GitPullRequestIcon,
   Folder01Icon,
   ListViewIcon,
+  PlusSignIcon,
   Search01Icon,
   Settings02Icon,
   Shield01Icon,
@@ -22,6 +23,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
 import { SlidingHighlight } from "@/components/motion"
+import { useNewIssue } from "@/components/new-issue/provider"
 import { useWorkspace } from "@/hooks/use-workspace"
 import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/react"
@@ -43,7 +45,7 @@ const PAGES: { label: string; href: string; icon: IconDef }[] = [
   { label: "Security", href: "/settings/account#security", icon: Shield01Icon },
 ]
 
-type Item = { key: string; group: "Pages" | "Pull requests"; label: string; hint?: string; href: string; icon: IconDef }
+type Item = { key: string; group: "Actions" | "Pages" | "Pull requests"; label: string; hint?: string; href?: string; run?: () => void; icon: IconDef }
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
@@ -58,6 +60,7 @@ export function CommandPalette() {
   const trpc = useTRPC()
   const router = useRouter()
   const { workspace } = useWorkspace()
+  const { open: openIssue, canCreate } = useNewIssue()
   const dialog = useRef<HTMLDialogElement>(null)
   const list = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
@@ -93,6 +96,7 @@ export function CommandPalette() {
 
   const needle = q.trim().toLowerCase().replace(/^#/, "")
   const match = (s: string) => !needle || s.toLowerCase().includes(needle)
+  const actions: Item[] = canCreate && match("new issue create") ? [{ key: "new-issue", group: "Actions", label: "New issue", hint: "C", run: () => openIssue({ source: "palette" }), icon: PlusSignIcon }] : []
   const pages: Item[] = PAGES.filter((p) => match(p.label)).map((p) => ({ key: p.href, group: "Pages", ...p }))
   const prs: Item[] = (board.data?.cards ?? [])
     .filter((c) => match(`${c.number} ${c.title} ${c.repo}`))
@@ -106,11 +110,12 @@ export function CommandPalette() {
       icon: GitPullRequestIcon,
     }))
   // PRs first once the person is typing; pages first when browsing.
-  const items = needle ? [...prs, ...pages] : [...pages.slice(0, 6), ...prs]
+  const items = needle ? [...actions, ...prs, ...pages] : [...actions, ...pages.slice(0, 6), ...prs]
 
-  function go(href: string) {
+  function go(item: Item) {
     setOpen(false)
-    router.push(href)
+    if (item.run) item.run()
+    else router.push(item.href!)
   }
 
   return (
@@ -136,7 +141,7 @@ export function CommandPalette() {
               setActive((a) => (items.length ? (a + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length : 0))
             } else if (e.key === "Enter" && items[active]) {
               e.preventDefault()
-              go(items[active]!.href)
+              go(items[active]!)
             }
           }}
           placeholder="Search pages and pull requests…"
@@ -166,7 +171,7 @@ export function CommandPalette() {
               data-idx={idx}
               aria-selected={idx === active}
               onMouseMove={() => setActive(idx)}
-              onClick={() => go(i.href)}
+              onClick={() => go(i)}
               className={cn(
                 "relative flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors",
                 idx === active ? "text-accent-foreground" : "text-foreground/90"
