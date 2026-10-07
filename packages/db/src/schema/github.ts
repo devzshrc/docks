@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -12,6 +13,24 @@ import { user } from "./auth.js";
 import { workspace } from "./workspace.js";
 
 /** plan.md §8 — Postgres mirror of GitHub data, kept fresh by webhooks. */
+
+/**
+ * "When a PR touches X or is bigger than N lines, do Y" (plan: routing rules).
+ * A rule needs at least one condition; actions fire once per PR (see pull_request.applied_rules).
+ */
+export interface RoutingRule {
+  id: string;
+  /** Globs over changed file paths ("billing/**", "*.sql"); empty = no path condition. */
+  paths: string[];
+  /** Lines added + removed at or above this; null = no size condition. */
+  minLines: number | null;
+  label: string | null;
+  /** Request every member of this team (by their linked GitHub login). */
+  teamId: string | null;
+  reviewers: string[];
+  /** Posted as a PR comment by the App. */
+  comment: string | null;
+}
 
 export const githubInstallation = pgTable("github_installation", {
   id: bigint("id", { mode: "number" }).primaryKey(), // GitHub installation id
@@ -37,6 +56,7 @@ export const repository = pgTable("repository", {
   autoAssign: integer("auto_assign").notNull().default(0),
   /** Team questions shown above the AI checklist on every PR (plan M6). */
   checklistTemplate: text("checklist_template").array().notNull().default([]),
+  routingRules: jsonb("routing_rules").$type<RoutingRule[]>().notNull().default([]),
   ...timestamps,
 });
 
@@ -77,6 +97,8 @@ export const pullRequest = pgTable(
     claimedBy: text("claimed_by").references(() => user.id, { onDelete: "set null" }),
     /** Set once auto-assign has run, so it never re-requests after people are removed. */
     autoAssignedAt: timestamptz("auto_assigned_at"),
+    /** Routing rules already applied to this PR, so each fires once. */
+    appliedRules: text("applied_rules").array().notNull().default([]),
     lastActivityAt: timestamptz("last_activity_at").notNull(),
     ...timestamps,
   },

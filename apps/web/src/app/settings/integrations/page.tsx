@@ -259,6 +259,79 @@ function SlackCard({ workspaceId }: { workspaceId: string }) {
   )
 }
 
+function LinearCard({ workspaceId }: { workspaceId: string }) {
+  const trpc = useTRPC()
+  const queryClient = useQueryClient()
+  const [key, setKey] = useState("")
+  const linear = useQuery(trpc.integration.linear.queryOptions({ workspaceId }))
+  const refresh = () => queryClient.invalidateQueries(trpc.integration.linear.queryFilter())
+  const connect = useMutation(trpc.integration.connectLinear.mutationOptions({ onSuccess: () => { setKey(""); void refresh() } }))
+  const disconnect = useMutation(trpc.integration.disconnectLinear.mutationOptions({ onSuccess: refresh }))
+
+  if (linear.isPending) return <Skeleton className="h-32 w-full max-w-lg" />
+  if (linear.error) return <p className="text-destructive text-sm">{linear.error.message}</p>
+  const { orgName, canManage } = linear.data
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Linear</CardTitle>
+        <CardDescription>
+          Show the Linear issue a pull request belongs to (matched from IDs like ENG-123 in the title, branch or description) while you review.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {orgName ? (
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <span>
+              Connected to <span className="font-medium">{orgName}</span>
+            </span>
+            {canManage && (
+              <Button
+                size="sm"
+                variant="ghost"
+                pending={disconnect.isPending}
+                onClick={() => confirm("Stop showing Linear issues?") && disconnect.mutate({ workspaceId })}
+              >
+                Disconnect
+              </Button>
+            )}
+          </div>
+        ) : canManage ? (
+          <form
+            className="flex flex-wrap items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              connect.mutate({ workspaceId, apiKey: key })
+            }}
+          >
+            <Input
+              type="password"
+              autoComplete="off"
+              className="max-w-xs"
+              placeholder="lin_api_…"
+              aria-label="Linear API key"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+            />
+            <Button type="submit" pending={connect.isPending} disabled={key.trim().length < 10}>
+              Connect
+            </Button>
+            <p className="text-muted-foreground w-full text-xs">
+              Create a personal API key in Linear under Settings → Security &amp; access. It&apos;s stored encrypted and only used to read issues.
+            </p>
+          </form>
+        ) : (
+          <p className="text-muted-foreground text-sm">Ask a workspace owner to connect Linear.</p>
+        )}
+        {(connect.error ?? disconnect.error) && (
+          <p role="alert" className="text-destructive text-sm">{(connect.error ?? disconnect.error)!.message}</p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 function Integrations() {
   const { workspace, isPending } = useWorkspace()
   if (isPending) return null
@@ -269,6 +342,7 @@ function Integrations() {
         <GitHubCard workspaceId={workspace.id} />
         <GitHubAccountCard />
         <SlackCard workspaceId={workspace.id} />
+        <LinearCard workspaceId={workspace.id} />
       </div>
     </Suspense>
   )
@@ -276,7 +350,7 @@ function Integrations() {
 
 export default function Page() {
   return (
-    <AppShell title="Integrations" description="Connect GitHub to sync pull requests, and Slack for the daily digest." width="narrow">
+    <AppShell title="Integrations" description="Connect GitHub to sync pull requests, Slack for the daily digest and Linear for issue context." width="narrow">
       <Integrations />
     </AppShell>
   )

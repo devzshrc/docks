@@ -2,6 +2,16 @@ import { integer, pgTable, text } from "drizzle-orm/pg-core";
 import { timestamps } from "./_helpers.js";
 import { workspace } from "./workspace.js";
 
+/** Linear API key per workspace, so the review page can show linked Linear issues. */
+export const linearIntegration = pgTable("linear_integration", {
+  workspaceId: text("workspace_id")
+    .primaryKey()
+    .references(() => workspace.id, { onDelete: "cascade" }),
+  apiKeyEncrypted: text("api_key_encrypted").notNull(),
+  orgName: text("org_name").notNull(),
+  ...timestamps,
+});
+
 /**
  * plan.md §5.4 — daily stuck-PR digest via a Slack incoming webhook.
  * The channel is chosen on Slack's own OAuth screen; we can only post there.

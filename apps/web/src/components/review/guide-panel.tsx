@@ -78,27 +78,28 @@ export function GuidePanel({
       {error && <p className="text-destructive text-sm">{error}</p>}
 
       {guide.steps.length > 0 && (
-        <ol className="grid gap-2 sm:grid-cols-2">
-          <li>
+        <ol className="grid auto-rows-fr gap-2 sm:grid-cols-2">
+          <li className="h-full">
             <button
               type="button"
               onClick={() => onStepChange(null)}
               className={cn(
-                "hover:bg-muted w-full rounded-md border px-3 py-2 text-left text-sm",
+                "hover:bg-muted flex h-full w-full flex-col justify-center rounded-md border px-3 py-2 text-left text-sm",
                 activeStep === null && "border-foreground/40 bg-muted"
               )}
             >
               <span className="font-medium">All files</span>
+              <span className="text-muted-foreground mt-0.5 block text-xs">Show the full diff.</span>
             </button>
           </li>
           {guide.steps.map((step, i) => (
-            <li key={i}>
+            <li key={i} className="h-full">
               <button
                 type="button"
                 onClick={() => onStepChange(activeStep === i ? null : i)}
                 aria-pressed={activeStep === i}
                 className={cn(
-                  "hover:bg-muted w-full rounded-md border px-3 py-2 text-left text-sm",
+                  "hover:bg-muted flex h-full w-full flex-col justify-center rounded-md border px-3 py-2 text-left text-sm",
                   activeStep === i && "border-foreground/40 bg-muted"
                 )}
               >

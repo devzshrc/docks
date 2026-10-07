@@ -198,9 +198,39 @@ const THREADS_QUERY = `query($owner:String!,$name:String!,$number:Int!,$cursor:S
         comments(first:50){ nodes{ databaseId body createdAt author{ login } } } }
     } } } }`;
 
+export interface BlameRange {
+  start: number;
+  end: number;
+  oid: string;
+  headline: string;
+  date: string;
+  author: string;
+  pr: { number: number; title: string; url: string } | null;
+}
+
+export interface GhIssue {
+  number: number;
+  title: string;
+  url: string;
+  state: "open" | "closed";
+  labels: { name: string; color: string }[];
+  assignees: { login: string; avatar: string }[];
+}
+
+const BLAME_QUERY = `query($owner:String!,$name:String!,$oid:GitObjectID!,$path:String!){
+  repository(owner:$owner,name:$name){ object(oid:$oid){ ... on Commit { blame(path:$path){ ranges{
+    startingLine endingLine
+    commit{ oid abbreviatedOid messageHeadline committedDate author{ name user{ login } }
+      associatedPullRequests(first:1){ nodes{ number title url } } } } } } } } }`;
+
+const CLOSING_QUERY = `query($owner:String!,$name:String!,$number:Int!){
+  repository(owner:$owner,name:$name){ pullRequest(number:$number){ closingIssuesReferences(first:10){ nodes{
+    number title url state repository{ nameWithOwner }
+    labels(first:5){ nodes{ name color } } assignees(first:3){ nodes{ login avatarUrl } } } } } } }`;
+
 /** Reads as the App installation — used by sync jobs. */
 export function installationClient(installationId: number) {
-  const { call, paginate } = clientFor(() => getInstallationToken(installationId));
+  const { call, paginate, graphql } = clientFor(() => getInstallationToken(installationId));
   return {
     listRepos: () =>
       paginate<GhRepo, { repositories: GhRepo[] }>(
@@ -230,7 +260,76 @@ export function installationClient(installationId: number) {
     },
     /** Files changed between two commits (for "since my last review"). */
     compare: (repo: string, base: string, head: string) =>
-      call<{ files?: { filename: string }[]; status: string }>(`/repos/${repo}/compare/${base}...${head}`),
+      call<{ files?: { filename: string }[]; status: string; merge_base_commit?: { sha: string } }>(
+        `/repos/${repo}/compare/${base}...${head}`,
+      ),
+    /** Per-line history of a file at a commit: who last changed each range, and in which PR. */
+    blame: async (repo: string, oid: string, path: string): Promise<BlameRange[]> => {
+      const [owner, name] = repo.split("/");
+      type R = { repository: { object: { blame?: { ranges: {
+        startingLine: number; endingLine: number;
+        commit: { oid: string; abbreviatedOid: string; messageHeadline: string; committedDate: string;
+          author: { name: string | null; user: { login: string } | null } | null;
+          associatedPullRequests: { nodes: { number: number; title: string; url: string }[] } };
+      }[] } } | null } };
+      const data = await graphql<R>(BLAME_QUERY, { owner, name, oid, path });
+      return (data.repository.object?.blame?.ranges ?? []).map((r) => ({
+        start: r.startingLine,
+        end: r.endingLine,
+        oid: r.commit.abbreviatedOid,
+        headline: r.commit.messageHeadline,
+        date: r.commit.committedDate,
+        author: r.commit.author?.user?.login ?? r.commit.author?.name ?? "unknown",
+        pr: r.commit.associatedPullRequests.nodes[0] ?? null,
+      }));
+    },
+    /** Issues GitHub itself links to this PR (closing keywords or the Development sidebar). */
+    closingIssues: async (repo: string, n: number): Promise<GhIssue[]> => {
+      const [owner, name] = repo.split("/");
+      type R = { repository: { pullRequest: { closingIssuesReferences: { nodes: {
+        number: number; title: string; url: string; state: string;
+        labels: { nodes: { name: string; color: string }[] };
+        assignees: { nodes: { login: string; avatarUrl: string }[] };
+        repository: { nameWithOwner: string };
+      }[] } } } };
+      const data = await graphql<R>(CLOSING_QUERY, { owner, name, number: n });
+      return data.repository.pullRequest.closingIssuesReferences.nodes
+        .filter((i) => i.repository.nameWithOwner.toLowerCase() === repo.toLowerCase())
+        .map((i) => ({
+          number: i.number,
+          title: i.title,
+          url: i.url,
+          state: i.state.toLowerCase() === "open" ? "open" : "closed",
+          labels: i.labels.nodes,
+          assignees: i.assignees.nodes.map((a) => ({ login: a.login, avatar: a.avatarUrl })),
+        }));
+    },
+    /** One issue (null if it's a PR or doesn't exist). */
+    issue: async (repo: string, n: number): Promise<GhIssue | null> => {
+      try {
+        const i = await call<{
+          number: number; title: string; html_url: string; state: string; pull_request?: unknown;
+          labels: ({ name: string; color: string } | string)[]; assignees: { login: string; avatar_url: string }[];
+        }>(`/repos/${repo}/issues/${n}`);
+        if (i.pull_request) return null;
+        return {
+          number: i.number,
+          title: i.title,
+          url: i.html_url,
+          state: i.state === "open" ? "open" : "closed",
+          labels: i.labels.flatMap((l) => (typeof l === "string" ? [] : [{ name: l.name, color: l.color }])),
+          assignees: i.assignees.map((a) => ({ login: a.login, avatar: a.avatar_url })),
+        };
+      } catch (err) {
+        if (err instanceof GitHubError && (err.status === 404 || err.status === 410)) return null;
+        throw err;
+      }
+    },
+    /** Routing rules post as the App. */
+    addLabels: (repo: string, n: number, labels: string[]) =>
+      call(`/repos/${repo}/issues/${n}/labels`, { method: "POST", body: JSON.stringify({ labels }) }),
+    commentOnPr: (repo: string, n: number, body: string) =>
+      call(`/repos/${repo}/issues/${n}/comments`, { method: "POST", body: JSON.stringify({ body }) }),
     /** Auto-assign posts as the App. */
     requestReviewers: (repo: string, n: number, logins: string[]) =>
       call(`/repos/${repo}/pulls/${n}/requested_reviewers`, {

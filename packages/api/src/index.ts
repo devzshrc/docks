@@ -13,7 +13,7 @@ export type { AppRouter } from "./routers/_app.js";
 export { claimNextJob, completeJob, enqueue, failJob, PermanentJobError } from "./jobs.js";
 export type { Job, JobType } from "./jobs.js";
 export { handleGithubEvent, verifyGithubSignature } from "./review/webhooks.js";
-export { linkInstallation, purgeOldPatches, runAutoAssign, syncPr, syncRepo } from "./review/sync.js";
+export { linkInstallation, purgeOldPatches, runAutoAssign, runRules, syncPr, syncRepo } from "./review/sync.js";
 export { completeAuthorization, scheduleUserRepoSync, syncUserRepos } from "./review/github-user.js";
 export { generateGuideFor } from "./review/guide.js";
 export { handleBillingWebhook } from "./billing.js";
@@ -27,3 +27,8 @@ export type { BoardCard, Guide, RankedFile, ReviewColumn } from "./review/types.
 export { createTestContext } from "./context.js";
 export type { Context, User } from "./context.js";
 export { protectedProcedure, publicProcedure, router } from "./trpc.js";
+
+// Types the web app needs without importing @docks/db directly.
+export type { RoutingRule } from "@docks/db";
+export type { BlameRange, GhIssue } from "./review/github.js";
+export type { LinearIssue } from "./linear.js";
