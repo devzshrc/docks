@@ -336,3 +336,7 @@ pre, code, kbd { font-family: var(--font-code); }
   .prose-docks img { max-width: 100%; border-radius: 0.4rem; }
   .prose-docks hr { border-color: var(--border); }
 }
+
+/* Word-level diff marks (CSS Custom Highlight API, set from file-diff.tsx). */
+::highlight(word-add) { background-color: oklch(0.72 0.17 150 / 0.35); }
+::highlight(word-del) { background-color: oklch(0.65 0.2 25 / 0.35); }

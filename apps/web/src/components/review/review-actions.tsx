@@ -7,6 +7,7 @@ import { useState } from "react"
 import { MentionTextarea } from "@/components/mention-textarea"
 import type { PendingComment } from "@/components/review/file-diff"
 import { Button } from "@/components/ui/button"
+import { useDraft } from "@/hooks/use-draft"
 import { useTRPC } from "@/trpc/react"
 
 type Event = "APPROVE" | "REQUEST_CHANGES" | "COMMENT"
@@ -43,7 +44,7 @@ export function ReviewActions({
   const blocked = mergeableState ? MERGE_STATE[mergeableState] : undefined
   const trpc = useTRPC()
   const queryClient = useQueryClient()
-  const [body, setBody] = useState("")
+  const [body, setBody] = useDraft(`draft:body:${repo}#${number}`, "")
   const [error, setError] = useState<string>()
   const [done, setDone] = useState<string>()
 

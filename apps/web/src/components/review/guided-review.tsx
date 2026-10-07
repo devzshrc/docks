@@ -10,7 +10,7 @@ import {
 } from "@tabler/icons-react"
 import { Tick02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 
 import { FileIcon } from "@/components/file-icon"
 import { Checklist } from "@/components/review/checklist"
@@ -25,6 +25,8 @@ import { ReviewerPicker } from "@/components/review/reviewer-picker"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { useDraft } from "@/hooks/use-draft"
+import { commentLabel } from "@/lib/diff"
 import { useTRPC } from "@/trpc/react"
 
 const REVIEW_STATE = {
@@ -52,7 +54,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
     refetchInterval: (q) => (q.state.data?.status === "pending" ? 3_000 : false),
   })
   const [activeStep, setActiveStep] = useState<number | null>(null)
-  const [pending, setPending] = useState<PendingComment[]>([])
+  const [pending, setPending] = useDraft<PendingComment[]>(`draft:comments:${repo}#${number}`, [])
   const [sinceOnly, setSinceOnly] = useState(false)
   const [mode, setModeState] = useState<"unified" | "split">("unified")
   useEffect(() => {
@@ -92,6 +94,69 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
     })
   )
 
+  // Keyboard review mode. Reads live from the query cache so the handler never goes stale.
+  const filesNow = () => queryClient.getQueryData(queryOptions.queryKey)?.files ?? []
+  function jumpTo(path: string) {
+    const id = `file-${path}`
+    if (decodeURIComponent(location.hash) === `#${id}`) document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
+    else location.hash = id
+  }
+  function currentFile() {
+    const els = [...document.querySelectorAll<HTMLElement>('section[id^="file-"]')]
+    let cur = els[0]
+    for (const el of els) if (el.getBoundingClientRect().top <= 140) cur = el
+    return cur?.id.slice("file-".length)
+  }
+  function nextUnviewed(after?: string) {
+    const list = filesNow()
+    const at = list.findIndex((f) => f.filename === after)
+    const order = [...list.slice(at + 1), ...list.slice(0, at + 1)]
+    const next = order.find((f) => !f.viewed && f.filename !== after)
+    if (next) jumpTo(next.filename)
+    else document.getElementById("review-actions")?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }
+  function setViewed(path: string, v: boolean) {
+    const f = filesNow().find((x) => x.filename === path)
+    if (!f) return
+    markViewed.mutate({ repo, number, path, fileSha: f.sha, viewed: v })
+    if (v) nextUnviewed(path)
+  }
+  const keys = useRef({ setViewed, jumpTo, currentFile, filesNow })
+  keys.current = { setViewed, jumpTo, currentFile, filesNow }
+  const help = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement | null
+      if (e.metaKey || e.ctrlKey || e.altKey || t?.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t?.tagName ?? "")) return
+      if (document.querySelector("dialog[open]") && e.key !== "?") return
+      const k = keys.current
+      const list = k.filesNow()
+      const cur = k.currentFile()
+      const i = list.findIndex((f) => f.filename === cur)
+      if (e.key === "j" || e.key === "k") {
+        const next = list[Math.max(0, Math.min(list.length - 1, i + (e.key === "j" ? 1 : -1)))]
+        if (next) k.jumpTo(next.filename)
+      } else if (e.key === "n" || e.key === "p") {
+        const hunks = [...document.querySelectorAll<HTMLElement>("tr[data-hunk]")]
+        const mid = 150
+        const target =
+          e.key === "n"
+            ? hunks.find((h) => h.getBoundingClientRect().top > mid + 5)
+            : hunks.findLast((h) => h.getBoundingClientRect().top < mid - 5)
+        target?.scrollIntoView({ block: "start", behavior: "smooth" })
+      } else if (e.key === "v" && cur) {
+        const f = list.find((x) => x.filename === cur)
+        if (f) k.setViewed(cur, !f.viewed)
+      } else if (e.key === "?") {
+        if (help.current?.open) help.current.close()
+        else help.current?.showModal()
+      } else return
+      e.preventDefault()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+
   if (data.isPending) return <Skeleton className="h-64 w-full" />
   if (data.error) return <p className="text-destructive text-sm">{data.error.message}</p>
 
@@ -105,6 +170,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
     .filter((f) => !stepFiles || stepFiles.has(f.filename))
     .filter((f) => !sinceOnly || !newSince || newSince.has(f.filename))
   const threadsFor = (path: string) => (threads.data?.threads ?? []).filter((t) => t.path === path)
+  const blocking = (threads.data?.threads ?? []).filter((t) => !t.isResolved && t.comments[0] && commentLabel(t.comments[0].body) === "blocking").length
   const checklistItems = [
     ...data.data.checklistTemplate.map((question) => ({ question, files: [] as string[] })),
     ...(ready?.checklist ?? []),
@@ -131,6 +197,11 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
             <a href={pr.url} target="_blank" rel="noreferrer" className="hover:text-foreground flex items-center gap-1">
               View on GitHub <IconExternalLink className="size-3.5" aria-hidden />
             </a>
+            {blocking > 0 && (
+              <span className="rounded bg-red-500/15 px-1.5 py-px text-xs font-medium text-red-700 dark:text-red-300">
+                {blocking} blocking
+              </span>
+            )}
             <OpenInPx0 prUrl={pr.url} branch={pr.headRef} />
             <FixWithAgent
               context={{
@@ -312,9 +383,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
               onThreadsChanged={refreshThreads}
               highlightNew={Boolean(newSince?.has(f.filename))}
               branch={pr.headRef}
-              onViewedChange={(v) =>
-                markViewed.mutate({ repo, number, path: f.filename, fileSha: f.sha, viewed: v })
-              }
+              onViewedChange={(v) => setViewed(f.filename, v)}
             />
           ))}
         </div>
@@ -323,7 +392,75 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
       {pr.state === "open" && !data.data.canAct && (
         <p className="text-muted-foreground border-t pt-3 text-sm">You have read-only access to this workspace.</p>
       )}
+      {files.length > 0 && (
+        <div className="bg-popover/95 fixed right-6 bottom-6 z-30 flex items-center gap-3 rounded-full border py-1.5 pr-1.5 pl-4 text-sm shadow-lg backdrop-blur">
+          {viewed < files.length ? (
+            <>
+              <span className="text-muted-foreground tabular-nums">
+                {files.length - viewed} file{files.length - viewed === 1 ? "" : "s"} left
+              </span>
+              <button
+                type="button"
+                onClick={() => nextUnviewed(currentFile())}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-3 py-1 text-xs font-medium transition-colors"
+              >
+                Next unviewed ↓
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="font-medium text-emerald-600 dark:text-emerald-400">All files viewed</span>
+              {pr.state === "open" && data.data.canAct && (
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("review-actions")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-3 py-1 text-xs font-medium transition-colors"
+                >
+                  Submit review
+                </button>
+              )}
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => help.current?.showModal()}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted size-7 rounded-full text-xs transition-colors"
+            aria-label="Keyboard shortcuts"
+          >
+            ?
+          </button>
+        </div>
+      )}
+
+      <dialog
+        ref={help}
+        onClick={(e) => e.target === help.current && help.current?.close()}
+        className="bg-popover text-popover-foreground m-auto w-[min(24rem,calc(100vw-2rem))] rounded-2xl border p-5 shadow-2xl backdrop:bg-black/30"
+        aria-label="Keyboard shortcuts"
+      >
+        <h2 className="mb-3 text-sm font-semibold">Keyboard shortcuts</h2>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+          {[
+            ["j / k", "Next / previous file"],
+            ["n / p", "Next / previous change"],
+            ["v", "Mark file viewed, go to next unviewed"],
+            ["t", "Find file"],
+            ["⌘K", "Go to page or PR"],
+            ["Shift-click", "Select a line range to comment on"],
+            ["?", "Show this list"],
+          ].map(([k, d]) => (
+            <Fragment key={k}>
+              <dt>
+                <kbd className="bg-muted rounded border px-1.5 py-0.5 font-sans text-[11px]">{k}</kbd>
+              </dt>
+              <dd className="text-muted-foreground">{d}</dd>
+            </Fragment>
+          ))}
+        </dl>
+      </dialog>
+
       {pr.state === "open" && data.data.canAct && (
+        <div id="review-actions" className="scroll-mt-24">
         <ReviewActions
           repo={repo}
           number={number}
@@ -338,6 +475,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
           }}
           onDiscardPending={() => setPending([])}
         />
+        </div>
       )}
     </div>
   )
