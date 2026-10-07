@@ -359,7 +359,7 @@ export function FileDiff({
       {open &&
         (full || file.patch ? (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse font-mono text-xs leading-5">
+            <table className="font-code w-full border-collapse text-[12.5px] leading-5">
               {full ? <FullFile /> : mode === "split" ? <Split /> : <Unified />}
             </table>
           </div>
