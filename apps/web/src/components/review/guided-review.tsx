@@ -15,6 +15,8 @@ import { useEffect, useState } from "react"
 import { FileIcon } from "@/components/file-icon"
 import { Checklist } from "@/components/review/checklist"
 import { AskPanel } from "@/components/review/ask-panel"
+import { OpenInPx0 } from "@/components/review/agent-handoff"
+import { FileFinder } from "@/components/review/file-finder"
 import { FileDiff, type PendingComment } from "@/components/review/file-diff"
 import { GuidePanel } from "@/components/review/guide-panel"
 import { ReviewActions } from "@/components/review/review-actions"
@@ -129,6 +131,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
             <a href={pr.url} target="_blank" rel="noreferrer" className="hover:text-foreground flex items-center gap-1">
               View on GitHub <IconExternalLink className="size-3.5" aria-hidden />
             </a>
+            <OpenInPx0 prUrl={pr.url} branch={pr.headRef} />
           </div>
         </div>
         {/* Aligned label column: the eye scans down one edge instead of hunting. */}
@@ -284,6 +287,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
               {threads.data?.needsGithub && (
                 <span className="text-muted-foreground">Connect your GitHub account to see and add comments.</span>
               )}
+              <FileFinder files={files} />
             </div>
           )}
           {visible.map((f) => (
@@ -299,6 +303,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
               onAddPending={(c) => setPending((all) => [...all, c])}
               onThreadsChanged={refreshThreads}
               highlightNew={Boolean(newSince?.has(f.filename))}
+              branch={pr.headRef}
               onViewedChange={(v) =>
                 markViewed.mutate({ repo, number, path: f.filename, fileSha: f.sha, viewed: v })
               }
