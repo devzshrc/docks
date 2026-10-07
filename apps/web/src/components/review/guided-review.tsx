@@ -8,8 +8,11 @@ import {
   IconExternalLink,
   IconGitBranch,
 } from "@tabler/icons-react"
+import { Tick02Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import { useEffect, useState } from "react"
 
+import { FileIcon } from "@/components/file-icon"
 import { Checklist } from "@/components/review/checklist"
 import { AskPanel } from "@/components/review/ask-panel"
 import { FileDiff, type PendingComment } from "@/components/review/file-diff"
@@ -189,31 +192,50 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
               />
             </div>
           </div>
-          <nav aria-label="Files" className="max-h-[60vh] overflow-y-auto">
-            <ol className="space-y-0.5 text-xs">
-              {visible.map((f) => (
-                <li key={f.filename}>
-                  <a
-                    href={`#file-${f.filename}`}
-                    className={cn(
-                      "hover:bg-muted flex items-center gap-2 rounded px-2 py-1 font-mono",
-                      f.viewed && "text-muted-foreground line-through",
-                      f.tier === "noise" && "opacity-60"
-                    )}
-                  >
-                    <span
+          <nav aria-label="Files" className="-mx-2 max-h-[60vh] overflow-y-auto">
+            <ol className="space-y-px">
+              {visible.map((f) => {
+                const parts = f.filename.split("/")
+                const name = parts.pop()
+                const dir = parts.join("/")
+                return (
+                  <li key={f.filename}>
+                    <a
+                      href={`#file-${f.filename}`}
+                      title={f.filename}
                       className={cn(
-                        "size-1.5 shrink-0 rounded-full",
-                        f.changedSinceViewed ? "bg-amber-500" : f.viewed ? "bg-emerald-600" : "bg-muted-foreground/40"
+                        "hover:bg-muted/70 group flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors",
+                        f.tier === "noise" && "opacity-60"
                       )}
-                      aria-hidden
-                    />
-                    <span className="truncate" title={f.filename}>
-                      {f.filename.split("/").pop()}
-                    </span>
-                  </a>
-                </li>
-              ))}
+                    >
+                      <FileIcon path={f.filename} className={cn(f.viewed && !f.changedSinceViewed && "opacity-50")} />
+                      <span className="min-w-0 flex-1 leading-tight">
+                        <span
+                          className={cn(
+                            "block truncate font-code text-[12.5px]",
+                            f.viewed && !f.changedSinceViewed ? "text-muted-foreground" : "text-foreground"
+                          )}
+                        >
+                          {name}
+                        </span>
+                        {dir && <span className="text-muted-foreground/70 block truncate text-[11px]">{dir}</span>}
+                      </span>
+                      <span className="flex shrink-0 items-center gap-1.5 font-code text-[10.5px] tabular-nums">
+                        {f.changedSinceViewed ? (
+                          <span className="rounded bg-amber-500/15 px-1 py-px text-amber-700 dark:text-amber-400">changed</span>
+                        ) : f.viewed ? (
+                          <HugeiconsIcon icon={Tick02Icon} size={14} className="text-emerald-600 dark:text-emerald-400" aria-label="Viewed" />
+                        ) : (
+                          <>
+                            {f.additions > 0 && <span className="text-emerald-600 dark:text-emerald-400">+{f.additions}</span>}
+                            {f.deletions > 0 && <span className="text-rose-600 dark:text-rose-400">−{f.deletions}</span>}
+                          </>
+                        )}
+                      </span>
+                    </a>
+                  </li>
+                )
+              })}
             </ol>
           </nav>
           <Checklist items={checklistItems} storageKey={`checklist:${repo}#${number}@${pr.headSha}`} />
