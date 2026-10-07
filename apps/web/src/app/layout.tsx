@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { cn } from "@/lib/utils";
 import "./globals.css";
+import "@/components/obsidian/obsidian-theme.css";
 
 // Geist for UI text, Geist Mono for UI monospace (paths, numbers),
 // Fira Code for code. Variables live on <html> so the :root theme tokens
