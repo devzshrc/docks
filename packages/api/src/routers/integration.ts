@@ -6,8 +6,9 @@ import { decrypt, encrypt } from "../crypto.js";
 import { linearOrg, linearTeams } from "../linear.js";
 import { z } from "zod";
 import { assertCan, assertMember, audit, can } from "../access.js";
-import { installUrl } from "../review/github.js";
-import { authorizeUrl, githubIdentity } from "../review/github-user.js";
+import { getInstallation, installUrl } from "../review/github.js";
+import { authorizeUrl, githubAs, githubIdentity } from "../review/github-user.js";
+import { linkInstallation } from "../review/sync.js";
 import { isValidTimezone, sendTestDigest, slackConnectUrl } from "../slack.js";
 import { protectedProcedure, router } from "../trpc.js";
 
@@ -18,6 +19,42 @@ export const integrationRouter = router({
     .query(async ({ ctx, input }) => {
       await assertCan(ctx.user.id, input.workspaceId, "integrations.manage");
       return { url: installUrl(input.workspaceId) };
+    }),
+  /**
+   * Installations of our App this person can reach on GitHub. GitHub only redirects back after
+   * a fresh install, so this is how an install that already exists gets linked to a workspace.
+   */
+  githubInstallations: protectedProcedure
+    .input(z.object({ workspaceId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      await assertCan(ctx.user.id, input.workspaceId, "integrations.manage");
+      if (!(await githubIdentity(ctx.user.id))) return [];
+      const [mine, linked] = await Promise.all([
+        githubAs(ctx.user.id).installations(),
+        db
+          .select({ id: schema.githubInstallation.id })
+          .from(schema.githubInstallation)
+          .where(eq(schema.githubInstallation.workspaceId, input.workspaceId)),
+      ]);
+      const here = new Set(linked.map((r) => r.id));
+      return Promise.all(
+        mine.map(async ({ id }) => {
+          const inst = await getInstallation(id);
+          return { id, login: inst.account.login, type: inst.account.type, linked: here.has(id) };
+        }),
+      );
+    }),
+  linkGithubInstallation: protectedProcedure
+    .input(z.object({ workspaceId: z.string(), installationId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      await assertCan(ctx.user.id, input.workspaceId, "integrations.manage");
+      // Only installations this person can actually see on GitHub.
+      const mine = await githubAs(ctx.user.id).installations();
+      if (!mine.some((i) => i.id === input.installationId)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't have access to that installation on GitHub" });
+      }
+      await linkInstallation(ctx.user.id, input.installationId, input.workspaceId);
+      return { ok: true };
     }),
   /** Per-user GitHub connection, needed to act as yourself (review, merge). */
   githubAccount: protectedProcedure.query(async ({ ctx }) => {
