@@ -14,7 +14,6 @@ import { DiscoverButton } from "@/components/obsidian/discover-button"
 import { DraggableMarquee } from "@/components/obsidian/draggable-marquee"
 import { FlipText } from "@/components/obsidian/flip-text"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Button } from "@/components/ui/button"
 import { useSession } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 
@@ -45,7 +44,7 @@ const pill = "inline-flex h-10 items-center justify-center gap-2 rounded-full px
 const primaryPill = `${pill} bg-foreground text-background hover:bg-foreground/90`
 const secondaryPill = `${pill} tex-neutral`
 
-/* ─── Content ────────────────────────────────────────────────────────────────────────── */
+/* ─── Content ───────────────────────────────────────────────────────────────────────── */
 
 const FACTS = [
   { k: "One board", v: "Every open pull request, across every repository, by where it is in review." },
@@ -90,8 +89,6 @@ function SkipIfSignedIn() {
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return <p className="text-text-3 font-mono text-[11px] tracking-[0.14em] uppercase">{children}</p>
 }
-
-const section = "mx-auto w-full max-w-6xl px-5 sm:px-8"
 
 export function Landing() {
   const { start, pending } = useGithubStart()
@@ -242,51 +239,49 @@ export function Landing() {
         </Band>
 
         {/* Integrations */}
-        <section id="tools" className="border-hairline scroll-mt-20 border-y py-20">
-          <div className={`${section} mb-10 max-w-2xl`}>
-            <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">Plays well with your tools.</h2>
-            <p className="text-muted-foreground mt-3 text-base">Built on GitHub, with Slack and Linear for context, and one-click hand-off to your coding agent. Drag to explore.</p>
+        <Band id="tools">
+          <div className="px-6 pt-16 pb-8 text-center sm:px-12">
+            <Eyebrow>Integrations</Eyebrow>
+            <p className="font-display mx-auto mt-4 max-w-xl text-3xl tracking-[-0.02em] text-balance">Fits the tools you already use.</p>
           </div>
-          <div className="[mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+          <div className="pb-14 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
             <DraggableMarquee
               items={TOOLS}
-              speed={0.6}
-              gapClassName="gap-3"
-              label="Integrations. Drag or use the left and right arrow keys."
+              speed={0.4}
+              gapClassName="gap-2"
               itemClassName="rounded-full"
+              label="Integrations. Drag or use the left and right arrow keys."
               renderItem={(item) => (
-                <div className="tex-neutral flex h-12 items-center gap-2.5 rounded-full px-5 text-sm font-medium select-none">
+                <div className="border-hairline text-muted-foreground flex h-10 items-center gap-2 rounded-full border px-4 text-sm select-none">
                   {item.icon}
                   {item.name}
                 </div>
               )}
             />
           </div>
-        </section>
+        </Band>
 
-        {/* Final CTA */}
-        <section className={`${section} py-24`}>
-          <div className="bg-card border-hairline relative overflow-hidden rounded-3xl border px-6 py-16 text-center sm:px-12">
-            <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_80%_at_50%_100%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent)]" />
-            <h2 className="relative text-3xl font-medium tracking-tight text-balance sm:text-5xl">
+        {/* Final call to action */}
+        <Band className="overflow-hidden">
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_90%_at_50%_120%,color-mix(in_oklch,var(--primary)_12%,transparent),transparent)]" />
+          <div className="relative flex flex-col items-center px-6 py-24 text-center sm:py-28">
+            <h2 className="font-display max-w-3xl text-[clamp(2.25rem,6vw,4rem)] leading-[1.02] tracking-[-0.025em] text-balance">
               <FlipText className="justify-center">Make the next review the easy one.</FlipText>
             </h2>
-            <p className="text-muted-foreground relative mx-auto mt-4 max-w-xl text-base">Connect GitHub in one click and see your board in under a minute.</p>
-            <div className="relative mt-8 flex justify-center">
-              <DiscoverButton label={pending ? "Opening GitHub…" : "Continue with GitHub"} onClick={start} disabled={pending} />
+            <p className="text-muted-foreground mt-5 max-w-md text-base">Connect GitHub and see your board in under a minute.</p>
+            <div className="mt-9">
+              <DiscoverButton size="sm" label={pending ? "Opening GitHub…" : "Continue with GitHub"} onClick={start} disabled={pending} />
             </div>
-            <p className="text-text-3 relative mt-5 text-xs">Free for up to 3 repositories · No credit card</p>
           </div>
-        </section>
-      </main>
+        </Band>
 
-      <footer className="border-hairline border-t">
-        <div className={`${section} text-muted-foreground flex flex-col items-center justify-between gap-3 py-8 text-xs sm:flex-row`}>
+        {/* Footer */}
+        <footer className="text-muted-foreground flex flex-col items-center justify-between gap-3 px-6 py-8 text-xs sm:flex-row sm:px-8">
           <span className="flex items-center gap-2">
-            <span className="bg-foreground text-background flex size-5 items-center justify-center rounded text-[10px] font-medium" aria-hidden>
+            <span className="bg-foreground text-background flex size-5 items-center justify-center rounded-full text-[10px] font-medium" aria-hidden>
               D
             </span>
-            Docks · Guided code review
+            Docks · Guided code review for GitHub teams
           </span>
           <nav aria-label="Footer" className="flex gap-5">
             <Link href="/login" className="hover:text-foreground transition-colors">
@@ -296,8 +291,8 @@ export function Landing() {
               Create account
             </Link>
           </nav>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   )
 }
