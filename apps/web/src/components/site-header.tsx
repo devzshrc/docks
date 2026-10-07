@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -26,6 +27,7 @@ export function SiteHeader({ title = "Dashboard" }: { title?: string }) {
         />
         <h1 className="text-base font-medium">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
           <Button
             variant="ghost"
             size="sm"
