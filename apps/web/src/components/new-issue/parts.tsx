@@ -58,7 +58,7 @@ export function AssigneeChips({
             title={p.reasons.join(" · ") || p.name}
             className={cn(
               "flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-xs transition-[color,background-color,border-color,transform] duration-150 active:scale-95",
-              on ? "border-primary/30 bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              on ? "border-primary/30 bg-primary/10 text-primary-text" : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
             <GhAvatar login={p.login} />
@@ -135,7 +135,7 @@ export function TraceOffer({ repo, text, linked, dismissed, onLink, onDismiss }:
         <span className="text-muted-foreground font-code ml-1.5 text-[11px]">{fresh.slice(0, 2).map((r) => `${r.path.split("/").pop()}:${r.line}`).join(", ")}{fresh.length > 2 ? "…" : ""}</span>
       </span>
       <span className="ml-auto flex gap-1">
-        <button type="button" onClick={() => onLink(fresh)} className="text-primary hover:bg-primary/10 rounded-md px-2 py-1 text-xs font-medium transition-colors">
+        <button type="button" onClick={() => onLink(fresh)} className="text-primary-text hover:bg-primary/10 rounded-md px-2 py-1 text-xs font-medium transition-colors">
           Link them
         </button>
         <button type="button" onClick={onDismiss} className="text-muted-foreground hover:bg-muted rounded-md px-2 py-1 text-xs transition-colors">
