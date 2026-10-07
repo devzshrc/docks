@@ -10,6 +10,7 @@ import {
   purgeOldPatches,
   scheduleDigests,
   scheduleUserRepoSync,
+  scheduleWeeklyReports,
   type Job,
 } from "@docks/api";
 import { autoAssign } from "./handlers/auto-assign.js";
@@ -18,6 +19,7 @@ import { slackDigest } from "./handlers/slack-digest.js";
 import { syncPr } from "./handlers/sync-pr.js";
 import { syncRepo } from "./handlers/sync-repo.js";
 import { syncUserRepos } from "./handlers/sync-user-repos.js";
+import { weeklyReport } from "./handlers/weekly-report.js";
 
 export const handlers: Record<Job["type"], (payload: unknown) => Promise<void>> = {
   sync_repo: syncRepo,
@@ -26,6 +28,7 @@ export const handlers: Record<Job["type"], (payload: unknown) => Promise<void>> 
   slack_digest: slackDigest,
   sync_user_repos: syncUserRepos,
   auto_assign: autoAssign,
+  weekly_report: weeklyReport,
 };
 
 const IDLE_MS = 2_000;
@@ -75,6 +78,9 @@ export function startWorker(): () => void {
   const retention = setInterval(() => {
     purgeOldPatches().catch((err) =>
       console.error(`[jobs] patch retention failed: ${(err as Error).message}`),
+    );
+    scheduleWeeklyReports().catch((err) =>
+      console.error(`[jobs] weekly report scheduling failed: ${(err as Error).message}`),
     );
   }, 60 * 60_000);
 

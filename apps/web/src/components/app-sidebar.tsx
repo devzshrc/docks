@@ -3,6 +3,7 @@
 import Link from "next/link"
 import * as React from "react"
 import {
+  IconChartBar,
   IconCreditCard,
   IconFolders,
   IconGitPullRequest,
@@ -31,6 +32,11 @@ const navMain = [
     title: "Reviews",
     url: "/review",
     icon: IconGitPullRequest,
+  },
+  {
+    title: "Insights",
+    url: "/insights",
+    icon: IconChartBar,
   },
   {
     title: "Team",

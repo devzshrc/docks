@@ -268,6 +268,7 @@ async function main() {
       requestedReviewers: pr.reviewers,
       reviewColumn: pr.column,
       lastActivityAt: pr.lastActivityAt,
+      ghCreatedAt: new Date(pr.lastActivityAt.getTime() - 2 * 3_600_000),
     });
     await db.insert(schema.prFile).values(
       pr.files.map((f, i) => ({
@@ -298,6 +299,48 @@ async function main() {
         })),
       );
     }
+  }
+
+  // Merged history for Insights (plan M7): 24 PRs over 8 weeks, deterministic.
+  const authors = ["dana", "raj", "mei", "dependabot"];
+  const reviewers = ["demo-reviewer", "raj", "demo-admin", "mei"];
+  for (let i = 0; i < 24; i++) {
+    const number = 300 + i;
+    const created = hoursAgo(24 * 56 - i * 55);
+    const waitHours = 1 + ((i * 7) % 30); // 1h to 30h to first review
+    const firstReview = new Date(created.getTime() + waitHours * 3_600_000);
+    const merged = new Date(firstReview.getTime() + (4 + ((i * 5) % 40)) * 3_600_000);
+    const author = authors[i % authors.length]!;
+    const reviewer = reviewers.filter((r) => r !== author)[i % 3]!;
+    const lines = [20, 80, 150, 420, 900][i % 5]!;
+    await db.insert(schema.pullRequest).values({
+      repoId: REPO_ID,
+      number,
+      title: `Historical change ${number}`,
+      body: null,
+      authorLogin: author,
+      state: "merged",
+      headRef: `feature/${number}`,
+      headSha: `hist${number}`.padEnd(40, "0"),
+      baseRef: "main",
+      additions: Math.round(lines * 0.7),
+      deletions: Math.round(lines * 0.3),
+      changedFiles: 3,
+      requestedReviewers: [],
+      reviewColumn: "approved",
+      lastActivityAt: merged,
+      ghCreatedAt: created,
+      firstReviewAt: firstReview,
+      mergedAt: merged,
+    });
+    await db.insert(schema.prReview).values({
+      id: 900_001_000 + i,
+      repoId: REPO_ID,
+      prNumber: number,
+      reviewerLogin: reviewer,
+      state: "APPROVED",
+      submittedAt: firstReview,
+    });
   }
 
   // A ready-made guide for #418 so the guide UI works without an API key.

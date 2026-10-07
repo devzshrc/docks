@@ -210,6 +210,8 @@ export function installationClient(installationId: number) {
     listOpenPulls: (repo: string) =>
       paginate<GhPull>(`/repos/${repo}/pulls?state=open&per_page=100`),
     getPull: (repo: string, n: number) => call<GhPull>(`/repos/${repo}/pulls/${n}`),
+    listRecentlyClosed: (repo: string) =>
+      call<GhPull[]>(`/repos/${repo}/pulls?state=closed&sort=updated&direction=desc&per_page=100`),
     listFiles: (repo: string, n: number) =>
       paginate<GhFile>(`/repos/${repo}/pulls/${n}/files?per_page=100`),
     listReviews: (repo: string, n: number) =>

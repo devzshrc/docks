@@ -115,6 +115,14 @@ export async function syncRepo(repoId: number) {
   const pulls = await installationClient(repo.installationId).listOpenPulls(repo.fullName);
   for (const p of pulls) await enqueue("sync_pr", { repoId, number: p.number });
 
+  // Insights backfill (plan M7): the most recent closed PRs, without patches.
+  // ponytail: one page (100) per sync; page further if teams want longer history.
+  const closed = await installationClient(repo.installationId).listRecentlyClosed(repo.fullName);
+  const since = Date.now() - 90 * 24 * 3_600_000;
+  for (const p of closed) {
+    if (new Date(p.updated_at).getTime() >= since) await enqueue("sync_pr", { repoId, number: p.number });
+  }
+
   const open = pulls.map((p) => p.number);
   const stale = await db
     .select({ number: schema.pullRequest.number })
@@ -127,6 +135,14 @@ export async function syncRepo(repoId: number) {
       ),
     );
   for (const s of stale) await enqueue("sync_pr", { repoId, number: s.number });
+}
+
+/** Earliest review by someone other than the author (plain comments count as a first look). */
+export function firstReviewAt(reviews: { reviewerLogin: string; submittedAt: Date }[], author: string): Date | null {
+  const times = reviews
+    .filter((r) => r.reviewerLogin.toLowerCase() !== author.toLowerCase())
+    .map((r) => r.submittedAt.getTime());
+  return times.length ? new Date(Math.min(...times)) : null;
 }
 
 /** Full refresh of one PR: pull, reviews, checks, files, then column. */
@@ -179,6 +195,9 @@ export async function syncPr(repoId: number, number: number) {
       requestedReviewers: pr.requested_reviewers.map((u) => u.login),
       labels: pr.labels.map((l) => l.name),
       mergeableState: pr.mergeable_state ?? null,
+      ghCreatedAt: new Date(pr.created_at),
+      mergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
+      firstReviewAt: firstReviewAt(mirroredReviews, pr.user.login),
       reviewColumn: column,
       lastActivityAt,
     } as const;

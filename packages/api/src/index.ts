@@ -17,6 +17,7 @@ export { linkInstallation, purgeOldPatches, runAutoAssign, syncPr, syncRepo } fr
 export { completeAuthorization, scheduleUserRepoSync, syncUserRepos } from "./review/github-user.js";
 export { generateGuideFor } from "./review/guide.js";
 export { handleBillingWebhook } from "./billing.js";
+export { scheduleWeeklyReports, sendWeeklyReport } from "./reports.js";
 export { connectSlack, scheduleDigests, sendDigest } from "./slack.js";
 export type { GuideState } from "./routers/review.js";
 export type { BoardCard, Guide, RankedFile, ReviewColumn } from "./review/types.js";
