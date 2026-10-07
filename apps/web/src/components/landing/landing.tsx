@@ -1,7 +1,5 @@
 "use client"
 
-import { DashboardCircleIcon, GitPullRequestIcon } from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
 import { IconBrandGithub, IconBrandSlack } from "@tabler/icons-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -15,8 +13,6 @@ import { useGithubStart } from "@/components/landing/use-github-start"
 import { DiscoverButton } from "@/components/obsidian/discover-button"
 import { DraggableMarquee } from "@/components/obsidian/draggable-marquee"
 import { FlipText } from "@/components/obsidian/flip-text"
-import { HoverImg } from "@/components/obsidian/hover-img"
-import { SplitShowcase } from "@/components/obsidian/split-showcase"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { useSession } from "@/lib/auth-client"
@@ -50,13 +46,6 @@ const primaryPill = `${pill} bg-foreground text-background hover:bg-foreground/9
 const secondaryPill = `${pill} tex-neutral`
 
 /* ─── Content ────────────────────────────────────────────────────────────────────────── */
-
-const AREAS = [
-  { title: "Board", label: "See what's waiting, who has it, what's stuck", imageSrc: "/landing/board.svg" },
-  { title: "Guided review", label: "Read the changes in the right order", imageSrc: "/landing/review.svg" },
-  { title: "Issues", label: "File a good one in seconds", imageSrc: "/landing/issues.svg" },
-  { title: "Insights", label: "Know where review time goes", imageSrc: "/landing/insights.svg" },
-]
 
 const FACTS = [
   { k: "One board", v: "Every open pull request, across every repository, by where it is in review." },
@@ -192,58 +181,65 @@ export function Landing() {
         </Band>
 
         {/* How it works */}
-        <section id="how" className={`${section} scroll-mt-20 py-24`}>
-          <div className="mb-12 max-w-2xl">
-            <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">From pull request to approved, in three steps.</h2>
+        <Band id="how">
+          <div className="px-6 pt-20 pb-12 text-center sm:px-12">
+            <Eyebrow>How it works</Eyebrow>
+            <h2 className="font-display mx-auto mt-4 max-w-2xl text-4xl leading-[1.05] tracking-[-0.02em] text-balance sm:text-5xl">From pull request to approved, in three steps.</h2>
           </div>
-          <ol className="grid gap-4 md:grid-cols-3">
+          <ol className="border-hairline divide-hairline grid divide-y border-t md:grid-cols-3 md:divide-x md:divide-y-0">
             {STEPS.map((s) => (
-              <li key={s.n} className="bg-card border-hairline rounded-2xl border p-6">
-                <span className="pill" data-tone="info">
-                  Step {s.n}
-                </span>
-                <h3 className="mt-4 text-lg font-medium tracking-tight">{s.title}</h3>
+              <li key={s.n} className="px-6 py-10 sm:px-8">
+                <span className="text-text-3 font-mono text-xs">{s.n}</span>
+                <h3 className="mt-6 text-base font-medium tracking-tight">{s.title}</h3>
                 <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{s.body}</p>
               </li>
             ))}
           </ol>
-        </section>
+        </Band>
 
-        {/* Two views */}
-        <section className={`${section} pb-24`}>
-          <div className="mb-10 max-w-2xl">
-            <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">Two views. One flow.</h2>
-            <p className="text-muted-foreground mt-3 text-base">Start from everything waiting, drop into one pull request, and come back without losing your place.</p>
+        {/* Product: the board */}
+        <Band id="product">
+          <div className="grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+            <div className="border-hairline flex flex-col justify-center gap-4 px-6 py-14 sm:px-10 md:border-r">
+              <Eyebrow>The board</Eyebrow>
+              <h3 className="font-display text-3xl leading-[1.08] tracking-[-0.02em] sm:text-4xl">See everything waiting, at a glance.</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">Every open pull request by review state, with who has it, how long it has waited, and what&apos;s stuck. Filter by repository, author or team; save the view you use most.</p>
+            </div>
+            <div className="bg-muted/40 flex items-center p-6 sm:p-10">
+              <ProductPreview className="w-full shadow-none" />
+            </div>
           </div>
-          <SplitShowcase
-            className="mx-auto max-w-4xl"
-            items={[
-              {
-                id: "board",
-                icon: <HugeiconsIcon icon={DashboardCircleIcon} size={28} />,
-                title: <h3 className="text-xl font-medium tracking-tight">The board</h3>,
-                description: "Every open pull request by review state: who has it, how long it has waited, what's stuck.",
-                tag: "See",
-              },
-              {
-                id: "review",
-                icon: <HugeiconsIcon icon={GitPullRequestIcon} size={28} />,
-                title: <h3 className="text-xl font-medium tracking-tight">Guided review</h3>,
-                description: "Changes grouped and ordered, with a summary, a checklist and inline comments, then approve or merge.",
-                tag: "Read",
-              },
-            ]}
-          />
-        </section>
+        </Band>
 
-        {/* What's inside */}
-        <section id="everything" className={`${section} scroll-mt-20 pb-24`}>
-          <div className="mb-8 max-w-2xl">
-            <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">Everything a review needs.</h2>
-            <p className="text-muted-foreground mt-3 text-base">Hover a row for a closer look.</p>
+        {/* Product: guided review */}
+        <Band>
+          <div className="grid md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+            <div className="bg-muted/40 border-hairline order-2 flex items-center p-6 sm:p-10 md:order-1 md:border-r">
+              <ReviewPreview className="w-full" />
+            </div>
+            <div className="order-1 flex flex-col justify-center gap-4 px-6 py-14 sm:px-10 md:order-2">
+              <Eyebrow>Guided review</Eyebrow>
+              <h3 className="font-display text-3xl leading-[1.08] tracking-[-0.02em] sm:text-4xl">Read it like a story, not a pile.</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">A summary, an order for the changes, and a checklist of what to verify. Comment inline, suggest edits, and approve or merge without leaving the page.</p>
+            </div>
           </div>
-          <HoverImg projects={AREAS} />
-        </section>
+        </Band>
+
+        {/* Smaller capabilities */}
+        <Band>
+          <div className="divide-hairline grid divide-y md:grid-cols-2 md:divide-x md:divide-y-0">
+            {[
+              { k: "Issues", t: "File a good one in seconds.", v: "Templates, duplicate checks and linked code, then hand it to your coding agent." },
+              { k: "Insights", t: "Know where review time goes.", v: "Time to first review, cycle time and who is overloaded, without ranking people." },
+            ].map((c) => (
+              <div key={c.k} className="space-y-3 px-6 py-12 sm:px-10">
+                <Eyebrow>{c.k}</Eyebrow>
+                <p className="font-display text-2xl tracking-tight">{c.t}</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">{c.v}</p>
+              </div>
+            ))}
+          </div>
+        </Band>
 
         {/* Integrations */}
         <section id="tools" className="border-hairline scroll-mt-20 border-y py-20">
