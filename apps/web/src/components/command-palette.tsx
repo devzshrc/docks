@@ -10,6 +10,7 @@ import {
   GitPullRequestIcon,
   Folder01Icon,
   ListViewIcon,
+  AlertCircleIcon,
   PlusSignIcon,
   Search01Icon,
   Settings02Icon,
@@ -45,7 +46,7 @@ const PAGES: { label: string; href: string; icon: IconDef }[] = [
   { label: "Security", href: "/settings/account#security", icon: Shield01Icon },
 ]
 
-type Item = { key: string; group: "Actions" | "Pages" | "Pull requests"; label: string; hint?: string; href?: string; run?: () => void; icon: IconDef }
+type Item = { key: string; group: "Actions" | "Pages" | "Pull requests" | "Issues"; label: string; hint?: string; href?: string; run?: () => void; icon: IconDef }
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
@@ -95,6 +96,17 @@ export function CommandPalette() {
   }, [active])
 
   const needle = q.trim().toLowerCase().replace(/^#/, "")
+  const [debouncedNeedle, setDebouncedNeedle] = useState("")
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedNeedle(needle), 400)
+    return () => clearTimeout(t)
+  }, [needle])
+  const issueHits = useQuery({
+    ...trpc.issue.search.queryOptions({ workspaceId: workspace?.id ?? "", q: debouncedNeedle }),
+    enabled: open && Boolean(workspace) && debouncedNeedle.length >= 3,
+    retry: false,
+    staleTime: 60_000,
+  })
   const match = (s: string) => !needle || s.toLowerCase().includes(needle)
   const actions: Item[] = canCreate && match("new issue create") ? [{ key: "new-issue", group: "Actions", label: "New issue", hint: "C", run: () => openIssue({ source: "palette" }), icon: PlusSignIcon }] : []
   const pages: Item[] = PAGES.filter((p) => match(p.label)).map((p) => ({ key: p.href, group: "Pages", ...p }))
@@ -109,8 +121,18 @@ export function CommandPalette() {
       href: `/review/${c.repo}/${c.number}`,
       icon: GitPullRequestIcon,
     }))
+  const issues: Item[] = needle.length >= 3 && debouncedNeedle === needle
+    ? (issueHits.data ?? []).map((i) => ({
+        key: `issue:${i.repo}#${i.number}`,
+        group: "Issues" as const,
+        label: i.title,
+        hint: `${i.repo.split("/").pop()} #${i.number}`,
+        run: () => window.open(i.url, "_blank", "noopener"),
+        icon: AlertCircleIcon,
+      }))
+    : []
   // PRs first once the person is typing; pages first when browsing.
-  const items = needle ? [...actions, ...prs, ...pages] : [...actions, ...pages.slice(0, 6), ...prs]
+  const items = needle ? [...actions, ...prs, ...issues, ...pages] : [...actions, ...pages.slice(0, 6), ...prs]
 
   function go(item: Item) {
     setOpen(false)

@@ -1,8 +1,8 @@
 import { db, schema } from "@docks/db";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
-import { encrypt } from "../crypto.js";
-import { linearOrg } from "../linear.js";
+import { decrypt, encrypt } from "../crypto.js";
+import { linearOrg, linearTeams } from "../linear.js";
 import { z } from "zod";
 import { assertCan, assertMember, audit, can } from "../access.js";
 import { installUrl } from "../review/github.js";
@@ -58,11 +58,34 @@ export const integrationRouter = router({
   linear: protectedProcedure.input(z.object({ workspaceId: z.string() })).query(async ({ ctx, input }) => {
     const member = await assertMember(ctx.user.id, input.workspaceId);
     const [row] = await db
-      .select({ orgName: schema.linearIntegration.orgName })
+      .select({ orgName: schema.linearIntegration.orgName, teamName: schema.linearIntegration.defaultTeamName, teamId: schema.linearIntegration.defaultTeamId })
       .from(schema.linearIntegration)
       .where(eq(schema.linearIntegration.workspaceId, input.workspaceId));
-    return { orgName: row?.orgName ?? null, canManage: can(member.role, "integrations.manage") };
+    return { orgName: row?.orgName ?? null, teamId: row?.teamId ?? null, teamName: row?.teamName ?? null, canManage: can(member.role, "integrations.manage") };
   }),
+
+  /** Teams to choose from when filing Linear issues from "New issue". */
+  linearTeams: protectedProcedure.input(z.object({ workspaceId: z.string() })).query(async ({ ctx, input }) => {
+    await assertCan(ctx.user.id, input.workspaceId, "integrations.manage");
+    const [row] = await db.select({ key: schema.linearIntegration.apiKeyEncrypted }).from(schema.linearIntegration).where(eq(schema.linearIntegration.workspaceId, input.workspaceId));
+    if (!row) return [];
+    return linearTeams(decrypt(row.key)).catch(() => []);
+  }),
+
+  setLinearTeam: protectedProcedure
+    .input(z.object({ workspaceId: z.string(), teamId: z.string().nullable() }))
+    .mutation(async ({ ctx, input }) => {
+      await assertCan(ctx.user.id, input.workspaceId, "integrations.manage");
+      const [row] = await db.select({ key: schema.linearIntegration.apiKeyEncrypted }).from(schema.linearIntegration).where(eq(schema.linearIntegration.workspaceId, input.workspaceId));
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Connect Linear first" });
+      const team = input.teamId ? (await linearTeams(decrypt(row.key)).catch(() => [])).find((t) => t.id === input.teamId) : null;
+      if (input.teamId && !team) throw new TRPCError({ code: "BAD_REQUEST", message: "That Linear team wasn't found" });
+      await db
+        .update(schema.linearIntegration)
+        .set({ defaultTeamId: team?.id ?? null, defaultTeamName: team?.name ?? null })
+        .where(eq(schema.linearIntegration.workspaceId, input.workspaceId));
+      await audit(input.workspaceId, ctx.user.id, "linear.team", team?.name ?? null);
+    }),
 
   connectLinear: protectedProcedure
     .input(z.object({ workspaceId: z.string(), apiKey: z.string().trim().min(10).max(200) }))

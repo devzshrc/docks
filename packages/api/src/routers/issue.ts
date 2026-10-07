@@ -3,7 +3,12 @@ import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { audit, repoForAction } from "../access.js";
+import { assertMember, audit, repoForAction } from "../access.js";
+import { decrypt } from "../crypto.js";
+import { createLinearIssue } from "../linear.js";
+import { teamLogins } from "../review/apply-rules.js";
+import { parseIssueForm } from "../review/issue-form.js";
+import { issueRules } from "../review/rules.js";
 import { track } from "../analytics.js";
 import { githubFailure } from "../review/errors.js";
 import { GitHubError, getInstallation, installationClient } from "../review/github.js";
@@ -22,6 +27,7 @@ import {
   resolvePath,
   unapplied,
   type CodeRef,
+  type FormTemplate,
   type MdTemplate,
 } from "../review/issue.js";
 import { codeownerLogins, rankReviewers, reviewCandidates } from "../review/reviewers.js";
@@ -93,6 +99,16 @@ function areasOf(paths: string[]) {
   return [...dirs].filter((d) => !d.startsWith(".")).sort().slice(0, 60);
 }
 
+/** Routing rules that apply to these paths: labels to add and people to suggest (path rules only). */
+async function ruleHits(repo: RepoRow, paths: string[]) {
+  const [row] = await db.select({ rules: schema.repository.routingRules }).from(schema.repository).where(eq(schema.repository.id, repo.id));
+  const hits = issueRules(row?.rules ?? [], paths);
+  const labels = [...new Set(hits.flatMap((r) => (r.label ? [r.label] : [])))];
+  const logins = new Set(hits.flatMap((r) => r.reviewers));
+  for (const r of hits) if (r.teamId) for (const l of await teamLogins(r.teamId, repo.workspaceId)) logins.add(l);
+  return { labels, logins: [...logins] };
+}
+
 /** What GitHub says when the App has no Issues permission (or the installation hasn't accepted it yet). */
 const NO_ISSUES_PERMISSION = "Issues aren't enabled for this GitHub installation. An admin needs to accept the GitHub App's new Issues permission.";
 
@@ -117,6 +133,10 @@ export const issueRouter = router({
     const installationId = await installationOf(repo.id);
     const gh = installationClient(installationId);
     try {
+      const [linear] = await db
+        .select({ teamName: schema.linearIntegration.defaultTeamName, teamId: schema.linearIntegration.defaultTeamId })
+        .from(schema.linearIntegration)
+        .where(eq(schema.linearIntegration.workspaceId, repo.workspaceId));
       const [meta, tree, labels, assignees, templates, permissions, identity] = await Promise.all([
         metaOf(repo, installationId),
         treeOf(repo, installationId),
@@ -125,10 +145,20 @@ export const issueRouter = router({
         cached(`templates:${repo.id}`, 5 * MIN, async () => {
           const files = await gh.issueTemplateFiles(repo.fullName);
           const md = files.filter((f) => /\.md$/i.test(f)).slice(0, 6);
+          const yml = files.filter((f) => /\.ya?ml$/i.test(f) && !/^config\.ya?ml$/i.test(f)).slice(0, 6);
+          const read = (f: string) => gh.fileContent(repo.fullName, `.github/ISSUE_TEMPLATE/${f}`).catch(() => null);
+          const forms = (
+            await Promise.all(
+              yml.map(async (f) => {
+                const t = await read(f);
+                return t === null ? null : parseIssueForm(f, t);
+              }),
+            )
+          ).filter((f): f is FormTemplate => f !== null);
           const loaded = await Promise.all(
             md.map(async (f) => {
-              const text = await gh.fileContent(repo.fullName, `.github/ISSUE_TEMPLATE/${f}`).catch(() => null);
-              return text === null ? null : parseMdTemplate(f, text);
+              const t = await read(f);
+              return t === null ? null : parseMdTemplate(f, t);
             }),
           );
           let list = loaded.filter((t): t is MdTemplate => t !== null);
@@ -141,7 +171,7 @@ export const issueRouter = router({
               }
             }
           }
-          return { list, usesForms: files.some((f) => /\.ya?ml$/i.test(f) && !/^config\.ya?ml$/i.test(f)) };
+          return { list, forms, usesForms: yml.length > 0 && forms.length === 0 };
         }),
         cached(`perm:${installationId}`, 10 * MIN, async () => (await getInstallation(installationId)).permissions ?? {}),
         githubIdentity(ctx.user.id),
@@ -154,7 +184,9 @@ export const issueRouter = router({
         githubConnected: Boolean(identity),
         labels,
         templates: templates.list,
+        forms: templates.forms,
         usesForms: templates.usesForms,
+        linear: linear?.teamId ? { teamName: linear.teamName ?? "Linear" } : null,
         areas: areasOf(tree.paths),
         assignableCount: assignees.length,
       };
@@ -228,6 +260,45 @@ export const issueRouter = router({
     }
   }),
 
+  /** Labels routing rules want on an issue touching these paths. */
+  ruleLabels: protectedProcedure.input(repoIn.extend({ paths: z.array(z.string().max(500)).max(30) })).query(async ({ ctx, input }) => {
+    const repo = await repoForAction(ctx.user.id, input.repo, "review.act");
+    return (await ruleHits(repo, input.paths)).labels;
+  }),
+
+  /** Open issues matching a search, across the repos this person can see (⌘K). */
+  search: protectedProcedure.input(z.object({ workspaceId: z.string(), q: z.string().trim().min(3).max(100) })).query(async ({ ctx, input }) => {
+    const member = await assertMember(ctx.user.id, input.workspaceId);
+    limit(ctx.user.id, "search", 30, MIN, "Slow down a little");
+    const [repos, visible] = await Promise.all([
+      db
+        .select({ id: schema.repository.id, fullName: schema.repository.fullName, installationId: schema.repository.installationId })
+        .from(schema.repository)
+        .innerJoin(schema.githubInstallation, eq(schema.githubInstallation.id, schema.repository.installationId))
+        .where(and(eq(schema.githubInstallation.workspaceId, input.workspaceId), eq(schema.repository.enabled, true))),
+      db.select({ repoId: schema.githubRepoAccess.repoId }).from(schema.githubRepoAccess).where(eq(schema.githubRepoAccess.userId, ctx.user.id)),
+    ]);
+    const seen = new Set(visible.map((v) => v.repoId));
+    const mine = repos.filter((r) => seen.has(r.id) && (!member.repoIds || member.repoIds.includes(r.id))).slice(0, 8);
+    if (!mine.length) return [];
+    // One search per installation (each has its own token); at most two.
+    const groups = new Map<number, string[]>();
+    for (const r of mine) groups.set(r.installationId, [...(groups.get(r.installationId) ?? []), r.fullName]);
+    try {
+      const found = await Promise.all(
+        [...groups].slice(0, 2).map(([installationId, names]) =>
+          cached(`isearch:${installationId}:${names.join(",")}:${input.q.toLowerCase()}`, MIN, () =>
+            installationClient(installationId).searchIssuesIn(names, input.q),
+          ),
+        ),
+      );
+      return found.flat().slice(0, 8);
+    } catch (err) {
+      if (err instanceof GitHubError) return [];
+      return githubFailure(err);
+    }
+  }),
+
   /** Who could take this: assignable on GitHub, ranked by CODEOWNERS, expertise tags and load. Away people are left out. */
   suggestAssignees: protectedProcedure.input(repoIn.extend({ paths: z.array(z.string().max(500)).max(30) })).query(async ({ ctx, input }) => {
     const repo = await repoForAction(ctx.user.id, input.repo, "review.act");
@@ -240,12 +311,20 @@ export const issueRouter = router({
       ]);
       const ok = new Set(assignable.map((l) => l.toLowerCase()));
       const owners = await codeownerLogins({ id: repo.id, fullName: repo.fullName, installationId }, input.paths);
-      return rankReviewers(
+      const ranked = rankReviewers(
         candidates.filter((c) => ok.has(c.login.toLowerCase())),
         { author: "", paths: input.paths, codeowners: owners, folderReviews: new Map() },
-      )
-        .slice(0, 6)
-        .map((s) => ({ login: s.login, name: s.name, reasons: s.reasons }));
+      ).map((s) => ({ login: s.login, name: s.name, reasons: s.reasons }));
+      // People a routing rule names for these paths go first, tagged as such.
+      const { logins } = await ruleHits(repo, input.paths);
+      const fromRules = logins
+        .filter((l) => ok.has(l.toLowerCase()))
+        .map((login) => {
+          const known = ranked.find((r) => r.login.toLowerCase() === login.toLowerCase());
+          return { login: known?.login ?? login, name: known?.name ?? login, reasons: ["routing rule", ...(known?.reasons ?? [])] };
+        });
+      const seen = new Set(fromRules.map((r) => r.login.toLowerCase()));
+      return [...fromRules, ...ranked.filter((r) => !seen.has(r.login.toLowerCase()))].slice(0, 6);
     } catch (err) {
       return githubFailure(err);
     }
@@ -260,7 +339,8 @@ export const issueRouter = router({
         labels: z.array(z.string().min(1).max(100)).max(10).default([]),
         assignees: z.array(z.string().regex(/^[A-Za-z0-9-]{1,39}$/)).max(5).default([]),
         clientKey: z.string().min(8).max(64),
-        source: z.enum(["board", "palette", "shortcut", "link"]).default("board"),
+        alsoLinear: z.boolean().default(false),
+        source: z.enum(["board", "palette", "shortcut", "link", "comment"]).default("board"),
         hadTrace: z.boolean().default(false),
       }),
     )
@@ -282,15 +362,30 @@ export const issueRouter = router({
           .from(schema.issueCreation)
           .where(and(eq(schema.issueCreation.userId, ctx.user.id), eq(schema.issueCreation.clientKey, input.clientKey)));
         if (prior && prior.number > 0) {
-          return { number: prior.number, url: prior.url, branch: branchName(input.type, prior.number, title), dropped: { labels: [], assignees: [] }, replayed: true };
+          return { number: prior.number, url: prior.url, branch: branchName(input.type, prior.number, title), dropped: { labels: [] as string[], assignees: [] as string[] }, replayed: true, byApp: false, linear: null, linearError: null };
         }
         throw new TRPCError({ code: "CONFLICT", message: "This issue is already being created" });
       }
 
       try {
         limit(ctx.user.id, "create", 10, MIN, "You're creating issues quickly. Try again in a minute.");
-        const created = await githubAs(ctx.user.id)
-          .createIssue(repo.fullName, { title, body: input.body, labels: input.labels, assignees: input.assignees })
+        // No linked GitHub account (or it needs reconnecting): the App files it on their behalf and says so.
+        const asUser = (await githubIdentity(ctx.user.id)) !== null;
+        const payload = { title, body: input.body, labels: input.labels, assignees: input.assignees };
+        const viaUser = async () => {
+          if (!asUser) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "not linked" });
+          return githubAs(ctx.user.id).createIssue(repo.fullName, payload);
+        };
+        let byApp = !asUser;
+        const created = await viaUser()
+          .catch(async (err) => {
+            if (!(err instanceof TRPCError && err.code === "PRECONDITION_FAILED")) throw err;
+            byApp = true;
+            return installationClient(await installationOf(repo.id)).createIssue(repo.fullName, {
+              ...payload,
+              body: `> Requested by ${ctx.user.name} via Docks\n\n${payload.body}`,
+            });
+          })
           .catch(createFailure);
         const dropped = unapplied(
           { labels: input.labels, assignees: input.assignees },
@@ -305,7 +400,25 @@ export const issueRouter = router({
           .where(eq(schema.issueCreation.id, id));
         await audit(repo.workspaceId, ctx.user.id, "issue.create", `${repo.fullName}#${created.number}`, { type: input.type });
         await track(ctx.user.id, repo.workspaceId, "issue_created", { source: input.source, type: input.type, hadTrace: input.hadTrace, labels: input.labels.length, assignees: input.assignees.length });
-        return { number: created.number, url: created.html_url, branch: branchName(input.type, created.number, title), dropped, replayed: false };
+        // Optional Linear copy. A Linear failure never undoes the GitHub issue; it's reported next to it.
+        let linear: { id: string; url: string } | null = null;
+        let linearError: string | null = null;
+        if (input.alsoLinear) {
+          const [row] = await db.select().from(schema.linearIntegration).where(eq(schema.linearIntegration.workspaceId, repo.workspaceId));
+          if (!row?.defaultTeamId) linearError = "Linear isn't set up for new issues.";
+          else {
+            try {
+              linear = await createLinearIssue(decrypt(row.apiKeyEncrypted), {
+                teamId: row.defaultTeamId,
+                title,
+                description: `${input.body}\n\n[GitHub: ${repo.fullName}#${created.number}](${created.html_url})`,
+              });
+            } catch (err) {
+              linearError = (err as Error).message;
+            }
+          }
+        }
+        return { number: created.number, url: created.html_url, branch: branchName(input.type, created.number, title), dropped, replayed: false, byApp, linear, linearError };
       } catch (err) {
         // Nothing was created: free the key so the user can retry.
         await db.delete(schema.issueCreation).where(and(eq(schema.issueCreation.id, id), eq(schema.issueCreation.number, 0)));

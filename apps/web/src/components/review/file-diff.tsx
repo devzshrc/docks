@@ -7,6 +7,7 @@ import hljs from "highlight.js/lib/common"
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 
 import { MentionTextarea } from "@/components/mention-textarea"
+import { useNewIssue } from "@/components/new-issue/provider"
 import { FixWithAgent } from "@/components/review/agent-handoff"
 import { BlameLine, useBlame } from "@/components/review/blame-popover"
 import { Collapse, flash } from "@/components/motion"
@@ -190,6 +191,22 @@ function ThreadView({ thread, repo, number, branch, canAct, onChanged }: { threa
   const [reply, setReply] = useState("")
   const send = useMutation(trpc.review.reply.mutationOptions({ onSuccess: () => { setReply(""); onChanged() } }))
   const resolve = useMutation(trpc.review.resolveThread.mutationOptions({ onSuccess: onChanged }))
+  const { open: openIssue, canCreate } = useNewIssue()
+  /** Follow-up: turn this thread into an issue that links back to the comment. */
+  function followUp() {
+    const first = thread.comments[0]
+    if (!first) return
+    const quoted = first.body.trim().split("\n").map((l) => `> ${l}`).join("\n")
+    const where = `${thread.path}${thread.line ? `:${thread.line}` : ""}`
+    openIssue({
+      repo,
+      source: "comment",
+      seed: {
+        title: first.body.trim().split("\n")[0]!.replace(/^\**\w+\**:\s*/, "").slice(0, 100),
+        body: `${quoted}\n\nFrom the review of ${repo}#${number}, [\`${where}\`](https://github.com/${repo}/pull/${number}#discussion_r${first.id}) (@${first.author}).`,
+      },
+    })
+  }
   return (
     <div className={cn("bg-background m-2 rounded-md border font-sans text-sm transition-opacity duration-300", thread.isResolved && "opacity-70")}>
       <div className="flex items-center gap-2 pr-1.5">
@@ -200,6 +217,11 @@ function ThreadView({ thread, repo, number, branch, canAct, onChanged }: { threa
           {thread.isResolved && <Badge variant="secondary">resolved</Badge>}
           {thread.isOutdated && <Badge variant="outline">outdated</Badge>}
         </button>
+        {canCreate && (
+          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={followUp}>
+            Create issue
+          </Button>
+        )}
         {!thread.isResolved && (
           <FixWithAgent context={{ repo, number, branch, path: thread.path, line: thread.line, comments: thread.comments }} />
         )}

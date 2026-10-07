@@ -35,3 +35,8 @@ export function ruleMatches(rule: RoutingRule, pr: PrFacts): boolean {
 export function dueRules(rules: RoutingRule[], applied: string[], pr: PrFacts): RoutingRule[] {
   return rules.filter((r) => !applied.includes(r.id) && ruleMatches(r, pr));
 }
+
+/** Rules that apply to a new issue: path rules only (a size condition means nothing before there is a PR). */
+export function issueRules(rules: RoutingRule[], paths: string[]): RoutingRule[] {
+  return rules.filter((r) => r.minLines === null && r.paths.length > 0 && ruleMatches(r, { paths, lines: 0 }));
+}

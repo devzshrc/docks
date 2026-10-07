@@ -5,11 +5,17 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { NewIssuePanel } from "@/components/new-issue/panel"
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace"
 
-export type IssueSource = "board" | "palette" | "shortcut" | "link"
+export type IssueSource = "board" | "palette" | "shortcut" | "link" | "comment"
+
+/** Starting content, e.g. from a review comment. */
+export interface IssueSeed {
+  title: string
+  body: string
+}
 
 interface Ctx {
   /** Opens the panel; `repo` preselects a repository (owner/name). */
-  open: (opts?: { repo?: string; source?: IssueSource }) => void
+  open: (opts?: { repo?: string; source?: IssueSource; seed?: IssueSeed }) => void
   /** Viewers can't create issues, so they get no entry points. */
   canCreate: boolean
 }
@@ -25,10 +31,10 @@ export function NewIssueProvider({ children }: { children: React.ReactNode }) {
   const { workspace } = useWorkspace()
   const settings = useWorkspaceSettings(workspace?.id)
   const canCreate = Boolean(workspace && settings.data?.can["review.act"])
-  const [state, setState] = useState<{ open: boolean; repo?: string; source: IssueSource }>({ open: false, source: "board" })
+  const [state, setState] = useState<{ open: boolean; repo?: string; source: IssueSource; seed?: IssueSeed; nonce: number }>({ open: false, source: "board", nonce: 0 })
 
-  const open = useCallback((o?: { repo?: string; source?: IssueSource }) => {
-    setState({ open: true, repo: o?.repo, source: o?.source ?? "board" })
+  const open = useCallback((o?: { repo?: string; source?: IssueSource; seed?: IssueSeed }) => {
+    setState((s) => ({ open: true, repo: o?.repo, source: o?.source ?? "board", seed: o?.seed, nonce: s.nonce + 1 }))
   }, [])
 
   useEffect(() => {
@@ -65,6 +71,8 @@ export function NewIssueProvider({ children }: { children: React.ReactNode }) {
           open={state.open}
           wantedRepo={state.repo}
           source={state.source}
+          seed={state.seed}
+          nonce={state.nonce}
           onOpenChange={(o) => setState((s) => ({ ...s, open: o }))}
         />
       )}

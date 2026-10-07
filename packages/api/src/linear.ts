@@ -11,7 +11,7 @@ export interface LinearIssue {
 
 const FIELDS = "identifier title url priorityLabel state{ name type color } assignee{ name }";
 
-async function gql<T>(apiKey: string, query: string, variables: Record<string, string> = {}) {
+async function gql<T>(apiKey: string, query: string, variables: Record<string, unknown> = {}) {
   const res = await fetch("https://api.linear.app/graphql", {
     method: "POST",
     // Personal API keys go in the header as-is (OAuth tokens would need "Bearer ").
@@ -28,6 +28,29 @@ export async function linearOrg(apiKey: string): Promise<string> {
   const { data, errors } = await gql<{ viewer: { organization: { name: string } } }>(apiKey, "{ viewer { organization { name } } }");
   if (!data?.viewer) throw new Error(errors?.[0]?.message ?? "Couldn't read your Linear workspace");
   return data.viewer.organization.name;
+}
+
+export interface LinearTeam {
+  id: string;
+  key: string;
+  name: string;
+}
+
+export async function linearTeams(apiKey: string): Promise<LinearTeam[]> {
+  const { data } = await gql<{ teams: { nodes: LinearTeam[] } }>(apiKey, "{ teams { nodes { id key name } } }");
+  return data?.teams.nodes ?? [];
+}
+
+/** Files an issue in a Linear team. Throws with Linear's own message on failure. */
+export async function createLinearIssue(apiKey: string, input: { teamId: string; title: string; description: string }) {
+  const { data, errors } = await gql<{ issueCreate: { success: boolean; issue: { identifier: string; url: string } | null } }>(
+    apiKey,
+    "mutation($input: IssueCreateInput!){ issueCreate(input:$input){ success issue{ identifier url } } }",
+    { input } as unknown as Record<string, string>,
+  );
+  const issue = data?.issueCreate.issue;
+  if (!issue) throw new Error(errors?.[0]?.message ?? "Linear didn't create the issue");
+  return { id: issue.identifier, url: issue.url };
 }
 
 /** Issues by identifier; ids Linear doesn't know are simply absent. */

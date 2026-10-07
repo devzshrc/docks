@@ -1,6 +1,6 @@
 "use client"
 
-import { compileBody, MAX_BODY, MAX_TITLE, missingRequired, TEMPLATES, type CodeRef, type IssueType } from "@docks/api/issue"
+import { compileBody, compileForm, MAX_BODY, MAX_TITLE, missingForm, missingRequired, TEMPLATES, type CodeRef, type IssueType } from "@docks/api/issue"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react"
 import { MentionTextarea } from "@/components/mention-textarea"
 import { DrawTick } from "@/components/motion"
 import { AssigneeChips, FilePicker, Label, SimilarStrip, TraceOffer } from "@/components/new-issue/parts"
-import type { IssueSource } from "@/components/new-issue/provider"
+import type { IssueSeed, IssueSource } from "@/components/new-issue/provider"
 import { FixWithAgent } from "@/components/review/agent-handoff"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,20 +46,25 @@ function lastRepo() {
   }
 }
 
-export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenChange }: {
+export function NewIssuePanel({ workspaceId, open, wantedRepo, source, seed, nonce, onOpenChange }: {
   workspaceId: string
   open: boolean
   wantedRepo?: string
   source: IssueSource
+  seed?: IssueSeed
+  nonce: number
   onOpenChange: (open: boolean) => void
 }) {
   const trpc = useTRPC()
   const repos = useQuery({ ...trpc.workspace.repos.queryOptions({ workspaceId }), enabled: open })
   const usable = (repos.data ?? []).filter((r) => r.enabled && r.accessible && !r.suspended)
   const [repo, setRepo] = useState("")
-  const [done, setDone] = useState<{ number: number; url: string; branch: string; dropped: { labels: string[]; assignees: string[] }; title: string; body: string } | null>(null)
+  const [done, setDone] = useState<DoneInfo | null>(null)
+  const [alsoLinear, setAlsoLinear] = useState(false)
+  const appliedLabels = useRef(new Set<string>())
+  const seeded = useRef(0)
   const clientKey = useRef("")
-  const form = useRef<HTMLFormElement>(null)
+  const formEl = useRef<HTMLFormElement>(null)
 
   // Each time the panel opens: fresh idempotency key, success view cleared, repo chosen.
   useEffect(() => {
@@ -82,6 +87,22 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenCha
   const labelNames = new Set((o?.labels ?? []).map((l) => l.name.toLowerCase()))
   const exists = (l: string) => labelNames.has(l.toLowerCase())
   const tpl = o?.templates.find((t) => t.name === draft.template) ?? null
+  const form = o?.forms.find((f) => f.name === draft.template) ?? null
+
+  // Starting content from a review comment: applied once per open, after the repo is known.
+  useEffect(() => {
+    if (!open || !repo || !seed || seeded.current === nonce) return
+    seeded.current = nonce
+    setDraft({ ...EMPTY, type: "task", title: seed.title, values: { description: seed.body } })
+  }, [open, repo, seed, nonce]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    try {
+      setAlsoLinear(localStorage.getItem("issue:linear") === "1")
+    } catch {}
+  }, [])
+  useEffect(() => {
+    appliedLabels.current = new Set()
+  }, [repo, open])
 
   function setType(type: IssueType) {
     const hints = TYPES.map((t) => TEMPLATES[t].label_hint).filter((x): x is string => Boolean(x))
@@ -94,21 +115,38 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenCha
   }
   function chooseTemplate(name: string) {
     const t = o?.templates.find((x) => x.name === name) ?? null
+    const f = o?.forms.find((x) => x.name === name) ?? null
     setDraft((d) => ({
       ...d,
-      template: t?.name ?? null,
+      template: t?.name ?? f?.name ?? null,
       body: t && !d.body.trim() ? t.body : d.body,
-      title: d.title || t?.title || "",
-      labels: t ? [...new Set([...d.labels, ...t.labels.filter(exists)])] : d.labels,
+      title: d.title || t?.title || f?.title || "",
+      labels: [...new Set([...d.labels, ...(t?.labels ?? f?.labels ?? []).filter(exists)])],
+      values: f ? { ...Object.fromEntries(f.fields.map((x) => [x.id, x.value])), ...d.values } : d.values,
     }))
   }
 
-  const body = tpl
-    ? [draft.body.trim(), compileBody("task", {}, draft.refs)].filter(Boolean).join("\n\n")
-    : compileBody(draft.type, draft.values, draft.refs)
-  const missing = tpl ? [] : missingRequired(draft.type, draft.values)
+  const body = form
+    ? compileForm(form.fields, draft.values, draft.refs)
+    : tpl
+      ? [draft.body.trim(), compileBody("task", {}, draft.refs)].filter(Boolean).join("\n\n")
+      : compileBody(draft.type, draft.values, draft.refs)
+  const missing = form ? missingForm(form.fields, draft.values) : tpl ? [] : missingRequired(draft.type, draft.values)
   const text = [...Object.values(draft.values), draft.body].join("\n")
   const paths = [...draft.refs.map((r) => r.path), ...(draft.area ? [`${draft.area}/_`] : [])]
+
+  // Labels routing rules want for these paths: added once, only if they exist in the repo, always removable.
+  const ruleLabels = useQuery({
+    ...trpc.issue.ruleLabels.queryOptions({ repo, paths }),
+    enabled: open && Boolean(repo) && paths.length > 0 && Boolean(o),
+    retry: false,
+  })
+  useEffect(() => {
+    const fresh = (ruleLabels.data ?? []).filter((l) => exists(l) && !appliedLabels.current.has(l.toLowerCase()))
+    if (!fresh.length) return
+    fresh.forEach((l) => appliedLabels.current.add(l.toLowerCase()))
+    setDraft((d) => ({ ...d, labels: [...new Set([...d.labels, ...fresh.filter((l) => !d.labels.includes(l))])].slice(0, 10) }))
+  }, [ruleLabels.data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const create = useMutation(
     trpc.issue.create.mutationOptions({
@@ -116,7 +154,7 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenCha
         try {
           localStorage.setItem("issue:repo", repo)
         } catch {}
-        setDone({ number: res.number, url: res.url, branch: res.branch, dropped: res.dropped, title: draft.title, body })
+        setDone({ number: res.number, url: res.url, branch: res.branch, dropped: res.dropped, title: draft.title, body, byApp: res.byApp, linear: res.linear, linearError: res.linearError })
         setDraft(EMPTY)
       },
     })
@@ -127,7 +165,6 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenCha
     : o && !o.hasIssues ? "Issues are turned off for this repository."
     : o?.archived ? "This repository is archived."
     : o && !o.issuesPermission ? "needs-permission"
-    : o && !o.githubConnected ? "needs-github"
     : null
 
   const reason = !draft.title.trim() ? "Add a title" : missing.length ? `Add: ${missing.join(", ")}` : body.length > MAX_BODY ? "The description is too long" : null
@@ -143,6 +180,7 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenCha
       labels: draft.labels,
       assignees: draft.assignees,
       clientKey: clientKey.current,
+      alsoLinear: alsoLinear && Boolean(o?.linear),
       source,
       hadTrace: draft.refs.some((r) => r.line > 0),
     })
@@ -175,7 +213,7 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenCha
           <Done done={done} repo={repo} onAnother={() => { setDone(null); clientKey.current = crypto.randomUUID() }} onClose={() => onOpenChange(false)} />
         ) : (
           <form
-            ref={form}
+            ref={formEl}
             className="flex flex-1 flex-col"
             onSubmit={(e) => {
               e.preventDefault()
@@ -221,9 +259,9 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenCha
                   . Your draft is saved.
                 </div>
               )}
-              {blocked === "needs-github" && (
-                <div role="alert" className={cn(bannerClass, "border-amber-500/40 bg-amber-500/5 text-amber-800 dark:text-amber-300")}>
-                  Connect your GitHub account to create issues as yourself.{" "}
+              {o && !o.githubConnected && (
+                <div className={cn(bannerClass, "text-muted-foreground")}>
+                  Your GitHub account isn&apos;t connected, so the Docks app will file this on your behalf and credit you in the description.{" "}
                   <Link className="underline" href="/settings/integrations">
                     Connect GitHub
                   </Link>
@@ -258,10 +296,10 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenCha
                     </button>
                   ))}
                 </div>
-                {o && o.templates.length > 0 && (
+                {o && o.templates.length + o.forms.length > 0 && (
                   <select className={select} aria-label="Template" value={draft.template ?? ""} onChange={(e) => (e.target.value ? chooseTemplate(e.target.value) : patch({ template: null }))}>
                     <option value="">Docks template</option>
-                    {o.templates.map((t) => (
+                    {[...o.templates, ...o.forms].map((t) => (
                       <option key={t.name} value={t.name}>
                         {t.name}
                       </option>
@@ -269,11 +307,22 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenCha
                   </select>
                 )}
               </div>
-              {o?.usesForms && !o.templates.length && (
-                <p className="text-muted-foreground -mt-2 text-xs">This repo uses GitHub issue forms. Using the Docks template instead.</p>
+              {o?.usesForms && !o.templates.length && !o.forms.length && (
+                <p className="text-muted-foreground -mt-2 text-xs">This repo&apos;s issue forms couldn&apos;t be read. Using the Docks template instead.</p>
               )}
 
-              {tpl ? (
+              {form ? (
+                <div className="space-y-4">
+                  {form.fields.map((f) => (
+                    <FormFieldInput
+                      key={f.id}
+                      field={f}
+                      value={draft.values[f.id] ?? ""}
+                      onChange={(v) => setDraft((d) => ({ ...d, values: { ...d.values, [f.id]: v } }))}
+                    />
+                  ))}
+                </div>
+              ) : tpl ? (
                 <div>
                   <Label htmlFor="issue-body">Description</Label>
                   <MentionTextarea id="issue-body" rows={10} value={draft.body} onChange={(v) => patch({ body: v })} className="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm" />
@@ -379,6 +428,21 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenCha
               </div>
             </div>
 
+            {o?.linear && (
+              <label className="text-muted-foreground mx-5 mb-3 flex items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={alsoLinear}
+                  onChange={(e) => {
+                    setAlsoLinear(e.target.checked)
+                    try {
+                      localStorage.setItem("issue:linear", e.target.checked ? "1" : "0")
+                    } catch {}
+                  }}
+                />
+                Also create in Linear ({o.linear.teamName})
+              </label>
+            )}
             <div className="bg-background sticky bottom-0 flex flex-wrap items-center gap-3 border-t px-5 py-3">
               <span className="text-muted-foreground text-xs">
                 {create.error ? null : reason ? reason : draft.title || Object.values(draft.values).some(Boolean) ? "Draft saved on this device" : ""}
@@ -405,8 +469,67 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, onOpenCha
   )
 }
 
+interface DoneInfo {
+  number: number
+  url: string
+  branch: string
+  dropped: { labels: string[]; assignees: string[] }
+  title: string
+  body: string
+  byApp: boolean
+  linear: { id: string; url: string } | null
+  linearError: string | null
+}
+
+function FormFieldInput({ field, value, onChange }: { field: import("@docks/api/issue").FormField; value: string; onChange: (v: string) => void }) {
+  const id = `issue-f-${field.id}`
+  const box = "border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
+  return (
+    <div>
+      <Label htmlFor={id}>
+        {field.label}
+        {field.required && <span className="text-destructive"> *</span>}
+      </Label>
+      {field.description && <p className="text-muted-foreground -mt-1 mb-1.5 text-xs">{field.description}</p>}
+      {field.kind === "textarea" ? (
+        <MentionTextarea id={id} rows={4} value={value} placeholder={field.placeholder} onChange={onChange} className={box} />
+      ) : field.kind === "input" ? (
+        <Input id={id} value={value} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} />
+      ) : field.kind === "dropdown" ? (
+        <select id={id} className={cn(select, "w-full")} value={value} onChange={(e) => onChange(e.target.value)}>
+          <option value="">Choose…</option>
+          {field.options.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <div className="space-y-1.5">
+          {field.options.map((opt) => {
+            const set = new Set(value.split("\n").filter(Boolean))
+            return (
+              <label key={opt} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={set.has(opt)}
+                  onChange={(e) => {
+                    e.target.checked ? set.add(opt) : set.delete(opt)
+                    onChange([...set].join("\n"))
+                  }}
+                />
+                {opt}
+              </label>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Done({ done, repo, onAnother, onClose }: {
-  done: { number: number; url: string; branch: string; dropped: { labels: string[]; assignees: string[] }; title: string; body: string }
+  done: DoneInfo
   repo: string
   onAnother: () => void
   onClose: () => void
@@ -431,6 +554,22 @@ function Done({ done, repo, onAnother, onClose }: {
           <p className="text-muted-foreground text-xs">{repo}</p>
         </div>
       </div>
+      {done.byApp && (
+        <p className="text-muted-foreground text-xs">Filed by the Docks app on your behalf. Connect GitHub to create issues as yourself.</p>
+      )}
+      {done.linear && (
+        <p className="text-sm">
+          Also in Linear:{" "}
+          <a href={done.linear.url} target="_blank" rel="noreferrer" className="font-medium underline underline-offset-2">
+            {done.linear.id}
+          </a>
+        </p>
+      )}
+      {done.linearError && (
+        <p role="alert" className="text-sm text-amber-800 dark:text-amber-300">
+          The GitHub issue was created, but Linear failed: {done.linearError}
+        </p>
+      )}
       {dropped.length > 0 && (
         <p role="alert" className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
           Created, but GitHub didn&apos;t apply {dropped.join(", ")}. Setting labels and assignees needs triage access on the repository.
