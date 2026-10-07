@@ -84,8 +84,8 @@ export function GuidePanel({
               type="button"
               onClick={() => onStepChange(null)}
               className={cn(
-                "hover:bg-hover/50 border-hairline flex h-full w-full flex-col justify-center rounded-lg border px-3 py-2.5 text-left text-sm transition-colors",
-                activeStep === null && "bg-raised border-transparent shadow-(--ring-raised)"
+                "bg-muted/60 hover:bg-hover flex h-full w-full flex-col justify-center rounded-lg px-3 py-2.5 text-left text-sm transition-colors active:scale-[0.99]",
+                activeStep === null && "bg-primary/15 hover:bg-primary/20"
               )}
             >
               <span className="font-medium">All files</span>
@@ -99,8 +99,8 @@ export function GuidePanel({
                 onClick={() => onStepChange(activeStep === i ? null : i)}
                 aria-pressed={activeStep === i}
                 className={cn(
-                  "hover:bg-hover/50 border-hairline flex h-full w-full flex-col justify-center rounded-lg border px-3 py-2.5 text-left text-sm transition-colors",
-                  activeStep === i && "bg-raised border-transparent shadow-(--ring-raised)"
+                  "bg-muted/60 hover:bg-hover flex h-full w-full flex-col justify-center rounded-lg px-3 py-2.5 text-left text-sm transition-colors active:scale-[0.99]",
+                  activeStep === i && "bg-primary/15 hover:bg-primary/20"
                 )}
               >
                 <span className="font-medium">

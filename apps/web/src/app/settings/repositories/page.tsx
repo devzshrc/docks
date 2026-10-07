@@ -97,7 +97,7 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
             </TableCell>
             <TableCell>
               <select
-                className="border-input bg-background h-8 rounded-lg border px-2 text-sm"
+                className="bg-(--field) hover:bg-(--field-hover) h-8 rounded-lg border px-2 text-sm"
                 aria-label={`Auto-assign reviewers for ${r.fullName}`}
                 value={r.autoAssign}
                 onChange={(e) => setRepo.mutate({ repoId: r.id, autoAssign: Number(e.target.value) })}
@@ -112,7 +112,7 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
             </TableCell>
             <TableCell>
               <textarea
-                className="border-input bg-background w-64 rounded-md border px-2 py-1 text-xs"
+                className="bg-(--field) hover:bg-(--field-hover) w-64 rounded-md border px-2 py-1 text-xs"
                 rows={2}
                 aria-label={`Review checklist for ${r.fullName}, one question per line`}
                 placeholder="One question per line, shown on every PR"

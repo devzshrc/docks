@@ -18,6 +18,8 @@
   --accent: #e8ecf1;
   --raised: #ffffff;
   --hover: #e8ecf1;
+  --field: #e9edf2;
+  --field-hover: #e2e7ee;
   /* Text: foreground / secondary / tertiary */
   --foreground: #0f1720;
   --card-foreground: #0f1720;
@@ -93,6 +95,8 @@
   --accent: #272c33;
   --raised: #20242a;
   --hover: #2a2f36;
+  --field: #2a2f37;
+  --field-hover: #323843;
   --foreground: #eef2f6;
   --card-foreground: #eef2f6;
   --popover-foreground: #eef2f6;
@@ -532,20 +536,20 @@ pre, code, kbd { font-family: var(--font-code); }
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
   textarea,
   select:not(.select-bare) {
-    background-color: var(--muted);
+    background-color: var(--field);
     border-color: transparent;
     transition: background-color 150ms, box-shadow 150ms;
   }
   input:not([type="checkbox"]):not([type="radio"]):hover,
   textarea:hover,
-  select:not(.select-bare):hover { background-color: var(--hover); border-color: transparent; }
+  select:not(.select-bare):hover { background-color: var(--field-hover); border-color: transparent; }
   input:not([type="checkbox"]):not([type="radio"]):focus-visible,
   textarea:focus-visible,
   select:not(.select-bare):focus-visible {
     outline: none;
     border-color: transparent;
-    background-color: var(--card);
-    box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 55%, transparent);
+    background-color: var(--field);
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 60%, transparent);
   }
   input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   ::selection { background: color-mix(in oklab, var(--primary) 30%, transparent); }

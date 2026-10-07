@@ -34,7 +34,7 @@ interface Draft {
 
 const EMPTY: Draft = { type: "bug", title: "", values: {}, template: null, body: "", labels: [], assignees: [], refs: [], area: null, traceDismissed: false }
 const TYPES = Object.keys(TEMPLATES) as IssueType[]
-const select = "border-input bg-background h-9 rounded-lg border px-2 text-sm"
+const select = "bg-(--field) hover:bg-(--field-hover) h-9 rounded-lg border px-2 text-sm"
 
 const bannerClass = "rounded-lg border px-3 py-2 text-sm"
 
@@ -325,7 +325,7 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, seed, non
               ) : tpl ? (
                 <div>
                   <Label htmlFor="issue-body">Description</Label>
-                  <MentionTextarea id="issue-body" rows={10} value={draft.body} onChange={(v) => patch({ body: v })} className="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm" />
+                  <MentionTextarea id="issue-body" rows={10} value={draft.body} onChange={(v) => patch({ body: v })} className="bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border px-3 py-2 text-sm" />
                   {draft.body.trim() !== tpl.body && (
                     <button type="button" className="text-muted-foreground hover:text-foreground mt-1 text-xs underline underline-offset-2" onClick={() => patch({ body: tpl.body })}>
                       Replace with template text
@@ -346,7 +346,7 @@ export function NewIssuePanel({ workspaceId, open, wantedRepo, source, seed, non
                         value={draft.values[s.key] ?? ""}
                         placeholder={s.placeholder}
                         onChange={(v) => setDraft((d) => ({ ...d, values: { ...d.values, [s.key]: v } }))}
-                        className="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
+                        className="bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border px-3 py-2 text-sm"
                       />
                     </div>
                   ))}
@@ -483,7 +483,7 @@ interface DoneInfo {
 
 function FormFieldInput({ field, value, onChange }: { field: import("@docks/api/issue").FormField; value: string; onChange: (v: string) => void }) {
   const id = `issue-f-${field.id}`
-  const box = "border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
+  const box = "bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border px-3 py-2 text-sm"
   return (
     <div>
       <Label htmlFor={id}>

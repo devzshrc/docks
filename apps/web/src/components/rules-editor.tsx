@@ -70,7 +70,7 @@ function RuleCard({ rule, teams, onChange, onRemove, index }: {
             <label className={field} htmlFor={`team-${rule.id}`}>Request team</label>
             <select
               id={`team-${rule.id}`}
-              className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm"
+              className="bg-(--field) hover:bg-(--field-hover) h-9 w-full rounded-lg border px-2 text-sm"
               value={rule.teamId ?? ""}
               onChange={(e) => set({ teamId: e.target.value || null })}
             >
@@ -90,7 +90,7 @@ function RuleCard({ rule, teams, onChange, onRemove, index }: {
           <textarea
             id={`comment-${rule.id}`}
             rows={2}
-            className="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
+            className="bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border px-3 py-2 text-sm"
             placeholder="This PR is large. Could it be split into smaller ones?"
             defaultValue={rule.comment ?? ""}
             onBlur={(e) => set({ comment: e.target.value.trim() || null })}

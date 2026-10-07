@@ -179,7 +179,7 @@ export function FilePicker({ repo, onPick }: { repo: string; onPick: (r: CodeRef
         }}
         placeholder="Search files…"
         aria-label="Search files to reference"
-        className="border-input bg-background h-8 w-full rounded-lg border px-3 text-sm outline-none"
+        className="bg-(--field) hover:bg-(--field-hover) h-8 w-full rounded-lg border px-3 text-sm outline-none"
       />
       {res.data?.length === 0 && debounced.length >= 2 && <p className="text-muted-foreground px-1 text-xs">No matching files.</p>}
       {res.error && <p className="text-muted-foreground px-1 text-xs">Couldn&apos;t search files.</p>}
