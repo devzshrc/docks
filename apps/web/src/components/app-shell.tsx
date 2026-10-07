@@ -7,8 +7,8 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 
 const WIDTH = {
-  narrow: "max-w-[720px]", // settings and forms
-  default: "max-w-[1040px]",
+  narrow: "max-w-[720px]", // single-column forms
+  default: "max-w-[1200px]", // every dashboard and settings page shares one left edge
   wide: "max-w-[1360px]", // board and code review
 } as const
 

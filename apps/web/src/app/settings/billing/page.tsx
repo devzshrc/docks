@@ -125,7 +125,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Billing" description="Your plan, usage and payment details." width="narrow">
+    <AppShell title="Billing" description="Your plan, usage and payment details.">
       <Content />
     </AppShell>
   )

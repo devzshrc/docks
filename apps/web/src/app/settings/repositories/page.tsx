@@ -47,6 +47,7 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="space-y-2">
     {setRepo.error && <p className="text-destructive text-sm">{setRepo.error.message}</p>}
+    <div className="bg-card border-hairline overflow-hidden rounded-xl border">
     <div className="overflow-x-auto">
     <Table>
       <TableHeader>
@@ -125,6 +126,7 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
         ))}
       </TableBody>
     </Table>
+    </div>
     </div>
     </div>
   )

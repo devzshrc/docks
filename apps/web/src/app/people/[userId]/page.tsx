@@ -233,7 +233,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell width="narrow">
+    <AppShell>
       <Content />
     </AppShell>
   )

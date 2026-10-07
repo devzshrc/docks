@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 
+import { Panel } from "@/components/panel"
 import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { Badge } from "@/components/ui/badge"
@@ -32,25 +33,21 @@ function waited(d: Date | string | null) {
 function LoadRow({ p, max }: { p: Person; max: number }) {
   const width = max ? (p.openReviews / max) * 100 : 0
   return (
-    <li className="grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)_auto] items-center gap-3 py-2 text-sm">
-      <Link href={`/people/${p.userId}`} className="truncate hover:underline">
+    <li className="grid min-h-11 grid-cols-[minmax(0,12rem)_minmax(0,1fr)_6rem_7rem] items-center gap-4 px-5 py-2 text-sm">
+      <Link href={`/people/${p.userId}`} className="truncate font-medium hover:underline">
         {p.name}
       </Link>
-      <div className="flex items-center gap-2">
-        <div className="bg-muted h-2 flex-1 rounded-full" aria-hidden>
-          <div
-            className={p.overLimit ? "h-2 rounded-full bg-amber-500" : "h-2 rounded-full bg-emerald-600"}
-            style={{ width: `${width}%` }}
-          />
-        </div>
-        <span className="w-24 text-right tabular-nums">
-          {p.openReviews}
-          {p.maxOpenReviews ? ` / ${p.maxOpenReviews}` : ""} open
-        </span>
+      <div className="bg-muted h-1.5 rounded-full" aria-hidden>
+        <div className={p.overLimit ? "bg-warning h-1.5 rounded-full" : "bg-success h-1.5 rounded-full"} style={{ width: `${width}%` }} />
       </div>
-      <span className="text-muted-foreground flex w-40 justify-end gap-1 text-xs">
-        {p.away && <Badge variant="secondary">away until {p.awayUntil}</Badge>}
-        {!p.githubLogin && <Badge variant="outline">no GitHub</Badge>}
+      <span className="text-right tabular-nums">
+        {p.openReviews}
+        {p.maxOpenReviews ? <span className="text-text-3"> / {p.maxOpenReviews}</span> : ""}
+        <span className="text-muted-foreground"> open</span>
+      </span>
+      <span className="text-muted-foreground flex justify-end gap-1 text-xs">
+        {p.away && <span className="pill">away until {p.awayUntil}</span>}
+        {!p.githubLogin && <span className="pill">no GitHub</span>}
         {p.oldestWaitingSince && p.openReviews > 0 && `oldest ${waited(p.oldestWaitingSince)}`}
       </span>
     </li>
@@ -72,18 +69,17 @@ function Load({ workspaceId }: { workspaceId: string }) {
   ].filter((g) => g.people.length)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {groups.map((g) => (
-        <section key={g.name}>
-          <h2 className="mb-1 text-sm font-medium">{g.name}</h2>
-          <ul className="divide-y">
+        <Panel key={g.name} title={g.name} description={`${g.people.length} ${g.people.length === 1 ? "person" : "people"}`} bodyClassName="p-0">
+          <ul className="divide-hairline divide-y">
             {[...g.people]
               .sort((a, b) => b.openReviews - a.openReviews)
               .map((p) => (
                 <LoadRow key={p.userId} p={p} max={max} />
               ))}
           </ul>
-        </section>
+        </Panel>
       ))}
     </div>
   )

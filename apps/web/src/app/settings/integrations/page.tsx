@@ -372,7 +372,7 @@ function Integrations() {
 
 export default function Page() {
   return (
-    <AppShell title="Integrations" description="Connect GitHub to sync pull requests, Slack for the daily digest and Linear for issue context." width="narrow">
+    <AppShell title="Integrations" description="Connect GitHub to sync pull requests, Slack for the daily digest and Linear for issue context.">
       <Integrations />
     </AppShell>
   )
