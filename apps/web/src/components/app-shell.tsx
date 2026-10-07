@@ -197,7 +197,7 @@ function Frame({ title, description, actions, width, children }: { title?: strin
     <ShellSlotsContext.Provider value={{ filters: slots.filters, actions: slots.actions, setHasFilters: slots.setHasFilters, setHasActions: slots.setHasActions }}>
     <div className="h-dvh">
       <DashboardShell
-        brand={{ name: "Docks", description: workspace?.name, logo: <BrandMark /> }}
+        brand={{ name: "Docks", description: workspace?.name ?? "Code review", logo: <BrandMark /> }}
         navigation={navigation}
         secondaryNavigation={[{ id: "settings", label: "Settings", icon: SettingsIcon, href: "/settings/workspace" }]}
         sidebarFooter={<UserMenu />}
@@ -231,7 +231,7 @@ function Frame({ title, description, actions, width, children }: { title?: strin
 
 function BrandMark() {
   return (
-    <span className="bg-foreground text-background flex size-6 items-center justify-center rounded-md text-xs font-medium" aria-hidden>
+    <span className="bg-foreground text-background flex size-7 items-center justify-center rounded-lg text-xs font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.2)]" aria-hidden>
       D
     </span>
   )
