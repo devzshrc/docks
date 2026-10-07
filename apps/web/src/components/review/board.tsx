@@ -70,21 +70,21 @@ export function ReviewBoard({
         {lanes.map((lane) => {
           const items = inLane(lane.id)
           return (
-            <section key={lane.id} aria-label={lane.title} className="w-[80vw] max-w-sm shrink-0 snap-start md:w-auto md:max-w-none">
-              <h2 className="mb-3 flex h-8 items-center gap-2 text-sm font-medium">
-                {lane.title}
+            <section key={lane.id} aria-label={lane.title} className="flex min-h-[12rem] w-[80vw] max-w-sm shrink-0 snap-start flex-col md:w-auto md:max-w-none">
+              <header className="border-hairline mb-3 flex items-center justify-between gap-2 border-b pb-2.5">
+                <h2 className="text-foreground text-sm font-medium">{lane.title}</h2>
                 {cards && (
-                  <span className="pill h-5 overflow-hidden px-2 text-[11px]">
+                  <span className="text-muted-foreground rounded-md px-1.5 text-xs tabular-nums">
                     <Count value={items.length} />
                   </span>
                 )}
-              </h2>
+              </header>
               {loading ? (
                 <Skeleton className="h-28 w-full rounded-xl" />
               ) : items.length === 0 ? (
                 <p className="border-hairline text-text-3 animate-in fade-in rounded-xl border border-dashed px-3 py-8 text-center text-xs duration-300">Nothing here</p>
               ) : (
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2.5">
                   {items.map((pr) => (
                     <BoardCard key={`${pr.repo}#${pr.number}`} pr={pr} canAct={canAct} />
                   ))}

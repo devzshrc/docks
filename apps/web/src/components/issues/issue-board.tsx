@@ -23,12 +23,14 @@ export function IssueBoard({ columns, loading }: { columns: Record<IssueStatus, 
         const items = columns?.[lane] ?? []
         return (
           <section key={lane} aria-label={STATUS_LABEL[lane]} className="w-[80vw] max-w-sm shrink-0 snap-start md:w-auto md:max-w-none">
-            <h2 className="mb-1 flex h-8 items-center gap-2 text-sm font-medium">
-              {STATUS_LABEL[lane]}
-              {columns && <span className="pill h-5 px-2 text-[11px] tabular-nums">{items.length}</span>}
-            </h2>
-            <p className="text-text-3 mb-3 text-xs">{HINT[lane]}</p>
-            <div className="space-y-2.5">
+            <header className="border-hairline mb-3 border-b pb-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-foreground text-sm font-medium">{STATUS_LABEL[lane]}</h2>
+                {columns && <span className="text-muted-foreground text-xs tabular-nums">{items.length}</span>}
+              </div>
+              <p className="text-text-3 mt-0.5 text-xs">{HINT[lane]}</p>
+            </header>
+            <div className="flex flex-col gap-2.5">
               {loading && [0, 1].map((n) => <Skeleton key={n} className="h-24 w-full rounded-xl" />)}
               {!loading && items.length === 0 && <p className="text-muted-foreground border-hairline rounded-xl border border-dashed px-3 py-6 text-center text-xs">Nothing here</p>}
               {items.map((i) => {
