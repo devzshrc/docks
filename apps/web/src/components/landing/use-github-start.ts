@@ -10,15 +10,21 @@ import { useTRPC } from "@/trpc/react"
 /**
  * One click to start: GitHub sign-in when the server has it, otherwise the sign-up page.
  * Used by every call to action on the landing page.
+ * Surfaces a notice instead of silently redirecting when GitHub login is
+ * unavailable or fails, so the landing page can explain the fallback.
  */
 export function useGithubStart() {
   const trpc = useTRPC()
   const router = useRouter()
   const config = useQuery(trpc.health.authConfig.queryOptions())
   const [pending, setPending] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const start = useCallback(async () => {
+    setNotice(null)
+    if (config.isLoading) return
     if (!config.data?.githubLogin) {
+      setNotice("GitHub login isn't enabled on this server — continue with email instead.")
       router.push("/signup")
       return
     }
@@ -32,9 +38,10 @@ export function useGithubStart() {
     })
     if (error) {
       setPending(false)
+      setNotice("GitHub didn't complete the sign-in. Try again, or use email instead.")
       router.push("/login")
     }
-  }, [config.data?.githubLogin, router])
+  }, [config.data?.githubLogin, config.isLoading, router])
 
-  return { start, pending }
+  return { start, pending, notice }
 }
