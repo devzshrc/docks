@@ -6,7 +6,7 @@
 /*
  * Docks design tokens. One system, two designed themes (not inverted).
  * Surfaces step by lightness, edges are hairlines, depth comes from the "raised" ring on controls.
- * Type is Geist at 14/12, weights 400/500. Radii: 4 / 6 / 8 / 12 / full.
+ * Type is Space Grotesk at 14/12, weights 400/500; code uses Geist Mono. Radii: 4 / 6 / 8 / 12 / full.
  */
 :root {
   /* Surfaces */
@@ -63,13 +63,13 @@
   --sidebar-border: #e8e8eb;
   --sidebar-ring: oklch(0.6231 0.1880 259.8145);
   /* next/font sets the --font-*-face variables on <html> (see app/layout.tsx). */
-  --font-sans: var(--font-geist-face), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-space-grotesk-face), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-source-serif-face), ui-serif, serif;
   --font-display: var(--font-display-face), var(--font-source-serif-face), ui-serif, serif;
   /* UI monospace: branch names, paths, numbers. */
   --font-mono: var(--font-geist-mono-face), ui-monospace, monospace;
   /* Code: diffs, full files, code in comments. */
-  --font-code: var(--font-fira-code-face), var(--font-geist-mono-face), ui-monospace, monospace;
+  --font-code: var(--font-geist-mono-face), ui-monospace, monospace;
   --radius: 0.5rem;
   /* Content has no drop shadows; only floating layers (menus, sheets) get one. */
   --shadow-2xs: none;
