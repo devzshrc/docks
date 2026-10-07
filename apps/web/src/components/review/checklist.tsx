@@ -1,7 +1,10 @@
 "use client"
 
 import type { Guide } from "@docks/api"
+import { IconFileCode } from "@tabler/icons-react"
 import { useEffect, useState } from "react"
+
+import { cn } from "@/lib/utils"
 
 /**
  * Reviewer checklist questions linked to files (§5.3). Ticks are a personal
@@ -33,41 +36,81 @@ export function Checklist({
   }
 
   if (!items.length) return null
+  const complete = done.length === items.length
 
   return (
-    <section aria-labelledby="checklist-heading" className="space-y-2">
-      <h3 id="checklist-heading" className="flex justify-between text-sm font-medium">
-        Before you approve
-        <span className="text-muted-foreground font-normal">
-          {done.length} of {items.length}
-        </span>
-      </h3>
-      <ul className="space-y-2 text-sm">
-        {items.map((item, i) => (
-          <li key={i} className="flex gap-2">
-            <input
-              type="checkbox"
-              id={`check-${i}`}
-              className="mt-0.5 size-4 shrink-0"
-              checked={done.includes(i)}
-              onChange={() => toggle(i)}
-            />
-            <div className="min-w-0">
-              <label htmlFor={`check-${i}`} className={done.includes(i) ? "text-muted-foreground line-through" : ""}>
-                {item.question}
+    <section aria-labelledby="checklist-heading" className="space-y-3">
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between gap-2">
+          <h3 id="checklist-heading" className="text-sm font-semibold tracking-tight">
+            Before you approve
+          </h3>
+          <span
+            className={cn(
+              "text-xs tabular-nums",
+              complete ? "font-medium text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+            )}
+          >
+            {complete ? "All checked" : `${done.length} of ${items.length}`}
+          </span>
+        </div>
+        <div className="bg-muted h-1 overflow-hidden rounded-full" aria-hidden>
+          <div
+            className={cn("h-full rounded-full transition-[width] duration-300", complete ? "bg-emerald-500" : "bg-primary")}
+            style={{ width: `${(done.length / items.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      <ul className="-mx-2 space-y-0.5">
+        {items.map((item, i) => {
+          const checked = done.includes(i)
+          return (
+            <li key={i}>
+              {/* The whole row is the hit target; file links inside don't toggle it. */}
+              <label
+                htmlFor={`check-${i}`}
+                className="hover:bg-muted/70 flex cursor-pointer gap-3 rounded-lg px-2 py-2.5 transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  id={`check-${i}`}
+                  className="mt-[3px] size-4"
+                  checked={checked}
+                  onChange={() => toggle(i)}
+                />
+                <span className="min-w-0 flex-1 space-y-1.5">
+                  <span
+                    className={cn(
+                      "block text-[13.5px] leading-relaxed transition-colors",
+                      checked
+                        ? "text-muted-foreground/70"
+                        : "text-foreground"
+                    )}
+                  >
+                    {item.question}
+                  </span>
+                  {item.files.length > 0 && (
+                    <span className="flex flex-wrap gap-1.5">
+                      {item.files.map((f) => (
+                        <a
+                          key={f}
+                          href={`#file-${f}`}
+                          title={f}
+                          onClick={(e) => e.stopPropagation()}
+                          className="bg-muted text-muted-foreground hover:text-foreground hover:bg-accent inline-flex max-w-full items-center gap-1 rounded-md px-1.5 py-0.5 font-code text-[11px] transition-colors"
+                        >
+                          <IconFileCode className="size-3 shrink-0" aria-hidden />
+                          <span className="truncate">{f.split("/").pop()}</span>
+                        </a>
+                      ))}
+                    </span>
+                  )}
+                </span>
               </label>
-              {item.files.length > 0 && (
-                <div className="mt-0.5 flex flex-wrap gap-x-2">
-                  {item.files.map((f) => (
-                    <a key={f} href={`#file-${f}`} className="text-muted-foreground truncate font-mono text-xs underline">
-                      {f.split("/").pop()}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          </li>
-        ))}
+            </li>
+          )
+        })}
       </ul>
     </section>
   )
