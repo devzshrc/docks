@@ -1,5 +1,6 @@
 "use client"
 
+import { PersonAvatar } from "@/components/person-avatar"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { IconCopy, IconDots } from "@tabler/icons-react"
 import Link from "next/link"
@@ -212,11 +213,16 @@ function MembersCard({
                 return (
                   <TableRow key={m.userId}>
                     <TableCell>
-                      <Link href={`/people/${m.userId}`} className="font-medium hover:underline">
-                        {m.name}
-                      </Link>{" "}
-                      {me && <span className="text-muted-foreground">(you)</span>}
-                      <div className="text-muted-foreground text-xs">{m.email}</div>
+                      <div className="flex items-center gap-3">
+                        <PersonAvatar seed={m.userId} name={m.name} githubLogin={m.githubLogin} className="size-8" />
+                        <div className="min-w-0">
+                          <Link href={`/people/${m.userId}`} className="font-medium hover:underline">
+                            {m.name}
+                          </Link>{" "}
+                          {me && <span className="text-muted-foreground">(you)</span>}
+                          <div className="text-muted-foreground text-xs">{m.email}</div>
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm">
                       {m.githubLogin ?? <span className="text-muted-foreground">Not connected</span>}

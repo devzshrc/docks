@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { NewIssueProvider } from "@/components/new-issue/provider"
 import { CommandPalette } from "@/components/command-palette"
+import { PageHeader } from "@/components/page-header"
 import { RequireAuth } from "@/components/auth-guard"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -45,15 +46,7 @@ export function AppShell({
         <SidebarInset className="min-w-0">
           <SiteHeader />
           <div className={cn("animate-in fade-in slide-in-from-bottom-1 mx-auto flex w-full min-w-0 flex-1 flex-col gap-6 px-4 py-6 duration-200 md:px-6 lg:px-8 lg:py-8", WIDTH[width])}>
-            {title && (
-              <header className="flex flex-wrap items-start justify-between gap-4">
-                <div className="min-w-0 space-y-1">
-                  <h1 className="text-xl font-medium tracking-tight">{title}</h1>
-                  {description && <p className="text-muted-foreground max-w-2xl text-sm">{description}</p>}
-                </div>
-                {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
-              </header>
-            )}
+            <PageHeader title={title} description={description} actions={actions} />
             {children}
           </div>
           <CommandPalette />
