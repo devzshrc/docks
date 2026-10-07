@@ -3,7 +3,7 @@
 import { Search01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { DashboardFilterMenu } from "@/components/obsidian/dashboard-shell"
+import { DashboardButton, DashboardFilterMenu } from "@/components/obsidian/dashboard-shell"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
@@ -51,21 +51,18 @@ export function FilterSelect({
   )
 }
 
-/** Toggle chip: neutral when off, tinted accent when on. */
-export function ToggleChip({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) {
+/** Toggle chip, built on ObsidianUI's DashboardButton: quiet when off, brand-tinted when on. */
+export function ToggleChip({ on, label, onChange, count }: { on: boolean; label: string; onChange: (v: boolean) => void; count?: number }) {
   return (
-    <button
-      type="button"
+    <DashboardButton
+      variant="ghost"
+      size="sm"
       aria-pressed={on}
       onClick={() => onChange(!on)}
-      className={cn(
-        "h-8 rounded-full px-3 text-xs font-medium transition-[color,background-color,box-shadow,transform] duration-150 active:scale-95",
-        on
-          ? "bg-primary/10 text-primary shadow-[0_0_0_1px_color-mix(in_oklch,var(--primary)_40%,transparent)]"
-          : "text-muted-foreground hover:bg-hover hover:text-foreground shadow-[0_0_0_1px_var(--hairline)]"
-      )}
+      className={cn("h-8 rounded-full px-3 font-medium", on && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary")}
     >
       {label}
-    </button>
+      {count !== undefined && <span className={cn("tabular-nums", on ? "text-primary/80" : "text-text-3")}>{count}</span>}
+    </DashboardButton>
   )
 }

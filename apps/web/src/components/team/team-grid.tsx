@@ -21,10 +21,10 @@ export type TeamMember = {
 
 export function TeamGrid({ people }: { people: TeamMember[] }) {
   return (
-    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
+    <div className="stagger grid grid-cols-1 gap-8 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
       {people.map((p) => (
         <div key={p.userId} className="group relative pt-2">
-          <Card className="bg-card hover:border-border-control relative mt-8 overflow-visible py-0 pt-16 text-center transition-colors duration-200">
+          <Card className="bg-card surface-hover relative mt-8 overflow-visible py-0 pt-16 text-center">
             <div className="absolute inset-x-0 -top-8 flex justify-center">
               <div className="bg-background ring-hairline rounded-full p-1.5 ring-1">
                 <PersonAvatar seed={p.userId} name={p.name} githubLogin={p.githubLogin} className="size-24 border-2" />

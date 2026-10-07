@@ -52,7 +52,7 @@ const TIER_LABEL = { core: null, config: "config", test: "test", noise: "generat
 
 const LABEL_STYLE: Record<CommentLabel, string> = {
   nit: "bg-muted text-muted-foreground",
-  question: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+  question: "bg-primary/15 text-info-text",
   suggestion: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
   blocking: "bg-red-500/15 text-red-700 dark:text-red-300",
   praise: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
@@ -412,7 +412,7 @@ export function FileDiff({
             onClick={(e) => pick(e, n, side)}
             data-text={text}
           >
-            <IconMessagePlus className="absolute top-0.5 -left-1 size-3.5 text-sky-500 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />
+            <IconMessagePlus className="absolute top-0.5 -left-1 size-3.5 text-primary opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />
             {num}
           </button>
         ) : (
@@ -434,7 +434,7 @@ export function FileDiff({
             <ThreadView key={t.id} thread={t} repo={repo} number={number} branch={branch} canAct={canAct} onChanged={onThreadsChanged} />
           ))}
           {mine.map((p, i) => (
-            <div key={i} className="m-2 rounded-md border border-dashed p-2 font-sans text-sm">
+            <div key={i} className="m-2 rounded-md bg-muted/50 p-2 font-sans text-sm">
               <div className="mb-1 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Badge variant="outline">pending</Badge>

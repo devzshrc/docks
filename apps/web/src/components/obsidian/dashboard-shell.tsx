@@ -24,7 +24,7 @@ const RESIZE_STEP = 10;
 const DOCKED_SIDEBAR_REM = 42;
 
 export const dashboardButtonVariants = cva(
-  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium leading-none outline-none select-none transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.25,1,0.5,1)] focus-visible:ring-2 focus-visible:ring-(--obsidian-dashboard-shell-ring) disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium leading-none outline-none select-none transition-[background-color,color,box-shadow,scale] duration-150 ease-[cubic-bezier(0.25,1,0.5,1)] focus-visible:ring-2 focus-visible:ring-(--obsidian-dashboard-shell-ring) active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -878,12 +878,12 @@ function NavItem({ item, isActive, isQuiet, pillId, onSelect }: NavItemProps) {
         <motion.span
           layoutId={pillId}
           aria-hidden
-          className="absolute inset-0 rounded-lg bg-(--obsidian-dashboard-shell-muted) shadow-(--obsidian-dashboard-shell-control-shadow)"
+          className="absolute inset-0 rounded-lg bg-[color-mix(in_oklab,var(--obsidian-dashboard-shell-accent)_15%,transparent)]"
           transition={reduceMotion ? { duration: 0 } : PILL_SPRING}
         />
       )}
       {Icon ? (
-        <Icon aria-hidden className="relative size-4 shrink-0 text-(--obsidian-dashboard-shell-icon)" />
+        <Icon aria-hidden className={cn("relative size-4 shrink-0 transition-colors duration-150", isActive ? "text-(--obsidian-dashboard-shell-accent)" : "text-(--obsidian-dashboard-shell-icon)")} />
       ) : item.color ? (
         <span aria-hidden className="relative flex size-4 shrink-0 items-center justify-center">
           <span className="size-2 rounded-full" style={{ backgroundColor: item.color }} />
@@ -891,7 +891,7 @@ function NavItem({ item, isActive, isQuiet, pillId, onSelect }: NavItemProps) {
       ) : null}
       <span className="relative min-w-0 flex-1 truncate text-left">{item.label}</span>
       {item.count !== undefined && (
-        <span className="relative inline-flex h-4 min-w-6 shrink-0 items-center justify-center rounded-[5px] border-[0.5px] border-(--obsidian-dashboard-shell-border-strong) bg-(--obsidian-dashboard-shell-muted) px-1 text-[11px] font-normal leading-none tabular-nums text-(--obsidian-dashboard-shell-text-muted)">
+        <span className="relative inline-flex h-4 min-w-6 shrink-0 items-center justify-center rounded-[5px] bg-(--obsidian-dashboard-shell-muted) px-1 text-[11px] font-normal leading-none tabular-nums text-(--obsidian-dashboard-shell-text-muted)">
           {item.count}
         </span>
       )}
@@ -931,7 +931,7 @@ function ShellTab({ item, isActive, pillId }: ShellTabProps) {
         <motion.span
           layoutId={pillId}
           aria-hidden
-          className="absolute inset-0 rounded-md bg-(--obsidian-dashboard-shell-muted) shadow-(--obsidian-dashboard-shell-control-shadow)"
+          className="absolute inset-0 rounded-md bg-[color-mix(in_oklab,var(--obsidian-dashboard-shell-accent)_15%,transparent)]"
           transition={reduceMotion ? { duration: 0 } : PILL_SPRING}
         />
       )}

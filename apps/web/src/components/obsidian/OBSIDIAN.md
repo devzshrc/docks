@@ -10,3 +10,5 @@ Copied from the ObsidianUI registry (`https://www.obsidianui.dev/r/{name}.json`)
 - `flip-text` groups characters by word so headlines wrap between words only.
 - Not installed: `art-gallery` (needs three.js and real artwork).
 - Confirm the library's licence terms before shipping.
+
+- Edits to `dashboard-shell`: buttons scale on press; the active nav and tab pill use a 15% tint of the brand accent (#3581B8) with an accent-coloured icon; the sidebar count badge has no border.

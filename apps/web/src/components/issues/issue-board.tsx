@@ -18,7 +18,7 @@ const HINT: Record<IssueStatus, string> = {
 /** Status comes from GitHub (assignee, linked PR, closed), so there is nothing to drag. */
 export function IssueBoard({ columns, loading }: { columns: Record<IssueStatus, IssueItem[]> | undefined; loading: boolean }) {
   return (
-    <div className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
+    <div className="stagger -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
       {LANES.map((lane) => {
         const items = columns?.[lane] ?? []
         return (
@@ -30,13 +30,13 @@ export function IssueBoard({ columns, loading }: { columns: Record<IssueStatus, 
               </div>
               <p className="text-text-3 mt-0.5 text-xs">{HINT[lane]}</p>
             </header>
-            <div className="flex flex-col gap-2.5">
+            <div className="stagger flex flex-col gap-2.5">
               {loading && [0, 1].map((n) => <Skeleton key={n} className="h-24 w-full rounded-xl" />)}
-              {!loading && items.length === 0 && <p className="text-muted-foreground border-hairline rounded-xl border border-dashed px-3 py-6 text-center text-xs">Nothing here</p>}
+              {!loading && items.length === 0 && <p className="text-muted-foreground rounded-xl bg-muted/50 px-3 py-6 text-center text-xs">Nothing here</p>}
               {items.map((i) => {
                 const pr = i.prs.find((p) => p.state === "open") ?? i.prs.find((p) => p.state === "merged")
                 return (
-                  <article key={`${i.repo}#${i.number}`} className="bg-card border-hairline hover:border-border-control relative rounded-xl border p-3.5 text-sm transition-colors">
+                  <article key={`${i.repo}#${i.number}`} className="bg-card surface-hover relative rounded-xl p-3.5 text-sm">
                     <Link href={`/issues/${i.repo}/${i.number}`} className="block outline-none after:absolute after:inset-0 after:content-[''] focus-visible:underline">
                       <div className="text-muted-foreground truncate font-mono text-xs">{i.repo}</div>
                       <div className="mt-1 line-clamp-2 leading-snug font-medium">

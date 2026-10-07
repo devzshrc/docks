@@ -12,7 +12,7 @@ import { IssueList } from "@/components/issues/issue-list"
 import { fromParams, serverFilters, toParams, VIEWS, type Sort, type UiFilters, type View } from "@/components/issues/shared"
 import { QueryError } from "@/components/query-state"
 import { ShellFilters } from "@/components/shell-slots"
-import { FilterSelect, ToolbarSearch } from "@/components/toolbar"
+import { FilterSelect, ToggleChip, ToolbarSearch } from "@/components/toolbar"
 import { Button } from "@/components/ui/button"
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace"
 import { cn } from "@/lib/utils"
@@ -135,26 +135,16 @@ function Issues({ workspaceId }: { workspaceId: string }) {
         </ShellFilters>
       )}
 
-      <nav aria-label="Issue views" className="-mx-1 flex flex-wrap gap-1.5 px-1">
-        {VIEWS.map((v) => {
-          const n = v.count && counts.data ? counts.data[v.count] : undefined
-          const on = filters.view === v.id
-          return (
-            <button
-              key={v.id}
-              type="button"
-              aria-pressed={on}
-              onClick={() => set({ view: v.id, assignee: undefined, sort: undefined })}
-              className={cn(
-                "flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-[color,background-color,box-shadow,transform] duration-150 active:scale-95",
-                on ? "bg-primary/10 text-primary shadow-[0_0_0_1px_color-mix(in_oklch,var(--primary)_40%,transparent)]" : "text-muted-foreground hover:bg-hover hover:text-foreground shadow-[0_0_0_1px_var(--hairline)]"
-              )}
-            >
-              {v.label}
-              {n !== undefined && <span className={cn("tabular-nums", on ? "text-primary" : "text-text-3")}>{n}</span>}
-            </button>
-          )
-        })}
+      <nav aria-label="Issue views" className="-mx-1 flex flex-wrap gap-1 px-1">
+        {VIEWS.map((v) => (
+          <ToggleChip
+            key={v.id}
+            on={filters.view === v.id}
+            label={v.label}
+            count={v.count && counts.data ? counts.data[v.count] : undefined}
+            onChange={() => set({ view: v.id, assignee: undefined, sort: undefined })}
+          />
+        ))}
       </nav>
 
       {needsGithub && <p className="text-muted-foreground text-sm">Connect your GitHub account (Integrations) to use this view.</p>}
