@@ -536,19 +536,19 @@ pre, code, kbd { font-family: var(--font-code); }
 /* ───────────── Borderless surfaces and ObsidianUI motion ─────────────
    Panels are separated by fill (background, card, muted), not lines. Inputs are filled controls with a brand focus ring. */
 @layer base {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
-  textarea,
-  select:not(.select-bare) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(.input-bare),
+  textarea:not(.input-bare),
+  select:not(.select-bare):not(.input-bare) {
     background-color: var(--field);
     border-color: var(--input);
     transition: background-color 150ms, border-color 150ms, box-shadow 150ms;
   }
-  input:not([type="checkbox"]):not([type="radio"]):hover,
-  textarea:hover,
-  select:not(.select-bare):hover { background-color: var(--field-hover); border-color: var(--border-control); }
-  input:not([type="checkbox"]):not([type="radio"]):focus-visible,
-  textarea:focus-visible,
-  select:not(.select-bare):focus-visible {
+  input:not([type="checkbox"]):not([type="radio"]):not(.input-bare):hover,
+  textarea:not(.input-bare):hover,
+  select:not(.select-bare):not(.input-bare):hover { background-color: var(--field-hover); border-color: var(--border-control); }
+  input:not([type="checkbox"]):not([type="radio"]):not(.input-bare):focus-visible,
+  textarea:not(.input-bare):focus-visible,
+  select:not(.select-bare):not(.input-bare):focus-visible {
     outline: none;
     border-color: var(--primary);
     background-color: var(--card);
