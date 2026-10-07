@@ -15,7 +15,7 @@ export function TrendChart({
   label,
   ariaLabel,
   format = (v) => String(v),
-  color = "#3581B8",
+  color = "#2D6E9E",
   height = 200,
 }: {
   rows: TrendRow[]

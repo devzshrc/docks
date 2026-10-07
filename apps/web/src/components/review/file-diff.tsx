@@ -412,7 +412,7 @@ export function FileDiff({
             onClick={(e) => pick(e, n, side)}
             data-text={text}
           >
-            <IconMessagePlus className="absolute top-0.5 -left-1 size-3.5 text-primary opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />
+            <IconMessagePlus className="absolute top-0.5 -left-1 size-3.5 text-primary-text opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />
             {num}
           </button>
         ) : (

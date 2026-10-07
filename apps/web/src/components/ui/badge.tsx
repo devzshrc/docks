@@ -19,7 +19,7 @@ const badgeVariants = cva(
         violet: "bg-violet-bg text-violet-text",
         outline: "bg-muted text-muted-foreground [a&]:hover:bg-hover [a&]:hover:text-foreground",
         ghost: "bg-transparent text-muted-foreground [a&]:hover:bg-hover",
-        link: "text-primary underline-offset-4 [a&]:hover:underline",
+        link: "text-primary-text underline-offset-4 [a&]:hover:underline",
       },
     },
     defaultVariants: {

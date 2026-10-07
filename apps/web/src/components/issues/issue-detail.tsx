@@ -328,7 +328,7 @@ export function IssueDetail({ repo, number }: { repo: string; number: number }) 
                     </div>
                   ))}
                   {canEdit && me && !i.assignees.includes(me) && (
-                    <button type="button" className="text-primary text-xs hover:underline" onClick={() => patch({ assignees: [...i.assignees, me] })}>
+                    <button type="button" className="text-primary-text text-xs hover:underline" onClick={() => patch({ assignees: [...i.assignees, me] })}>
                       Assign myself
                     </button>
                   )}

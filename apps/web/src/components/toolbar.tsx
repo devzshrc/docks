@@ -59,10 +59,10 @@ export function ToggleChip({ on, label, onChange, count }: { on: boolean; label:
       size="sm"
       aria-pressed={on}
       onClick={() => onChange(!on)}
-      className={cn("h-8 rounded-full px-3 font-medium", on && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary")}
+      className={cn("h-8 rounded-full px-3 font-medium", on && "bg-primary/15 text-primary-text hover:bg-primary/20 hover:text-primary-text")}
     >
       {label}
-      {count !== undefined && <span className={cn("tabular-nums", on ? "text-primary/80" : "text-text-3")}>{count}</span>}
+      {count !== undefined && <span className={cn("tabular-nums", on ? "text-primary-text/80" : "text-text-3")}>{count}</span>}
     </DashboardButton>
   )
 }

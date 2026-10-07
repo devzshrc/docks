@@ -11,4 +11,4 @@ Copied from the ObsidianUI registry (`https://www.obsidianui.dev/r/{name}.json`)
 - Not installed: `art-gallery` (needs three.js and real artwork).
 - Confirm the library's licence terms before shipping.
 
-- Edits to `dashboard-shell`: buttons scale on press; the active nav and tab pill use a 15% tint of the brand accent (#3581B8) with an accent-coloured icon; the sidebar count badge has no border.
+- Edits to `dashboard-shell`: buttons scale on press; the active nav and tab pill use a 15% tint of the brand accent (#2D6E9E) with an accent-coloured icon; the sidebar count badge has no border.
