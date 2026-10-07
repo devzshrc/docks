@@ -17,6 +17,7 @@ import { applyRules } from "./handlers/apply-rules.js";
 import { autoAssign } from "./handlers/auto-assign.js";
 import { generateGuide } from "./handlers/generate-guide.js";
 import { slackDigest } from "./handlers/slack-digest.js";
+import { syncIssue, syncIssues } from "./handlers/sync-issues.js";
 import { syncPr } from "./handlers/sync-pr.js";
 import { syncRepo } from "./handlers/sync-repo.js";
 import { syncUserRepos } from "./handlers/sync-user-repos.js";
@@ -31,6 +32,8 @@ export const handlers: Record<Job["type"], (payload: unknown) => Promise<void>> 
   auto_assign: autoAssign,
   weekly_report: weeklyReport,
   apply_rules: applyRules,
+  sync_issues: syncIssues,
+  sync_issue: syncIssue,
 };
 
 const IDLE_MS = 2_000;

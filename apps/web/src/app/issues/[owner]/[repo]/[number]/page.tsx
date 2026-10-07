@@ -1,0 +1,15 @@
+import { notFound } from "next/navigation"
+
+import { AppShell } from "@/components/app-shell"
+import { IssueDetail } from "@/components/issues/issue-detail"
+
+export default async function Page({ params }: { params: Promise<{ owner: string; repo: string; number: string }> }) {
+  const { owner, repo, number } = await params
+  const n = Number(number)
+  if (!Number.isInteger(n) || n < 1) notFound()
+  return (
+    <AppShell width="wide">
+      <IssueDetail repo={`${owner}/${repo}`} number={n} />
+    </AppShell>
+  )
+}

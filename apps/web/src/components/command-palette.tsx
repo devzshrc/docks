@@ -2,6 +2,7 @@
 
 import {
   Analytics01Icon,
+  CheckListIcon,
   ArrowTurnBackwardIcon,
   Clock01Icon,
   ConnectIcon,
@@ -33,6 +34,9 @@ type IconDef = typeof Search01Icon
 
 const PAGES: { label: string; href: string; icon: IconDef }[] = [
   { label: "Reviews", href: "/review", icon: DashboardCircleIcon },
+  { label: "Issues", href: "/issues", icon: CheckListIcon },
+  { label: "My issues", href: "/issues?view=mine", icon: CheckListIcon },
+  { label: "Issue board", href: "/issues?view=board", icon: CheckListIcon },
   { label: "Waiting on me", href: "/review?waiting=1", icon: Clock01Icon },
   { label: "My pull requests", href: "/review?mine=1", icon: GitPullRequestIcon },
   { label: "Team", href: "/team", icon: UserGroupIcon },
@@ -127,7 +131,7 @@ export function CommandPalette() {
         group: "Issues" as const,
         label: i.title,
         hint: `${i.repo.split("/").pop()} #${i.number}`,
-        run: () => window.open(i.url, "_blank", "noopener"),
+        run: () => router.push(`/issues/${i.repo}/${i.number}`),
         icon: AlertCircleIcon,
       }))
     : []

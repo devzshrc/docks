@@ -58,6 +58,8 @@ export const repository = pgTable("repository", {
   /** Team questions shown above the AI checklist on every PR (plan M6). */
   checklistTemplate: text("checklist_template").array().notNull().default([]),
   routingRules: jsonb("routing_rules").$type<RoutingRule[]>().notNull().default([]),
+  /** When the issue mirror was last backfilled; null = never (the Issues page queues a sync). */
+  issuesSyncedAt: timestamptz("issues_synced_at"),
   ...timestamps,
 });
 
