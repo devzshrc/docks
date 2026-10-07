@@ -17,7 +17,6 @@ import { DraggableMarquee } from "@/components/obsidian/draggable-marquee"
 import { FlipText } from "@/components/obsidian/flip-text"
 import { HoverImg } from "@/components/obsidian/hover-img"
 import { SplitShowcase } from "@/components/obsidian/split-showcase"
-import { TextStream } from "@/components/obsidian/text-stream"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { useSession } from "@/lib/auth-client"
@@ -141,44 +140,56 @@ export function Landing() {
         </nav>
       </header>
 
-      <main>
+      <div className="border-hairline relative mx-auto max-w-[1120px] border-x">
         {/* Hero */}
-        <section className="relative overflow-hidden">
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(60%_60%_at_50%_0%,color-mix(in_oklch,var(--primary)_14%,transparent),transparent)]" />
-          <div className={`${section} relative flex flex-col items-center pt-20 pb-16 text-center sm:pt-28`}>
-            <span className="pill animate-in fade-in slide-in-from-bottom-2 mb-6 duration-500" data-tone="info">
-              Guided code review for GitHub teams
+        <Band className="overflow-hidden">
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,var(--hairline)_1px,transparent_1px),linear-gradient(to_bottom,var(--hairline)_1px,transparent_1px)] [mask-image:radial-gradient(70%_60%_at_50%_0%,black,transparent)] bg-[size:56px_56px] opacity-60" />
+          <div className="relative flex flex-col items-center px-6 pt-36 pb-20 text-center sm:pt-44 sm:pb-24">
+            <span className="bg-background border-hairline text-muted-foreground mb-8 inline-flex h-8 items-center gap-2 rounded-full border px-3 text-xs">
+              <span className="bg-success size-1.5 rounded-full" aria-hidden />
+              Free for up to 3 repositories
             </span>
-            <h1 className="animate-in fade-in slide-in-from-bottom-2 max-w-4xl text-4xl font-medium tracking-tight text-balance duration-700 sm:text-6xl sm:leading-[1.05]">
-              <FlipText className="justify-center">Review code the way it was meant to be read.</FlipText>
+            <h1 className="font-display max-w-4xl text-[clamp(2.75rem,8vw,5.75rem)] leading-[0.98] font-normal tracking-[-0.025em] text-balance">
+              Code review,
+              <br />
+              <span className="relative inline-block">
+                <span aria-hidden className="bg-primary/12 absolute inset-x-[-0.12em] top-[0.18em] bottom-[0.02em] -z-0 rounded-[0.12em]" />
+                <em className="text-primary relative not-italic sm:italic">read in the right order.</em>
+              </span>
             </h1>
-            <p className="text-muted-foreground animate-in fade-in mt-6 max-w-2xl text-base text-pretty duration-1000 sm:text-lg">
-              Docks turns every pull request into a guided read: one board of what&apos;s waiting, a clear order for the changes, and the context to decide with confidence.
-              Faster reviews, fewer surprises, calmer releases.
+            <p className="text-muted-foreground mt-7 max-w-xl text-base leading-relaxed text-pretty sm:text-lg">
+              Docks turns every pull request into a guided read: what changed, why it matters, and what to check before you approve.
             </p>
-            <div className="animate-in fade-in mt-9 flex flex-col items-center gap-4 duration-1000 sm:flex-row">
-              <DiscoverButton label={pending ? "Opening GitHub…" : "Continue with GitHub"} onClick={start} disabled={pending} />
-              <a href="#how" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
-                See how it works ↓
+            <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
+              <button type="button" onClick={start} disabled={pending} className={primaryPill}>
+                <IconBrandGithub className="size-4" aria-hidden />
+                {pending ? "Opening GitHub…" : "Continue with GitHub"}
+              </button>
+              <a href="#how" className={secondaryPill}>
+                See how it works
               </a>
             </div>
-            <p className="text-text-3 mt-5 text-xs">Free for up to 3 repositories · No credit card</p>
           </div>
-          <div className={`${section} relative pb-20`}>
-            <ProductPreview className="mx-auto max-w-5xl" />
-          </div>
-        </section>
+        </Band>
 
-        {/* Vision */}
-        <section aria-label="Our vision" className="border-hairline border-y">
-          <div className={section}>
-            <TextStream prefix="Docks makes review" items={["faster.", "clearer.", "calmer.", "kinder."]} height="360px" fontSize="clamp(2.5rem, 7vw, 5rem)" fontWeight={500} />
+        {/* The idea, drawn */}
+        <Band>
+          <div className="px-6 py-14 sm:px-12 sm:py-16">
+            <OrderDiagram />
           </div>
-          <p className="text-muted-foreground mx-auto max-w-2xl px-5 pb-20 text-center text-base text-pretty sm:text-lg">
-            Code review is where quality is won, and where teams quietly lose days. We think it should feel like reading a well-edited story, not digging through a pile. Docks
-            gives reviewers the order, the context and the checklist, so good reviews become the easy ones.
-          </p>
-        </section>
+        </Band>
+
+        {/* Facts */}
+        <Band>
+          <div className="divide-hairline grid divide-y md:grid-cols-3 md:divide-x md:divide-y-0">
+            {FACTS.map((f) => (
+              <div key={f.k} className="space-y-2 px-6 py-10 sm:px-8">
+                <p className="font-display text-2xl tracking-tight">{f.k}</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">{f.v}</p>
+              </div>
+            ))}
+          </div>
+        </Band>
 
         {/* How it works */}
         <section id="how" className={`${section} scroll-mt-20 py-24`}>
