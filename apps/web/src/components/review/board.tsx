@@ -58,31 +58,31 @@ export function ReviewBoard({
   return (
     <div ref={root} className="space-y-3">
       {stuck > 0 && (
-        <p className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
-          <span className="size-1.5 rounded-full bg-amber-500" aria-hidden />
+        <p className="text-warning-text flex items-center gap-2 text-xs">
+          <span className="bg-warning size-1.5 rounded-full" aria-hidden />
           {stuck} PR{stuck > 1 ? "s" : ""} waiting more than {stuckHours}h
         </p>
       )}
       <div
-        className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:overflow-visible md:px-0"
+        className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:overflow-visible md:px-0"
         style={{ gridTemplateColumns: `repeat(${lanes.length}, minmax(0, 1fr))` }}
       >
         {lanes.map((lane) => {
           const items = inLane(lane.id)
           return (
-            <section key={lane.id} className="bg-muted/60 w-[80vw] max-w-sm shrink-0 snap-start rounded-lg p-3 md:w-auto md:max-w-none">
-              <h2 className="mb-3 flex items-center gap-2 px-1 text-sm font-medium">
+            <section key={lane.id} aria-label={lane.title} className="w-[80vw] max-w-sm shrink-0 snap-start md:w-auto md:max-w-none">
+              <h2 className="mb-3 flex h-8 items-center gap-2 text-sm font-medium">
                 {lane.title}
                 {cards && (
-                  <span className="bg-background text-muted-foreground overflow-hidden rounded-full border px-2 text-xs">
+                  <span className="pill h-5 overflow-hidden px-2 text-[11px]">
                     <Count value={items.length} />
                   </span>
                 )}
               </h2>
               {loading ? (
-                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-28 w-full rounded-xl" />
               ) : items.length === 0 ? (
-                <p className="text-muted-foreground animate-in fade-in rounded-md border border-dashed px-3 py-6 text-center text-xs duration-300">Nothing here</p>
+                <p className="border-hairline text-text-3 animate-in fade-in rounded-xl border border-dashed px-3 py-8 text-center text-xs duration-300">Nothing here</p>
               ) : (
                 <div className="space-y-2">
                   {items.map((pr) => (

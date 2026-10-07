@@ -232,7 +232,7 @@
   }
 
   /* Native selects everywhere: flat, hairline border, quiet chevron. */
-  select {
+  select:not(.select-bare) {
     appearance: none;
     padding-right: 2rem !important;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238f8f8f' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -242,10 +242,10 @@
     cursor: pointer;
     transition: border-color 120ms, box-shadow 120ms;
   }
-  select:hover {
+  select:not(.select-bare):hover {
     border-color: color-mix(in oklch, var(--input) 70%, var(--foreground));
   }
-  select:focus-visible {
+  select:not(.select-bare):focus-visible {
     outline: none;
     border-color: var(--ring);
     box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent);
@@ -317,6 +317,24 @@
   }
   .tex-neutral:hover { background: var(--hover); }
   .tex-neutral:active { background: var(--hover); filter: brightness(0.97); }
+
+  /* A select living inside a pill (see FilterSelect): no box of its own. */
+  .select-bare {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+    height: 100%;
+    max-width: 14rem;
+    font: inherit;
+    font-weight: 500;
+    color: var(--foreground);
+    cursor: pointer;
+    outline: none;
+    text-overflow: ellipsis;
+  }
+  .select-bare:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 
   /* Segmented control: a quiet track; the pressed segment is a raised pill. */
   .segmented {
