@@ -260,3 +260,50 @@ export function fuzzyScore(query: string, path: string): number | null {
   }
   return score - p.length * 0.01
 }
+
+// ---- GitHub issue forms (.github/ISSUE_TEMPLATE/*.yml) ------------------------------------
+
+export interface FormField {
+  id: string;
+  kind: "input" | "textarea" | "dropdown" | "checkboxes";
+  label: string;
+  description: string;
+  placeholder: string;
+  required: boolean;
+  /** dropdown choices, or checkbox labels */
+  options: string[];
+  /** starting text for textarea/input */
+  value: string;
+}
+
+export interface FormTemplate {
+  name: string;
+  about: string;
+  title: string;
+  labels: string[];
+  assignees: string[];
+  fields: FormField[];
+}
+
+/** Same shape GitHub gives a submitted form: "### Label" then the answer. Checkboxes are "- [x] label" lines. */
+export function compileForm(fields: FormField[], values: Record<string, string>, refs: CodeRef[] = []): string {
+  const parts: string[] = [];
+  for (const f of fields) {
+    const v = (values[f.id] ?? "").trim();
+    if (f.kind === "checkboxes") {
+      const checked = new Set(v.split("\n").filter(Boolean));
+      parts.push(`### ${f.label}\n\n${f.options.map((o) => `- [${checked.has(o) ? "x" : " "}] ${o}`).join("\n")}`);
+    } else if (v) {
+      parts.push(`### ${f.label}\n\n${v}`);
+    } else if (f.kind !== "dropdown") {
+      parts.push(`### ${f.label}\n\n_No response_`);
+    }
+  }
+  const body = parts.join("\n\n");
+  const links = compileBody("task", {}, refs);
+  return [body, links].filter(Boolean).join("\n\n");
+}
+
+export function missingForm(fields: FormField[], values: Record<string, string>): string[] {
+  return fields.filter((f) => f.required && !(values[f.id] ?? "").trim()).map((f) => f.label);
+}

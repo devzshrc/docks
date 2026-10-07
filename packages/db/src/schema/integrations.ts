@@ -9,6 +9,9 @@ export const linearIntegration = pgTable("linear_integration", {
     .references(() => workspace.id, { onDelete: "cascade" }),
   apiKeyEncrypted: text("api_key_encrypted").notNull(),
   orgName: text("org_name").notNull(),
+  /** Where "New issue" files the Linear copy; null = Linear off for new issues. */
+  defaultTeamId: text("default_team_id"),
+  defaultTeamName: text("default_team_name"),
   ...timestamps,
 });
 

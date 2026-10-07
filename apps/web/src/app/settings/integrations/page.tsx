@@ -267,6 +267,8 @@ function LinearCard({ workspaceId }: { workspaceId: string }) {
   const refresh = () => queryClient.invalidateQueries(trpc.integration.linear.queryFilter())
   const connect = useMutation(trpc.integration.connectLinear.mutationOptions({ onSuccess: () => { setKey(""); void refresh() } }))
   const disconnect = useMutation(trpc.integration.disconnectLinear.mutationOptions({ onSuccess: refresh }))
+  const teams = useQuery({ ...trpc.integration.linearTeams.queryOptions({ workspaceId }), enabled: Boolean(linear.data?.orgName && linear.data.canManage) })
+  const setTeam = useMutation(trpc.integration.setLinearTeam.mutationOptions({ onSuccess: refresh }))
 
   if (linear.isPending) return <Skeleton className="h-32 w-full max-w-lg" />
   if (linear.error) return <p className="text-destructive text-sm">{linear.error.message}</p>
@@ -324,8 +326,28 @@ function LinearCard({ workspaceId }: { workspaceId: string }) {
         ) : (
           <p className="text-muted-foreground text-sm">Ask a workspace owner to connect Linear.</p>
         )}
-        {(connect.error ?? disconnect.error) && (
-          <p role="alert" className="text-destructive text-sm">{(connect.error ?? disconnect.error)!.message}</p>
+        {orgName && canManage && (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <label htmlFor="linear-team">File new issues in</label>
+            <select
+              id="linear-team"
+              className="border-input bg-background h-9 rounded-lg border px-2"
+              value={linear.data.teamId ?? ""}
+              disabled={setTeam.isPending}
+              onChange={(e) => setTeam.mutate({ workspaceId, teamId: e.target.value || null })}
+            >
+              <option value="">Don&apos;t file in Linear</option>
+              {(teams.data ?? []).map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <span className="text-muted-foreground text-xs">Adds an &ldquo;Also create in Linear&rdquo; option to New issue.</span>
+          </div>
+        )}
+        {(connect.error ?? disconnect.error ?? setTeam.error) && (
+          <p role="alert" className="text-destructive text-sm">{(connect.error ?? disconnect.error ?? setTeam.error)!.message}</p>
         )}
       </CardContent>
     </Card>

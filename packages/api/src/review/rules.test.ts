@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { RoutingRule } from "@docks/db";
-import { dueRules, globToRegExp, ruleMatches } from "./rules.js";
+import { dueRules, globToRegExp, issueRules, ruleMatches } from "./rules.js";
 
 const rule = (r: Partial<RoutingRule>): RoutingRule => ({
   id: "r",
@@ -37,4 +37,11 @@ test("a rule needs a condition; path and size conditions combine with AND", () =
 test("applied rules don't fire again", () => {
   const rules = [rule({ id: "a", minLines: 10 }), rule({ id: "b", minLines: 10 })];
   assert.deepEqual(dueRules(rules, ["a"], { paths: [], lines: 50 }).map((r) => r.id), ["b"]);
+});
+
+test("issues only use path rules", () => {
+  const rules = [rule({ id: "a", paths: ["billing/"] }), rule({ id: "b", minLines: 5 }), rule({ id: "c", paths: ["billing/"], minLines: 5 })];
+  assert.deepEqual(issueRules(rules, ["billing/plans.ts"]).map((r) => r.id), ["a"]);
+  assert.deepEqual(issueRules(rules, ["web/a.ts"]), []);
+  assert.deepEqual(issueRules(rules, []), []);
 });

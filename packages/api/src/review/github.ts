@@ -360,6 +360,18 @@ export function installationClient(installationId: number) {
       );
       return res.items.map((i) => ({ number: i.number, title: i.title, url: i.html_url, labels: i.labels.map((l) => l.name), comments: i.comments, updatedAt: i.updated_at }));
     },
+    /** Open issues across several repos by title text, for ⌘K. */
+    searchIssuesIn: async (repos: string[], text: string) => {
+      const q = encodeURIComponent(`is:issue is:open in:title ${text} ${repos.map((r) => `repo:${r}`).join(" ")}`);
+      const res = await call<{ items: { number: number; title: string; html_url: string; repository_url: string }[] }>(`/search/issues?q=${q}&per_page=6&sort=updated`);
+      return res.items.map((i) => ({ number: i.number, title: i.title, url: i.html_url, repo: i.repository_url.replace(/^.*\/repos\//, "") }));
+    },
+    /** Fallback when the person hasn't linked GitHub: created by the App, attributed in the body. */
+    createIssue: (repo: string, input: { title: string; body: string; labels: string[]; assignees: string[] }) =>
+      call<{ number: number; html_url: string; labels: ({ name: string } | string)[]; assignees: { login: string }[] | null }>(
+        `/repos/${repo}/issues`,
+        { method: "POST", body: JSON.stringify(input) },
+      ),
     /** Routing rules post as the App. */
     addLabels: (repo: string, n: number, labels: string[]) =>
       call(`/repos/${repo}/issues/${n}/labels`, { method: "POST", body: JSON.stringify({ labels }) }),

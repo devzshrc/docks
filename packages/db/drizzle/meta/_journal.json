@@ -127,6 +127,13 @@
       "when": 1791379998011,
       "tag": "0017_redundant_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791381290060,
+      "tag": "0018_deep_hawkeye",
+      "breakpoints": true
     }
   ]
 }

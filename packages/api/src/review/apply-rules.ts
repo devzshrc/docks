@@ -6,7 +6,7 @@ import { dueRules } from "./rules.js";
 const FOOTER = "\n\n<sub>Posted by a Docks routing rule.</sub>";
 
 /** GitHub logins of a team's members who aren't away (members without a linked GitHub account are skipped). */
-async function teamLogins(teamId: string, workspaceId: string) {
+export async function teamLogins(teamId: string, workspaceId: string) {
   const rows = await db
     .select({ login: schema.githubIdentity.githubLogin, away: schema.workspaceMember.awayUntil })
     .from(schema.team)
