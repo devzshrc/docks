@@ -39,5 +39,9 @@ export function RankedBars({
       }),
     [ranked, label, format, color]
   )
-  return <Chart definition={definition} height={Math.max(120, 44 + ranked.length * 30)} ariaLabel={ariaLabel} />
+  return (
+    <div className="anim-reveal">
+      <Chart definition={definition} height={Math.max(120, 44 + ranked.length * 30)} ariaLabel={ariaLabel} />
+    </div>
+  )
 }

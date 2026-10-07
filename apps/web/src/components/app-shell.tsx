@@ -42,7 +42,7 @@ export function AppShell({
         <AppSidebar variant="inset" />
         <SidebarInset className="min-w-0">
           <SiteHeader />
-          <div className={cn("mx-auto flex w-full min-w-0 flex-1 flex-col gap-8 px-4 py-6 md:px-8 md:py-8", WIDTH[width])}>
+          <div className={cn("animate-in fade-in slide-in-from-bottom-1 mx-auto flex w-full min-w-0 flex-1 flex-col gap-8 px-4 py-6 duration-200 md:px-8 md:py-8", WIDTH[width])}>
             {title && (
               <header className="flex flex-wrap items-end justify-between gap-4">
                 <div className="min-w-0 space-y-1">

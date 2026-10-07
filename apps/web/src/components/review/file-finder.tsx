@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { useEffect, useRef, useState } from "react"
 
 import { FileIcon } from "@/components/file-icon"
+import { SlidingHighlight } from "@/components/motion"
 import { fuzzyScore } from "@/lib/diff"
 import { cn } from "@/lib/utils"
 
@@ -95,7 +96,8 @@ export function FileFinder({ files }: { files: RankedFile[] }) {
             className="placeholder:text-muted-foreground/70 h-12 w-full bg-transparent text-[15px] outline-none"
           />
         </div>
-        <ul ref={list} role="listbox" className="max-h-[min(22rem,50vh)] overflow-y-auto p-2">
+        <ul ref={list} role="listbox" className="relative max-h-[min(22rem,50vh)] overflow-y-auto p-2">
+          <SlidingHighlight listRef={list} active={active} watch={results.length + q} />
           {results.length === 0 && <li className="text-muted-foreground py-8 text-center text-sm">No matching files</li>}
           {results.map(({ f }, idx) => {
             const parts = f.filename.split("/")
@@ -109,8 +111,8 @@ export function FileFinder({ files }: { files: RankedFile[] }) {
                 onMouseMove={() => setActive(idx)}
                 onClick={() => go(f.filename)}
                 className={cn(
-                  "flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5",
-                  idx === active && "bg-accent text-accent-foreground"
+                  "relative flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5",
+                  idx === active && "text-accent-foreground"
                 )}
               >
                 <FileIcon path={f.filename} />

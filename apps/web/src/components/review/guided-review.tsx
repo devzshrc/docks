@@ -13,6 +13,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { Fragment, useEffect, useRef, useState } from "react"
 
 import { FileIcon } from "@/components/file-icon"
+import { Count, DrawTick, flash, useJustBecame } from "@/components/motion"
 import { Checklist } from "@/components/review/checklist"
 import { AskPanel } from "@/components/review/ask-panel"
 import { FixWithAgent, OpenInPx0 } from "@/components/review/agent-handoff"
@@ -98,7 +99,11 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
   const filesNow = () => queryClient.getQueryData(queryOptions.queryKey)?.files ?? []
   function jumpTo(path: string) {
     const id = `file-${path}`
-    if (decodeURIComponent(location.hash) === `#${id}`) document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
+    if (decodeURIComponent(location.hash) === `#${id}`) {
+      const el = document.getElementById(id)
+      el?.scrollIntoView({ behavior: "smooth" })
+      flash(el)
+    }
     else location.hash = id
   }
   function currentFile() {
@@ -124,6 +129,8 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
   const keys = useRef({ setViewed, jumpTo, currentFile, filesNow })
   keys.current = { setViewed, jumpTo, currentFile, filesNow }
   const help = useRef<HTMLDialogElement>(null)
+  const allViewed = data.data ? data.data.files.length > 0 && data.data.files.every((f) => f.viewed) : false
+  const justDone = useJustBecame(allViewed)
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const t = e.target as HTMLElement | null
@@ -177,7 +184,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
   ]
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="animate-in fade-in flex flex-col gap-6 duration-300">
       <header className="space-y-5">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -264,12 +271,12 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
             <div className="mb-1 flex justify-between text-sm">
               <span>Reviewed</span>
               <span className="text-muted-foreground">
-                {viewed} of {files.length}
+                <Count value={viewed} /> of {files.length}
               </span>
             </div>
             <div className="bg-muted h-1.5 rounded-full">
               <div
-                className="h-1.5 rounded-full bg-emerald-600 transition-all"
+                className={cn("h-1.5 rounded-full bg-emerald-600 transition-all duration-300", justDone && "anim-pulse-once")}
                 style={{ width: `${files.length ? (viewed / files.length) * 100 : 0}%` }}
               />
             </div>
@@ -306,7 +313,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
                         {f.changedSinceViewed ? (
                           <span className="rounded bg-amber-500/15 px-1 py-px text-amber-700 dark:text-amber-400">changed</span>
                         ) : f.viewed ? (
-                          <HugeiconsIcon icon={Tick02Icon} size={14} className="text-emerald-600 dark:text-emerald-400" aria-label="Viewed" />
+                          <HugeiconsIcon icon={Tick02Icon} size={14} className="animate-in zoom-in-50 fade-in text-emerald-600 duration-200 dark:text-emerald-400" aria-label="Viewed" />
                         ) : (
                           <>
                             {f.additions > 0 && <span className="text-emerald-600 dark:text-emerald-400">+{f.additions}</span>}
@@ -393,11 +400,11 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
         <p className="text-muted-foreground border-t pt-3 text-sm">You have read-only access to this workspace.</p>
       )}
       {files.length > 0 && (
-        <div className="bg-popover/95 fixed right-6 bottom-6 z-30 flex items-center gap-3 rounded-full border py-1.5 pr-1.5 pl-4 text-sm shadow-lg backdrop-blur">
+        <div className={cn("bg-popover/95 animate-in fade-in slide-in-from-bottom-3 fixed right-6 bottom-6 z-30 flex items-center gap-3 rounded-full border py-1.5 pr-1.5 pl-4 text-sm shadow-lg backdrop-blur duration-300 transition-colors", allViewed && "border-emerald-500/40")}>
           {viewed < files.length ? (
             <>
               <span className="text-muted-foreground tabular-nums">
-                {files.length - viewed} file{files.length - viewed === 1 ? "" : "s"} left
+                <Count value={files.length - viewed} /> file{files.length - viewed === 1 ? "" : "s"} left
               </span>
               <button
                 type="button"
@@ -409,7 +416,9 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
             </>
           ) : (
             <>
-              <span className="font-medium text-emerald-600 dark:text-emerald-400">All files viewed</span>
+              <span className="flex items-center gap-1.5 font-medium text-emerald-600 dark:text-emerald-400">
+                <DrawTick className="size-3.5" /> All files viewed
+              </span>
               {pr.state === "open" && data.data.canAct && (
                 <button
                   type="button"

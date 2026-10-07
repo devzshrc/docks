@@ -340,3 +340,82 @@ pre, code, kbd { font-family: var(--font-code); }
 /* Word-level diff marks (CSS Custom Highlight API, set from file-diff.tsx). */
 ::highlight(word-add) { background-color: oklch(0.72 0.17 150 / 0.35); }
 ::highlight(word-del) { background-color: oklch(0.65 0.2 25 / 0.35); }
+
+/* ───────────── Micro-interactions ─────────────
+   Short (<250ms), ease-out, transform/opacity only. Everything is switched off under
+   prefers-reduced-motion at the bottom of this block. */
+@layer components {
+  /* Native <dialog>s (⌘K, file finder, shortcuts): fade + scale in, backdrop fades separately. */
+  dialog[open] { animation: dialog-in 160ms cubic-bezier(0.16, 1, 0.3, 1); }
+  dialog[open]::backdrop { animation: fade-in 160ms ease-out; }
+
+  /* Claude → Codex → Cursor loop for "Fix with agent". 6s cycle, 2s per mark. */
+  .agent-cycle > svg { opacity: 0; animation: agent-cycle 6s ease-in-out infinite; }
+  .agent-cycle > svg:nth-child(2) { animation-delay: 2s; }
+  .agent-cycle > svg:nth-child(3) { animation-delay: 4s; }
+
+  /* Self-drawing tick (SVG path with pathLength=1). */
+  .draw-tick path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw-tick 320ms 80ms ease-out forwards; }
+
+  .anim-pop { animation: pop 220ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .anim-pulse-once { animation: pulse-once 700ms ease-out; }
+  .anim-shake { animation: shake 320ms cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+  .anim-reveal { animation: reveal 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .anim-spin { animation: spin 700ms linear infinite; }
+
+  /* Errors announce themselves with a small shake. */
+  [role="alert"] { animation: shake 320ms cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+
+  /* Theme switch: colours cross-fade instead of flashing (class is set briefly by ThemeToggle). */
+  html.theme-fade, html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
+    transition: background-color 250ms ease, border-color 250ms ease, color 250ms ease, fill 250ms ease !important;
+  }
+
+  /* Checkbox press + pop on check. */
+  input[type="checkbox"]:active { transform: scale(0.88); }
+  input[type="checkbox"]:checked { animation: pop 200ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  /* Primary buttons brighten a touch on hover (already textured). */
+  .tex-primary { transition: background 150ms, box-shadow 150ms, transform 100ms; }
+
+  /* Sidebar: active item gets a small accent bar that grows in. */
+  [data-slot="sidebar-menu-button"][data-active="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 22%;
+    bottom: 22%;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--primary);
+    transform-origin: center;
+    animation: bar-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  [data-slot="sidebar-menu-button"] { position: relative; transition: background-color 150ms, color 150ms, padding 200ms; }
+  [data-slot="sidebar-menu-button"]:active { transform: scale(0.985); }
+
+  @media (prefers-reduced-motion: reduce) {
+    dialog[open], dialog[open]::backdrop, [role="alert"], .anim-pop, .anim-pulse-once, .anim-shake, .anim-reveal,
+    input[type="checkbox"]:checked, [data-slot="sidebar-menu-button"][data-active="true"]::before { animation: none !important; }
+    .agent-cycle > svg { animation: none; }
+    .agent-cycle > svg:first-child { opacity: 1; }
+    .draw-tick path { animation: none; stroke-dashoffset: 0; }
+    .anim-spin { animation-duration: 1.6s; }
+    html.theme-fade, html.theme-fade * { transition: none !important; }
+  }
+}
+
+@keyframes dialog-in { from { opacity: 0; transform: translateY(4px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes agent-cycle {
+  0% { opacity: 0; transform: scale(0.6) rotate(-10deg); filter: blur(2px); }
+  6%, 33% { opacity: 1; transform: scale(1) rotate(0); filter: blur(0); }
+  39%, 100% { opacity: 0; transform: scale(0.6) rotate(10deg); filter: blur(2px); }
+}
+@keyframes draw-tick { to { stroke-dashoffset: 0; } }
+@keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
+@keyframes pulse-once { 0% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 45%, transparent); } 100% { box-shadow: 0 0 0 8px transparent; } }
+@keyframes shake { 10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(2px); } 30%, 50%, 70% { transform: translateX(-3px); } 40%, 60% { transform: translateX(3px); } }
+@keyframes reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes bar-in { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }

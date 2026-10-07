@@ -24,7 +24,8 @@ function Chip({ on, label, onChange }: { on: boolean; label: string; onChange: (
       aria-pressed={on}
       onClick={() => onChange(!on)}
       className={cn(
-        "h-7 rounded-full border px-3 text-xs font-medium transition-colors",
+        "h-7 rounded-full border px-3 text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-95",
+        on && "anim-pop",
         on
           ? "border-primary/30 bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-muted hover:text-foreground"

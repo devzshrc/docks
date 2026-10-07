@@ -21,6 +21,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
+import { SlidingHighlight } from "@/components/motion"
 import { useWorkspace } from "@/hooks/use-workspace"
 import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/react"
@@ -145,7 +146,8 @@ export function CommandPalette() {
         <Kbd>esc</Kbd>
       </div>
 
-      <div ref={list} role="listbox" className="max-h-[min(24rem,55vh)] overflow-y-auto p-2">
+      <div ref={list} role="listbox" className="relative max-h-[min(24rem,55vh)] overflow-y-auto p-2">
+        <SlidingHighlight listRef={list} active={active} watch={items.length + q} />
         {items.length === 0 && (
           <div className="flex flex-col items-center gap-1 py-10 text-center">
             <p className="text-sm font-medium">No results</p>
@@ -166,8 +168,8 @@ export function CommandPalette() {
               onMouseMove={() => setActive(idx)}
               onClick={() => go(i.href)}
               className={cn(
-                "flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors",
-                idx === active ? "bg-accent text-accent-foreground" : "text-foreground/90"
+                "relative flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                idx === active ? "text-accent-foreground" : "text-foreground/90"
               )}
             >
               <HugeiconsIcon
@@ -179,7 +181,7 @@ export function CommandPalette() {
               <span className="min-w-0 flex-1 truncate">{i.label}</span>
               {i.hint && <span className="text-muted-foreground shrink-0 font-mono text-[11px]">{i.hint}</span>}
               {idx === active && (
-                <HugeiconsIcon icon={ArrowTurnBackwardIcon} size={14} className="text-muted-foreground shrink-0" aria-hidden />
+                <HugeiconsIcon icon={ArrowTurnBackwardIcon} size={14} className="animate-in fade-in text-muted-foreground shrink-0 duration-150" aria-hidden />
               )}
             </div>
           </div>
