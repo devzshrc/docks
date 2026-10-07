@@ -365,6 +365,7 @@ export const reviewRouter = router({
         additions: pull.additions,
         deletions: pull.deletions,
         column: pull.reviewColumn,
+        labels: pull.labels,
       },
       canAct: can(repoRow.role, "review.act"),
       files: ranked,

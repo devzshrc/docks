@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar"
+import { CommandPalette } from "@/components/command-palette"
 import { RequireAuth } from "@/components/auth-guard"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -25,6 +26,7 @@ export function AppShell({
         <SidebarInset>
           <SiteHeader title={title} />
           <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">{children}</div>
+          <CommandPalette />
         </SidebarInset>
       </SidebarProvider>
     </RequireAuth>

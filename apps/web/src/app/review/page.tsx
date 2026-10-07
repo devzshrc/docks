@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { Suspense, useMemo } from "react"
+import { Suspense, useEffect, useMemo, useRef } from "react"
 
 import { AppShell } from "@/components/app-shell"
 import { GettingStarted } from "@/components/getting-started"
@@ -43,6 +43,19 @@ function Board({ workspaceId }: { workspaceId: string }) {
   const saveView = useMutation(trpc.review.saveView.mutationOptions({ onSuccess: refreshViews }))
   const deleteView = useMutation(trpc.review.deleteView.mutationOptions({ onSuccess: refreshViews }))
 
+  const search = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement
+      if (e.key === "/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) {
+        e.preventDefault()
+        search.current?.focus()
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+
   const set = (patch: Partial<UiFilters>) => {
     const qs = toParams({ ...filters, ...patch })
     router.replace(qs ? `${pathname}?${qs}` : pathname)
@@ -70,8 +83,9 @@ function Board({ workspaceId }: { workspaceId: string }) {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <Input
+          ref={search}
           type="search"
-          placeholder="Search title or #"
+          placeholder="Search ( / )"
           aria-label="Search pull requests"
           className="h-9 w-48"
           value={filters.q}
