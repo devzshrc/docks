@@ -232,10 +232,73 @@ const CLOSING_QUERY = `query($owner:String!,$name:String!,$number:Int!){
     number title url state repository{ nameWithOwner }
     labels(first:5){ nodes{ name color } } assignees(first:3){ nodes{ login avatarUrl } } } } } } }`;
 
+/** An issue as GitHub's REST API returns it. */
+export interface GhIssueRest {
+  number: number;
+  title: string;
+  body: string | null;
+  state: string;
+  state_reason?: string | null;
+  html_url: string;
+  user: { login: string } | null;
+  assignees: { login: string }[] | null;
+  labels: ({ name: string; color: string } | string)[];
+  milestone: { title: string } | null;
+  comments: number;
+  created_at: string;
+  updated_at: string;
+  closed_at: string | null;
+  pull_request?: unknown;
+}
+
+export interface GhIssueComment {
+  id: number;
+  body: string;
+  user: { login: string } | null;
+  created_at: string;
+  updated_at: string;
+  author_association?: string;
+}
+
+export interface IssuePatch {
+  title?: string;
+  body?: string;
+  state?: "open" | "closed";
+  state_reason?: "completed" | "not_planned" | "duplicate" | "reopened";
+  labels?: string[];
+  assignees?: string[];
+  milestone?: number | null;
+}
+
+/** Issue calls shared by the App client (sync) and the person's client (edits). */
+function issueApi(call: ReturnType<typeof clientFor>["call"], paginate: ReturnType<typeof clientFor>["paginate"]) {
+  return {
+    getIssueRest: (repo: string, n: number) => call<GhIssueRest>(`/repos/${repo}/issues/${n}`),
+    /** Open issues plus anything touched since `since` (ISO), pull requests filtered out. */
+    listIssues: async (repo: string, opts: { state: "open" | "closed" | "all"; since?: string }) => {
+      const q = new URLSearchParams({ state: opts.state, per_page: "100", sort: "updated", direction: "desc" });
+      if (opts.since) q.set("since", opts.since);
+      return (await paginate<GhIssueRest>(`/repos/${repo}/issues?${q}`)).filter((i) => !i.pull_request);
+    },
+    issueComments: (repo: string, n: number) =>
+      paginate<GhIssueComment>(`/repos/${repo}/issues/${n}/comments?per_page=100`),
+    patchIssue: (repo: string, n: number, patch: IssuePatch) =>
+      call<GhIssueRest>(`/repos/${repo}/issues/${n}`, { method: "PATCH", body: JSON.stringify(patch) }),
+    addIssueComment: (repo: string, n: number, body: string) =>
+      call<GhIssueComment>(`/repos/${repo}/issues/${n}/comments`, { method: "POST", body: JSON.stringify({ body }) }),
+    listMilestones: async (repo: string) =>
+      (await paginate<{ number: number; title: string; state: string }>(`/repos/${repo}/milestones?state=open&per_page=100`)).map((m) => ({
+        number: m.number,
+        title: m.title,
+      })),
+  };
+}
+
 /** Reads as the App installation — used by sync jobs. */
 export function installationClient(installationId: number) {
   const { call, paginate, graphql } = clientFor(() => getInstallationToken(installationId));
   return {
+    ...issueApi(call, paginate),
     listRepos: () =>
       paginate<GhRepo, { repositories: GhRepo[] }>(
         "/installation/repositories?per_page=100",
@@ -395,6 +458,7 @@ export function installationClient(installationId: number) {
 export function userClient(getToken: () => Promise<string>) {
   const { call, paginate, graphql } = clientFor(getToken);
   return {
+    ...issueApi(call, paginate),
     me: () => call<GhUser>("/user"),
     /** Installations of our App this person can access. */
     installations: () =>

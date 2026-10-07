@@ -2,6 +2,8 @@ import { db, schema } from "@docks/db";
 import { eq } from "drizzle-orm";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { enqueue } from "../jobs.js";
+import type { GhIssueRest } from "./github.js";
+import { upsertIssue } from "./issues-sync.js";
 import { syncInstallationRepos } from "./sync.js";
 
 /** plan.md §9.2 — GitHub App webhook handling. */
@@ -21,6 +23,7 @@ interface Payload {
   installation?: { id: number };
   repository?: { id: number };
   pull_request?: { number: number };
+  issue?: GhIssueRest;
   check_run?: { pull_requests: { number: number }[] };
   check_suite?: { pull_requests: { number: number }[] };
 }
@@ -71,6 +74,12 @@ export async function handleGithubEvent(event: string, payload: Payload) {
 
   const repoId = payload.repository?.id;
   if (!repoId || !(await knownRepo(repoId))) return;
+
+  // Issue events carry the whole issue; store it without a round trip. (PRs also arrive as `issue_comment`.)
+  if ((event === "issues" || event === "issue_comment") && payload.issue && !payload.issue.pull_request) {
+    await upsertIssue(repoId, payload.issue);
+    return;
+  }
 
   if (PR_EVENTS.has(event) && payload.pull_request) {
     await enqueue("sync_pr", { repoId, number: payload.pull_request.number });

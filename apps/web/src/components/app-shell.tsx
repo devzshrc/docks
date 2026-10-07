@@ -1,6 +1,6 @@
 "use client"
 
-import { Analytics01Icon, GitPullRequestIcon, Search01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons"
+import { Analytics01Icon, CheckListIcon, GitPullRequestIcon, Search01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useQuery } from "@tanstack/react-query"
 import { usePathname, useRouter } from "next/navigation"
@@ -30,6 +30,7 @@ const icon = (i: typeof GitPullRequestIcon) =>
     return <HugeiconsIcon icon={i} size={16} className={className} />
   }
 const ReviewsIcon = icon(GitPullRequestIcon)
+const IssuesIcon = icon(CheckListIcon)
 const InsightsIcon = icon(Analytics01Icon)
 const TeamIcon = icon(UserGroupIcon)
 const SettingsIcon = icon(Settings02Icon)
@@ -47,6 +48,7 @@ function activeIdFor(pathname: string) {
   if (pathname.startsWith("/settings")) return "settings"
   if (pathname.startsWith("/insights")) return "insights"
   if (pathname.startsWith("/team") || pathname.startsWith("/people")) return "team"
+  if (pathname.startsWith("/issues")) return "issues"
   if (pathname.startsWith("/review")) return "reviews"
   return undefined
 }
@@ -59,6 +61,15 @@ function titleFor(pathname: string, title?: string) {
       <>
         <span className="text-(--obsidian-dashboard-shell-text-subtle) font-normal">Reviews / </span>
         {pr[1]}/{pr[2]} <span className="text-(--obsidian-dashboard-shell-text-subtle) font-normal">#{pr[3]}</span>
+      </>
+    )
+  }
+  const issue = pathname.match(/^\/issues\/([^/]+)\/([^/]+)\/(\d+)/)
+  if (issue) {
+    return (
+      <>
+        <span className="text-(--obsidian-dashboard-shell-text-subtle) font-normal">Issues / </span>
+        {issue[1]}/{issue[2]} <span className="text-(--obsidian-dashboard-shell-text-subtle) font-normal">#{issue[3]}</span>
       </>
     )
   }
@@ -115,6 +126,15 @@ function Frame({ title, description, actions, width, children }: { title?: strin
   })
   const waitingCount = waiting.data?.cards.length ?? 0
 
+  // Open issues nobody has picked up: the triage queue.
+  const triage = useQuery({
+    ...trpc.issues.counts.queryOptions({ workspaceId: workspace?.id ?? "" }),
+    enabled: Boolean(workspace),
+    staleTime: 60_000,
+    retry: false,
+  })
+  const triageCount = triage.data?.triage ?? 0
+
   const navigation = useMemo<DashboardShellNavSection[]>(
     () => [
       {
@@ -122,12 +142,13 @@ function Frame({ title, description, actions, width, children }: { title?: strin
         title: "Review",
         items: [
           { id: "reviews", label: "Reviews", icon: ReviewsIcon, href: "/review", count: waitingCount > 0 ? waitingCount : undefined },
+          { id: "issues", label: "Issues", icon: IssuesIcon, href: "/issues", count: triageCount > 0 ? triageCount : undefined },
           { id: "insights", label: "Insights", icon: InsightsIcon, href: "/insights" },
           { id: "team", label: "Team", icon: TeamIcon, href: "/team" },
         ],
       },
     ],
-    [waitingCount]
+    [waitingCount, triageCount]
   )
 
   // Sidebar width is remembered per browser.

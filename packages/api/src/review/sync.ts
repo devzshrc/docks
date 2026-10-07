@@ -138,6 +138,8 @@ export async function syncRepo(repoId: number) {
       ),
     );
   for (const s of stale) await enqueue("sync_pr", { repoId, number: s.number });
+
+  await enqueue("sync_issues", { repoId });
 }
 
 /** Earliest review by someone other than the author (plain comments count as a first look). */
