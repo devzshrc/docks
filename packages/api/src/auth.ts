@@ -102,6 +102,14 @@ export const auth = betterAuth({
   // Built-in limiter on /api/auth/* (sign-in, sign-up, reset).
   rateLimit: { enabled: true, window: 60, max: 30 },
   plugins: [twoFactor({ issuer: "Docks" })],
+  // Web and API live on sibling subdomains in production (app.<domain> / api.<domain>):
+  // set COOKIE_DOMAIN=.<domain> so the session cookie is shared between them.
+  advanced: {
+    ipAddress: { ipAddressHeaders: ["cf-connecting-ip", "x-forwarded-for"] },
+    ...(process.env.COOKIE_DOMAIN
+      ? { useSecureCookies: true, crossSubDomainCookies: { enabled: true, domain: process.env.COOKIE_DOMAIN } }
+      : {}),
+  },
   trustedOrigins: [
     process.env.CLIENT_URL ?? "http://localhost:3000",
     "http://localhost:3000",

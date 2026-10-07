@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "docks-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
+  "observability": { "enabled": true },
+  "triggers": { "crons": ["* * * * *"] },
+  // Fill in after `wrangler hyperdrive create docks --connection-string=<supabase direct url>`.
+  // For `wrangler dev`, localConnectionString points Hyperdrive at the local Docker Postgres.
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "REPLACE_WITH_HYPERDRIVE_ID",
+      "localConnectionString": "postgresql://docks:docks@localhost:5433/docks"
+    }
+  ],
+  "ratelimits": [
+    { "name": "TRPC_LIMITER", "namespace_id": "1001", "simple": { "limit": 300, "period": 60 } }
+  ],
+  // Non-secret config. Secrets: `wrangler secret put <NAME>` (see docs/DEPLOY.md).
+  "vars": {
+    "CLIENT_URL": "https://app.example.com",
+    "BETTER_AUTH_URL": "https://api.example.com",
+    "COOKIE_DOMAIN": ".example.com"
+  }
+}
