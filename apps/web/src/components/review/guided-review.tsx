@@ -8,10 +8,11 @@ import {
   IconExternalLink,
   IconGitBranch,
 } from "@tabler/icons-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Checklist } from "@/components/review/checklist"
-import { FileDiff } from "@/components/review/file-diff"
+import { AskPanel } from "@/components/review/ask-panel"
+import { FileDiff, type PendingComment } from "@/components/review/file-diff"
 import { GuidePanel } from "@/components/review/guide-panel"
 import { ReviewActions } from "@/components/review/review-actions"
 import { LabelsEditor } from "@/components/review/labels-editor"
@@ -46,6 +47,23 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
     refetchInterval: (q) => (q.state.data?.status === "pending" ? 3_000 : false),
   })
   const [activeStep, setActiveStep] = useState<number | null>(null)
+  const [pending, setPending] = useState<PendingComment[]>([])
+  const [sinceOnly, setSinceOnly] = useState(false)
+  const [mode, setModeState] = useState<"unified" | "split">("unified")
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("diff.mode") === "split") setModeState("split")
+    } catch {}
+  }, [])
+  const setMode = (m: "unified" | "split") => {
+    setModeState(m)
+    try {
+      localStorage.setItem("diff.mode", m)
+    } catch {}
+  }
+  const threads = useQuery(trpc.review.threads.queryOptions({ repo, number }))
+  const since = useQuery(trpc.review.sinceLastReview.queryOptions({ repo, number }))
+  const refreshThreads = () => queryClient.invalidateQueries(trpc.review.threads.queryFilter({ repo, number }))
 
   const markViewed = useMutation(
     trpc.review.markViewed.mutationOptions({
@@ -77,7 +95,15 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
   const ready = guide.data?.status === "ready" ? guide.data.guide : null
   const stepFiles =
     activeStep !== null && ready?.steps[activeStep] ? new Set(ready.steps[activeStep].files) : null
-  const visible = stepFiles ? files.filter((f) => stepFiles.has(f.filename)) : files
+  const newSince = since.data?.files ? new Set(since.data.files) : null
+  const visible = files
+    .filter((f) => !stepFiles || stepFiles.has(f.filename))
+    .filter((f) => !sinceOnly || !newSince || newSince.has(f.filename))
+  const threadsFor = (path: string) => (threads.data?.threads ?? []).filter((t) => t.path === path)
+  const checklistItems = [
+    ...data.data.checklistTemplate.map((question) => ({ question, files: [] as string[] })),
+    ...(ready?.checklist ?? []),
+  ]
 
   return (
     <div className="flex flex-col gap-4">
@@ -173,9 +199,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
               ))}
             </ol>
           </nav>
-          {ready && (
-            <Checklist items={ready.checklist} storageKey={`checklist:${repo}#${number}@${pr.headSha}`} />
-          )}
+          <Checklist items={checklistItems} storageKey={`checklist:${repo}#${number}@${pr.headSha}`} />
         </aside>
 
         <div className="min-w-0 space-y-3">
@@ -193,10 +217,49 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
           {files.length === 0 && (
             <p className="text-muted-foreground text-sm">No file changes synced for this commit yet.</p>
           )}
+          {pr.state === "open" && <AskPanel repo={repo} number={number} />}
+          {files.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <div className="flex rounded-md border" role="group" aria-label="Diff layout">
+                {(["unified", "split"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    aria-pressed={mode === m}
+                    onClick={() => setMode(m)}
+                    className={cn("px-3 py-1 capitalize", mode === m && "bg-muted font-medium")}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+              {since.data?.files && since.data.files.length > 0 && (
+                <label className="flex items-center gap-1.5">
+                  <input type="checkbox" className="size-4" checked={sinceOnly} onChange={(e) => setSinceOnly(e.target.checked)} />
+                  Only changes since my last review ({since.data.files.length})
+                </label>
+              )}
+              {since.data?.reviewedSha && since.data.files?.length === 0 && (
+                <span className="text-muted-foreground">No changes since your last review.</span>
+              )}
+              {threads.data?.needsGithub && (
+                <span className="text-muted-foreground">Connect your GitHub account to see and add comments.</span>
+              )}
+            </div>
+          )}
           {visible.map((f) => (
             <FileDiff
               key={`${f.filename}:${f.sha}`}
               file={f}
+              repo={repo}
+              number={number}
+              mode={mode}
+              canAct={data.data.canAct && pr.state === "open" && !threads.data?.needsGithub}
+              threads={threadsFor(f.filename)}
+              pending={pending.filter((p) => p.path === f.filename)}
+              onAddPending={(c) => setPending((all) => [...all, c])}
+              onThreadsChanged={refreshThreads}
+              highlightNew={Boolean(newSince?.has(f.filename))}
               onViewedChange={(v) =>
                 markViewed.mutate({ repo, number, path: f.filename, fileSha: f.sha, viewed: v })
               }
@@ -214,6 +277,14 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
           number={number}
           githubLogin={me}
           canMerge={pr.column === "approved" && !pr.draft}
+          mergeableState={pr.mergeableState}
+          pending={pending}
+          onSubmitted={() => {
+            setPending([])
+            void refreshThreads()
+            void queryClient.invalidateQueries(trpc.review.sinceLastReview.queryFilter({ repo, number }))
+          }}
+          onDiscardPending={() => setPending([])}
         />
       )}
     </div>

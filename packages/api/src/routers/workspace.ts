@@ -107,6 +107,7 @@ export const workspaceRouter = router({
             enabled: schema.repository.enabled,
             aiEnabled: schema.repository.aiEnabled,
             autoAssign: schema.repository.autoAssign,
+            checklistTemplate: schema.repository.checklistTemplate,
             installation: schema.githubInstallation.accountLogin,
             suspended: schema.githubInstallation.suspendedAt,
           })
@@ -139,6 +140,7 @@ export const workspaceRouter = router({
         enabled: z.boolean().optional(),
         aiEnabled: z.boolean().optional(),
         autoAssign: z.number().int().min(0).max(5).optional(),
+        checklistTemplate: z.array(z.string().trim().min(1).max(300)).max(20).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

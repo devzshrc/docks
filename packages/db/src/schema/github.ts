@@ -35,6 +35,8 @@ export const repository = pgTable("repository", {
   aiEnabled: boolean("ai_enabled").notNull().default(true),
   /** Reviewers to request automatically on new PRs with none; 0 = off (plan M4). */
   autoAssign: integer("auto_assign").notNull().default(0),
+  /** Team questions shown above the AI checklist on every PR (plan M6). */
+  checklistTemplate: text("checklist_template").array().notNull().default([]),
   ...timestamps,
 });
 
@@ -62,6 +64,8 @@ export const pullRequest = pgTable(
     }).notNull(),
     stuck: boolean("stuck").notNull().default(false),
     labels: text("labels").array().notNull().default([]),
+    /** GitHub's merge readiness: clean, blocked, dirty (conflicts), unstable, behind, … */
+    mergeableState: text("mergeable_state"),
     /** Team flag kept in this app only (not on GitHub). */
     priority: boolean("priority").notNull().default(false),
     /** "I'm on it": someone took the review before GitHub has a requested reviewer. */

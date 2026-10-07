@@ -220,11 +220,17 @@ export async function generateGuideFor(repoId: number, number: number, headSha: 
     );
   if (!files.length) return;
 
-  const result = await buildGuide({ title: pull.title, body: pull.body, files }).catch(
-    (err: unknown) => {
-      throw retryable(err) ? err : new PermanentJobError((err as Error).message);
-    },
-  );
+  // Big PRs: one guide per folder chunk, then merged (plan M6).
+  const chunks = chunkFiles(files);
+  const parts: GeneratedGuide[] = [];
+  for (const chunk of chunks) {
+    parts.push(
+      await buildGuide({ title: pull.title, body: pull.body, files: chunk }).catch((err: unknown) => {
+        throw retryable(err) ? err : new PermanentJobError((err as Error).message);
+      }),
+    );
+  }
+  const result = mergeGuides(parts, files.length);
   await db
     .insert(schema.reviewGuide)
     .values({
@@ -237,6 +243,53 @@ export async function generateGuideFor(repoId: number, number: number, headSha: 
       outputTokens: result.outputTokens,
     })
     .onConflictDoNothing();
+}
+
+/**
+ * Split files into chunks of at most MAX_GUIDE_FILES, keeping each top-level
+ * folder together where it fits. Lockfiles/generated go wherever there's room.
+ */
+export function chunkFiles<T extends { filename: string }>(files: T[], max = MAX_GUIDE_FILES): T[][] {
+  if (files.length <= max) return [files];
+  const groups = new Map<string, T[]>();
+  for (const f of files) {
+    const top = f.filename.includes("/") ? f.filename.split("/")[0]! : ".";
+    groups.set(top, [...(groups.get(top) ?? []), f]);
+  }
+  const chunks: T[][] = [];
+  let current: T[] = [];
+  for (const group of [...groups.values()].sort((a, b) => b.length - a.length)) {
+    for (let i = 0; i < group.length; i += max) {
+      const slice = group.slice(i, i + max);
+      if (current.length + slice.length > max) {
+        chunks.push(current);
+        current = [];
+      }
+      current.push(...slice);
+    }
+  }
+  if (current.length) chunks.push(current);
+  return chunks;
+}
+
+/**
+ * Combine per-chunk guides. ponytail: summary is the first chunk's plus a note,
+ * not a separate model call; add one if merged summaries read poorly in the eval.
+ */
+export function mergeGuides(parts: GeneratedGuide[], totalFiles: number): GeneratedGuide {
+  if (parts.length === 1) return parts[0]!;
+  return {
+    guide: {
+      source: "ai",
+      summary: `${parts[0]!.guide.summary} (Large PR: ${totalFiles} files, guided in ${parts.length} parts.)`,
+      steps: parts.flatMap((p) => p.guide.steps),
+      checklist: parts.flatMap((p) => p.guide.checklist).slice(0, 10),
+    },
+    model: parts[0]!.model,
+    inputTokens: parts.reduce((n, p) => n + p.inputTokens, 0),
+    outputTokens: parts.reduce((n, p) => n + p.outputTokens, 0),
+    invalidPaths: parts.flatMap((p) => p.invalidPaths),
+  };
 }
 
 /** Rate limits, overload, server and network errors are worth retrying; the rest aren't. */
