@@ -10,7 +10,8 @@ import { GettingStarted } from "@/components/getting-started"
 import { ReviewBoard } from "@/components/review/board"
 import { fromParams, serverFilters, toParams, type UiFilters } from "@/components/review/board-filters"
 import { Button } from "@/components/ui/button"
-import { FilterSelect, Toolbar, ToggleChip, ToolbarSearch } from "@/components/toolbar"
+import { ShellActions, ShellFilters } from "@/components/shell-slots"
+import { FilterSelect, ToggleChip, ToolbarSearch } from "@/components/toolbar"
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace"
 import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/react"
@@ -74,7 +75,7 @@ function Board({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="space-y-6">
-      <Toolbar>
+      <ShellFilters>
         <ToolbarSearch ref={search} placeholder="Search ( / )" aria-label="Search pull requests" value={filters.q} onChange={(e) => set({ q: e.target.value })} />
         <button
           type="button"
@@ -144,8 +145,10 @@ function Board({ workspaceId }: { workspaceId: string }) {
           <ToggleChip on={filters.priority} label="Priority" onChange={(v) => set({ priority: v })} />
           <ToggleChip on={filters.includeDrafts} label="Drafts" onChange={(v) => set({ includeDrafts: v })} />
         </div>
+      </ShellFilters>
+      <ShellActions>
         {active && (
-          <span className="ml-auto flex items-center gap-1">
+          <span className="flex items-center gap-1">
             <Button size="sm" variant="ghost" onClick={() => router.replace(pathname)}>
               Clear
             </Button>
@@ -162,7 +165,7 @@ function Board({ workspaceId }: { workspaceId: string }) {
             </Button>
           </span>
         )}
-      </Toolbar>
+      </ShellActions>
       {views.data && views.data.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="text-muted-foreground">Views</span>
