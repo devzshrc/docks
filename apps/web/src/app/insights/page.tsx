@@ -7,22 +7,13 @@ import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { RankedBars } from "@/components/charts/ranked-bars"
 import { TrendChart } from "@/components/charts/trend-chart"
+import { Panel, StatStrip } from "@/components/panel"
+import { FilterSelect, ToggleChip, Toolbar } from "@/components/toolbar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useWorkspace } from "@/hooks/use-workspace"
 import { useTRPC } from "@/trpc/react"
 
-const SELECT = "border-input bg-background h-9 rounded-lg border px-2 text-sm"
 const fmt = (h: number | null) => (h === null ? "—" : h < 48 ? `${h}h` : `${Math.round((h / 24) * 10) / 10}d`)
-
-function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="bg-muted/50 rounded-lg p-4">
-      <p className="text-muted-foreground text-sm">{label}</p>
-      <p className="text-2xl font-medium tabular-nums">{value}</p>
-      {sub && <p className="text-muted-foreground text-xs">{sub}</p>}
-    </div>
-  )
-}
 
 function Insights({ workspaceId }: { workspaceId: string }) {
   const trpc = useTRPC()
@@ -34,67 +25,62 @@ function Insights({ workspaceId }: { workspaceId: string }) {
   const data = useQuery(trpc.insights.summary.queryOptions({ workspaceId, days, repoId, teamId, perPerson }))
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center gap-2">
-        <select className={SELECT} aria-label="Range" value={days} onChange={(e) => setDays(Number(e.target.value))}>
+    <div className="space-y-6">
+      <Toolbar>
+        <FilterSelect label="Range" value={String(days)} onChange={(v) => setDays(Number(v))}>
           <option value={7}>Last 7 days</option>
           <option value={30}>Last 30 days</option>
           <option value={90}>Last 90 days</option>
-        </select>
-        <select className={SELECT} aria-label="Repository" value={repoId ?? ""} onChange={(e) => setRepoId(e.target.value ? Number(e.target.value) : undefined)}>
-          <option value="">All repositories</option>
+        </FilterSelect>
+        <FilterSelect label="Repository" value={String(repoId ?? "")} onChange={(v) => setRepoId(v ? Number(v) : undefined)}>
+          <option value="">All</option>
           {data.data?.repoOptions.map((r) => (
             <option key={r.id} value={r.id}>
               {r.fullName}
             </option>
           ))}
-        </select>
+        </FilterSelect>
         {teams.data && teams.data.length > 0 && (
-          <select className={SELECT} aria-label="Team" value={teamId ?? ""} onChange={(e) => setTeamId(e.target.value || undefined)}>
-            <option value="">All teams</option>
+          <FilterSelect label="Team" value={teamId ?? ""} onChange={(v) => setTeamId(v || undefined)}>
+            <option value="">All</option>
             {teams.data.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
               </option>
             ))}
-          </select>
+          </FilterSelect>
         )}
-        {data.data?.canSeePeople && (
-          <label className="flex items-center gap-1.5 text-sm">
-            <input type="checkbox" className="size-4" checked={perPerson} onChange={(e) => setPerPerson(e.target.checked)} />
-            Show per-person numbers
-          </label>
-        )}
-      </div>
+        {data.data?.canSeePeople && <ToggleChip on={perPerson} label="Per person" onChange={setPerPerson} />}
+      </Toolbar>
 
       {data.isPending ? (
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       ) : data.error ? (
         <QueryError error={data.error} onRetry={() => void data.refetch()} />
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat
-              label="Time to first review"
-              value={fmt(data.data.timeToFirstReview.medianHours)}
-              sub={`median · slowest 10% ${fmt(data.data.timeToFirstReview.p90Hours)} · ${data.data.timeToFirstReview.sample} PRs`}
-            />
-            <Stat label="Opened to merged" value={fmt(data.data.cycleTime.medianHours)} sub={`median · ${data.data.cycleTime.sample} merged`} />
-            <Stat label="PRs opened" value={String(data.data.opened)} sub={`${data.data.unreviewed} still without a review`} />
-            <Stat label="PRs merged" value={String(data.data.merged)} />
-          </div>
+          <StatStrip
+            stats={[
+              {
+                label: "Time to first review",
+                value: fmt(data.data.timeToFirstReview.medianHours),
+                sub: `median · slowest 10% ${fmt(data.data.timeToFirstReview.p90Hours)}`,
+              },
+              { label: "Opened to merged", value: fmt(data.data.cycleTime.medianHours), sub: `median · ${data.data.cycleTime.sample} merged` },
+              { label: "PRs opened", value: String(data.data.opened), sub: `${data.data.unreviewed} without a review` },
+              { label: "PRs merged", value: String(data.data.merged) },
+            ]}
+          />
 
-          <section className="grid gap-6 md:grid-cols-2">
-            <div>
-              <h2 className="mb-1 text-sm font-medium">Merged per week (12 weeks)</h2>
+          <section className="grid gap-4 md:grid-cols-2">
+            <Panel title="Merged per week" description="Last 12 weeks">
               <TrendChart
                 rows={data.data.trend.map((w) => ({ label: w.week.slice(5), value: w.merged }))}
                 label="PRs merged"
                 ariaLabel="Line chart of pull requests merged per week over the last 12 weeks"
               />
-            </div>
-            <div>
-              <h2 className="mb-1 text-sm font-medium">Time to first review per week</h2>
+            </Panel>
+            <Panel title="Time to first review" description="Median per week">
               <TrendChart
                 rows={data.data.trend.map((w) => ({ label: w.week.slice(5), value: w.medianHoursToFirstReview }))}
                 label="Median hours"
@@ -102,43 +88,43 @@ function Insights({ workspaceId }: { workspaceId: string }) {
                 color="#0d9488"
                 ariaLabel="Line chart of median hours to first review per week over the last 12 weeks"
               />
-            </div>
+            </Panel>
           </section>
 
-          <section>
-            <h2 className="mb-2 text-sm font-medium">PR size (opened)</h2>
-            <div className="flex h-3 overflow-hidden rounded-full" aria-hidden>
+          <Panel title="PR size" description="Pull requests opened in this range">
+            <div className="flex h-2 gap-0.5 overflow-hidden rounded-full" aria-hidden>
               {(["S", "M", "L"] as const).map((k, i) => (
                 <div
                   key={k}
-                  className={["bg-emerald-600", "bg-amber-500", "bg-red-500"][i]}
+                  className={["bg-success", "bg-warning", "bg-danger"][i]}
                   style={{ width: `${(data.data.sizes[k] / Math.max(1, data.data.opened)) * 100}%` }}
                 />
               ))}
             </div>
-            <p className="text-muted-foreground mt-1 text-xs">
-              Small (&lt;100 lines) {data.data.sizes.S} · Medium {data.data.sizes.M} · Large (500+) {data.data.sizes.L}
-            </p>
-          </section>
+            <dl className="text-muted-foreground mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+              {([["S", "Small (<100 lines)", "bg-success"], ["M", "Medium", "bg-warning"], ["L", "Large (500+)", "bg-danger"]] as const).map(([k, label, dot]) => (
+                <div key={k} className="flex items-center gap-2">
+                  <span className={`${dot} size-2 rounded-full`} aria-hidden />
+                  <dt>{label}</dt>
+                  <dd className="text-foreground tabular-nums">{data.data.sizes[k]}</dd>
+                </div>
+              ))}
+            </dl>
+          </Panel>
 
           {data.data.repos.length > 0 && (
-            <section>
-              <h2 className="mb-2 text-sm font-medium">Slowest repositories to first review</h2>
+            <Panel title="Slowest repositories" description="Median time to first review">
               <RankedBars
                 rows={data.data.repos.map((r) => ({ name: r.repo, value: r.medianHoursToFirstReview ?? 0, note: `${r.prs} PRs` }))}
                 label="Median hours to first review"
                 format={(v) => fmt(v)}
                 ariaLabel="Bar chart of repositories ranked by median hours to first review"
               />
-            </section>
+            </Panel>
           )}
 
           {data.data.reviewers && (
-            <section>
-              <h2 className="mb-1 text-sm font-medium">Time from PR opened to each person&apos;s first review</h2>
-              <p className="text-muted-foreground mb-2 text-xs">
-                Visible to owners and admins only. Use it to rebalance load, not to rank people.
-              </p>
+            <Panel title="Reviewer response time" description="Visible to owners and admins only. Use it to rebalance load, not to rank people.">
               <RankedBars
                 rows={data.data.reviewers.map((r) => ({ name: r.login, value: r.medianHoursToReview ?? 0, note: `${r.reviews} reviews` }))}
                 label="Median hours to their first review"
@@ -146,7 +132,7 @@ function Insights({ workspaceId }: { workspaceId: string }) {
                 color="#7c3aed"
                 ariaLabel="Bar chart of reviewers ranked by median hours from PR opened to their first review"
               />
-            </section>
+            </Panel>
           )}
         </>
       )}

@@ -305,7 +305,7 @@ function DeleteAccountCard() {
 
 export default function Page() {
   return (
-    <AppShell title="Account" description="Your profile, password, two-factor authentication and signed-in devices." width="narrow">
+    <AppShell title="Account" description="Your profile, password, two-factor authentication and signed-in devices.">
       <div className="flex flex-col gap-6">
         <ProfileCard />
         <PasswordCard />

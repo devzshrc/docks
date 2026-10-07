@@ -18,7 +18,7 @@ export function AuthCard({
 }) {
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <Card className="w-full max-w-sm">
+      <Card data-auth className="w-full max-w-[380px]">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
           {description && <CardDescription>{description}</CardDescription>}
