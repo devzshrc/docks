@@ -45,6 +45,8 @@ async function request<T>(path: string, token: string, init: RequestInit = {}) {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${token}`,
       "X-GitHub-Api-Version": "2022-11-28",
+      // GitHub rejects requests without one (Workers' fetch doesn't add a default).
+      "User-Agent": "docks",
       ...init.headers,
     },
   });
