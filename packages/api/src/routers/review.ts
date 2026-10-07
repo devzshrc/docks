@@ -9,7 +9,10 @@ import { enqueue } from "../jobs.js";
 import { boardFilters, filterBoard, sizeOf } from "../review/board.js";
 import { latestVerdicts } from "../review/columns.js";
 import { askPr } from "../review/ask.js";
-import { GitHubError, installationClient } from "../review/github.js";
+import { decrypt } from "../crypto.js";
+import { linearIssues } from "../linear.js";
+import { issueMentions, linearIdFromBranch, linearIds } from "../review/links.js";
+import { type BlameRange, GitHubError, type GhIssue, installationClient } from "../review/github.js";
 import { fallbackGuide, guideKey } from "../review/guide.js";
 import { githubAs, githubIdentity } from "../review/github-user.js";
 import { loginsToUsers, suggestReviewers } from "../review/reviewers.js";
@@ -173,6 +176,14 @@ async function recordVisit(userId: string, repoRow: { id: number; fullName: stri
 
 const repo = z.string().regex(/^[\w.-]+\/[\w.-]+$/);
 const pr = z.object({ repo, number: z.number().int().positive() });
+
+const mergeBases = new Map<string, string>();
+const blameCache = new Map<string, BlameRange[]>();
+/** Insert, evicting the oldest entry past 300. */
+function remember<V>(map: Map<string, V>, key: string, value: V) {
+  if (map.size >= 300) map.delete(map.keys().next().value!);
+  map.set(key, value);
+}
 
 export const reviewRouter = router({
   /**
@@ -657,6 +668,76 @@ export const reviewRouter = router({
     const text = await installationClient(installationId).fileContent(repoRow.fullName, input.path, headSha).catch(githubFailure);
     if (text.length > 1_000_000) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "File is too large to show" });
     return { text };
+  }),
+
+  /**
+   * Who last changed each line before this PR. Old-side line numbers in a diff refer to the
+   * merge base, so that's where we blame. Cached per commit: history under a sha never changes.
+   * ponytail: in-memory per process, capped; move to Postgres if blame gets heavy use.
+   */
+  blame: protectedProcedure.input(pr.extend({ path: z.string().min(1).max(500) })).query(async ({ ctx, input }) => {
+    const repoRow = await repoForUser(ctx.user.id, input.repo);
+    const [p] = await db
+      .select({ headSha: schema.pullRequest.headSha, baseRef: schema.pullRequest.baseRef })
+      .from(schema.pullRequest)
+      .where(and(eq(schema.pullRequest.repoId, repoRow.id), eq(schema.pullRequest.number, input.number)));
+    if (!p) throw new TRPCError({ code: "NOT_FOUND", message: "Pull request not synced yet" });
+    const { installationId } = await repoDetails(repoRow.id);
+    const gh = installationClient(installationId);
+    try {
+      const baseKey = `${repoRow.fullName}#${input.number}@${p.headSha}`;
+      let base = mergeBases.get(baseKey);
+      if (!base) {
+        base = (await gh.compare(repoRow.fullName, p.baseRef, p.headSha)).merge_base_commit?.sha;
+        if (base) remember(mergeBases, baseKey, base);
+      }
+      if (!base) return { ranges: [] as BlameRange[] };
+      const key = `${repoRow.fullName}@${base}:${input.path}`;
+      let ranges = blameCache.get(key);
+      if (!ranges) {
+        ranges = (await gh.blame(repoRow.fullName, base, input.path)).slice(0, 5000);
+        remember(blameCache, key, ranges);
+      }
+      return { ranges };
+    } catch (err) {
+      return githubFailure(err);
+    }
+  }),
+
+  /** Issues this PR is linked to: GitHub (closing keywords, #n) and Linear (ENG-123) when connected. */
+  linkedIssues: protectedProcedure.input(pr).query(async ({ ctx, input }) => {
+    const repoRow = await repoForUser(ctx.user.id, input.repo);
+    const [p] = await db
+      .select({ title: schema.pullRequest.title, body: schema.pullRequest.body, headRef: schema.pullRequest.headRef })
+      .from(schema.pullRequest)
+      .where(and(eq(schema.pullRequest.repoId, repoRow.id), eq(schema.pullRequest.number, input.number)));
+    if (!p) throw new TRPCError({ code: "NOT_FOUND", message: "Pull request not synced yet" });
+    const { installationId } = await repoDetails(repoRow.id);
+    const gh = installationClient(installationId);
+
+    const closing = await gh.closingIssues(repoRow.fullName, input.number).catch(() => [] as GhIssue[]);
+    const known = new Set(closing.map((i) => i.number));
+    const mentioned = (
+      await Promise.all(
+        issueMentions(`${p.title}\n${p.body ?? ""}`, input.number)
+          .filter((n) => !known.has(n))
+          .map((n) => gh.issue(repoRow.fullName, n).catch(() => null)),
+      )
+    ).flatMap((i) => (i ? [i] : []));
+
+    const ids = [...new Set([linearIdFromBranch(p.headRef), ...linearIds(p.title, p.body)].filter((x): x is string => Boolean(x)))].slice(0, 5);
+    const [linear] = await db
+      .select({ key: schema.linearIntegration.apiKeyEncrypted })
+      .from(schema.linearIntegration)
+      .where(eq(schema.linearIntegration.workspaceId, repoRow.workspaceId));
+    const issues = linear && ids.length ? await linearIssues(decrypt(linear.key), ids).catch(() => []) : [];
+    return {
+      github: [...closing.map((i) => ({ ...i, relation: "closes" as const })), ...mentioned.map((i) => ({ ...i, relation: "mentioned" as const }))],
+      linear: issues,
+      linearConnected: Boolean(linear),
+      // Looks like Linear ids but nothing to look them up with.
+      linearHint: linear ? [] : ids,
+    };
   }),
 
   /** Ask a question about the PR; viewers can ask too. */

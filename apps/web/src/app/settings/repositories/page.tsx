@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 
 import { AppShell } from "@/components/app-shell"
+import { RulesEditor } from "@/components/rules-editor"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -53,6 +54,7 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
           <TableHead className="w-28">AI guide</TableHead>
           <TableHead className="w-40">Auto-assign</TableHead>
           <TableHead>Review checklist</TableHead>
+          <TableHead className="w-28">Rules</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -113,6 +115,9 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
                   }
                 }}
               />
+            </TableCell>
+            <TableCell>
+              <RulesEditor workspaceId={workspaceId} repo={r} />
             </TableCell>
           </TableRow>
         ))}

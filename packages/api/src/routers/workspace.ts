@@ -16,6 +16,20 @@ function slugify(name: string) {
   return `${base || "workspace"}-${randomUUID().slice(0, 6)}`;
 }
 
+/** A routing rule: at least one condition and one action (see review/rules.ts). */
+const routingRule = z
+  .object({
+    id: z.string().min(1).max(40),
+    paths: z.array(z.string().trim().min(1).max(200)).max(10),
+    minLines: z.number().int().min(1).max(100_000).nullable(),
+    label: z.string().trim().min(1).max(50).nullable(),
+    teamId: z.string().nullable(),
+    reviewers: z.array(z.string().trim().regex(/^[A-Za-z0-9-]{1,39}$/, "Not a GitHub username")).max(10),
+    comment: z.string().trim().min(1).max(2000).nullable(),
+  })
+  .refine((r) => r.paths.length > 0 || r.minLines !== null, "Add a path or a size condition")
+  .refine((r) => r.label || r.teamId || r.reviewers.length || r.comment, "Add something for the rule to do");
+
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 const clientUrl = () => process.env.CLIENT_URL ?? "http://localhost:3000";
@@ -110,6 +124,7 @@ export const workspaceRouter = router({
             aiEnabled: schema.repository.aiEnabled,
             autoAssign: schema.repository.autoAssign,
             checklistTemplate: schema.repository.checklistTemplate,
+            routingRules: schema.repository.routingRules,
             installation: schema.githubInstallation.accountLogin,
             suspended: schema.githubInstallation.suspendedAt,
           })
@@ -143,6 +158,7 @@ export const workspaceRouter = router({
         aiEnabled: z.boolean().optional(),
         autoAssign: z.number().int().min(0).max(5).optional(),
         checklistTemplate: z.array(z.string().trim().min(1).max(300)).max(20).optional(),
+        routingRules: z.array(routingRule).max(20).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -159,10 +175,19 @@ export const workspaceRouter = router({
       await assertCan(ctx.user.id, repo.workspaceId, "repos.manage");
 
       if (input.enabled && !repo.enabled) await assertCanEnableRepo(repo.workspaceId);
+      const teamIds = [...new Set((input.routingRules ?? []).flatMap((r) => (r.teamId ? [r.teamId] : [])))];
+      if (teamIds.length) {
+        const found = await db
+          .select({ id: schema.team.id })
+          .from(schema.team)
+          .where(and(eq(schema.team.workspaceId, repo.workspaceId), inArray(schema.team.id, teamIds)));
+        if (found.length !== teamIds.length) throw new TRPCError({ code: "BAD_REQUEST", message: "A rule points at a team that no longer exists" });
+      }
       await audit(repo.workspaceId, ctx.user.id, "repo.settings", String(input.repoId), {
         enabled: input.enabled,
         aiEnabled: input.aiEnabled,
         autoAssign: input.autoAssign,
+        routingRules: input.routingRules?.length,
       });
 
       const { repoId, ...set } = input;

@@ -15,6 +15,7 @@ import { Fragment, useEffect, useRef, useState } from "react"
 import { FileIcon } from "@/components/file-icon"
 import { Count, DrawTick, flash, useJustBecame } from "@/components/motion"
 import { Checklist } from "@/components/review/checklist"
+import { LinkedIssues } from "@/components/review/linked-issues"
 import { AskPanel } from "@/components/review/ask-panel"
 import { FixWithAgent, OpenInPx0 } from "@/components/review/agent-handoff"
 import { FileFinder } from "@/components/review/file-finder"
@@ -327,6 +328,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
               })}
             </ol>
           </nav>
+          <LinkedIssues repo={repo} number={number} />
           <Checklist items={checklistItems} storageKey={`checklist:${repo}#${number}@${pr.headSha}`} />
         </aside>
 

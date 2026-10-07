@@ -1,6 +1,8 @@
 import { db, schema } from "@docks/db";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
+import { encrypt } from "../crypto.js";
+import { linearOrg } from "../linear.js";
 import { z } from "zod";
 import { assertCan, assertMember, audit, can } from "../access.js";
 import { installUrl } from "../review/github.js";
@@ -50,6 +52,43 @@ export const integrationRouter = router({
         }
       }
       return { connection: row ?? null, connectUrl, canManage: can(member.role, "integrations.manage") };
+    }),
+
+  /** Linear connection: lets the review page show linked Linear issues. The key is never sent back. */
+  linear: protectedProcedure.input(z.object({ workspaceId: z.string() })).query(async ({ ctx, input }) => {
+    const member = await assertMember(ctx.user.id, input.workspaceId);
+    const [row] = await db
+      .select({ orgName: schema.linearIntegration.orgName })
+      .from(schema.linearIntegration)
+      .where(eq(schema.linearIntegration.workspaceId, input.workspaceId));
+    return { orgName: row?.orgName ?? null, canManage: can(member.role, "integrations.manage") };
+  }),
+
+  connectLinear: protectedProcedure
+    .input(z.object({ workspaceId: z.string(), apiKey: z.string().trim().min(10).max(200) }))
+    .mutation(async ({ ctx, input }) => {
+      await assertCan(ctx.user.id, input.workspaceId, "integrations.manage");
+      let orgName: string;
+      try {
+        orgName = await linearOrg(input.apiKey);
+      } catch (err) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: (err as Error).message });
+      }
+      const values = { workspaceId: input.workspaceId, apiKeyEncrypted: encrypt(input.apiKey), orgName };
+      await db
+        .insert(schema.linearIntegration)
+        .values(values)
+        .onConflictDoUpdate({ target: schema.linearIntegration.workspaceId, set: values });
+      await audit(input.workspaceId, ctx.user.id, "linear.connect", orgName);
+      return { orgName };
+    }),
+
+  disconnectLinear: protectedProcedure
+    .input(z.object({ workspaceId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await assertCan(ctx.user.id, input.workspaceId, "integrations.manage");
+      await db.delete(schema.linearIntegration).where(eq(schema.linearIntegration.workspaceId, input.workspaceId));
+      await audit(input.workspaceId, ctx.user.id, "linear.disconnect", null);
     }),
 
   setDigest: protectedProcedure

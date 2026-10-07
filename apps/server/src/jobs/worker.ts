@@ -13,6 +13,7 @@ import {
   scheduleWeeklyReports,
   type Job,
 } from "@docks/api";
+import { applyRules } from "./handlers/apply-rules.js";
 import { autoAssign } from "./handlers/auto-assign.js";
 import { generateGuide } from "./handlers/generate-guide.js";
 import { slackDigest } from "./handlers/slack-digest.js";
@@ -29,6 +30,7 @@ export const handlers: Record<Job["type"], (payload: unknown) => Promise<void>> 
   sync_user_repos: syncUserRepos,
   auto_assign: autoAssign,
   weekly_report: weeklyReport,
+  apply_rules: applyRules,
 };
 
 const IDLE_MS = 2_000;

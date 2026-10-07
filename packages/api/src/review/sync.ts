@@ -5,6 +5,7 @@ import { assertCan, audit } from "../access.js";
 import { enqueue } from "../jobs.js";
 import { enabledRepoCount, PLAN_LIMITS, workspacePlan } from "../plans.js";
 import { columnOf, latestVerdicts } from "./columns.js";
+import { runApplyRules } from "./apply-rules.js";
 import { getInstallation, installationClient } from "./github.js";
 import { suggestReviewers } from "./reviewers.js";
 import { scheduleUserRepoSync } from "./github-user.js";
@@ -278,6 +279,11 @@ export async function syncPr(repoId: number, number: number) {
     await enqueue("auto_assign", { repoId, number });
   }
 
+  // Routing rules (label / reviewers / comment) for open, ready PRs; each rule fires once per PR.
+  if (state === "open" && !pr.draft && repo.routingRules.length) {
+    await enqueue("apply_rules", { repoId, number });
+  }
+
   // New head commit with files: queue the AI guide (plan.md §6.3).
   if (state === "open" && !pr.draft && files.length && repo.aiEnabled) {
     await enqueue("generate_guide", { repoId, number, headSha: pr.head.sha });
@@ -299,6 +305,11 @@ export async function purgeOldPatches() {
       AND f.patch IS NOT NULL
   `);
   return result.rowCount ?? 0;
+}
+
+/** Job body: apply routing rules, then refresh the PR so the board shows the new labels/reviewers. */
+export async function runRules(repoId: number, number: number) {
+  if (await runApplyRules(repoId, number)) await syncPr(repoId, number);
 }
 
 /** Job body: request the top N suggested reviewers as the App, at most once per PR. */

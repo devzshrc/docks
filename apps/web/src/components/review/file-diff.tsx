@@ -8,6 +8,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 
 import { MentionTextarea } from "@/components/mention-textarea"
 import { FixWithAgent } from "@/components/review/agent-handoff"
+import { BlameLine, useBlame } from "@/components/review/blame-popover"
 import { Collapse, flash } from "@/components/motion"
 import { MarkdownPreview } from "@/components/review/markdown-preview"
 import { Badge } from "@/components/ui/badge"
@@ -305,6 +306,7 @@ export function FileDiff({
     ...trpc.review.fileContent.queryOptions({ repo, number, path: file.filename }),
     enabled: (full || Object.keys(above).length > 0) && open,
   })
+  const blame = useBlame(repo, number, file.filename, open && near && file.status !== "added")
   const fileLines = useMemo(() => content.data?.text.split("\n"), [content.data])
   const shown = useMemo(() => withContext(lines, fileLines, above), [lines, fileLines, above])
   const capped = !showAll && shown.length > ROW_CAP
@@ -330,8 +332,25 @@ export function FileDiff({
   }
 
   function NumberCell({ n, side, text, extra }: { n?: number; side: Side; text: string; extra?: boolean }) {
+    const showBlame = side === "LEFT" && n !== undefined && !extra && file.status !== "added"
+    const num = showBlame ? (
+      <BlameLine
+        repo={repo}
+        number={number}
+        path={file.filename}
+        line={n!}
+        ranges={blame.data?.ranges}
+        isPending={blame.isPending}
+      >
+        {n}
+      </BlameLine>
+    ) : (
+      n
+    )
     return (
-      <td className={cn("text-muted-foreground w-10 px-2 text-right align-top select-none", selected(side, n) && "bg-sky-500/20")}>
+      <td
+        className={cn("text-muted-foreground w-10 px-2 text-right align-top select-none", selected(side, n) && "bg-sky-500/20")}
+      >
         {n !== undefined && canAct && !extra ? (
           <button
             type="button"
@@ -341,10 +360,10 @@ export function FileDiff({
             data-text={text}
           >
             <IconMessagePlus className="absolute top-0.5 -left-1 size-3.5 text-sky-500 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />
-            {n}
+            {num}
           </button>
         ) : (
-          n
+          num
         )}
       </td>
     )
