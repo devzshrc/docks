@@ -201,7 +201,7 @@ function SlackCard({ workspaceId }: { workspaceId: string }) {
                 <label htmlFor="digest-hour">Send at</label>
                 <select
                   id="digest-hour"
-                  className="border-input bg-background h-9 rounded-md border px-2"
+                  className="border-input bg-background h-9 rounded-lg border px-2"
                   value={connection.digestHour}
                   onChange={(e) =>
                     setDigest.mutate({ workspaceId, hour: Number(e.target.value), timezone: connection.timezone })

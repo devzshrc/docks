@@ -4,11 +4,13 @@ import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
 import { AppShell } from "@/components/app-shell"
+import { RankedBars } from "@/components/charts/ranked-bars"
+import { TrendChart } from "@/components/charts/trend-chart"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useWorkspace } from "@/hooks/use-workspace"
 import { useTRPC } from "@/trpc/react"
 
-const SELECT = "border-input bg-background h-9 rounded-md border px-2 text-sm"
+const SELECT = "border-input bg-background h-9 rounded-lg border px-2 text-sm"
 const fmt = (h: number | null) => (h === null ? "—" : h < 48 ? `${h}h` : `${Math.round((h / 24) * 10) / 10}d`)
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
@@ -18,40 +20,6 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
       <p className="text-2xl font-medium tabular-nums">{value}</p>
       {sub && <p className="text-muted-foreground text-xs">{sub}</p>}
     </div>
-  )
-}
-
-/** Inline SVG line; no chart library (plan M7). */
-function Sparkline({ values, label }: { values: (number | null)[]; label: string }) {
-  const nums = values.map((v) => v ?? 0)
-  const max = Math.max(1, ...nums)
-  const pts = nums.map((v, i) => `${(i / Math.max(1, nums.length - 1)) * 100},${30 - (v / max) * 28}`).join(" ")
-  return (
-    <svg viewBox="0 0 100 32" className="h-10 w-full" role="img" aria-label={label} preserveAspectRatio="none">
-      <polyline points={pts} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" className="text-emerald-600" />
-    </svg>
-  )
-}
-
-function Bars({ rows }: { rows: { label: string; value: number | null; note?: string }[] }) {
-  const max = Math.max(1, ...rows.map((r) => r.value ?? 0))
-  return (
-    <ul className="space-y-1.5">
-      {rows.map((r) => (
-        <li key={r.label} className="grid grid-cols-[minmax(0,12rem)_minmax(0,1fr)_5rem] items-center gap-3 text-sm">
-          <span className="truncate font-mono text-xs" title={r.label}>
-            {r.label}
-          </span>
-          <div className="bg-muted h-2 rounded-full" aria-hidden>
-            <div className="h-2 rounded-full bg-sky-600" style={{ width: `${((r.value ?? 0) / max) * 100}%` }} />
-          </div>
-          <span className="text-right tabular-nums">
-            {fmt(r.value)}
-            {r.note && <span className="text-muted-foreground text-xs"> {r.note}</span>}
-          </span>
-        </li>
-      ))}
-    </ul>
   )
 }
 
@@ -118,17 +86,21 @@ function Insights({ workspaceId }: { workspaceId: string }) {
           <section className="grid gap-6 md:grid-cols-2">
             <div>
               <h2 className="mb-1 text-sm font-medium">Merged per week (12 weeks)</h2>
-              <Sparkline values={data.data.trend.map((w) => w.merged)} label="Merged pull requests per week" />
-              <p className="text-muted-foreground text-xs">
-                {data.data.trend.map((w) => w.merged).join(" · ")}
-              </p>
+              <TrendChart
+                rows={data.data.trend.map((w) => ({ label: w.week.slice(5), value: w.merged }))}
+                label="PRs merged"
+                ariaLabel="Line chart of pull requests merged per week over the last 12 weeks"
+              />
             </div>
             <div>
               <h2 className="mb-1 text-sm font-medium">Time to first review per week</h2>
-              <Sparkline values={data.data.trend.map((w) => w.medianHoursToFirstReview)} label="Median hours to first review per week" />
-              <p className="text-muted-foreground text-xs">
-                {data.data.trend.map((w) => fmt(w.medianHoursToFirstReview)).join(" · ")}
-              </p>
+              <TrendChart
+                rows={data.data.trend.map((w) => ({ label: w.week.slice(5), value: w.medianHoursToFirstReview }))}
+                label="Median hours"
+                format={(v) => fmt(v)}
+                color="#0d9488"
+                ariaLabel="Line chart of median hours to first review per week over the last 12 weeks"
+              />
             </div>
           </section>
 
@@ -151,7 +123,12 @@ function Insights({ workspaceId }: { workspaceId: string }) {
           {data.data.repos.length > 0 && (
             <section>
               <h2 className="mb-2 text-sm font-medium">Slowest repositories to first review</h2>
-              <Bars rows={data.data.repos.map((r) => ({ label: r.repo, value: r.medianHoursToFirstReview, note: `· ${r.prs}` }))} />
+              <RankedBars
+                rows={data.data.repos.map((r) => ({ name: r.repo, value: r.medianHoursToFirstReview ?? 0, note: `${r.prs} PRs` }))}
+                label="Median hours to first review"
+                format={(v) => fmt(v)}
+                ariaLabel="Bar chart of repositories ranked by median hours to first review"
+              />
             </section>
           )}
 
@@ -161,7 +138,13 @@ function Insights({ workspaceId }: { workspaceId: string }) {
               <p className="text-muted-foreground mb-2 text-xs">
                 Visible to owners and admins only. Use it to rebalance load, not to rank people.
               </p>
-              <Bars rows={data.data.reviewers.map((r) => ({ label: r.login, value: r.medianHoursToReview, note: `· ${r.reviews}` }))} />
+              <RankedBars
+                rows={data.data.reviewers.map((r) => ({ name: r.login, value: r.medianHoursToReview ?? 0, note: `${r.reviews} reviews` }))}
+                label="Median hours to their first review"
+                format={(v) => fmt(v)}
+                color="#7c3aed"
+                ariaLabel="Bar chart of reviewers ranked by median hours from PR opened to their first review"
+              />
             </section>
           )}
         </>

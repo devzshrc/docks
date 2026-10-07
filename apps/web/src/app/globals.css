@@ -11,8 +11,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.56 0.19 264);
+  --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -22,7 +22,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.62 0.17 264);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -45,8 +45,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.62 0.18 264);
+  --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -56,7 +56,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.66 0.16 264);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -118,6 +118,133 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Native selects everywhere: same quiet texture as secondary buttons. */
+  select {
+    appearance: none;
+    padding-right: 2rem !important;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"),
+      linear-gradient(to bottom, oklch(1 0 0), oklch(0.975 0.003 264));
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center, 0 0;
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.8), 0 1px 2px oklch(0.2 0.02 264 / 0.08);
+    cursor: pointer;
+  }
+  .dark select {
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"),
+      linear-gradient(to bottom, oklch(1 0 0 / 0.07), oklch(1 0 0 / 0.025));
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.3);
+  }
+  select:focus-visible {
+    outline: none;
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 35%, transparent);
+  }
+
+  /* Checkboxes: textured box, blue when on. */
+  input[type="checkbox"] {
+    appearance: none;
+    flex-shrink: 0;
+    border: 1px solid var(--input);
+    border-radius: 0.3rem;
+    background: linear-gradient(to bottom, oklch(1 0 0), oklch(0.965 0.004 264));
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.9), 0 1px 1.5px oklch(0.2 0.02 264 / 0.1);
+    display: inline-grid;
+    place-content: center;
+    cursor: pointer;
+    transition: background 120ms, border-color 120ms;
+  }
+  .dark input[type="checkbox"] {
+    background: linear-gradient(to bottom, oklch(1 0 0 / 0.08), oklch(1 0 0 / 0.03));
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.06);
+  }
+  input[type="checkbox"]::before {
+    content: "";
+    width: 0.6em;
+    height: 0.6em;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    background: white;
+    transform: scale(0);
+    transition: transform 120ms;
+  }
+  input[type="checkbox"]:checked {
+    border-color: oklch(0.45 0.17 264);
+    background: linear-gradient(to bottom, oklch(0.66 0.17 264), oklch(0.53 0.2 264));
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.3), 0 1px 2px oklch(0.3 0.15 264 / 0.35);
+  }
+  input[type="checkbox"]:checked::before {
+    transform: scale(1);
+  }
+  input[type="checkbox"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 35%, transparent);
+  }
+  input[type="checkbox"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  /* Primary actions: blue gradient with a soft top highlight (reference screenshot). */
+  .tex-primary {
+    color: white;
+    border: 1px solid oklch(0.45 0.17 264);
+    background: linear-gradient(to bottom, oklch(0.67 0.16 264), oklch(0.54 0.2 264));
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.28), inset 0 -1px 0 oklch(0.3 0.15 264 / 0.25), 0 1px 2px oklch(0.3 0.15 264 / 0.3);
+    text-shadow: 0 1px 0 oklch(0.3 0.15 264 / 0.35);
+  }
+  .tex-primary:hover {
+    background: linear-gradient(to bottom, oklch(0.7 0.15 264), oklch(0.57 0.2 264));
+  }
+  .tex-primary:active {
+    background: linear-gradient(to bottom, oklch(0.54 0.2 264), oklch(0.6 0.18 264));
+    box-shadow: inset 0 1px 2px oklch(0.25 0.15 264 / 0.35);
+  }
+
+  /* Secondary actions, segmented toggles: the same shape, quieter. */
+  .tex-neutral {
+    border: 1px solid var(--border);
+    background: linear-gradient(to bottom, oklch(1 0 0), oklch(0.97 0.003 264));
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.9), 0 1px 2px oklch(0.2 0.02 264 / 0.08);
+  }
+  .tex-neutral:hover {
+    background: linear-gradient(to bottom, oklch(0.995 0 0), oklch(0.95 0.004 264));
+  }
+  .tex-neutral:active {
+    background: oklch(0.95 0.004 264);
+    box-shadow: inset 0 1px 2px oklch(0.2 0.02 264 / 0.12);
+  }
+  .dark .tex-neutral {
+    background: linear-gradient(to bottom, oklch(1 0 0 / 0.08), oklch(1 0 0 / 0.03));
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.07), 0 1px 2px oklch(0 0 0 / 0.35);
+  }
+  .dark .tex-neutral:hover {
+    background: linear-gradient(to bottom, oklch(1 0 0 / 0.11), oklch(1 0 0 / 0.05));
+  }
+
+  /* Segmented control: a neutral track; the pressed segment gets the primary texture. */
+  .segmented {
+    display: inline-flex;
+    padding: 2px;
+    gap: 2px;
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid var(--border);
+    background: var(--muted);
+  }
+  .segmented > button {
+    border-radius: calc(var(--radius) - 4px);
+    padding: 0.25rem 0.75rem;
+    border: 1px solid transparent;
+  }
+  .segmented > button[aria-pressed="true"] {
+    color: white;
+    border-color: oklch(0.45 0.17 264);
+    background: linear-gradient(to bottom, oklch(0.67 0.16 264), oklch(0.54 0.2 264));
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.28), 0 1px 2px oklch(0.3 0.15 264 / 0.3);
   }
 }
 

@@ -37,7 +37,7 @@ function Log({ workspaceId }: { workspaceId: string }) {
       <div className="flex flex-wrap gap-2">
         <select
           aria-label="Filter by action"
-          className="border-input bg-background h-9 rounded-md border px-2 text-sm"
+          className="border-input bg-background h-9 rounded-lg border px-2 text-sm"
           value={action}
           onChange={(e) => setAction(e.target.value)}
         >
@@ -50,7 +50,7 @@ function Log({ workspaceId }: { workspaceId: string }) {
         </select>
         <select
           aria-label="Filter by person"
-          className="border-input bg-background h-9 rounded-md border px-2 text-sm"
+          className="border-input bg-background h-9 rounded-lg border px-2 text-sm"
           value={actorId}
           onChange={(e) => setActorId(e.target.value)}
         >

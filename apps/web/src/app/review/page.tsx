@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace"
 import { useTRPC } from "@/trpc/react"
 
-const SELECT = "border-input bg-background h-9 rounded-md border px-2 text-sm"
+const SELECT = "border-input bg-background h-9 rounded-lg border px-2 text-sm"
 
 function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) {
   return (

@@ -220,14 +220,14 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
           {pr.state === "open" && <AskPanel repo={repo} number={number} />}
           {files.length > 0 && (
             <div className="flex flex-wrap items-center gap-3 text-sm">
-              <div className="flex rounded-md border" role="group" aria-label="Diff layout">
+              <div className="segmented" role="group" aria-label="Diff layout">
                 {(["unified", "split"] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
                     aria-pressed={mode === m}
                     onClick={() => setMode(m)}
-                    className={cn("px-3 py-1 capitalize", mode === m && "bg-muted font-medium")}
+                    className="capitalize"
                   >
                     {m}
                   </button>
