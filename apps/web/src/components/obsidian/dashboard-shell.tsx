@@ -830,9 +830,9 @@ function NavSection({ title, items, activeItemId, pillId, onSelect, isQuiet = fa
   const titleId = useId();
 
   return (
-    <div className={cn("flex flex-col gap-1 p-3", className)}>
+    <div className={cn("flex flex-col gap-1 px-2.5 py-3", className)}>
       {title && (
-        <span id={titleId} className="block py-1 text-xs font-medium uppercase leading-none tracking-[1px] text-(--obsidian-dashboard-shell-text-subtle)">
+        <span id={titleId} className="block px-2 pt-1 pb-2 text-[11px] font-medium uppercase leading-none tracking-[1px] text-(--obsidian-dashboard-shell-text-subtle)">
           {title}
         </span>
       )}
