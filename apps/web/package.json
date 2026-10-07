@@ -9,7 +9,7 @@
     "start": "next start --port 3000",
     "lint": "echo \"@docks/web: lint ok (Next.js lint via build)\"",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "echo \"@docks/web: no tests yet\"",
+    "test": "tsx --test src/lib/*.test.ts",
     "clean": "rm -rf .next"
   },
   "dependencies": {
@@ -48,6 +48,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.2"
   }
 }

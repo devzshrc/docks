@@ -5,6 +5,8 @@ export type DiffLine = {
   text: string
   oldNo?: number
   newNo?: number
+  /** Context pulled from the full file, not part of the patch (can't be commented on). */
+  extra?: boolean
 }
 
 /** GitHub's per-file patch -> numbered lines. */
@@ -116,4 +118,80 @@ export function fuzzyScore(query: string, path: string): number | null {
     pi = at + 1
   }
   return score - p.length * 0.01
+}
+
+/** Pairs each removed line with the added line that replaced it (i-th del ↔ i-th add in a run). */
+export function pairChanges(lines: DiffLine[]): Map<DiffLine, DiffLine> {
+  const pairs = new Map<DiffLine, DiffLine>()
+  let dels: DiffLine[] = []
+  let adds: DiffLine[] = []
+  const flush = () => {
+    for (let i = 0; i < Math.min(dels.length, adds.length); i++) {
+      pairs.set(dels[i]!, adds[i]!)
+      pairs.set(adds[i]!, dels[i]!)
+    }
+    dels = []
+    adds = []
+  }
+  for (const l of lines) {
+    if (l.kind === "del") {
+      if (adds.length) flush()
+      dels.push(l)
+    } else if (l.kind === "add") adds.push(l)
+    else flush()
+  }
+  flush()
+  return pairs
+}
+
+/**
+ * The span of `text` that differs from `other` (common prefix/suffix trimmed, snapped to word edges).
+ * null when the lines share too little for a word highlight to help.
+ * ponytail: prefix/suffix only, one span per line; switch to a token LCS if multi-edit lines need it.
+ */
+export function wordRange(text: string, other: string): [number, number] | null {
+  let a = 0
+  while (a < text.length && a < other.length && text[a] === other[a]) a++
+  let b = 0
+  while (b < text.length - a && b < other.length - a && text[text.length - 1 - b] === other[other.length - 1 - b]) b++
+  while (a > 0 && /\w/.test(text[a - 1]!)) a--
+  let end = text.length - b
+  while (end < text.length && /\w/.test(text[end]!)) end++
+  const same = a + (text.length - end)
+  if (end <= a || same < text.trim().length * 0.3) return null
+  return [a, end]
+}
+
+/** Inserts `above[h]` lines of file context before hunk h (from the head file), marked `extra`. */
+export function withContext(lines: DiffLine[], file: string[] | undefined, above: Record<number, number>): DiffLine[] {
+  if (!file) return lines
+  const out: DiffLine[] = []
+  let hunk = -1
+  let lastNew = 0
+  for (const l of lines) {
+    if (l.kind === "hunk") {
+      hunk++
+      const m = l.text.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)/)
+      const n = above[hunk] ?? 0
+      if (m && n) {
+        const offset = Number(m[1]) - Number(m[2])
+        const start = Math.max(lastNew + 1, Number(m[2]) - n)
+        for (let k = start; k < Number(m[2]); k++) {
+          out.push({ kind: "ctx", text: file[k - 1] ?? "", oldNo: k + offset, newNo: k, extra: true })
+        }
+      }
+    }
+    if (l.newNo) lastNew = l.newNo
+    out.push(l)
+  }
+  return out
+}
+
+/** Conventional Comments labels, written as a `**label:**` prefix so they read fine on GitHub too. */
+export const COMMENT_LABELS = ["nit", "question", "suggestion", "blocking", "praise"] as const
+export type CommentLabel = (typeof COMMENT_LABELS)[number]
+
+export function commentLabel(body: string): CommentLabel | null {
+  const m = body.trimStart().match(/^\**\s*(nit|question|suggestion|blocking|praise)\s*(?:\([^)]*\))?\s*:/i)
+  return m ? (m[1]!.toLowerCase() as CommentLabel) : null
 }
