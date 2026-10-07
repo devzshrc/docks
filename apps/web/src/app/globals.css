@@ -65,6 +65,7 @@
   /* next/font sets the --font-*-face variables on <html> (see app/layout.tsx). */
   --font-sans: var(--font-geist-face), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-source-serif-face), ui-serif, serif;
+  --font-display: var(--font-display-face), var(--font-source-serif-face), ui-serif, serif;
   /* UI monospace: branch names, paths, numbers. */
   --font-mono: var(--font-geist-mono-face), ui-monospace, monospace;
   /* Code: diffs, full files, code in comments. */
@@ -200,6 +201,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
+  --font-display: var(--font-display);
   --font-code: var(--font-code);
 
   --radius-sm: calc(var(--radius) - 4px);
