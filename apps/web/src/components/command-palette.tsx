@@ -1,5 +1,22 @@
 "use client"
 
+import {
+  Analytics01Icon,
+  ArrowTurnBackwardIcon,
+  Clock01Icon,
+  ConnectIcon,
+  CreditCardIcon,
+  DashboardCircleIcon,
+  GitPullRequestIcon,
+  Folder01Icon,
+  ListViewIcon,
+  Search01Icon,
+  Settings02Icon,
+  Shield01Icon,
+  UserCircleIcon,
+  UserGroupIcon,
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
@@ -8,19 +25,32 @@ import { useWorkspace } from "@/hooks/use-workspace"
 import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/react"
 
-const PAGES = [
-  { label: "Reviews", href: "/review" },
-  { label: "Waiting on me", href: "/review?waiting=1" },
-  { label: "My pull requests", href: "/review?mine=1" },
-  { label: "Team", href: "/team" },
-  { label: "Insights", href: "/insights" },
-  { label: "Repositories", href: "/settings/repositories" },
-  { label: "Integrations", href: "/settings/integrations" },
-  { label: "Workspace", href: "/settings/workspace" },
-  { label: "Audit log", href: "/settings/audit" },
-  { label: "Billing", href: "/settings/billing" },
-  { label: "Account", href: "/settings/account" },
+type IconDef = typeof Search01Icon
+
+const PAGES: { label: string; href: string; icon: IconDef }[] = [
+  { label: "Reviews", href: "/review", icon: DashboardCircleIcon },
+  { label: "Waiting on me", href: "/review?waiting=1", icon: Clock01Icon },
+  { label: "My pull requests", href: "/review?mine=1", icon: GitPullRequestIcon },
+  { label: "Team", href: "/team", icon: UserGroupIcon },
+  { label: "Insights", href: "/insights", icon: Analytics01Icon },
+  { label: "Repositories", href: "/settings/repositories", icon: Folder01Icon },
+  { label: "Integrations", href: "/settings/integrations", icon: ConnectIcon },
+  { label: "Workspace", href: "/settings/workspace", icon: Settings02Icon },
+  { label: "Audit log", href: "/settings/audit", icon: ListViewIcon },
+  { label: "Billing", href: "/settings/billing", icon: CreditCardIcon },
+  { label: "Account", href: "/settings/account", icon: UserCircleIcon },
+  { label: "Security", href: "/settings/account#security", icon: Shield01Icon },
 ]
+
+type Item = { key: string; group: "Pages" | "Pull requests"; label: string; hint?: string; href: string; icon: IconDef }
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="bg-muted text-muted-foreground inline-flex h-5 min-w-5 items-center justify-center rounded border px-1 font-sans text-[10.5px] font-medium">
+      {children}
+    </kbd>
+  )
+}
 
 /** ⌘K / Ctrl+K: jump to a page or a pull request. Native <dialog>, no library (plan M5). */
 export function CommandPalette() {
@@ -28,6 +58,7 @@ export function CommandPalette() {
   const router = useRouter()
   const { workspace } = useWorkspace()
   const dialog = useRef<HTMLDialogElement>(null)
+  const list = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState("")
   const [active, setActive] = useState(0)
@@ -55,18 +86,26 @@ export function CommandPalette() {
     } else dialog.current?.close()
   }, [open])
 
+  useEffect(() => {
+    list.current?.querySelector(`[data-idx="${active}"]`)?.scrollIntoView({ block: "nearest" })
+  }, [active])
+
   const needle = q.trim().toLowerCase().replace(/^#/, "")
-  const items = [
-    ...PAGES.map((p) => ({ key: p.href, label: p.label, hint: "Page", href: p.href })),
-    ...(board.data?.cards ?? []).map((c) => ({
+  const match = (s: string) => !needle || s.toLowerCase().includes(needle)
+  const pages: Item[] = PAGES.filter((p) => match(p.label)).map((p) => ({ key: p.href, group: "Pages", ...p }))
+  const prs: Item[] = (board.data?.cards ?? [])
+    .filter((c) => match(`${c.number} ${c.title} ${c.repo}`))
+    .slice(0, 8)
+    .map((c) => ({
       key: `${c.repo}#${c.number}`,
-      label: `#${c.number} ${c.title}`,
-      hint: c.repo,
+      group: "Pull requests",
+      label: c.title,
+      hint: `${c.repo.split("/").pop()} #${c.number}`,
       href: `/review/${c.repo}/${c.number}`,
-    })),
-  ]
-    .filter((i) => !needle || `${i.label} ${i.hint}`.toLowerCase().includes(needle))
-    .slice(0, 12)
+      icon: GitPullRequestIcon,
+    }))
+  // PRs first once the person is typing; pages first when browsing.
+  const items = needle ? [...prs, ...pages] : [...pages.slice(0, 6), ...prs]
 
   function go(href: string) {
     setOpen(false)
@@ -78,45 +117,94 @@ export function CommandPalette() {
       ref={dialog}
       onClose={() => setOpen(false)}
       onClick={(e) => e.target === dialog.current && setOpen(false)}
-      className="bg-popover text-popover-foreground mx-auto mt-[15vh] w-[min(36rem,calc(100vw-2rem))] rounded-xl border p-0 shadow-xl backdrop:bg-black/40"
+      className="bg-popover text-popover-foreground mx-auto mt-[14vh] w-[min(38rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border p-0 shadow-2xl ring-1 ring-black/5 backdrop:bg-black/30 backdrop:backdrop-blur-[2px] dark:ring-white/5"
       aria-label="Go to"
     >
-      <input
-        autoFocus
-        value={q}
-        onChange={(e) => {
-          setQ(e.target.value)
-          setActive(0)
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-            e.preventDefault()
-            setActive((a) => (items.length ? (a + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length : 0))
-          } else if (e.key === "Enter" && items[active]) {
-            e.preventDefault()
-            go(items[active]!.href)
-          }
-        }}
-        placeholder="Go to a page or pull request…"
-        aria-label="Search pages and pull requests"
-        className="w-full border-b bg-transparent px-4 py-3 text-sm outline-none"
-      />
-      <ul role="listbox" className="max-h-80 overflow-y-auto p-1 text-sm">
-        {items.length === 0 && <li className="text-muted-foreground px-3 py-2">No matches</li>}
+      <div className="flex items-center gap-3 border-b px-4">
+        <HugeiconsIcon icon={Search01Icon} size={18} className="text-muted-foreground shrink-0" aria-hidden />
+        <input
+          autoFocus
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value)
+            setActive(0)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+              e.preventDefault()
+              setActive((a) => (items.length ? (a + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length : 0))
+            } else if (e.key === "Enter" && items[active]) {
+              e.preventDefault()
+              go(items[active]!.href)
+            }
+          }}
+          placeholder="Search pages and pull requests…"
+          aria-label="Search pages and pull requests"
+          className="placeholder:text-muted-foreground/70 h-13 w-full bg-transparent text-[15px] outline-none"
+        />
+        <Kbd>esc</Kbd>
+      </div>
+
+      <div ref={list} role="listbox" className="max-h-[min(24rem,55vh)] overflow-y-auto p-2">
+        {items.length === 0 && (
+          <div className="flex flex-col items-center gap-1 py-10 text-center">
+            <p className="text-sm font-medium">No results</p>
+            <p className="text-muted-foreground text-xs">Try a page name, PR title or number.</p>
+          </div>
+        )}
         {items.map((i, idx) => (
-          <li
-            key={i.key}
-            role="option"
-            aria-selected={idx === active}
-            onMouseEnter={() => setActive(idx)}
-            onClick={() => go(i.href)}
-            className={cn("flex cursor-pointer justify-between gap-3 rounded-md px-3 py-2", idx === active && "bg-muted")}
-          >
-            <span className="truncate">{i.label}</span>
-            <span className="text-muted-foreground shrink-0 text-xs">{i.hint}</span>
-          </li>
+          <div key={i.key}>
+            {i.group !== items[idx - 1]?.group && (
+              <div className="text-muted-foreground px-2.5 pt-2 pb-1.5 text-[11px] font-medium tracking-wide uppercase first:pt-1">
+                {i.group}
+              </div>
+            )}
+            <div
+              role="option"
+              data-idx={idx}
+              aria-selected={idx === active}
+              onMouseMove={() => setActive(idx)}
+              onClick={() => go(i.href)}
+              className={cn(
+                "flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                idx === active ? "bg-accent text-accent-foreground" : "text-foreground/90"
+              )}
+            >
+              <HugeiconsIcon
+                icon={i.icon}
+                size={17}
+                className={cn("shrink-0", idx === active ? "text-foreground" : "text-muted-foreground")}
+                aria-hidden
+              />
+              <span className="min-w-0 flex-1 truncate">{i.label}</span>
+              {i.hint && <span className="text-muted-foreground shrink-0 font-mono text-[11px]">{i.hint}</span>}
+              {idx === active && (
+                <HugeiconsIcon icon={ArrowTurnBackwardIcon} size={14} className="text-muted-foreground shrink-0" aria-hidden />
+              )}
+            </div>
+          </div>
         ))}
-      </ul>
+        {board.isLoading && (
+          <div className="text-muted-foreground px-2.5 py-2 text-xs">Loading pull requests…</div>
+        )}
+      </div>
+
+      <div className="text-muted-foreground bg-muted/40 flex items-center gap-4 border-t px-4 py-2.5 text-[11px]">
+        <span className="flex items-center gap-1.5">
+          <Kbd>↑</Kbd>
+          <Kbd>↓</Kbd>
+          Navigate
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Kbd>↵</Kbd>
+          Open
+        </span>
+        <span className="ml-auto flex items-center gap-1.5">
+          <Kbd>⌘</Kbd>
+          <Kbd>K</Kbd>
+          Toggle
+        </span>
+      </div>
     </dialog>
   )
 }
