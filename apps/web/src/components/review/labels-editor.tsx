@@ -6,6 +6,7 @@ import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { optimistic } from "@/lib/optimistic"
 import { useTRPC } from "@/trpc/react"
 
 /** Show and edit a PR's GitHub labels, posted as the signed-in person (plan M5). */
@@ -16,11 +17,17 @@ export function LabelsEditor({ repo, number, labels, canAct }: { repo: string; n
   const [value, setValue] = useState(labels.join(", "))
   const save = useMutation(
     trpc.review.setLabels.mutationOptions({
-      onSuccess: () => {
-        setEditing(false)
-        void queryClient.invalidateQueries(trpc.review.get.queryFilter({ repo, number }))
-        void queryClient.invalidateQueries(trpc.review.board.queryFilter())
-      },
+      ...optimistic<{ labels: string[] }>(
+        queryClient,
+        [
+          { filter: trpc.review.get.queryFilter({ repo, number }), patch: (d: { pr: { labels: string[] } }, v) => ({ ...d, pr: { ...d.pr, labels: v.labels } }) },
+          {
+            filter: trpc.review.board.queryFilter(),
+            patch: (d: { cards: { repo: string; number: number; labels: string[] }[] }, v) => ({ ...d, cards: d.cards.map((c) => (c.repo === repo && c.number === number ? { ...c, labels: v.labels } : c)) }),
+          },
+        ],
+        { onError: () => setEditing(true) },
+      ),
     })
   )
 
@@ -30,6 +37,7 @@ export function LabelsEditor({ repo, number, labels, canAct }: { repo: string; n
         className="flex flex-wrap items-center gap-2 text-sm"
         onSubmit={(e) => {
           e.preventDefault()
+          setEditing(false)
           save.mutate({ repo, number, labels: value.split(",").map((l) => l.trim()).filter(Boolean) })
         }}
       >

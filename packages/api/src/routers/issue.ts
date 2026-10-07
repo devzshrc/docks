@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { cached } from "../cache.js";
 import { assertMember, audit, repoForAction } from "../access.js";
 import { decrypt } from "../crypto.js";
 import { createLinearIssue } from "../linear.js";
@@ -35,16 +36,6 @@ import { protectedProcedure, router } from "../trpc.js";
 
 const repoIn = z.object({ repo: z.string().min(1).max(200) });
 
-// ponytail: in-memory per process (like the blame cache); move to Postgres/Redis with more than one instance.
-const cache = new Map<string, { at: number; value: unknown }>();
-async function cached<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<T> {
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < ttlMs) return hit.value as T;
-  const value = await load();
-  if (cache.size >= 500) cache.delete(cache.keys().next().value!);
-  cache.set(key, { at: Date.now(), value });
-  return value;
-}
 
 /** Sliding-window limiter per user and bucket. */
 const hits = new Map<string, number[]>();
@@ -84,7 +75,7 @@ async function treeOf(repo: RepoRow, installationId: number) {
   return cached(`tree:${repo.id}@${meta.headSha}`, 30 * MIN, async () => {
     const t = await installationClient(installationId).tree(repo.fullName, meta.headSha);
     return { index: indexTree(t.paths), paths: t.paths, truncated: t.truncated, sha: meta.headSha };
-  });
+  }, { local: true }); // the index isn't JSON-safe, so it stays per instance
 }
 
 /** Top-level folders (and apps/*, packages/* children in monorepos) as pickable areas. */

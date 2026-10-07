@@ -1,5 +1,7 @@
 // Auth instance — used by apps/server (handler + session lookup).
 // apps/web talks to it over HTTP via createAuthClient, never imports this.
+export { useKv } from "./cache.js";
+export type { KvLike } from "./cache.js";
 export { auth } from "./auth.js";
 export type { AuthUser, Session } from "./auth.js";
 

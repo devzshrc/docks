@@ -2,6 +2,7 @@ import { db, schema } from "@docks/db";
 import { TRPCError } from "@trpc/server";
 import { and, desc, asc, eq, gte, inArray, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
+import { cached } from "../cache.js";
 import { assertMember, audit, repoForAction, repoForUser, visibleRepos } from "../access.js";
 import { enqueue } from "../jobs.js";
 import { githubFailure } from "../review/errors.js";
@@ -152,15 +153,6 @@ function present(r: Row, repo: string, links: LinkedPr[], staleDays = STALE_DAYS
   };
 }
 
-const cache = new Map<string, { at: number; value: unknown }>();
-async function cached<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<T> {
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < ttlMs) return hit.value as T;
-  const value = await load();
-  if (cache.size >= 300) cache.delete(cache.keys().next().value!);
-  cache.set(key, { at: Date.now(), value });
-  return value;
-}
 
 async function installationOf(repoId: number) {
   const [r] = await db.select({ installationId: schema.repository.installationId }).from(schema.repository).where(eq(schema.repository.id, repoId));
@@ -328,9 +320,9 @@ export const issuesRouter = router({
     const gh = installationClient(await installationOf(repo.id));
     try {
       const [labels, assignees, milestones] = await Promise.all([
-        cached(`l:${repo.id}`, 5 * 60_000, () => gh.listLabels(repo.fullName)),
-        cached(`a:${repo.id}`, 5 * 60_000, () => gh.listAssignees(repo.fullName)),
-        cached(`m:${repo.id}`, 5 * 60_000, () => gh.listMilestones(repo.fullName)),
+        cached(`labels:${repo.id}`, 5 * 60_000, () => gh.listLabels(repo.fullName)),
+        cached(`assignees:${repo.id}`, 5 * 60_000, () => gh.listAssignees(repo.fullName)),
+        cached(`milestones:${repo.id}`, 5 * 60_000, () => gh.listMilestones(repo.fullName)),
       ]);
       return { labels, assignees, milestones };
     } catch (err) {

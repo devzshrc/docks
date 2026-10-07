@@ -6,6 +6,9 @@
   "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
   "routes": [{ "pattern": "api.devzshrc.in", "custom_domain": true }],
   "observability": { "enabled": true },
+  // Run next to the Mumbai database: each request makes several queries, so distance to the DB is the cost.
+  "placement": { "mode": "smart" },
+  "kv_namespaces": [{ "binding": "CACHE", "id": "c3dadd4cc77d45779c3c850682978b81" }],
   "triggers": { "crons": ["* * * * *"] },
   // Fill in after `wrangler hyperdrive create docks --connection-string=<supabase direct url>`.
   // For `wrangler dev`, localConnectionString points Hyperdrive at the local Docker Postgres.

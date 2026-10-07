@@ -9,6 +9,7 @@ import type { PendingComment } from "@/components/review/file-diff"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/toast"
 import { useDraft } from "@/hooks/use-draft"
+import { optimistic } from "@/lib/optimistic"
 import { useTRPC } from "@/trpc/react"
 
 type Event = "APPROVE" | "REQUEST_CHANGES" | "COMMENT"
@@ -59,8 +60,13 @@ export function ReviewActions({
 
   const submit = useMutation(
     trpc.review.submit.mutationOptions({
-      onSuccess: (_data, vars) => {
+      // The comment box empties as soon as you send; it comes back if GitHub says no.
+      onMutate: () => {
+        const previous = body
         setBody("")
+        return { previous }
+      },
+      onSuccess: (_data, vars) => {
         onSubmitted?.()
         toast(
           vars.event === "APPROVE"
@@ -71,16 +77,24 @@ export function ReviewActions({
         )
         void refresh()
       },
-      onError: (e) => setError(e.message),
+      onError: (e, _vars, ctx) => {
+        if (ctx) setBody(ctx.previous)
+        setError(e.message)
+      },
     })
   )
+  // Merging marks the PR merged and takes it off the board at once; both come back if the merge is refused.
   const merge = useMutation(
     trpc.review.merge.mutationOptions({
-      onSuccess: () => {
-        toast("Merged")
-        void refresh()
-      },
-      onError: (e) => setError(e.message),
+      ...optimistic<unknown>(
+        queryClient,
+        [
+          { filter: trpc.review.get.queryFilter({ repo, number }), patch: (d: { pr: { state: string } }) => ({ ...d, pr: { ...d.pr, state: "merged" } }) },
+          { filter: trpc.review.board.queryFilter(), patch: (d: { cards: { repo: string; number: number }[] }) => ({ ...d, cards: d.cards.filter((c) => !(c.repo === repo && c.number === number)) }) },
+        ],
+        { settled: () => void refresh(), onError: (e) => setError(e.message) },
+      ),
+      onSuccess: () => toast("Merged"),
     })
   )
   const busy = submit.isPending || merge.isPending

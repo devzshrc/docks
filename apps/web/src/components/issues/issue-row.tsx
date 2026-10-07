@@ -1,6 +1,7 @@
 "use client"
 
 import { IconGitPullRequest, IconMessageCircle, IconUserPlus, IconTag, IconX } from "@tabler/icons-react"
+import { useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -9,6 +10,7 @@ import { age, LabelChip, StateIcon, type IssueItem } from "@/components/issues/s
 import { AssigneeMenu, LabelMenu } from "@/components/issues/pickers"
 import { useIssueActions } from "@/components/issues/use-issue-actions"
 import { cn } from "@/lib/utils"
+import { useTRPC } from "@/trpc/react"
 
 const quick = "text-muted-foreground hover:text-foreground hover:bg-hover flex h-7 items-center gap-1 rounded-md px-2 text-xs transition-colors"
 
@@ -42,6 +44,10 @@ export function IssueRow({
   me: string | null
 }) {
   const { update } = useIssueActions()
+  const trpc = useTRPC()
+  const queryClient = useQueryClient()
+  // Start loading the issue as the pointer arrives, so the click opens it already filled in.
+  const prefetch = () => void queryClient.prefetchQuery(trpc.issues.get.queryOptions({ repo: issue.repo, number: issue.number }))
   const [menuOpen, setMenuOpen] = useState(false)
   const ref = { repo: issue.repo, number: issue.number }
   const labels = issue.labels.map((l) => l.name)
@@ -66,7 +72,7 @@ export function IssueRow({
       )}
       <StateIcon state={issue.state} reason={issue.stateReason} className="mt-0.5 shrink-0" />
       <div className="min-w-0 flex-1">
-        <Link href={`/issues/${issue.repo}/${issue.number}`} data-row className="line-clamp-2 leading-snug font-medium outline-none hover:underline focus-visible:underline">
+        <Link href={`/issues/${issue.repo}/${issue.number}`} onMouseEnter={prefetch} onFocus={prefetch} data-row className="line-clamp-2 leading-snug font-medium outline-none hover:underline focus-visible:underline">
           {issue.title}
         </Link>
         <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">

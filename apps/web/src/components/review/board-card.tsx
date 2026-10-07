@@ -6,6 +6,7 @@ import { IconCircleCheck, IconCircleDot, IconCircleX, IconStar, IconStarFilled }
 import Link from "next/link"
 
 import { GhAvatar } from "@/components/gh-avatar"
+import { optimistic } from "@/lib/optimistic"
 import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/react"
 
@@ -26,10 +27,17 @@ export function BoardCard({ pr, canAct }: { pr: BoardCardData; canAct: boolean }
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const priority = useMutation(
-    trpc.review.setPriority.mutationOptions({
-      onSuccess: () => queryClient.invalidateQueries(trpc.review.board.queryFilter()),
-    })
+    trpc.review.setPriority.mutationOptions(
+      optimistic<{ repo: string; number: number; priority: boolean }>(queryClient, [
+        {
+          filter: trpc.review.board.queryFilter(),
+          patch: (d: { cards: BoardCardData[] }, v) => ({ ...d, cards: d.cards.map((c) => (c.repo === v.repo && c.number === v.number ? { ...c, priority: v.priority } : c)) }),
+        },
+      ]),
+    )
   )
+  // Start loading the PR as the pointer arrives, so the click opens it already filled in.
+  const prefetch = () => void queryClient.prefetchQuery(trpc.review.get.queryOptions({ repo: pr.repo, number: pr.number }))
   const ci = pr.ci === "none" ? null : CI[pr.ci]
 
   return (
@@ -53,7 +61,11 @@ export function BoardCard({ pr, canAct }: { pr: BoardCardData; canAct: boolean }
           {pr.priority ? <IconStarFilled className="anim-pop size-4 text-amber-500" /> : <IconStar className="size-4" />}
         </button>
       )}
-      <Link href={`/review/${pr.repo}/${pr.number}`} data-card className="block outline-none after:absolute after:inset-0 after:content-['']">
+      <Link
+        href={`/review/${pr.repo}/${pr.number}`}
+        onMouseEnter={prefetch}
+        onFocus={prefetch}
+        data-card className="block outline-none after:absolute after:inset-0 after:content-['']">
         <div className="text-muted-foreground truncate pr-6 font-mono text-xs">{pr.repo}</div>
         <div className="mt-1 line-clamp-2 pr-6 leading-snug font-medium">
           <span className="text-text-3 font-normal">#{pr.number}</span> {pr.title}
