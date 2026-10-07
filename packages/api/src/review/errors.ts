@@ -6,7 +6,8 @@ const GENERIC = /^(unprocessable entity|validation failed|bad request|not found|
 type Detail = string | { message?: string; field?: string; code?: string; resource?: string; value?: unknown };
 
 const describe = (d: Detail) => {
-  if (typeof d === "string") return d;
+  // GitHub prefixes some reasons with the resource name ("Review Can not approve your own pull request").
+  if (typeof d === "string") return d.replace(/^Review (?=Can)/, "").replace(/^Can not /, "You can't ");
   if (d.message) return d.message;
   const what = [d.resource, d.field].filter(Boolean).join(" ");
   const why: Record<string, string> = {

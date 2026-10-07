@@ -21,3 +21,8 @@ test("falls back for generic or non-JSON bodies", () => {
   assert.match(githubReason(`GitHub 422 /x: {"message":"Unprocessable Entity"}`), /couldn't process/);
   assert.match(githubReason("GitHub 502 /x: <html>"), /couldn't process/);
 });
+
+test("cleans up GitHub's own-PR wording", () => {
+  const raw = `GitHub 422 /x: {"message":"Unprocessable Entity","errors":["Review Can not approve your own pull request"]}`;
+  assert.equal(githubReason(raw), "You can't approve your own pull request");
+});

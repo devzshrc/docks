@@ -11,6 +11,8 @@ import type { Context } from "./context.js";
  */
 const t = initTRPC.context<Context>().create({
   transformer: superjson,
+  // Workers has no NODE_ENV=production, so tRPC would otherwise send stack traces to the browser.
+  isDev: false,
   errorFormatter({ shape, error }) {
     return {
       ...shape,
