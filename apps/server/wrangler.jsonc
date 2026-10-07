@@ -4,6 +4,7 @@
   "main": "src/worker.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
+  "routes": [{ "pattern": "api.devzshrc.in", "custom_domain": true }],
   "observability": { "enabled": true },
   "triggers": { "crons": ["* * * * *"] },
   // Fill in after `wrangler hyperdrive create docks --connection-string=<supabase direct url>`.
@@ -11,7 +12,7 @@
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "REPLACE_WITH_HYPERDRIVE_ID",
+      "id": "c2c31221eaf84d1c99e9793f2f72be91",
       "localConnectionString": "postgresql://docks:docks@localhost:5433/docks"
     }
   ],
@@ -20,8 +21,8 @@
   ],
   // Non-secret config. Secrets: `wrangler secret put <NAME>` (see docs/DEPLOY.md).
   "vars": {
-    "CLIENT_URL": "https://app.example.com",
-    "BETTER_AUTH_URL": "https://api.example.com",
-    "COOKIE_DOMAIN": ".example.com"
+    "CLIENT_URL": "https://app.devzshrc.in",
+    "BETTER_AUTH_URL": "https://api.devzshrc.in",
+    "COOKIE_DOMAIN": ".devzshrc.in"
   }
 }
