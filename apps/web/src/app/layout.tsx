@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fira_Code, Geist, Geist_Mono, Source_Serif_4 } from "next/font/google";
+import { Fira_Code, Geist, Geist_Mono, Instrument_Serif, Source_Serif_4 } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/toast"
 import { ThemeProvider } from "@/components/theme-provider";
@@ -15,6 +15,8 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist-face" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono-face" });
 const firaCode = Fira_Code({ subsets: ["latin"], variable: "--font-fira-code-face" });
 const sourceSerif = Source_Serif_4({ subsets: ["latin"], variable: "--font-source-serif-face" });
+// Display serif for the landing page headlines only.
+const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-display-face" });
 
 export const metadata: Metadata = {
   title: "Docks",
@@ -26,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(geist.variable, geistMono.variable, firaCode.variable, sourceSerif.variable)}
+      className={cn(geist.variable, geistMono.variable, firaCode.variable, sourceSerif.variable, instrumentSerif.variable)}
     >
       <body className="font-sans antialiased">
         <ThemeProvider>
