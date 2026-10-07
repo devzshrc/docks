@@ -1,4 +1,5 @@
 import { db, schema } from "@docks/db";
+import { track } from "../analytics.js";
 import { and, eq, isNull, notInArray, sql } from "drizzle-orm";
 import { assertCan, audit } from "../access.js";
 import { enqueue } from "../jobs.js";
@@ -36,6 +37,7 @@ export async function linkInstallation(
       set: { workspaceId, accountLogin: inst.account.login, suspendedAt: null },
     });
   await audit(workspaceId, userId, "github.install", inst.account.login);
+  await track(userId, workspaceId, "github_installed");
   await syncInstallationRepos(installationId);
   // New repos: refresh members' GitHub access so they can open them.
   const members = await db

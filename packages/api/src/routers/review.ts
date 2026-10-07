@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { track, trackDaily } from "../analytics.js";
 import { db, schema } from "@docks/db";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
@@ -75,7 +76,10 @@ async function guideState(
     .from(schema.reviewGuide)
     .where(guideKey(repoRow.fullName, input.number, pull.headSha))
     .limit(1);
-  if (cached) return { status: "ready", guide: cached.guide as Guide, model: cached.model };
+  if (cached) {
+    void trackDaily(userId, repoRow.workspaceId, "guide_viewed", `${repoRow.fullName}#${input.number}`);
+    return { status: "ready", guide: cached.guide as Guide, model: cached.model };
+  }
 
   const files = await db
     .select({
@@ -179,6 +183,7 @@ export const reviewRouter = router({
     .input(z.object({ workspaceId: z.string(), filters: boardFilters.default({ sort: "oldest" }) }))
     .query(async ({ ctx, input }) => {
       const member = await assertMember(ctx.user.id, input.workspaceId);
+      void trackDaily(ctx.user.id, input.workspaceId, "board_viewed");
       const [repos, visible, ws, identity] = await Promise.all([
         db
           .select({ id: schema.repository.id, fullName: schema.repository.fullName })
@@ -317,6 +322,7 @@ export const reviewRouter = router({
   /** Everything the guided review view needs, from the mirror (plan.md §5.3). */
   get: protectedProcedure.input(pr).query(async ({ ctx, input }) => {
     const repoRow = await repoForUser(ctx.user.id, input.repo);
+    void trackDaily(ctx.user.id, repoRow.workspaceId, "pr_opened", `${repoRow.fullName}#${input.number}`);
     const [pull] = await db
       .select()
       .from(schema.pullRequest)
@@ -479,6 +485,7 @@ export const reviewRouter = router({
         .catch(githubFailure);
       await recordVisit(ctx.user.id, repoRow, input.number);
       await audit(repoRow.workspaceId, ctx.user.id, `review.${input.event.toLowerCase()}`, `${repoRow.fullName}#${input.number}`);
+      await track(ctx.user.id, repoRow.workspaceId, "review_submitted", { event: input.event, comments: input.comments.length });
       await refreshPr(repoRow.id, input.number);
     }),
   merge: protectedProcedure
@@ -489,6 +496,7 @@ export const reviewRouter = router({
         .merge(repoRow.fullName, input.number, input.method)
         .catch(githubFailure);
       await audit(repoRow.workspaceId, ctx.user.id, "review.merge", `${repoRow.fullName}#${input.number}`, { method: input.method });
+      await track(ctx.user.id, repoRow.workspaceId, "merged");
       await refreshPr(repoRow.id, input.number);
       return { merged: result.merged };
     }),

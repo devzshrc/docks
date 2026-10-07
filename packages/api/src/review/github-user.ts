@@ -1,4 +1,5 @@
 import { db, schema } from "@docks/db";
+import { track } from "../analytics.js";
 import { TRPCError } from "@trpc/server";
 import { eq, inArray } from "drizzle-orm";
 import { enqueue } from "../jobs.js";
@@ -89,6 +90,7 @@ export async function completeAuthorization(userId: string, code: string, state:
       .onConflictDoUpdate({ target: schema.githubIdentity.userId, set: values });
   });
   await syncUserRepos(userId).catch(() => enqueue("sync_user_repos", { userId }));
+  await track(userId, null, "github_connected");
 }
 
 /** Valid access token for a user, refreshing it when it's about to expire. */
