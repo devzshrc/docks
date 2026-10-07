@@ -315,3 +315,24 @@ pre, code, kbd { font-family: var(--font-code); }
 .dark [data-slot="sidebar-inset"] {
   box-shadow: 0 0 0 1px oklch(1 0 0 / 0.06);
 }
+
+/* Rendered Markdown in the review view (no typography plugin needed). */
+@layer components {
+  .prose-docks > * + * { margin-top: 0.85em; }
+  .prose-docks h1 { font-size: 1.6em; font-weight: 600; letter-spacing: -0.01em; padding-bottom: 0.3em; border-bottom: 1px solid var(--border); }
+  .prose-docks h2 { font-size: 1.3em; font-weight: 600; margin-top: 1.6em; padding-bottom: 0.25em; border-bottom: 1px solid var(--border); }
+  .prose-docks h3 { font-size: 1.1em; font-weight: 600; margin-top: 1.4em; }
+  .prose-docks a { color: var(--primary); text-underline-offset: 3px; }
+  .prose-docks a:hover { text-decoration: underline; }
+  .prose-docks ul { list-style: disc; padding-left: 1.4em; }
+  .prose-docks ol { list-style: decimal; padding-left: 1.4em; }
+  .prose-docks li + li { margin-top: 0.25em; }
+  .prose-docks blockquote { border-left: 3px solid var(--border); padding-left: 1em; color: var(--muted-foreground); }
+  .prose-docks :not(pre) > code { font-family: var(--font-code); font-size: 0.86em; background: var(--muted); padding: 0.1em 0.35em; border-radius: 0.3rem; }
+  .prose-docks pre { font-family: var(--font-code); font-size: 12.5px; background: var(--muted); padding: 0.9em 1em; border-radius: 0.5rem; overflow-x: auto; }
+  .prose-docks table { width: 100%; border-collapse: collapse; font-size: 0.92em; }
+  .prose-docks th, .prose-docks td { border: 1px solid var(--border); padding: 0.4em 0.7em; text-align: left; }
+  .prose-docks th { background: var(--muted); font-weight: 600; }
+  .prose-docks img { max-width: 100%; border-radius: 0.4rem; }
+  .prose-docks hr { border-color: var(--border); }
+}
