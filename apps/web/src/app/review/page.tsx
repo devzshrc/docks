@@ -11,16 +11,27 @@ import { fromParams, serverFilters, toParams, type UiFilters } from "@/component
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace"
+import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/react"
 
-const SELECT = "border-input bg-background h-9 rounded-lg border px-2 text-sm"
+const SELECT = "border-input bg-background h-9 rounded-md border px-2.5 text-sm"
 
-function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) {
+/** Quick filter as a pill: reads as a filter, not a form field. */
+function Chip({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) {
   return (
-    <label className="flex items-center gap-1.5 text-sm">
-      <input type="checkbox" className="size-4" checked={on} onChange={(e) => onChange(e.target.checked)} />
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={() => onChange(!on)}
+      className={cn(
+        "h-7 rounded-full border px-3 text-xs font-medium transition-colors",
+        on
+          ? "border-primary/30 bg-primary/10 text-primary"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+    >
       {label}
-    </label>
+    </button>
   )
 }
 
@@ -80,14 +91,14 @@ function Board({ workspaceId }: { workspaceId: string }) {
   const needsGithub = (filters.mine || filters.waitingOnMe) && data && !data.me
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
         <Input
           ref={search}
           type="search"
           placeholder="Search ( / )"
           aria-label="Search pull requests"
-          className="h-9 w-48"
+          className="h-9 min-w-48 flex-1 md:max-w-64"
           value={filters.q}
           onChange={(e) => set({ q: e.target.value })}
         />
@@ -140,11 +151,12 @@ function Board({ workspaceId }: { workspaceId: string }) {
           <option value="risk">Most at risk</option>
         </select>
       </div>
-      <div className="flex flex-wrap items-center gap-4">
-        <Toggle on={filters.mine} label="Mine" onChange={(v) => set({ mine: v })} />
-        <Toggle on={filters.waitingOnMe} label="Waiting on me" onChange={(v) => set({ waitingOnMe: v })} />
-        <Toggle on={filters.priority} label="Priority" onChange={(v) => set({ priority: v })} />
-        <Toggle on={filters.includeDrafts} label="Show drafts" onChange={(v) => set({ includeDrafts: v })} />
+      <div className="-mt-3 flex flex-wrap items-center gap-2">
+        <Chip on={filters.mine} label="Mine" onChange={(v) => set({ mine: v })} />
+        <Chip on={filters.waitingOnMe} label="Waiting on me" onChange={(v) => set({ waitingOnMe: v })} />
+        <Chip on={filters.priority} label="Priority" onChange={(v) => set({ priority: v })} />
+        <Chip on={filters.includeDrafts} label="Show drafts" onChange={(v) => set({ includeDrafts: v })} />
+        <span className="flex-1" />
         {active && (
           <Button size="sm" variant="ghost" onClick={() => router.replace(pathname)}>
             Clear filters
@@ -213,7 +225,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Reviews">
+    <AppShell title="Reviews" description="Open pull requests across your repositories, grouped by where they are in review." width="wide">
       <Content />
     </AppShell>
   )

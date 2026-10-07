@@ -33,7 +33,7 @@ function Insights({ workspaceId }: { workspaceId: string }) {
   const data = useQuery(trpc.insights.summary.queryOptions({ workspaceId, days, repoId, teamId, perPerson }))
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="space-y-8">
       <div className="flex flex-wrap items-center gap-2">
         <select className={SELECT} aria-label="Range" value={days} onChange={(e) => setDays(Number(e.target.value))}>
           <option value={7}>Last 7 days</option>
@@ -162,7 +162,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Insights">
+    <AppShell title="Insights" description="How quickly pull requests get reviewed and merged, and where they slow down.">
       <Content />
     </AppShell>
   )

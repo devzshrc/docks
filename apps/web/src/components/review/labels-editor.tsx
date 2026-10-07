@@ -42,7 +42,6 @@ export function LabelsEditor({ repo, number, labels, canAct }: { repo: string; n
   }
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-sm">
-      <span className="text-muted-foreground mr-1">Labels</span>
       {labels.length === 0 && <span className="text-muted-foreground">none</span>}
       {labels.map((l) => (
         <Badge key={l} variant="secondary" className="font-normal">{l}</Badge>

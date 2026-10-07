@@ -168,7 +168,7 @@ function Person({ workspaceId, userId }: { workspaceId: string; userId: string }
   const p = person.data
 
   return (
-    <div className="flex max-w-3xl flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center gap-3">
         {p.githubLogin && (
           <img src={`https://github.com/${p.githubLogin}.png?size=80`} alt="" className="size-12 rounded-full" />
@@ -233,7 +233,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Person">
+    <AppShell width="narrow">
       <Content />
     </AppShell>
   )

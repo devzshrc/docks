@@ -37,7 +37,7 @@ function CreateWorkspace() {
   )
 
   return (
-    <Card className="max-w-lg">
+    <Card>
       <CardHeader>
         <CardTitle>Create your workspace</CardTitle>
         <CardDescription>A workspace holds your team, repositories and billing.</CardDescription>
@@ -75,7 +75,7 @@ function GitHubCard({ workspaceId }: { workspaceId: string }) {
   const install = useQuery(trpc.integration.githubInstallUrl.queryOptions({ workspaceId }))
 
   return (
-    <Card className="max-w-lg">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <IconBrandGithub className="size-5" aria-hidden />
@@ -117,7 +117,7 @@ function GitHubAccountCard() {
   const account = useQuery(trpc.integration.githubAccount.queryOptions())
 
   return (
-    <Card className="max-w-lg">
+    <Card>
       <CardHeader>
         <CardTitle>Your GitHub account</CardTitle>
         <CardDescription>
@@ -182,7 +182,7 @@ function SlackCard({ workspaceId }: { workspaceId: string }) {
   const { connection, connectUrl, canManage } = slack.data
 
   return (
-    <Card className="max-w-lg">
+    <Card>
       <CardHeader>
         <CardTitle>Slack</CardTitle>
         <CardDescription>A daily message listing PRs waiting more than 24h, and who they&apos;re waiting on.</CardDescription>
@@ -276,7 +276,7 @@ function Integrations() {
 
 export default function Page() {
   return (
-    <AppShell title="Integrations">
+    <AppShell title="Integrations" description="Connect GitHub to sync pull requests, and Slack for the daily digest." width="narrow">
       <Integrations />
     </AppShell>
   )

@@ -27,47 +27,18 @@ import {
 } from "@/components/ui/sidebar"
 import { useSession } from "@/lib/auth-client"
 
-const navMain = [
-  {
-    title: "Reviews",
-    url: "/review",
-    icon: IconGitPullRequest,
-  },
-  {
-    title: "Insights",
-    url: "/insights",
-    icon: IconChartBar,
-  },
-  {
-    title: "Team",
-    url: "/team",
-    icon: IconUsersGroup,
-  },
-  {
-    title: "Repositories",
-    url: "/settings/repositories",
-    icon: IconFolders,
-  },
-  {
-    title: "Integrations",
-    url: "/settings/integrations",
-    icon: IconPlugConnected,
-  },
-  {
-    title: "Workspace",
-    url: "/settings/workspace",
-    icon: IconUsers,
-  },
-  {
-    title: "Billing",
-    url: "/settings/billing",
-    icon: IconCreditCard,
-  },
-  {
-    title: "Account",
-    url: "/settings/account",
-    icon: IconUserCircle,
-  },
+const navReview = [
+  { title: "Reviews", url: "/review", icon: IconGitPullRequest },
+  { title: "Insights", url: "/insights", icon: IconChartBar },
+  { title: "Team", url: "/team", icon: IconUsersGroup },
+]
+
+const navSettings = [
+  { title: "Repositories", url: "/settings/repositories", icon: IconFolders },
+  { title: "Integrations", url: "/settings/integrations", icon: IconPlugConnected },
+  { title: "Workspace", url: "/settings/workspace", icon: IconUsers },
+  { title: "Billing", url: "/settings/billing", icon: IconCreditCard },
+  { title: "Account", url: "/settings/account", icon: IconUserCircle },
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -92,7 +63,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} />
+        <NavMain label="Review" items={navReview} />
+        <NavMain label="Settings" items={navSettings} />
       </SidebarContent>
       <SidebarFooter>
         {user && (

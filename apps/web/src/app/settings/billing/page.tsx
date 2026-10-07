@@ -63,7 +63,7 @@ function Billing({ workspaceId }: { workspaceId: string }) {
   const team = s.plan === "team"
 
   return (
-    <Card className="max-w-xl">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           {team ? "Team plan" : "Free plan"}
@@ -124,7 +124,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Billing">
+    <AppShell title="Billing" description="Your plan, usage and payment details." width="narrow">
       <Content />
     </AppShell>
   )

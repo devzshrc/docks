@@ -57,7 +57,8 @@ export function ReviewBoard({
   return (
     <div ref={root} className="space-y-3">
       {stuck > 0 && (
-        <p className="text-sm text-amber-600 dark:text-amber-400">
+        <p className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
+          <span className="size-1.5 rounded-full bg-amber-500" aria-hidden />
           {stuck} PR{stuck > 1 ? "s" : ""} waiting more than {stuckHours}h
         </p>
       )}
@@ -68,15 +69,19 @@ export function ReviewBoard({
         {lanes.map((lane) => {
           const items = inLane(lane.id)
           return (
-            <section key={lane.id} className="bg-muted/50 w-[80vw] max-w-sm shrink-0 snap-start rounded-xl p-3 md:w-auto md:max-w-none">
-              <h2 className="text-muted-foreground mb-2 flex justify-between text-sm font-medium">
+            <section key={lane.id} className="bg-muted/60 w-[80vw] max-w-sm shrink-0 snap-start rounded-lg p-3 md:w-auto md:max-w-none">
+              <h2 className="mb-3 flex items-center gap-2 px-1 text-sm font-medium">
                 {lane.title}
-                <span>{cards ? items.length : ""}</span>
+                {cards && (
+                  <span className="bg-background text-muted-foreground rounded-full border px-2 text-xs tabular-nums">
+                    {items.length}
+                  </span>
+                )}
               </h2>
               {loading ? (
                 <Skeleton className="h-20 w-full" />
               ) : items.length === 0 ? (
-                <p className="text-muted-foreground px-1 py-4 text-center text-xs">Nothing here</p>
+                <p className="text-muted-foreground rounded-md border border-dashed px-3 py-6 text-center text-xs">Nothing here</p>
               ) : (
                 <div className="space-y-2">
                   {items.map((pr) => (
