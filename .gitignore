@@ -9,3 +9,8 @@ coverage/
 .env
 .env.local
 .env*.local
+
+# Cloudflare
+.dev.vars
+.wrangler/
+.open-next/

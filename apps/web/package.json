@@ -10,7 +10,9 @@
     "lint": "echo \"@docks/web: lint ok (Next.js lint via build)\"",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "tsx --test src/lib/*.test.ts",
-    "clean": "rm -rf .next"
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "clean": "rm -rf .next .open-next"
   },
   "dependencies": {
     "@docks/api": "workspace:*",
@@ -50,11 +52,13 @@
   },
   "devDependencies": {
     "@docks/typescript-config": "workspace:*",
+    "@opennextjs/cloudflare": "^1.20.9",
     "@types/node": "^22.10.0",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "tsx": "^4.23.15",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "wrangler": "^4.148.0"
   }
 }
