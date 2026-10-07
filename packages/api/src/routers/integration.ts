@@ -1,6 +1,7 @@
 import { db, schema } from "@docks/db";
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { healthDays } from "../health.js";
 import { decrypt, encrypt } from "../crypto.js";
 import { linearOrg, linearTeams } from "../linear.js";
 import { z } from "zod";
@@ -53,6 +54,39 @@ export const integrationRouter = router({
       }
       return { connection: row ?? null, connectUrl, canManage: can(member.role, "integrations.manage") };
     }),
+
+  /**
+   * Sync health per repository for the last 90 days, from the job queue: which days jobs ran, and how many failed.
+   * Powers the Status Bars on the Integrations page.
+   */
+  syncHealth: protectedProcedure.input(z.object({ workspaceId: z.string() })).query(async ({ ctx, input }) => {
+    await assertMember(ctx.user.id, input.workspaceId);
+    const repos = await db
+      .select({ id: schema.repository.id, fullName: schema.repository.fullName })
+      .from(schema.repository)
+      .innerJoin(schema.githubInstallation, eq(schema.githubInstallation.id, schema.repository.installationId))
+      .where(eq(schema.githubInstallation.workspaceId, input.workspaceId));
+    if (!repos.length) return [];
+    const rows = await db.execute<{ repo: string; day: string; done: number; failed: number }>(sql`
+      SELECT payload->>'repoId' AS repo,
+             to_char(date_trunc('day', updated_at AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS day,
+             count(*) FILTER (WHERE status = 'done')::int AS done,
+             count(*) FILTER (WHERE status = 'failed')::int AS failed
+      FROM ${schema.jobs}
+      WHERE type IN ('sync_repo', 'sync_pr', 'auto_assign', 'apply_rules')
+        AND status IN ('done', 'failed')
+        AND updated_at > now() - interval '90 days'
+        AND payload->>'repoId' IN (${sql.join(repos.map((r) => sql`${String(r.id)}`), sql`, `)})
+      GROUP BY 1, 2`);
+    const now = new Date();
+    return repos.map((r) => ({
+      repo: r.fullName,
+      days: healthDays(
+        rows.rows.filter((x) => x.repo === String(r.id)).map((x) => ({ date: x.day, done: x.done, failed: x.failed })),
+        now,
+      ),
+    }));
+  }),
 
   /** Linear connection: lets the review page show linked Linear issues. The key is never sent back. */
   linear: protectedProcedure.input(z.object({ workspaceId: z.string() })).query(async ({ ctx, input }) => {

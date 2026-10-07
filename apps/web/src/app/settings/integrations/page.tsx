@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
 
 import { AppShell } from "@/components/app-shell"
+import { StatusBars } from "@/components/obsidian/status-bars"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -354,6 +355,28 @@ function LinearCard({ workspaceId }: { workspaceId: string }) {
   )
 }
 
+/** Daily sync health per repository for the last 90 days (ObsidianUI Status Bars), read from the job queue. */
+function SyncHealthCard({ workspaceId }: { workspaceId: string }) {
+  const trpc = useTRPC()
+  const health = useQuery({ ...trpc.integration.syncHealth.queryOptions({ workspaceId }), retry: false })
+  if (health.isPending) return <Skeleton className="h-32 w-full" />
+  if (health.error || !health.data?.length) return null
+  const repos = health.data
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Sync health</CardTitle>
+        <CardDescription>How reliably pull requests sync from GitHub, day by day over the last 90 days.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {repos.slice(0, 8).map((r) => (
+          <StatusBars key={r.repo} label={r.repo} days={r.days} compact={repos.length > 3} />
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
 function Integrations() {
   const { workspace, isPending } = useWorkspace()
   if (isPending) return null
@@ -363,6 +386,7 @@ function Integrations() {
       <div className="flex flex-col gap-4">
         <GitHubCard workspaceId={workspace.id} />
         <GitHubAccountCard />
+        <SyncHealthCard workspaceId={workspace.id} />
         <SlackCard workspaceId={workspace.id} />
         <LinearCard workspaceId={workspace.id} />
       </div>

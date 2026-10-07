@@ -553,7 +553,7 @@ export function DashboardShell({
           {toolbarActions && <div className="ml-auto flex shrink-0 items-center gap-1">{toolbarActions}</div>}
         </div>
       )}
-      <div ref={contentRef} className="obsidian-dashboard-shell-scroll min-h-0 flex-1 overflow-auto">
+      <div ref={contentRef} className="obsidian-dashboard-shell-scroll relative min-h-0 flex-1 overflow-auto">
         {children}
       </div>
     </>
@@ -565,7 +565,7 @@ export function DashboardShell({
       {...props}
       data-resizing={dragWidth !== null ? "" : undefined}
       className={cn(
-        "obsidian-dashboard-shell @container/dashboard-shell relative flex h-full min-h-0 w-full overflow-hidden bg-(--obsidian-dashboard-shell-background) text-(--obsidian-dashboard-shell-foreground)",
+        "obsidian-dashboard-shell @container/dashboard-shell relative flex h-full min-h-0 w-full overflow-clip bg-(--obsidian-dashboard-shell-background) text-(--obsidian-dashboard-shell-foreground)",
         className,
       )}
       style={{ "--obsidian-dashboard-shell-sidebar-width": `${width}px`, ...style } as CSSProperties}

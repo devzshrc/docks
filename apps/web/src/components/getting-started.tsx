@@ -1,9 +1,9 @@
 "use client"
 
 import { IconCircleCheck, IconCircleDashed } from "@tabler/icons-react"
-import Link from "next/link"
 
-import { Button } from "@/components/ui/button"
+import { DiscoverButton } from "@/components/obsidian/discover-button"
+import { FlipText } from "@/components/obsidian/flip-text"
 import {
   Card,
   CardContent,
@@ -61,7 +61,9 @@ export function GettingStarted({
   return (
     <Card className="max-w-xl">
       <CardHeader>
-        <CardTitle>Get your review board running</CardTitle>
+        <CardTitle>
+          <FlipText>Get your review board running</FlipText>
+        </CardTitle>
         <CardDescription>A few steps, then open pull requests show up here automatically.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -79,9 +81,9 @@ export function GettingStarted({
                 </p>
                 {!s.done && <p className="text-muted-foreground text-sm">{s.body}</p>}
                 {s === next && (
-                  <Button asChild size="sm" className="mt-1">
-                    <Link href={s.href}>{s.action}</Link>
-                  </Button>
+                  <div className="pt-1">
+                    <DiscoverButton size="sm" href={s.href} label={s.action} />
+                  </div>
                 )}
               </div>
             </li>

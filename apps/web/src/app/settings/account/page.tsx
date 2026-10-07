@@ -1,6 +1,8 @@
 "use client"
 
 import QRCode from "qrcode"
+import { ActiveSessions, type ActiveSession } from "@/components/obsidian/active-sessions"
+import { parseUserAgent } from "@/lib/user-agent"
 import { useEffect, useState } from "react"
 
 import { AppShell } from "@/components/app-shell"
@@ -193,72 +195,51 @@ function TwoFactorCard() {
   )
 }
 
-type SessionRow = { id: string; token: string; userAgent?: string | null; ipAddress?: string | null; createdAt: Date }
+type SessionRow = { id: string; token: string; userAgent?: string | null; ipAddress?: string | null; createdAt: Date; updatedAt?: Date }
 
+/** Devices signed in to this account (ObsidianUI Active Sessions): revoke one, or everything but this device. */
 function SessionsCard() {
   const { data: current } = useSession()
-  const [sessions, setSessions] = useState<SessionRow[]>([])
-  const [msg, setMsg] = useState<{ error?: string; ok?: string }>({})
+  const [rows, setRows] = useState<SessionRow[]>([])
+  const [loading, setLoading] = useState(true)
 
   async function load() {
     const { data } = await authClient.listSessions()
-    setSessions((data ?? []) as SessionRow[])
+    setRows((data ?? []) as SessionRow[])
+    setLoading(false)
   }
   useEffect(() => {
     void load()
   }, [])
 
+  const sessions: ActiveSession[] = rows.map((r) => ({
+    id: r.id,
+    ...parseUserAgent(r.userAgent),
+    ip: r.ipAddress ?? undefined,
+    lastActiveAt: r.updatedAt ?? r.createdAt,
+    current: r.token === current?.session.token,
+  }))
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Sessions</CardTitle>
-        <CardDescription>Devices signed in to your account.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <ul className="divide-y rounded-md border text-sm">
-          {sessions.map((s) => {
-            const mine = s.token === current?.session.token
-            return (
-              <li key={s.id} className="flex items-center justify-between gap-2 px-3 py-2">
-                <span className="min-w-0">
-                  <span className="block truncate">{s.userAgent ?? "Unknown device"}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {s.ipAddress ?? "unknown IP"} · since {new Date(s.createdAt).toLocaleDateString()}
-                  </span>
-                </span>
-                {mine ? (
-                  <Badge variant="outline">This device</Badge>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={async () => {
-                      await authClient.revokeSession({ token: s.token })
-                      void load()
-                    }}
-                  >
-                    Sign out
-                  </Button>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-        {sessions.length > 1 && (
-          <Button
-            variant="outline"
-            onClick={async () => {
-              const { error } = await authClient.revokeOtherSessions()
-              setMsg(error ? { error: error.message } : { ok: "Signed out of all other devices" })
-              void load()
-            }}
-          >
-            Sign out of all other devices
-          </Button>
-        )}
-        <Status {...msg} />
-      </CardContent>
-    </Card>
+    <ActiveSessions
+      sessions={sessions}
+      loading={loading}
+      heading="Active sessions"
+      headingLevel={2}
+      description="Devices signed in to your account."
+      onRevoke={async (s) => {
+        const row = rows.find((r) => r.id === s.id)
+        if (!row) return
+        const { error } = await authClient.revokeSession({ token: row.token })
+        if (error) throw new Error(error.message)
+        await load()
+      }}
+      onRevokeOthers={async () => {
+        const { error } = await authClient.revokeOtherSessions()
+        if (error) throw new Error(error.message)
+        await load()
+      }}
+    />
   )
 }
 
