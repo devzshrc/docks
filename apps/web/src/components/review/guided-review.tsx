@@ -476,6 +476,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
           repo={repo}
           number={number}
           githubLogin={me}
+          own={Boolean(me) && pr.author.toLowerCase() === me!.toLowerCase()}
           canMerge={pr.column === "approved" && !pr.draft}
           mergeableState={pr.mergeableState}
           pending={pending}

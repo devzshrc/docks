@@ -27,6 +27,7 @@ export function ReviewActions({
   number,
   canMerge,
   githubLogin,
+  own = false,
   mergeableState = null,
   pending = [],
   onSubmitted,
@@ -36,6 +37,8 @@ export function ReviewActions({
   number: number
   canMerge: boolean
   githubLogin: string | null
+  /** GitHub refuses approvals and change requests from the PR's own author. */
+  own?: boolean
   mergeableState?: string | null
   pending?: PendingComment[]
   onSubmitted?: () => void
@@ -115,10 +118,10 @@ export function ReviewActions({
         aria-label="Review comment"
       />
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" disabled={busy} pending={submit.isPending && submit.variables?.event === "APPROVE"} onClick={() => send("APPROVE")}>
+        <Button size="sm" disabled={busy || own} title={own ? "You can't approve your own pull request" : undefined} pending={submit.isPending && submit.variables?.event === "APPROVE"} onClick={() => send("APPROVE")}>
           Approve
         </Button>
-        <Button size="sm" variant="outline" disabled={busy} pending={submit.isPending && submit.variables?.event === "REQUEST_CHANGES"} onClick={() => send("REQUEST_CHANGES")}>
+        <Button size="sm" variant="outline" disabled={busy || own} title={own ? "You can't request changes on your own pull request" : undefined} pending={submit.isPending && submit.variables?.event === "REQUEST_CHANGES"} onClick={() => send("REQUEST_CHANGES")}>
           Request changes
         </Button>
         <Button size="sm" variant="outline" disabled={busy} pending={submit.isPending && submit.variables?.event === "COMMENT"} onClick={() => send("COMMENT")}>
@@ -161,6 +164,7 @@ export function ReviewActions({
           </span>
         )}
         <span className="text-muted-foreground text-xs">as {githubLogin}</span>
+        {own && <span className="text-muted-foreground text-xs">Your own PR: you can comment, but not approve or request changes.</span>}
         {error && <span role="alert" className="text-destructive text-sm">{error}</span>}
       </div>
     </div>
