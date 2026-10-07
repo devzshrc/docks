@@ -7,7 +7,7 @@ import { useState } from "react"
 import { MentionTextarea } from "@/components/mention-textarea"
 import type { PendingComment } from "@/components/review/file-diff"
 import { Button } from "@/components/ui/button"
-import { DrawTick } from "@/components/motion"
+import { toast } from "@/components/toast"
 import { useDraft } from "@/hooks/use-draft"
 import { useTRPC } from "@/trpc/react"
 
@@ -47,7 +47,6 @@ export function ReviewActions({
   const queryClient = useQueryClient()
   const [body, setBody] = useDraft(`draft:body:${repo}#${number}`, "")
   const [error, setError] = useState<string>()
-  const [done, setDone] = useState<string>()
 
   const refresh = () =>
     Promise.all([
@@ -60,7 +59,7 @@ export function ReviewActions({
       onSuccess: (_data, vars) => {
         setBody("")
         onSubmitted?.()
-        setDone(
+        toast(
           vars.event === "APPROVE"
             ? "Approved"
             : vars.event === "REQUEST_CHANGES"
@@ -75,7 +74,7 @@ export function ReviewActions({
   const merge = useMutation(
     trpc.review.merge.mutationOptions({
       onSuccess: () => {
-        setDone("Merged")
+        toast("Merged")
         void refresh()
       },
       onError: (e) => setError(e.message),
@@ -96,7 +95,6 @@ export function ReviewActions({
 
   function send(event: Event) {
     setError(undefined)
-    setDone(undefined)
     if (event !== "APPROVE" && !body.trim() && !pending.length) {
       setError("Add a comment first")
       return
@@ -146,7 +144,6 @@ export function ReviewActions({
               title={blocked}
               onClick={() => {
                 setError(undefined)
-                setDone(undefined)
                 merge.mutate({ repo, number, method })
               }}
             >
@@ -165,11 +162,6 @@ export function ReviewActions({
         )}
         <span className="text-muted-foreground text-xs">as {githubLogin}</span>
         {error && <span role="alert" className="text-destructive text-sm">{error}</span>}
-        {done && (
-          <span className="animate-in fade-in zoom-in-95 flex items-center gap-1 text-sm text-emerald-600 duration-200">
-            <DrawTick className="size-3.5" /> {done}
-          </span>
-        )}
       </div>
     </div>
   )

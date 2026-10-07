@@ -168,7 +168,7 @@ export function CommandPalette() {
           }}
           placeholder="Search pages and pull requests…"
           aria-label="Search pages and pull requests"
-          className="placeholder:text-muted-foreground/70 h-13 w-full bg-transparent text-[15px] outline-none"
+          className="placeholder:text-muted-foreground h-13 w-full bg-transparent text-[15px] outline-none"
         />
         <Kbd>esc</Kbd>
       </div>

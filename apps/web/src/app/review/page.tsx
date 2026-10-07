@@ -2,8 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { Suspense, useEffect, useMemo, useRef } from "react"
+import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 
+import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { NewIssueButton } from "@/components/new-issue/button"
 import { GettingStarted } from "@/components/getting-started"
@@ -56,6 +57,7 @@ function Board({ workspaceId }: { workspaceId: string }) {
   const saveView = useMutation(trpc.review.saveView.mutationOptions({ onSuccess: refreshViews }))
   const deleteView = useMutation(trpc.review.deleteView.mutationOptions({ onSuccess: refreshViews }))
 
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const search = useRef<HTMLInputElement>(null)
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -74,7 +76,7 @@ function Board({ workspaceId }: { workspaceId: string }) {
     router.replace(qs ? `${pathname}?${qs}` : pathname)
   }
 
-  if (board.error) return <p className="text-destructive text-sm">{board.error.message}</p>
+  if (board.error) return <QueryError error={board.error} onRetry={() => void board.refetch()} />
   const data = board.data
   if (data && data.repos.length === 0) {
     return (
@@ -89,7 +91,8 @@ function Board({ workspaceId }: { workspaceId: string }) {
 
   const q = filters.q.trim().toLowerCase()
   const cards = data?.cards.filter((c) => !q || `${c.repo}#${c.number} ${c.title}`.toLowerCase().includes(q))
-  const active = Object.keys(serverFilters(filters)).length > 0 && toParams(filters) !== ""
+  const activeCount = Object.entries(serverFilters(filters)).filter(([k, v]) => k !== "sort" && v !== undefined && v !== false && v !== "" && !(Array.isArray(v) && v.length === 0)).length
+  const active = activeCount > 0 && toParams(filters) !== ""
   const needsGithub = (filters.mine || filters.waitingOnMe) && data && !data.me
 
   return (
@@ -104,6 +107,19 @@ function Board({ workspaceId }: { workspaceId: string }) {
           value={filters.q}
           onChange={(e) => set({ q: e.target.value })}
         />
+        <button
+          type="button"
+          aria-expanded={filtersOpen}
+          onClick={() => setFiltersOpen((o) => !o)}
+          className="hover:bg-muted flex h-9 items-center gap-2 rounded-lg border px-3 text-sm transition-colors md:hidden"
+        >
+          Filters
+          {activeCount > 0 && <span className="bg-primary text-primary-foreground rounded-full px-1.5 text-[11px] tabular-nums">{activeCount}</span>}
+          <span className={cn("text-muted-foreground transition-transform duration-150", filtersOpen && "rotate-90")} aria-hidden>
+            ›
+          </span>
+        </button>
+        <div className={cn("animate-in fade-in contents duration-150", !filtersOpen && "max-md:hidden")}>
         <select
           className={SELECT}
           aria-label="Repository"
@@ -152,8 +168,9 @@ function Board({ workspaceId }: { workspaceId: string }) {
           <option value="biggest">Biggest first</option>
           <option value="risk">Most at risk</option>
         </select>
+        </div>
       </div>
-      <div className="-mt-3 flex flex-wrap items-center gap-2">
+      <div className={cn("-mt-3 flex flex-wrap items-center gap-2", !filtersOpen && "max-md:hidden")}>
         <Chip on={filters.mine} label="Mine" onChange={(v) => set({ mine: v })} />
         <Chip on={filters.waitingOnMe} label="Waiting on me" onChange={(v) => set({ waitingOnMe: v })} />
         <Chip on={filters.priority} label="Priority" onChange={(v) => set({ priority: v })} />

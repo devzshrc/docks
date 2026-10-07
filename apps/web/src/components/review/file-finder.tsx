@@ -93,7 +93,7 @@ export function FileFinder({ files }: { files: RankedFile[] }) {
             }}
             placeholder={`Jump to one of ${files.length} files…`}
             aria-label="Find file"
-            className="placeholder:text-muted-foreground/70 h-12 w-full bg-transparent text-[15px] outline-none"
+            className="placeholder:text-muted-foreground h-12 w-full bg-transparent text-[15px] outline-none"
           />
         </div>
         <ul ref={list} role="listbox" className="relative max-h-[min(22rem,50vh)] overflow-y-auto p-2">

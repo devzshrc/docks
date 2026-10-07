@@ -63,7 +63,7 @@ export function AssigneeChips({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`https://github.com/${p.login}.png?size=40`} alt="" className="size-5 rounded-full" />
             <span className="font-medium">{p.login}</span>
-            {p.reasons[0] && <span className="text-muted-foreground/80 hidden sm:inline">· {p.reasons[0]}</span>}
+            {p.reasons[0] && <span className="text-muted-foreground hidden sm:inline">· {p.reasons[0]}</span>}
           </button>
         )
       })}
