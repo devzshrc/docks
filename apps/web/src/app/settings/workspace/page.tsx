@@ -218,7 +218,7 @@ function MembersCard({
                     <TableCell>
                       {editable ? (
                         <select
-                          className="border-input bg-background h-8 rounded-md border px-2 text-sm"
+                          className="border-input bg-background h-8 rounded-lg border px-2 text-sm"
                           aria-label={`Role for ${m.name}`}
                           value={m.role}
                           title={ROLE_LABEL[m.role]?.help}

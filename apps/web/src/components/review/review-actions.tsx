@@ -127,7 +127,7 @@ export function ReviewActions({
         {canMerge && (
           <span className="flex items-center gap-1">
             <select
-              className="border-input bg-background h-8 rounded-md border px-2 text-sm"
+              className="border-input bg-background h-8 rounded-lg border px-2 text-sm"
               aria-label="Merge method"
               value={method}
               onChange={(e) => setMethod(e.target.value as typeof method)}

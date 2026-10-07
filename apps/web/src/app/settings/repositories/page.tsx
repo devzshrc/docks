@@ -86,7 +86,7 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
             </TableCell>
             <TableCell>
               <select
-                className="border-input bg-background h-8 rounded-md border px-2 text-sm"
+                className="border-input bg-background h-8 rounded-lg border px-2 text-sm"
                 aria-label={`Auto-assign reviewers for ${r.fullName}`}
                 value={r.autoAssign}
                 onChange={(e) => setRepo.mutate({ repoId: r.id, autoAssign: Number(e.target.value) })}
