@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
+import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -29,7 +30,7 @@ function Log({ workspaceId }: { workspaceId: string }) {
   )
   const members = useQuery(trpc.workspace.members.queryOptions({ workspaceId }))
 
-  if (log.error) return <p className="text-destructive text-sm">{log.error.message}</p>
+  if (log.error) return <QueryError error={log.error} onRetry={() => void log.refetch()} />
   const actions = [...new Set((log.data ?? []).map((e) => e.action))].sort()
 
   return (

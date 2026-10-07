@@ -94,7 +94,7 @@ export function Checklist({
                     className={cn(
                       "block text-[13.5px] leading-relaxed transition-colors",
                       checked
-                        ? "text-muted-foreground/70"
+                        ? "text-muted-foreground"
                         : "text-foreground"
                     )}
                   >

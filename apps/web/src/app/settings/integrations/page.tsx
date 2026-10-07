@@ -265,10 +265,10 @@ function LinearCard({ workspaceId }: { workspaceId: string }) {
   const [key, setKey] = useState("")
   const linear = useQuery(trpc.integration.linear.queryOptions({ workspaceId }))
   const refresh = () => queryClient.invalidateQueries(trpc.integration.linear.queryFilter())
-  const connect = useMutation(trpc.integration.connectLinear.mutationOptions({ onSuccess: () => { setKey(""); void refresh() } }))
-  const disconnect = useMutation(trpc.integration.disconnectLinear.mutationOptions({ onSuccess: refresh }))
+  const connect = useMutation(trpc.integration.connectLinear.mutationOptions({ meta: { toast: "Linear connected" }, onSuccess: () => { setKey(""); void refresh() } }))
+  const disconnect = useMutation(trpc.integration.disconnectLinear.mutationOptions({ meta: { toast: "Linear disconnected" }, onSuccess: refresh }))
   const teams = useQuery({ ...trpc.integration.linearTeams.queryOptions({ workspaceId }), enabled: Boolean(linear.data?.orgName && linear.data.canManage) })
-  const setTeam = useMutation(trpc.integration.setLinearTeam.mutationOptions({ onSuccess: refresh }))
+  const setTeam = useMutation(trpc.integration.setLinearTeam.mutationOptions({ meta: { toast: "Saved" }, onSuccess: refresh }))
 
   if (linear.isPending) return <Skeleton className="h-32 w-full max-w-lg" />
   if (linear.error) return <p className="text-destructive text-sm">{linear.error.message}</p>

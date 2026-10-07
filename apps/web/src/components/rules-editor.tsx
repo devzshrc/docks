@@ -4,6 +4,7 @@ import type { RoutingRule } from "@docks/api"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 
+import { toast } from "@/components/toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
@@ -112,6 +113,7 @@ export function RulesEditor({ workspaceId, repo }: { workspaceId: string; repo: 
       onSuccess: () => {
         void queryClient.invalidateQueries(trpc.workspace.repos.queryFilter())
         setOpen(false)
+        toast("Rules saved")
       },
     })
   )

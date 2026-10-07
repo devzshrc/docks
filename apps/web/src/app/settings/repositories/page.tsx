@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 
+import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { RulesEditor } from "@/components/rules-editor"
 import { Badge } from "@/components/ui/badge"
@@ -24,12 +25,13 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
   const repos = useQuery(trpc.workspace.repos.queryOptions({ workspaceId }))
   const setRepo = useMutation(
     trpc.workspace.setRepo.mutationOptions({
+      meta: { toast: "Saved" },
       onSettled: () => queryClient.invalidateQueries(trpc.workspace.repos.queryFilter()),
     })
   )
 
   if (repos.isPending) return <Skeleton className="h-24 w-full" />
-  if (repos.error) return <p className="text-destructive text-sm">{repos.error.message}</p>
+  if (repos.error) return <QueryError error={repos.error} onRetry={() => void repos.refetch()} />
   if (!repos.data.length) {
     return (
       <p className="text-muted-foreground text-sm">

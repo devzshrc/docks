@@ -1,6 +1,7 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { toast } from "@/components/toast";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import superjson from "superjson";
@@ -22,6 +23,13 @@ export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
+        // A mutation can opt in to a success toast with `meta: { toast: "Saved" }`.
+        mutationCache: new MutationCache({
+          onSuccess: (_data, _vars, _ctx, mutation) => {
+            const message = mutation.meta?.toast
+            if (typeof message === "string") toast(message)
+          },
+        }),
         defaultOptions: {
           queries: {
             staleTime: 30_000,

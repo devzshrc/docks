@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 
+import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -61,7 +62,7 @@ function Load({ workspaceId }: { workspaceId: string }) {
   const people = useQuery(trpc.people.list.queryOptions({ workspaceId }))
   const teams = useQuery(trpc.people.teams.queryOptions({ workspaceId }))
   if (people.isPending || teams.isPending) return <Skeleton className="h-48 w-full max-w-3xl" />
-  if (people.error) return <p className="text-destructive text-sm">{people.error.message}</p>
+  if (people.error) return <QueryError error={people.error} onRetry={() => void people.refetch()} />
 
   const all = people.data.filter((p) => p.role !== "viewer") as Person[]
   const max = Math.max(1, ...all.map((p) => p.openReviews))

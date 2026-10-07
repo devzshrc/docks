@@ -8,13 +8,11 @@ import {
   IconExternalLink,
   IconGitBranch,
 } from "@tabler/icons-react"
-import { Tick02Icon } from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
 import { Fragment, useEffect, useRef, useState } from "react"
 
-import { FileIcon } from "@/components/file-icon"
 import { Count, DrawTick, flash, useJustBecame } from "@/components/motion"
 import { Checklist } from "@/components/review/checklist"
+import { FileRail } from "@/components/review/file-rail"
 import { LinkedIssues } from "@/components/review/linked-issues"
 import { AskPanel } from "@/components/review/ask-panel"
 import { FixWithAgent, OpenInPx0 } from "@/components/review/agent-handoff"
@@ -58,6 +56,9 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
   const [activeStep, setActiveStep] = useState<number | null>(null)
   const [pending, setPending] = useDraft<PendingComment[]>(`draft:comments:${repo}#${number}`, [])
   const [sinceOnly, setSinceOnly] = useState(false)
+  // Phones: PR details and the file list start folded so the diff is one scroll away.
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [filesOpen, setFilesOpen] = useState(false)
   const [mode, setModeState] = useState<"unified" | "split">("unified")
   useEffect(() => {
     try {
@@ -185,7 +186,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
   ]
 
   return (
-    <div className="animate-in fade-in flex flex-col gap-6 duration-300">
+    <div className="animate-in fade-in flex flex-col gap-6 pb-20 duration-300">
       <header className="space-y-5">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -221,6 +222,22 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
             />
           </div>
         </div>
+        <div>
+          <button
+            type="button"
+            aria-expanded={detailsOpen}
+            onClick={() => setDetailsOpen((o) => !o)}
+            className="hover:bg-muted/60 flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors lg:hidden"
+          >
+            <span className="font-medium">Details</span>
+            <span className="text-muted-foreground flex-1 truncate text-right text-xs">
+              {checks.length ? `${checks.filter((c) => c.conclusion === "success").length}/${checks.length} checks` : "no checks"} · {reviewers.length} verdict{reviewers.length === 1 ? "" : "s"}
+            </span>
+            <span className={cn("text-muted-foreground transition-transform duration-150", detailsOpen && "rotate-90")} aria-hidden>
+              ›
+            </span>
+          </button>
+          <div className={cn("animate-in fade-in pt-4 duration-150 lg:block lg:pt-0", detailsOpen ? "block" : "hidden")}>
         {/* Aligned label column: the eye scans down one edge instead of hunting. */}
         <dl className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-x-4 gap-y-3 text-sm">
           {pr.state === "open" && (
@@ -264,17 +281,29 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
             </>
           )}
         </dl>
+          </div>
+        </div>
       </header>
 
-      <div className="grid gap-6 border-t pt-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="space-y-6 lg:sticky lg:top-4 lg:self-start">
+      <div className="grid gap-4 border-t pt-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-6 lg:pt-6">
+        <aside className="space-y-4 lg:sticky lg:top-4 lg:space-y-6 lg:self-start">
           <div>
-            <div className="mb-1 flex justify-between text-sm">
-              <span>Reviewed</span>
+            <button
+              type="button"
+              aria-expanded={filesOpen}
+              onClick={() => setFilesOpen((o) => !o)}
+              className="mb-1.5 flex w-full items-center justify-between text-sm lg:pointer-events-none"
+            >
+              <span className="flex items-center gap-1.5">
+                Reviewed
+                <span className={cn("text-muted-foreground transition-transform duration-150 lg:hidden", filesOpen && "rotate-90")} aria-hidden>
+                  ›
+                </span>
+              </span>
               <span className="text-muted-foreground">
                 <Count value={viewed} /> of {files.length}
               </span>
-            </div>
+            </button>
             <div className="bg-muted h-1.5 rounded-full">
               <div
                 className={cn("h-1.5 rounded-full bg-emerald-600 transition-all duration-300", justDone && "anim-pulse-once")}
@@ -282,54 +311,13 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
               />
             </div>
           </div>
-          <nav aria-label="Files" className="-mx-2 max-h-[60vh] overflow-y-auto">
-            <ol className="space-y-px">
-              {visible.map((f) => {
-                const parts = f.filename.split("/")
-                const name = parts.pop()
-                const dir = parts.join("/")
-                return (
-                  <li key={f.filename}>
-                    <a
-                      href={`#file-${f.filename}`}
-                      title={f.filename}
-                      className={cn(
-                        "hover:bg-muted/70 group flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors",
-                        f.tier === "noise" && "opacity-60"
-                      )}
-                    >
-                      <FileIcon path={f.filename} className={cn(f.viewed && !f.changedSinceViewed && "opacity-50")} />
-                      <span className="min-w-0 flex-1 leading-tight">
-                        <span
-                          className={cn(
-                            "block truncate font-code text-[12.5px]",
-                            f.viewed && !f.changedSinceViewed ? "text-muted-foreground" : "text-foreground"
-                          )}
-                        >
-                          {name}
-                        </span>
-                        {dir && <span className="text-muted-foreground/70 block truncate text-[11px]">{dir}</span>}
-                      </span>
-                      <span className="flex shrink-0 items-center gap-1.5 font-code text-[10.5px] tabular-nums">
-                        {f.changedSinceViewed ? (
-                          <span className="rounded bg-amber-500/15 px-1 py-px text-amber-700 dark:text-amber-400">changed</span>
-                        ) : f.viewed ? (
-                          <HugeiconsIcon icon={Tick02Icon} size={14} className="animate-in zoom-in-50 fade-in text-emerald-600 duration-200 dark:text-emerald-400" aria-label="Viewed" />
-                        ) : (
-                          <>
-                            {f.additions > 0 && <span className="text-emerald-600 dark:text-emerald-400">+{f.additions}</span>}
-                            {f.deletions > 0 && <span className="text-rose-600 dark:text-rose-400">−{f.deletions}</span>}
-                          </>
-                        )}
-                      </span>
-                    </a>
-                  </li>
-                )
-              })}
-            </ol>
-          </nav>
+          <div className={cn("lg:block", filesOpen ? "block" : "hidden")}>
+            <FileRail files={visible} />
+          </div>
           <LinkedIssues repo={repo} number={number} />
-          <Checklist items={checklistItems} storageKey={`checklist:${repo}#${number}@${pr.headSha}`} />
+          <div className="hidden lg:block">
+            <Checklist items={checklistItems} storageKey={`checklist:${repo}#${number}@${pr.headSha}`} />
+          </div>
         </aside>
 
         <div className="min-w-0 space-y-3">
@@ -395,6 +383,9 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
               onViewedChange={(v) => setViewed(f.filename, v)}
             />
           ))}
+          <div className="pt-2 lg:hidden">
+            <Checklist items={checklistItems} storageKey={`checklist:${repo}#${number}@${pr.headSha}`} />
+          </div>
         </div>
       </div>
 
@@ -402,7 +393,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
         <p className="text-muted-foreground border-t pt-3 text-sm">You have read-only access to this workspace.</p>
       )}
       {files.length > 0 && (
-        <div className={cn("bg-popover/95 animate-in fade-in slide-in-from-bottom-3 fixed right-6 bottom-6 z-30 flex items-center gap-3 rounded-full border py-1.5 pr-1.5 pl-4 text-sm shadow-lg backdrop-blur duration-300 transition-colors", allViewed && "border-emerald-500/40")}>
+        <div className={cn("bg-popover/95 animate-in fade-in slide-in-from-bottom-3 fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 sm:right-6 sm:bottom-6 flex items-center gap-3 rounded-full border py-1.5 pr-1.5 pl-4 text-sm shadow-lg backdrop-blur duration-300 transition-colors", allViewed && "border-emerald-500/40")}>
           {viewed < files.length ? (
             <>
               <span className="text-muted-foreground tabular-nums">

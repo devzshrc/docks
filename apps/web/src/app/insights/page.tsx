@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
+import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { RankedBars } from "@/components/charts/ranked-bars"
 import { TrendChart } from "@/components/charts/trend-chart"
@@ -69,7 +70,7 @@ function Insights({ workspaceId }: { workspaceId: string }) {
       {data.isPending ? (
         <Skeleton className="h-64 w-full" />
       ) : data.error ? (
-        <p className="text-destructive text-sm">{data.error.message}</p>
+        <QueryError error={data.error} onRetry={() => void data.refetch()} />
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

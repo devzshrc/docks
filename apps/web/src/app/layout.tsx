@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fira_Code, Geist_Mono, Inter, Source_Serif_4 } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/toast"
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <TRPCReactProvider>
             <TooltipProvider>{children}</TooltipProvider>
+            <Toaster />
           </TRPCReactProvider>
         </ThemeProvider>
       </body>

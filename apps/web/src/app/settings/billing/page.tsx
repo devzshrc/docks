@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
 
+import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -58,7 +59,7 @@ function Billing({ workspaceId }: { workspaceId: string }) {
   const error = upgrade.error ?? portal.error
 
   if (status.isPending) return <Skeleton className="h-48 w-full max-w-xl" />
-  if (status.error) return <p className="text-destructive text-sm">{status.error.message}</p>
+  if (status.error) return <QueryError error={status.error} onRetry={() => void status.refetch()} />
   const s = status.data
   const team = s.plan === "team"
 

@@ -159,7 +159,7 @@ function Composer({
             {l}
           </button>
         ))}
-        {!startLine && <span className="text-muted-foreground/70 ml-auto text-[11px]">Shift-click another line number to select a range</span>}
+        {!startLine && <span className="text-muted-foreground ml-auto text-[11px]">Shift-click another line number to select a range</span>}
       </div>
       <MentionTextarea value={body} onChange={setBody} rows={3} autoFocus placeholder="Leave a comment" aria-label={`Comment on line ${line}`} />
       <div className="flex flex-wrap gap-2">
@@ -563,7 +563,7 @@ export function FileDiff({
 
   return (
     <section ref={section} id={`file-${file.filename}`} data-viewed={file.viewed || undefined} className="scroll-mt-16 rounded-lg border">
-      <header className="bg-muted/40 flex flex-wrap items-center gap-2 border-b px-3 py-2 text-sm">
+      <header className="bg-background/95 sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-t-lg border-b px-3 py-2 text-sm backdrop-blur max-sm:gap-1.5 max-sm:py-1.5">
         <button type="button" onClick={() => setOpen((o) => !o)} className="flex min-w-[12rem] flex-1 items-center gap-2 text-left" aria-expanded={open}>
           {open ? <IconChevronDown className="size-4 shrink-0" aria-hidden /> : <IconChevronRight className="size-4 shrink-0" aria-hidden />}
           <span className="truncate font-mono text-xs">{file.filename}</span>
@@ -622,7 +622,7 @@ export function FileDiff({
         </nav>
       )}
       {!near && (
-        <div aria-hidden style={{ height: Math.min(lines.length, ROW_CAP) * 20 }} />
+        <div aria-hidden className="bg-muted/30 m-3 animate-pulse rounded-md" style={{ height: Math.max(60, Math.min(lines.length, ROW_CAP) * 20 - 24) }} />
       )}
       {near &&
         (full || file.patch ? (
