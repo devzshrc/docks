@@ -64,7 +64,7 @@ export function ReviewBoard({
         </p>
       )}
       <div
-        className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:overflow-visible md:px-0"
+        className="-mx-4 flex snap-x scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:overflow-visible md:px-0"
         style={{ gridTemplateColumns: `repeat(${lanes.length}, minmax(0, 1fr))` }}
       >
         {lanes.map((lane) => {
