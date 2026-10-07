@@ -34,7 +34,7 @@ function waited(d: Date | string | null) {
 function LoadRow({ p, max }: { p: Person; max: number }) {
   const width = max ? (p.openReviews / max) * 100 : 0
   return (
-    <li className="surface-hover grid min-h-12 grid-cols-[minmax(0,12rem)_minmax(0,1fr)_6rem_7rem] items-center gap-4 rounded-lg px-4 py-2 text-sm">
+    <li className="row-hover grid min-h-14 grid-cols-[minmax(0,12rem)_minmax(0,1fr)_6rem_7rem] items-center gap-4 rounded-lg px-4 py-2 text-sm">
       <Link href={`/people/${p.userId}`} className="flex min-w-0 items-center gap-2.5 font-medium hover:underline">
         <PersonAvatar seed={p.userId} name={p.name} githubLogin={p.githubLogin} />
         <span className="truncate">{p.name}</span>

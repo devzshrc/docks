@@ -10,29 +10,29 @@
  */
 :root {
   /* Surfaces */
-  --background: #f4f6f9;
+  --background: #f6f7f9;
   --card: #ffffff;
   --popover: #ffffff;
-  --muted: #edf0f4;
-  --secondary: #edf0f4;
-  --accent: #e8ecf1;
+  --muted: #f0f2f5;
+  --secondary: #f0f2f5;
+  --accent: #eaedf1;
   --raised: #ffffff;
-  --hover: #e8ecf1;
-  --field: #e9edf2;
-  --field-hover: #e2e7ee;
+  --hover: #eceff3;
+  --field: #f0f2f5;
+  --field-hover: #e8ebf0;
   /* Text: foreground / secondary / tertiary */
-  --foreground: #0f1720;
-  --card-foreground: #0f1720;
-  --popover-foreground: #0f1720;
-  --secondary-foreground: #3d4a58;
-  --accent-foreground: #0f1720;
-  --muted-foreground: #5d6b7a;
-  --text-3: #8896a5;
+  --foreground: #0f1419;
+  --card-foreground: #0f1419;
+  --popover-foreground: #0f1419;
+  --secondary-foreground: #3b4654;
+  --accent-foreground: #0f1419;
+  --muted-foreground: #5a6674;
+  --text-3: #8a94a1;
   /* Edges */
-  --border: transparent;
-  --hairline: transparent;
-  --input: transparent;
-  --border-control: rgb(15 23 42 / 0.10);
+  --border: rgb(15 23 42 / 0.08);
+  --hairline: rgb(15 23 42 / 0.08);
+  --input: rgb(15 23 42 / 0.12);
+  --border-control: rgb(15 23 42 / 0.16);
   /* Brand + feedback */
   --primary: #2D6E9E;
   --primary-text: #245a82;
@@ -48,8 +48,8 @@
   --violet: #7c5cf0;   --violet-bg: #f0ecff;   --violet-border: transparent;   --violet-text: #5b3fd4;
   --neutral-bg: #f3f3f5; --neutral-border: transparent; --neutral-text: #52525b;
   /* Controls */
-  --ring-raised: 0 1px 2px rgb(15 23 42 / 0.07);
-  --ring-primary: 0 1px 2px rgb(16 46 74 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.24), inset 0 -6px 10px rgb(0 0 0 / 0.08);
+  --ring-raised: 0 0 0 1px rgb(15 23 42 / 0.09), 0 1px 2px rgb(15 23 42 / 0.05);
+  --ring-primary: 0 0 0 1px rgb(14 40 66 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.16);
   /* Charts */
   --chart-1: #2D6E9E;
   --chart-2: #245a82;
@@ -57,13 +57,13 @@
   --chart-4: #1b4766;
   --chart-5: #7bb0d6;
   /* Sidebar shares the page surface; the hairline separates it */
-  --sidebar: #eaeef3;
+  --sidebar: #fbfbfc;
   --sidebar-foreground: #0f1720;
   --sidebar-primary: #2D6E9E;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e0e6ed;
+  --sidebar-accent: #eceff3;
   --sidebar-accent-foreground: #0f1720;
-  --sidebar-border: transparent;
+  --sidebar-border: rgb(15 23 42 / 0.08);
   --sidebar-ring: #2D6E9E;
   /* next/font sets the --font-*-face variables on <html> (see app/layout.tsx). */
   --font-sans: var(--font-space-grotesk-face), ui-sans-serif, system-ui, sans-serif;
@@ -88,27 +88,27 @@
 }
 
 .dark {
-  --background: #121416;
-  --card: #1a1d21;
-  --popover: #1f2328;
-  --muted: #20242a;
-  --secondary: #20242a;
-  --accent: #272c33;
-  --raised: #20242a;
-  --hover: #2a2f36;
-  --field: #2a2f37;
-  --field-hover: #323843;
-  --foreground: #eef2f6;
-  --card-foreground: #eef2f6;
-  --popover-foreground: #eef2f6;
-  --secondary-foreground: #c4ccd6;
-  --accent-foreground: #f4f7fa;
-  --muted-foreground: #8d99a7;
-  --text-3: #6f7b89;
-  --border: transparent;
-  --hairline: transparent;
-  --input: transparent;
-  --border-control: rgb(255 255 255 / 0.10);
+  --background: #0e1012;
+  --card: #15181c;
+  --popover: #1a1e23;
+  --muted: #1b1f24;
+  --secondary: #1b1f24;
+  --accent: #23282e;
+  --raised: #1b1f24;
+  --hover: #22272d;
+  --field: #1b1f24;
+  --field-hover: #23282e;
+  --foreground: #eef1f5;
+  --card-foreground: #eef1f5;
+  --popover-foreground: #eef1f5;
+  --secondary-foreground: #c3cad3;
+  --accent-foreground: #f3f5f8;
+  --muted-foreground: #8b95a2;
+  --text-3: #6c7683;
+  --border: rgb(255 255 255 / 0.07);
+  --hairline: rgb(255 255 255 / 0.07);
+  --input: rgb(255 255 255 / 0.11);
+  --border-control: rgb(255 255 255 / 0.15);
   --primary-foreground: #ffffff;
   --primary-text: #7fb6e2;
   --primary: #2D6E9E;
@@ -121,18 +121,18 @@
   --info: #5a9bc9;     --info-bg: #16293a;     --info-border: transparent;     --info-text: #8cc0e8;
   --violet: #a78bfa;   --violet-bg: #231f3a;   --violet-border: transparent;   --violet-text: #c4b5fd;
   --neutral-bg: #1e1e1e; --neutral-border: transparent; --neutral-text: #b4b4b8;
-  --ring-raised: inset 0 1px 0 rgb(255 255 255 / 0.06);
-  --ring-primary: 0 4px 10px rgb(0 0 0 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.26), inset 0 -6px 10px rgb(0 0 0 / 0.14);
+  --ring-raised: 0 0 0 1px rgb(255 255 255 / 0.08);
+  --ring-primary: 0 0 0 1px rgb(0 0 0 / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.2);
   --chart-1: #5a9bc9;
   --chart-2: #2D6E9E;
   --chart-3: #2b6a96;
   --chart-4: #8bbadb;
   --chart-5: #1f567d;
-  --sidebar: #0e1012;
+  --sidebar: #0b0d0f;
   --sidebar-foreground: #eef2f6;
-  --sidebar-accent: #1f2429;
+  --sidebar-accent: #1b1f24;
   --sidebar-accent-foreground: #f4f7fa;
-  --sidebar-border: transparent;
+  --sidebar-border: rgb(255 255 255 / 0.07);
   --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.4);
   --shadow-lg: 0 8px 24px -4px rgb(0 0 0 / 0.5);
   --shadow-xl: 0 16px 40px -8px rgb(0 0 0 / 0.55);
@@ -540,19 +540,19 @@ pre, code, kbd { font-family: var(--font-code); }
   textarea,
   select:not(.select-bare) {
     background-color: var(--field);
-    border-color: transparent;
-    transition: background-color 150ms, box-shadow 150ms;
+    border-color: var(--input);
+    transition: background-color 150ms, border-color 150ms, box-shadow 150ms;
   }
   input:not([type="checkbox"]):not([type="radio"]):hover,
   textarea:hover,
-  select:not(.select-bare):hover { background-color: var(--field-hover); border-color: transparent; }
+  select:not(.select-bare):hover { background-color: var(--field-hover); border-color: var(--border-control); }
   input:not([type="checkbox"]):not([type="radio"]):focus-visible,
   textarea:focus-visible,
   select:not(.select-bare):focus-visible {
     outline: none;
-    border-color: transparent;
-    background-color: var(--field);
-    box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 60%, transparent);
+    border-color: var(--primary);
+    background-color: var(--card);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent);
   }
   input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   ::selection { background: color-mix(in oklab, var(--primary) 30%, transparent); }
@@ -560,21 +560,23 @@ pre, code, kbd { font-family: var(--font-code); }
 
 @layer components {
   /* Cards that can be hovered lift into the next surface instead of drawing an outline. */
-  .surface-hover { transition: background-color 180ms ease, transform 180ms cubic-bezier(0.25, 1, 0.5, 1); }
-  .surface-hover:hover { background-color: var(--hover); }
-  .surface-hover:active { transform: scale(0.992); }
+  .surface-hover { transition: border-color 160ms ease, box-shadow 200ms ease, transform 200ms cubic-bezier(0.25, 1, 0.5, 1); }
+  .surface-hover:hover { border-color: var(--border-control); box-shadow: 0 6px 16px -8px rgb(15 23 42 / 0.18); transform: translateY(-1px); }
+  .surface-hover:active { transform: none; box-shadow: none; }
+  .row-hover { transition: background-color 140ms ease; }
+  .row-hover:hover { background-color: var(--hover); }
 
   /* Lists, grids and board lanes rise in one after another. */
-  .stagger > * { animation: rise 420ms cubic-bezier(0.25, 1, 0.5, 1) both; }
+  .stagger > * { animation: rise 320ms cubic-bezier(0.25, 1, 0.5, 1) both; }
   .stagger > *:nth-child(1) { animation-delay: 0ms; }
-  .stagger > *:nth-child(2) { animation-delay: 40ms; }
-  .stagger > *:nth-child(3) { animation-delay: 80ms; }
-  .stagger > *:nth-child(4) { animation-delay: 120ms; }
-  .stagger > *:nth-child(5) { animation-delay: 160ms; }
-  .stagger > *:nth-child(6) { animation-delay: 200ms; }
-  .stagger > *:nth-child(7) { animation-delay: 240ms; }
-  .stagger > *:nth-child(8) { animation-delay: 280ms; }
-  .stagger > *:nth-child(n+9) { animation-delay: 320ms; }
+  .stagger > *:nth-child(2) { animation-delay: 30ms; }
+  .stagger > *:nth-child(3) { animation-delay: 60ms; }
+  .stagger > *:nth-child(4) { animation-delay: 90ms; }
+  .stagger > *:nth-child(5) { animation-delay: 120ms; }
+  .stagger > *:nth-child(6) { animation-delay: 150ms; }
+  .stagger > *:nth-child(7) { animation-delay: 180ms; }
+  .stagger > *:nth-child(8) { animation-delay: 210ms; }
+  .stagger > *:nth-child(n+9) { animation-delay: 240ms; }
 
   /* Loading placeholders shimmer with the brand tint. */
   .shimmer {
@@ -589,45 +591,5 @@ pre, code, kbd { font-family: var(--font-code); }
   }
 }
 
-@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
-
-
-
-/* ───────────── Button texture ─────────────
-   A faint top-lit gloss with a 1px highlight and soft base shade (3D), and a slow light sweep on hover (glass).
-   Drawn with pseudo-elements behind the label, so it works on every fill and never changes layout. */
-.btn-3d, .btn-glass, .tex-primary, .tex-neutral { position: relative; isolation: isolate; overflow: hidden; }
-
-.btn-3d::before, .tex-primary::before, .tex-neutral::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.14) 0%, rgb(255 255 255 / 0.03) 48%, rgb(0 0 0 / 0.07) 100%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), inset 0 -1px 0 rgb(0 0 0 / 0.12);
-  transition: opacity 200ms ease;
-}
-.btn-3d:hover::before, .tex-primary:hover::before, .tex-neutral:hover::before { opacity: 1.35; }
-.btn-3d:active::before, .tex-primary:active::before, .tex-neutral:active::before { opacity: 0.6; }
-
-.btn-glass::after, .tex-primary::after, .tex-neutral::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(105deg, transparent 34%, rgb(255 255 255 / 0.26) 48%, rgb(255 255 255 / 0.1) 53%, transparent 66%);
-  transform: translateX(-130%);
-  transition: transform 700ms cubic-bezier(0.25, 1, 0.5, 1);
-}
-.btn-glass:hover::after, .tex-primary:hover::after, .tex-neutral:hover::after { transform: translateX(130%); }
-
-.btn-plain::before, .btn-plain::after { display: none; }
-
-@media (prefers-reduced-motion: reduce) {
-  .btn-glass::after, .tex-primary::after, .tex-neutral::after { display: none; }
-}

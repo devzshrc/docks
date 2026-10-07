@@ -24,16 +24,16 @@ const RESIZE_STEP = 10;
 const DOCKED_SIDEBAR_REM = 42;
 
 export const dashboardButtonVariants = cva(
-  "btn-glass inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium leading-none outline-none select-none transition-[background-color,color,box-shadow,scale] duration-150 ease-[cubic-bezier(0.25,1,0.5,1)] focus-visible:ring-2 focus-visible:ring-(--obsidian-dashboard-shell-ring) active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium leading-none outline-none select-none transition-[background-color,color,box-shadow,scale] duration-150 ease-[cubic-bezier(0.25,1,0.5,1)] focus-visible:ring-2 focus-visible:ring-(--obsidian-dashboard-shell-ring) active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         primary:
-          "btn-3d bg-(--obsidian-dashboard-shell-accent) text-(--obsidian-dashboard-shell-accent-foreground) shadow-(--obsidian-dashboard-shell-accent-shadow) hover:bg-(--obsidian-dashboard-shell-accent-hover)",
+          "bg-(--obsidian-dashboard-shell-accent) text-(--obsidian-dashboard-shell-accent-foreground) shadow-(--obsidian-dashboard-shell-accent-shadow) hover:bg-(--obsidian-dashboard-shell-accent-hover)",
         secondary:
-          "btn-3d bg-(--obsidian-dashboard-shell-control) text-(--obsidian-dashboard-shell-foreground) shadow-(--obsidian-dashboard-shell-control-shadow) hover:bg-(--obsidian-dashboard-shell-muted) data-[state=open]:bg-(--obsidian-dashboard-shell-muted)",
+          "bg-(--obsidian-dashboard-shell-control) text-(--obsidian-dashboard-shell-foreground) shadow-(--obsidian-dashboard-shell-control-shadow) hover:bg-(--obsidian-dashboard-shell-muted) data-[state=open]:bg-(--obsidian-dashboard-shell-muted)",
         muted:
-          "btn-3d bg-(--obsidian-dashboard-shell-muted) text-(--obsidian-dashboard-shell-foreground) shadow-(--obsidian-dashboard-shell-control-shadow) hover:bg-(--obsidian-dashboard-shell-muted-hover)",
+          "bg-(--obsidian-dashboard-shell-muted) text-(--obsidian-dashboard-shell-foreground) shadow-(--obsidian-dashboard-shell-control-shadow) hover:bg-(--obsidian-dashboard-shell-muted-hover)",
         ghost:
           "text-(--obsidian-dashboard-shell-text-subtle) hover:bg-(--obsidian-dashboard-shell-muted) hover:text-(--obsidian-dashboard-shell-foreground)",
       },
@@ -512,7 +512,7 @@ export function DashboardShell({
 
   const renderHeader = (tabList?: ReactNode) => (
     <header className="shrink-0">
-      <div className="flex items-center justify-between gap-2 px-4 py-3.5">
+      <div className={cn("flex items-center justify-between gap-2 px-5 py-3.5 md:px-8", !tabList && "border-b border-(--obsidian-dashboard-shell-border)")}>
         <div className="flex min-w-0 items-center gap-2">
           <DashboardButton
             ref={menuButtonRef}
@@ -548,7 +548,7 @@ export function DashboardShell({
   const body = (
     <>
       {(filters || toolbarActions) && (
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 p-4">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-(--obsidian-dashboard-shell-border) px-5 py-3 md:px-8">
           {filters && <div className="flex min-w-0 flex-wrap items-center gap-2">{filters}</div>}
           {toolbarActions && <div className="ml-auto flex shrink-0 items-center gap-1">{toolbarActions}</div>}
         </div>
@@ -603,7 +603,7 @@ export function DashboardShell({
         {tabs?.length ? (
           <TabsPrimitive.Root value={activeTab} onValueChange={setActiveTab} className="flex min-h-0 flex-1 flex-col">
             {renderHeader(
-              <TabsPrimitive.List aria-labelledby={titleId} className="border-b border-(--obsidian-dashboard-shell-border) px-3 pb-2.5">
+              <TabsPrimitive.List aria-labelledby={titleId} className="border-b border-(--obsidian-dashboard-shell-border) px-5 pb-2.5 md:px-8">
                 <HoverHighlightList className="flex flex-wrap items-center gap-1" highlightClassName="rounded-md bg-(--obsidian-dashboard-shell-hover)">
                   {tabs.map((item) => (
                     <ShellTab key={item.value} item={item} isActive={item.value === activeTab} pillId={tabPillId} />
@@ -878,7 +878,7 @@ function NavItem({ item, isActive, isQuiet, pillId, onSelect }: NavItemProps) {
         <motion.span
           layoutId={pillId}
           aria-hidden
-          className="absolute inset-0 rounded-lg bg-[color-mix(in_oklab,var(--obsidian-dashboard-shell-accent)_15%,transparent)]"
+          className="absolute inset-0 rounded-lg bg-[color-mix(in_oklab,var(--obsidian-dashboard-shell-accent)_11%,transparent)]"
           transition={reduceMotion ? { duration: 0 } : PILL_SPRING}
         />
       )}
@@ -931,7 +931,7 @@ function ShellTab({ item, isActive, pillId }: ShellTabProps) {
         <motion.span
           layoutId={pillId}
           aria-hidden
-          className="absolute inset-0 rounded-md bg-[color-mix(in_oklab,var(--obsidian-dashboard-shell-accent)_15%,transparent)]"
+          className="absolute inset-0 rounded-md bg-[color-mix(in_oklab,var(--obsidian-dashboard-shell-accent)_11%,transparent)]"
           transition={reduceMotion ? { duration: 0 } : PILL_SPRING}
         />
       )}
