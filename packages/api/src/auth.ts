@@ -1,4 +1,5 @@
 import { db, schema } from "@docks/db";
+import { track } from "./analytics.js";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { twoFactor } from "better-auth/plugins";
@@ -66,6 +67,9 @@ export const auth = betterAuth({
   socialProviders: github,
   user: {
     deleteUser: { enabled: true },
+  },
+  databaseHooks: {
+    user: { create: { after: async (user) => void (await track(user.id, null, "signed_up")) } },
   },
   // Built-in limiter on /api/auth/* (sign-in, sign-up, reset).
   rateLimit: { enabled: true, window: 60, max: 30 },

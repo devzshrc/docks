@@ -1,4 +1,5 @@
 import { db, ROLES, schema } from "@docks/db";
+import { track } from "../analytics.js";
 import { TRPCError } from "@trpc/server";
 import { and, asc, count, desc, eq, gt, inArray, isNull } from "drizzle-orm";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
@@ -92,6 +93,7 @@ export const workspaceRouter = router({
           .insert(schema.workspaceMember)
           .values({ workspaceId: id, userId: ctx.user.id, role: "owner" });
       });
+      await track(ctx.user.id, id, "workspace_created");
       return { id };
     }),
 

@@ -1,4 +1,5 @@
 import { router } from "../trpc.js";
+import { adminRouter } from "./admin.js";
 import { billingRouter } from "./billing.js";
 import { healthRouter } from "./health.js";
 import { insightsRouter } from "./insights.js";
@@ -16,6 +17,7 @@ export const appRouter = router({
   integration: integrationRouter,
   people: peopleRouter,
   insights: insightsRouter,
+  admin: adminRouter,
   billing: billingRouter,
 });
 
