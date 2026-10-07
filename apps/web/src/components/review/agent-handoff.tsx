@@ -1,6 +1,6 @@
 "use client"
 
-import { AiMagicIcon, ComputerTerminal01Icon, Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons"
+import { AiProgrammingIcon, ComputerTerminal01Icon, Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useState } from "react"
 
@@ -78,7 +78,7 @@ export function FixWithAgent({ context, label = "Fix with agent" }: { context: F
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button size="sm" variant="ghost" className="h-7 gap-1.5 px-2 text-xs">
-          <HugeiconsIcon icon={copied ? Tick02Icon : AiMagicIcon} size={14} aria-hidden />
+          <HugeiconsIcon icon={copied ? Tick02Icon : AiProgrammingIcon} size={14} aria-hidden />
           {copied ? "Copied" : label}
         </Button>
       </DropdownMenuTrigger>
