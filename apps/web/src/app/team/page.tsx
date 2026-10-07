@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 
+import { PersonAvatar } from "@/components/person-avatar"
 import { Panel } from "@/components/panel"
 import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
@@ -34,8 +35,9 @@ function LoadRow({ p, max }: { p: Person; max: number }) {
   const width = max ? (p.openReviews / max) * 100 : 0
   return (
     <li className="grid min-h-11 grid-cols-[minmax(0,12rem)_minmax(0,1fr)_6rem_7rem] items-center gap-4 px-5 py-2 text-sm">
-      <Link href={`/people/${p.userId}`} className="truncate font-medium hover:underline">
-        {p.name}
+      <Link href={`/people/${p.userId}`} className="flex min-w-0 items-center gap-2.5 font-medium hover:underline">
+        <PersonAvatar seed={p.userId} name={p.name} githubLogin={p.githubLogin} />
+        <span className="truncate">{p.name}</span>
       </Link>
       <div className="bg-muted h-1.5 rounded-full" aria-hidden>
         <div className={p.overLimit ? "bg-warning h-1.5 rounded-full" : "bg-success h-1.5 rounded-full"} style={{ width: `${width}%` }} />

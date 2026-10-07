@@ -4,12 +4,8 @@ import Link from "next/link"
 import * as React from "react"
 import {
   IconChartBar,
-  IconCreditCard,
-  IconFolders,
   IconGitPullRequest,
-  IconPlugConnected,
-  IconUserCircle,
-  IconUsers,
+  IconSettings,
   IconUsersGroup,
 } from "@tabler/icons-react"
 
@@ -29,13 +25,8 @@ const navReview = [
   { title: "Team", url: "/team", icon: IconUsersGroup },
 ]
 
-const navSettings = [
-  { title: "Repositories", url: "/settings/repositories", icon: IconFolders },
-  { title: "Integrations", url: "/settings/integrations", icon: IconPlugConnected },
-  { title: "Workspace", url: "/settings/workspace", icon: IconUsers },
-  { title: "Billing", url: "/settings/billing", icon: IconCreditCard },
-  { title: "Account", url: "/settings/account", icon: IconUserCircle },
-]
+/** One entry; the tabs inside the Settings page hold everything else. */
+const navSettings = [{ title: "Settings", url: "/settings/workspace", match: "/settings", icon: IconSettings }]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
@@ -53,12 +44,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain label="Review" items={navReview} />
-        <NavMain label="Settings" items={navSettings} />
       </SidebarContent>
       <SidebarFooter>
+        <NavMain items={navSettings} />
         {user && (
           <NavUser
             user={{
+              id: user.id,
               name: user.name,
               email: user.email,
               avatar: user.image ?? "",

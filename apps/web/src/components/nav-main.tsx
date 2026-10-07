@@ -22,6 +22,8 @@ export function NavMain({
     title: string
     url: string
     icon?: Icon
+    /** Also active for any path under this prefix (e.g. all of /settings). */
+    match?: string
   }[]
 }) {
   const pathname = usePathname()
@@ -32,7 +34,7 @@ export function NavMain({
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {items.map((item) => {
-            const active = pathname === item.url || pathname.startsWith(`${item.url}/`)
+            const active = pathname === item.url || pathname.startsWith(`${item.url}/`) || Boolean(item.match && pathname.startsWith(item.match))
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild tooltip={item.title} isActive={active}>
