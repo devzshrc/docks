@@ -16,6 +16,8 @@ export const workspace = pgTable("workspace", {
   require2fa: boolean("require_2fa").notNull().default(false),
   /** Hours without activity before a PR waiting on review counts as stuck. */
   stuckHours: integer("stuck_hours").notNull().default(24),
+  /** YYYY-MM-DD (UTC) of the last weekly report, so it's sent once per week. */
+  lastWeeklyReportOn: text("last_weekly_report_on"),
   ...timestamps,
 });
 

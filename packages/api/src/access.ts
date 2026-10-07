@@ -130,3 +130,17 @@ export async function audit(
     console.error(`[audit] ${action} not recorded: ${(err as Error).message}`);
   }
 }
+
+/** Enabled repos in the workspace this member can open (restriction AND GitHub access). */
+export async function visibleRepos(userId: string, workspaceId: string, repoIds: number[] | null) {
+  const [repos, access] = await Promise.all([
+    db
+      .select({ id: schema.repository.id, fullName: schema.repository.fullName })
+      .from(schema.repository)
+      .innerJoin(schema.githubInstallation, eq(schema.githubInstallation.id, schema.repository.installationId))
+      .where(and(eq(schema.githubInstallation.workspaceId, workspaceId), eq(schema.repository.enabled, true))),
+    db.select({ repoId: schema.githubRepoAccess.repoId }).from(schema.githubRepoAccess).where(eq(schema.githubRepoAccess.userId, userId)),
+  ]);
+  const onGithub = new Set(access.map((a) => a.repoId));
+  return repos.filter((r) => onGithub.has(r.id) && (!repoIds || repoIds.includes(r.id)));
+}

@@ -64,6 +64,11 @@ export const pullRequest = pgTable(
     }).notNull(),
     stuck: boolean("stuck").notNull().default(false),
     labels: text("labels").array().notNull().default([]),
+    /** Timing from GitHub, for insights (plan M7). */
+    ghCreatedAt: timestamptz("gh_created_at"),
+    mergedAt: timestamptz("merged_at"),
+    /** First review by someone other than the author. */
+    firstReviewAt: timestamptz("first_review_at"),
     /** GitHub's merge readiness: clean, blocked, dirty (conflicts), unstable, behind, … */
     mergeableState: text("mergeable_state"),
     /** Team flag kept in this app only (not on GitHub). */
