@@ -43,7 +43,7 @@ export type Thread = {
   comments: { id: number; author: string; body: string; createdAt: string }[]
 }
 
-const ROW = { hunk: "bg-sky-500/10 text-muted-foreground", add: "bg-emerald-500/10", del: "bg-red-500/10", ctx: "" } as const
+const ROW = { hunk: "bg-info-bg/50 text-muted-foreground", add: "bg-success/10", del: "bg-danger/10", ctx: "" } as const
 /** Rows rendered before "Show all"; keeps 5k-line generated diffs from freezing the page. */
 const ROW_CAP = 400
 const TIER_LABEL = { core: null, config: "config", test: "test", noise: "generated / lockfile" } as const
@@ -223,7 +223,7 @@ function ThreadView({ thread, repo, number, branch, canAct, onChanged }: { threa
           </Button>
         )}
         {!thread.isResolved && (
-          <FixWithAgent context={{ repo, number, branch, path: thread.path, line: thread.line, comments: thread.comments }} />
+          <FixWithAgent compact context={{ repo, number, branch, path: thread.path, line: thread.line, comments: thread.comments }} />
         )}
       </div>
       <Collapse open={open}>
@@ -410,7 +410,7 @@ export function FileDiff({
                   <LabelBadge body={p.body} />
                   {p.startLine && <span className="text-muted-foreground text-xs">lines {p.startLine}–{p.line}</span>}
                 </span>
-                <FixWithAgent context={{ repo, number, branch, path: p.path, line: p.line, comments: [{ author: "you", body: p.body }] }} />
+                <FixWithAgent compact context={{ repo, number, branch, path: p.path, line: p.line, comments: [{ author: "you", body: p.body }] }} />
               </div>
               <p className="whitespace-pre-wrap">{p.body}</p>
             </div>
@@ -562,8 +562,8 @@ export function FileDiff({
   const threadCount = threads.filter((t) => !t.isResolved).length
 
   return (
-    <section ref={section} id={`file-${file.filename}`} data-viewed={file.viewed || undefined} className="scroll-mt-16 rounded-lg border">
-      <header className="bg-background/95 sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-t-lg border-b px-3 py-2 text-sm backdrop-blur max-sm:gap-1.5 max-sm:py-1.5">
+    <section ref={section} id={`file-${file.filename}`} data-viewed={file.viewed || undefined} className="bg-card border-hairline scroll-mt-16 rounded-xl border">
+      <header className="bg-card/95 border-hairline sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-t-xl border-b px-3 py-2 text-sm backdrop-blur max-sm:gap-1.5 max-sm:py-1.5">
         <button type="button" onClick={() => setOpen((o) => !o)} className="flex min-w-[12rem] flex-1 items-center gap-2 text-left" aria-expanded={open}>
           {open ? <IconChevronDown className="size-4 shrink-0" aria-hidden /> : <IconChevronRight className="size-4 shrink-0" aria-hidden />}
           <span className="truncate font-mono text-xs">{file.filename}</span>
@@ -585,6 +585,7 @@ export function FileDiff({
           </div>
         )}
         <FixWithAgent
+          compact
           label="Agent"
           context={{
             repo, number, branch, path: file.filename, line: null,
@@ -626,7 +627,7 @@ export function FileDiff({
       )}
       {near &&
         (full || file.patch ? (
-          <div className={cn(view !== "preview" && "overflow-x-auto")}>
+          <div className={cn("rounded-b-xl", view !== "preview" && "overflow-x-auto")}>
             {view === "preview" ? (
               <table className="w-full"><FullFile /></table>
             ) : (

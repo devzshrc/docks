@@ -42,7 +42,7 @@ export function GuidePanel({
 
   if (!state || state.status === "pending") {
     return (
-      <section className="space-y-2 rounded-lg border p-4" aria-busy="true">
+      <section className="space-y-2 bg-card border-hairline rounded-xl border p-4" aria-busy="true">
         <p className="text-muted-foreground flex items-center gap-2 text-sm">
           <IconSparkles className="size-4" aria-hidden />
           Building the review guide…
@@ -57,7 +57,7 @@ export function GuidePanel({
   const ai = guide.source === "ai"
 
   return (
-    <section className="space-y-3 rounded-lg border p-4">
+    <section className="space-y-3 bg-card border-hairline rounded-xl border p-4">
       <div className="flex items-start gap-2">
         <p className="flex-1 text-sm">
           {ai && <IconSparkles className="text-muted-foreground mr-1.5 inline size-4" aria-label="AI summary" />}
@@ -84,8 +84,8 @@ export function GuidePanel({
               type="button"
               onClick={() => onStepChange(null)}
               className={cn(
-                "hover:bg-muted flex h-full w-full flex-col justify-center rounded-md border px-3 py-2 text-left text-sm",
-                activeStep === null && "border-foreground/40 bg-muted"
+                "hover:bg-hover/50 border-hairline flex h-full w-full flex-col justify-center rounded-lg border px-3 py-2.5 text-left text-sm transition-colors",
+                activeStep === null && "bg-raised border-transparent shadow-(--ring-raised)"
               )}
             >
               <span className="font-medium">All files</span>
@@ -99,8 +99,8 @@ export function GuidePanel({
                 onClick={() => onStepChange(activeStep === i ? null : i)}
                 aria-pressed={activeStep === i}
                 className={cn(
-                  "hover:bg-muted flex h-full w-full flex-col justify-center rounded-md border px-3 py-2 text-left text-sm",
-                  activeStep === i && "border-foreground/40 bg-muted"
+                  "hover:bg-hover/50 border-hairline flex h-full w-full flex-col justify-center rounded-lg border px-3 py-2.5 text-left text-sm transition-colors",
+                  activeStep === i && "bg-raised border-transparent shadow-(--ring-raised)"
                 )}
               >
                 <span className="font-medium">
