@@ -5,10 +5,19 @@ import Link from "next/link"
 import { useState } from "react"
 
 import { MentionTextarea } from "@/components/mention-textarea"
+import type { PendingComment } from "@/components/review/file-diff"
 import { Button } from "@/components/ui/button"
 import { useTRPC } from "@/trpc/react"
 
 type Event = "APPROVE" | "REQUEST_CHANGES" | "COMMENT"
+
+/** GitHub mergeable_state values that block merging, explained. */
+const MERGE_STATE: Record<string, string> = {
+  blocked: "Blocked by branch protection (required reviews or checks)",
+  dirty: "Has merge conflicts. Resolve them on GitHub or locally.",
+  behind: "Behind the base branch. Update it first.",
+  draft: "Still a draft",
+}
 
 /** Approve, request changes, comment, merge (§5.3). */
 export function ReviewActions({
@@ -16,12 +25,22 @@ export function ReviewActions({
   number,
   canMerge,
   githubLogin,
+  mergeableState = null,
+  pending = [],
+  onSubmitted,
+  onDiscardPending,
 }: {
   repo: string
   number: number
   canMerge: boolean
   githubLogin: string | null
+  mergeableState?: string | null
+  pending?: PendingComment[]
+  onSubmitted?: () => void
+  onDiscardPending?: () => void
 }) {
+  const [method, setMethod] = useState<"squash" | "merge" | "rebase">("squash")
+  const blocked = mergeableState ? MERGE_STATE[mergeableState] : undefined
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const [body, setBody] = useState("")
@@ -38,6 +57,7 @@ export function ReviewActions({
     trpc.review.submit.mutationOptions({
       onSuccess: (_data, vars) => {
         setBody("")
+        onSubmitted?.()
         setDone(
           vars.event === "APPROVE"
             ? "Approved"
@@ -75,11 +95,11 @@ export function ReviewActions({
   function send(event: Event) {
     setError(undefined)
     setDone(undefined)
-    if (event !== "APPROVE" && !body.trim()) {
+    if (event !== "APPROVE" && !body.trim() && !pending.length) {
       setError("Add a comment first")
       return
     }
-    submit.mutate({ repo, number, event, body })
+    submit.mutate({ repo, number, event, body, comments: pending })
   }
 
   return (
@@ -105,18 +125,40 @@ export function ReviewActions({
           Comment
         </Button>
         {canMerge && (
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={busy}
-            onClick={() => {
-              setError(undefined)
-              setDone(undefined)
-              merge.mutate({ repo, number, method: "squash" })
-            }}
-          >
-            Squash and merge
-          </Button>
+          <span className="flex items-center gap-1">
+            <select
+              className="border-input bg-background h-8 rounded-md border px-2 text-sm"
+              aria-label="Merge method"
+              value={method}
+              onChange={(e) => setMethod(e.target.value as typeof method)}
+            >
+              <option value="squash">Squash and merge</option>
+              <option value="merge">Create a merge commit</option>
+              <option value="rebase">Rebase and merge</option>
+            </select>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={busy || Boolean(blocked)}
+              title={blocked}
+              onClick={() => {
+                setError(undefined)
+                setDone(undefined)
+                merge.mutate({ repo, number, method })
+              }}
+            >
+              Merge
+            </Button>
+          </span>
+        )}
+        {canMerge && blocked && <span className="text-xs text-amber-600">{blocked}</span>}
+        {pending.length > 0 && (
+          <span className="text-xs">
+            {pending.length} pending comment{pending.length > 1 ? "s" : ""} will be sent with your review ·{" "}
+            <button type="button" className="underline" onClick={onDiscardPending}>
+              discard
+            </button>
+          </span>
         )}
         <span className="text-muted-foreground text-xs">as {githubLogin}</span>
         {error && <span className="text-destructive text-sm">{error}</span>}

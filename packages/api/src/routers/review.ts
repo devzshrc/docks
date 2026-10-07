@@ -7,7 +7,8 @@ import { assertMember, audit, can, repoForAction, repoForUser } from "../access.
 import { enqueue } from "../jobs.js";
 import { boardFilters, filterBoard, sizeOf } from "../review/board.js";
 import { latestVerdicts } from "../review/columns.js";
-import { GitHubError } from "../review/github.js";
+import { askPr } from "../review/ask.js";
+import { GitHubError, installationClient } from "../review/github.js";
 import { fallbackGuide, guideKey } from "../review/guide.js";
 import { githubAs, githubIdentity } from "../review/github-user.js";
 import { loginsToUsers, suggestReviewers } from "../review/reviewers.js";
@@ -26,7 +27,11 @@ function githubFailure(err: unknown): never {
       message: reason,
     });
   }
-  throw err;
+  // Our own errors (permissions, reconnect prompts) are already user-facing.
+  if (err instanceof TRPCError) throw err;
+  // Anything else is config or network trouble: log the detail, show a plain message.
+  console.error(`[github] ${(err as Error).message}`);
+  throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Couldn't reach GitHub. Try again in a moment." });
 }
 
 /** Refresh the mirror right away so the UI reflects the action; webhook is the backstop. */
@@ -121,6 +126,45 @@ async function guideState(
   }
   if (!job) await enqueue("generate_guide", payload);
   return { status: "pending" };
+}
+
+const lineComment = z.object({
+  path: z.string(),
+  line: z.number().int().positive(),
+  side: z.enum(["LEFT", "RIGHT"]),
+  startLine: z.number().int().positive().optional(),
+  body: z.string().trim().min(1).max(65_000),
+});
+
+async function repoDetails(repoId: number) {
+  const [r] = await db
+    .select({ installationId: schema.repository.installationId, checklistTemplate: schema.repository.checklistTemplate })
+    .from(schema.repository)
+    .where(eq(schema.repository.id, repoId));
+  if (!r) throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
+  return r;
+}
+
+const checklistTemplateOf = async (repoId: number) => (await repoDetails(repoId)).checklistTemplate;
+
+async function headShaOf(repoId: number, number: number) {
+  const [p] = await db
+    .select({ headSha: schema.pullRequest.headSha, title: schema.pullRequest.title, body: schema.pullRequest.body })
+    .from(schema.pullRequest)
+    .where(and(eq(schema.pullRequest.repoId, repoId), eq(schema.pullRequest.number, number)));
+  if (!p) throw new TRPCError({ code: "NOT_FOUND", message: "Pull request not synced yet" });
+  return p;
+}
+
+async function recordVisit(userId: string, repoRow: { id: number; fullName: string }, number: number) {
+  const { headSha } = await headShaOf(repoRow.id, number);
+  await db
+    .insert(schema.reviewVisit)
+    .values({ userId, repo: repoRow.fullName, prNumber: number, reviewedSha: headSha })
+    .onConflictDoUpdate({
+      target: [schema.reviewVisit.userId, schema.reviewVisit.repo, schema.reviewVisit.prNumber],
+      set: { reviewedSha: headSha },
+    });
 }
 
 const repo = z.string().regex(/^[\w.-]+\/[\w.-]+$/);
@@ -366,7 +410,9 @@ export const reviewRouter = router({
         deletions: pull.deletions,
         column: pull.reviewColumn,
         labels: pull.labels,
+        mergeableState: pull.mergeableState,
       },
+      checklistTemplate: await checklistTemplateOf(repoRow.id),
       canAct: can(repoRow.role, "review.act"),
       files: ranked,
       reviewers: [
@@ -420,16 +466,18 @@ export const reviewRouter = router({
       pr.extend({
         event: z.enum(["APPROVE", "REQUEST_CHANGES", "COMMENT"]),
         body: z.string().default(""),
+        comments: z.array(lineComment).max(100).default([]),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const repoRow = await repoForAction(ctx.user.id, input.repo, "review.act");
-      if (input.event !== "APPROVE" && !input.body.trim()) {
+      if (input.event !== "APPROVE" && !input.body.trim() && !input.comments.length) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Add a comment explaining your review" });
       }
       await githubAs(ctx.user.id)
-        .submitReview(repoRow.fullName, input.number, input.event, input.body)
+        .submitReview(repoRow.fullName, input.number, input.event, input.body, input.comments)
         .catch(githubFailure);
+      await recordVisit(ctx.user.id, repoRow, input.number);
       await audit(repoRow.workspaceId, ctx.user.id, `review.${input.event.toLowerCase()}`, `${repoRow.fullName}#${input.number}`);
       await refreshPr(repoRow.id, input.number);
     }),
@@ -533,4 +581,102 @@ export const reviewRouter = router({
       .where(and(eq(schema.pullRequest.repoId, repoRow.id), eq(schema.pullRequest.number, input.number)));
     await audit(repoRow.workspaceId, ctx.user.id, input.claim ? "review.claim" : "review.unclaim", `${repoRow.fullName}#${input.number}`);
   }),
+
+  /** Review threads, live from GitHub as the person (plan M6). Not mirrored. */
+  threads: protectedProcedure.input(pr).query(async ({ ctx, input }) => {
+    const repoRow = await repoForUser(ctx.user.id, input.repo);
+    try {
+      return { threads: await githubAs(ctx.user.id).threads(repoRow.fullName, input.number), needsGithub: false };
+    } catch (err) {
+      if (err instanceof TRPCError && err.code === "PRECONDITION_FAILED") return { threads: [], needsGithub: true };
+      return githubFailure(err);
+    }
+  }),
+
+  comment: protectedProcedure.input(pr.merge(lineComment)).mutation(async ({ ctx, input }) => {
+    const repoRow = await repoForAction(ctx.user.id, input.repo, "review.act");
+    const { headSha } = await headShaOf(repoRow.id, input.number);
+    const { repo: _r, number, ...c } = input;
+    await githubAs(ctx.user.id).comment(repoRow.fullName, number, headSha, c).catch(githubFailure);
+    await audit(repoRow.workspaceId, ctx.user.id, "review.line_comment", `${repoRow.fullName}#${number}`, { path: c.path, line: c.line });
+  }),
+
+  reply: protectedProcedure
+    .input(pr.extend({ commentId: z.number().int(), body: z.string().trim().min(1).max(65_000) }))
+    .mutation(async ({ ctx, input }) => {
+      const repoRow = await repoForAction(ctx.user.id, input.repo, "review.act");
+      await githubAs(ctx.user.id).reply(repoRow.fullName, input.number, input.commentId, input.body).catch(githubFailure);
+    }),
+
+  resolveThread: protectedProcedure
+    .input(pr.extend({ threadId: z.string(), resolve: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await repoForAction(ctx.user.id, input.repo, "review.act");
+      await githubAs(ctx.user.id).resolveThread(input.threadId, input.resolve).catch(githubFailure);
+    }),
+
+  /** Files changed since this person last submitted a review; null when they haven't. */
+  sinceLastReview: protectedProcedure.input(pr).query(async ({ ctx, input }) => {
+    const repoRow = await repoForUser(ctx.user.id, input.repo);
+    const [visit] = await db
+      .select({ sha: schema.reviewVisit.reviewedSha })
+      .from(schema.reviewVisit)
+      .where(
+        and(
+          eq(schema.reviewVisit.userId, ctx.user.id),
+          eq(schema.reviewVisit.repo, repoRow.fullName),
+          eq(schema.reviewVisit.prNumber, input.number),
+        ),
+      );
+    if (!visit) return { reviewedSha: null, files: null };
+    const { headSha } = await headShaOf(repoRow.id, input.number);
+    if (visit.sha === headSha) return { reviewedSha: visit.sha, files: [] as string[] };
+    const { installationId } = await repoDetails(repoRow.id);
+    try {
+      const cmp = await installationClient(installationId).compare(repoRow.fullName, visit.sha, headSha);
+      return { reviewedSha: visit.sha, files: (cmp.files ?? []).map((f) => f.filename) };
+    } catch {
+      // Force-pushed away from the reviewed commit: GitHub can't compare. Treat everything as new.
+      return { reviewedSha: visit.sha, files: null };
+    }
+  }),
+
+  /** Whole file at the PR head, for "show full file". */
+  fileContent: protectedProcedure.input(pr.extend({ path: z.string() })).query(async ({ ctx, input }) => {
+    const repoRow = await repoForUser(ctx.user.id, input.repo);
+    const { headSha } = await headShaOf(repoRow.id, input.number);
+    const { installationId } = await repoDetails(repoRow.id);
+    const text = await installationClient(installationId).fileContent(repoRow.fullName, input.path, headSha).catch(githubFailure);
+    if (text.length > 1_000_000) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "File is too large to show" });
+    return { text };
+  }),
+
+  /** Ask a question about the PR; viewers can ask too. */
+  ask: protectedProcedure
+    .input(
+      pr.extend({
+        question: z.string().trim().min(1).max(2000),
+        history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(8000) })).max(20).default([]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const repoRow = await repoForUser(ctx.user.id, input.repo);
+      const { headSha, title, body } = await headShaOf(repoRow.id, input.number);
+      const files = await db
+        .select({
+          filename: schema.prFile.path,
+          tier: schema.prFile.tier,
+          patch: schema.prFile.patch,
+          additions: schema.prFile.additions,
+          deletions: schema.prFile.deletions,
+        })
+        .from(schema.prFile)
+        .where(and(eq(schema.prFile.repoId, repoRow.id), eq(schema.prFile.prNumber, input.number), eq(schema.prFile.headSha, headSha)));
+      try {
+        return { answer: await askPr({ title, body, files, question: input.question, history: input.history }) };
+      } catch (err) {
+        console.error(`[ask] failed: ${(err as Error).message}`);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Couldn't get an answer right now. Try again." });
+      }
+    }),
 });

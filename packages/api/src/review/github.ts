@@ -110,6 +110,7 @@ export interface GhPull {
   base: { ref: string };
   requested_reviewers: GhUser[];
   labels: { name: string }[];
+  mergeable_state?: string;
   additions?: number;
   deletions?: number;
   changed_files?: number;
@@ -157,8 +158,45 @@ function clientFor(getToken: () => Promise<string>) {
     return out;
   }
 
-  return { call, paginate };
+  /** GitHub GraphQL; throws on transport errors and on `errors` in the body. */
+  async function graphql<T>(query: string, variables: Record<string, unknown>) {
+    const res = await call<{ data?: T; errors?: { message: string }[] }>("/graphql", {
+      method: "POST",
+      body: JSON.stringify({ query, variables }),
+    });
+    if (res.errors?.length) throw new GitHubError(422, `GitHub GraphQL: ${res.errors.map((e) => e.message).join("; ")}`);
+    return res.data as T;
+  }
+
+  return { call, paginate, graphql };
 }
+
+/** A line comment to post: right side = new code, left = removed lines. */
+export interface NewLineComment {
+  path: string;
+  line: number;
+  side: "LEFT" | "RIGHT";
+  startLine?: number;
+  body: string;
+}
+
+export interface ReviewThread {
+  id: string;
+  isResolved: boolean;
+  isOutdated: boolean;
+  path: string;
+  line: number | null;
+  diffSide: "LEFT" | "RIGHT";
+  comments: { id: number; author: string; body: string; createdAt: string }[];
+}
+
+const THREADS_QUERY = `query($owner:String!,$name:String!,$number:Int!,$cursor:String){
+  repository(owner:$owner,name:$name){ pullRequest(number:$number){
+    reviewThreads(first:100, after:$cursor){
+      pageInfo{ hasNextPage endCursor }
+      nodes{ id isResolved isOutdated path line diffSide
+        comments(first:50){ nodes{ databaseId body createdAt author{ login } } } }
+    } } } }`;
 
 /** Reads as the App installation — used by sync jobs. */
 export function installationClient(installationId: number) {
@@ -188,6 +226,9 @@ export function installationClient(installationId: number) {
       );
       return Buffer.from(res.content, res.encoding === "base64" ? "base64" : "utf8").toString("utf8");
     },
+    /** Files changed between two commits (for "since my last review"). */
+    compare: (repo: string, base: string, head: string) =>
+      call<{ files?: { filename: string }[]; status: string }>(`/repos/${repo}/compare/${base}...${head}`),
     /** Auto-assign posts as the App. */
     requestReviewers: (repo: string, n: number, logins: string[]) =>
       call(`/repos/${repo}/pulls/${n}/requested_reviewers`, {
@@ -202,7 +243,7 @@ export function installationClient(installationId: number) {
  * merges to them and enforces their own permissions and branch protection.
  */
 export function userClient(getToken: () => Promise<string>) {
-  const { call, paginate } = clientFor(getToken);
+  const { call, paginate, graphql } = clientFor(getToken);
   return {
     me: () => call<GhUser>("/user"),
     /** Installations of our App this person can access. */
@@ -217,16 +258,79 @@ export function userClient(getToken: () => Promise<string>) {
         `/user/installations/${installationId}/repositories?per_page=100`,
         (r) => r.repositories,
       ),
+    /** A review, optionally with batched line comments (a "pending review" sent at once). */
     submitReview: (
       repo: string,
       n: number,
       event: "APPROVE" | "REQUEST_CHANGES" | "COMMENT",
       body: string,
+      comments: NewLineComment[] = [],
     ) =>
       call<GhReview>(`/repos/${repo}/pulls/${n}/reviews`, {
         method: "POST",
-        body: JSON.stringify({ event, body }),
+        body: JSON.stringify({
+          event,
+          body,
+          comments: comments.map((c) => ({
+            path: c.path,
+            body: c.body,
+            line: c.line,
+            side: c.side,
+            ...(c.startLine && c.startLine < c.line ? { start_line: c.startLine, start_side: c.side } : {}),
+          })),
+        }),
       }),
+    /** Single line comment, posted right away. */
+    comment: (repo: string, n: number, commitId: string, c: NewLineComment) =>
+      call<{ id: number }>(`/repos/${repo}/pulls/${n}/comments`, {
+        method: "POST",
+        body: JSON.stringify({
+          commit_id: commitId,
+          path: c.path,
+          body: c.body,
+          line: c.line,
+          side: c.side,
+          ...(c.startLine && c.startLine < c.line ? { start_line: c.startLine, start_side: c.side } : {}),
+        }),
+      }),
+    reply: (repo: string, n: number, commentId: number, body: string) =>
+      call<{ id: number }>(`/repos/${repo}/pulls/${n}/comments/${commentId}/replies`, {
+        method: "POST",
+        body: JSON.stringify({ body }),
+      }),
+    threads: async (repo: string, n: number): Promise<ReviewThread[]> => {
+      const [owner, name] = repo.split("/");
+      const out: ReviewThread[] = [];
+      let cursor: string | null = null;
+      do {
+        type Page = { repository: { pullRequest: { reviewThreads: {
+          pageInfo: { hasNextPage: boolean; endCursor: string | null };
+          nodes: (Omit<ReviewThread, "comments"> & { comments: { nodes: { databaseId: number; body: string; createdAt: string; author: { login: string } | null }[] } })[];
+        } } } };
+        const data: Page = await graphql<Page>(THREADS_QUERY, { owner, name, number: n, cursor });
+        const page = data.repository.pullRequest.reviewThreads;
+        for (const t of page.nodes) {
+          out.push({
+            ...t,
+            comments: t.comments.nodes.map((c) => ({
+              id: c.databaseId,
+              author: c.author?.login ?? "ghost",
+              body: c.body,
+              createdAt: c.createdAt,
+            })),
+          });
+        }
+        cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+      } while (cursor);
+      return out;
+    },
+    resolveThread: (threadId: string, resolve: boolean) =>
+      graphql(
+        resolve
+          ? "mutation($id:ID!){ resolveReviewThread(input:{threadId:$id}){ thread{ id } } }"
+          : "mutation($id:ID!){ unresolveReviewThread(input:{threadId:$id}){ thread{ id } } }",
+        { id: threadId },
+      ),
     requestReviewers: (repo: string, n: number, logins: string[]) =>
       call(`/repos/${repo}/pulls/${n}/requested_reviewers`, {
         method: "POST",

@@ -34,3 +34,18 @@ export const reviewProgress = pgTable(
   },
   (t) => [primaryKey({ columns: [t.userId, t.repo, t.prNumber, t.path] })],
 );
+
+/** Head commit each person last submitted a review on, for "changes since my last review" (plan M6). */
+export const reviewVisit = pgTable(
+  "review_visit",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    repo: text("repo").notNull(),
+    prNumber: integer("pr_number").notNull(),
+    reviewedSha: text("reviewed_sha").notNull(),
+    ...timestamps,
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.repo, t.prNumber] })],
+);

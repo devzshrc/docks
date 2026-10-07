@@ -178,6 +178,7 @@ export async function syncPr(repoId: number, number: number) {
       changedFiles: pr.changed_files ?? 0,
       requestedReviewers: pr.requested_reviewers.map((u) => u.login),
       labels: pr.labels.map((l) => l.name),
+      mergeableState: pr.mergeable_state ?? null,
       reviewColumn: column,
       lastActivityAt,
     } as const;

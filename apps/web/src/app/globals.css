@@ -120,3 +120,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Syntax highlighting (highlight.js classes), readable in light and dark. */
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-built_in { color: #a626a4; }
+.hljs-string, .hljs-attr-value, .hljs-regexp, .hljs-addition { color: #50a14f; }
+.hljs-number, .hljs-symbol, .hljs-variable.constant_ { color: #986801; }
+.hljs-comment, .hljs-quote { color: #8b8b8b; font-style: italic; }
+.hljs-title, .hljs-title.function_, .hljs-section { color: #4078f2; }
+.hljs-type, .hljs-title.class_, .hljs-attr, .hljs-attribute, .hljs-property { color: #c18401; }
+.hljs-meta, .hljs-tag, .hljs-name { color: #0184bc; }
+.dark .hljs-keyword, .dark .hljs-selector-tag, .dark .hljs-literal, .dark .hljs-built_in { color: #c678dd; }
+.dark .hljs-string, .dark .hljs-attr-value, .dark .hljs-regexp, .dark .hljs-addition { color: #98c379; }
+.dark .hljs-number, .dark .hljs-symbol, .dark .hljs-variable.constant_ { color: #d19a66; }
+.dark .hljs-comment, .dark .hljs-quote { color: #7f848e; }
+.dark .hljs-title, .dark .hljs-title.function_, .dark .hljs-section { color: #61afef; }
+.dark .hljs-type, .dark .hljs-title.class_, .dark .hljs-attr, .dark .hljs-attribute, .dark .hljs-property { color: #e5c07b; }
+.dark .hljs-meta, .dark .hljs-tag, .dark .hljs-name { color: #56b6c2; }
