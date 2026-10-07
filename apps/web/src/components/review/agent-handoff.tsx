@@ -7,6 +7,7 @@ import { useState } from "react"
 import { AgentStackIcon, BrandIcon, Px0Icon, type Brand } from "@/components/brand-icons"
 import { DrawTick } from "@/components/motion"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,12 +77,12 @@ function useCopied() {
 const BRAND: Record<string, Brand> = { claude: "claude", codex: "codex", cursor: "cursor" }
 
 /** "Fix with agent": copies a ready-to-run command for a local coding agent. */
-export function FixWithAgent({ context, prompt, label = "Fix with agent" }: { context?: FixContext; prompt?: string; label?: string }) {
+export function FixWithAgent({ context, prompt, label = "Fix with agent", compact = false }: { context?: FixContext; prompt?: string; label?: string; compact?: boolean }) {
   const { copied, run } = useCopied()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="ghost" className="group/agent h-7 gap-2 px-2 text-xs">
+        <Button size={compact ? "sm" : "default"} variant={compact ? "ghost" : "outline"} className={cn("group/agent gap-2", compact && "px-2")}>
           {copied ? <DrawTick className="size-3.5 text-emerald-600 dark:text-emerald-400" /> : <AgentStackIcon />}
           {copied ? "Copied" : label}
         </Button>
@@ -112,7 +113,7 @@ export function OpenInPx0({ prUrl, branch }: { prUrl: string; branch: string }) 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="hover:text-foreground flex items-center gap-1">
+        <button type="button" className="tex-neutral flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium">
           {copied ? <DrawTick className="size-3.5 text-emerald-600 dark:text-emerald-400" /> : <Px0Icon className="h-3.5" />}
           {copied ? "Copied" : "Review in px0"}
         </button>

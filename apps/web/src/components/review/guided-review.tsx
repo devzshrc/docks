@@ -29,17 +29,20 @@ import { useDraft } from "@/hooks/use-draft"
 import { commentLabel } from "@/lib/diff"
 import { useTRPC } from "@/trpc/react"
 
+/** One row of the details panel: fixed label column, controls aligned on a shared left edge. */
+const ROW = "grid grid-cols-[88px_minmax(0,1fr)] items-center gap-4 px-4 py-2.5 min-h-11"
+
 const REVIEW_STATE = {
-  APPROVED: { label: "approved", variant: "default" },
-  CHANGES_REQUESTED: { label: "changes requested", variant: "destructive" },
-  PENDING: { label: "pending", variant: "outline" },
+  APPROVED: { label: "Approved", variant: "success" },
+  CHANGES_REQUESTED: { label: "Changes requested", variant: "destructive" },
+  PENDING: { label: "Pending", variant: "secondary" },
 } as const
 
 function CheckIcon({ status, conclusion }: { status: string; conclusion: string | null }) {
-  if (status !== "completed") return <IconCircleDot className="size-4 text-amber-500" aria-label="running" />
+  if (status !== "completed") return <IconCircleDot className="size-4 text-warning" aria-label="running" />
   if (conclusion === "success" || conclusion === "skipped" || conclusion === "neutral")
-    return <IconCircleCheck className="size-4 text-emerald-600" aria-label="passed" />
-  return <IconCircleX className="text-destructive size-4" aria-label="failed" />
+    return <IconCircleCheck className="size-4 text-success" aria-label="passed" />
+  return <IconCircleX className="text-danger size-4" aria-label="failed" />
 }
 
 /** Guided review view (plan.md §5.3): header, ranked file list, diffs, actions. */
@@ -188,29 +191,33 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
   return (
     <div className="animate-in fade-in flex flex-col gap-6 pb-20 duration-300">
       <header className="space-y-5">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {pr.title} <span className="text-muted-foreground font-normal">#{pr.number}</span>
-          </h1>
-          <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            {pr.state !== "open" && <Badge variant="secondary">{pr.state}</Badge>}
-            <span className="text-foreground font-medium">{pr.author}</span>
-            <span className="flex items-center gap-1 font-mono text-xs">
-              <IconGitBranch className="size-3.5" aria-hidden />
-              {pr.headRef} → {pr.baseRef}
-            </span>
-            <span className="tabular-nums">
-              <span className="text-emerald-600">+{pr.additions}</span>{" "}
-              <span className="text-destructive">−{pr.deletions}</span> · {files.length} files
-            </span>
-            <a href={pr.url} target="_blank" rel="noreferrer" className="hover:text-foreground flex items-center gap-1">
-              View on GitHub <IconExternalLink className="size-3.5" aria-hidden />
-            </a>
-            {blocking > 0 && (
-              <span className="rounded bg-red-500/15 px-1.5 py-px text-xs font-medium text-red-700 dark:text-red-300">
-                {blocking} blocking
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+          <div className="min-w-0 flex-1 space-y-2">
+            <h1 className="text-xl font-medium tracking-tight">
+              {pr.title} <span className="text-text-3 font-normal">#{pr.number}</span>
+            </h1>
+            <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
+              {pr.state !== "open" && <Badge variant="violet">{pr.state}</Badge>}
+              <span className="text-foreground text-sm font-medium">{pr.author}</span>
+              <span className="flex items-center gap-1 font-mono">
+                <IconGitBranch className="size-3.5" aria-hidden />
+                {pr.headRef} → {pr.baseRef}
               </span>
-            )}
+              <span className="tabular-nums">
+                <span className="text-success-text">+{pr.additions}</span> <span className="text-danger-text">−{pr.deletions}</span>
+                <span className="text-text-3"> · {files.length} files</span>
+              </span>
+              {blocking > 0 && (
+                <span className="pill" data-tone="danger">
+                  {blocking} blocking
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <a href={pr.url} target="_blank" rel="noreferrer" className="tex-neutral flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium">
+              GitHub <IconExternalLink className="size-3.5" aria-hidden />
+            </a>
             <OpenInPx0 prUrl={pr.url} branch={pr.headRef} />
             <FixWithAgent
               context={{
@@ -239,22 +246,24 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
           </button>
           <div className={cn("animate-in fade-in pt-4 duration-150 lg:block lg:pt-0", detailsOpen ? "block" : "hidden")}>
         {/* Aligned label column: the eye scans down one edge instead of hunting. */}
-        <dl className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-x-4 gap-y-3 text-sm">
+        <dl className="bg-card border-hairline divide-hairline divide-y rounded-xl border text-sm">
           {pr.state === "open" && (
-            <>
-              <dt className="text-muted-foreground pt-1">Reviewers</dt>
+            <div className={ROW}>
+              <dt className="text-muted-foreground text-xs">Reviewers</dt>
               <dd>
                 <ReviewerPicker repo={repo} number={number} />
               </dd>
-            </>
+            </div>
           )}
-          <dt className="text-muted-foreground pt-1">Labels</dt>
-          <dd>
-            <LabelsEditor repo={repo} number={number} labels={pr.labels} canAct={data.data.canAct && pr.state === "open"} />
-          </dd>
+          <div className={ROW}>
+            <dt className="text-muted-foreground text-xs">Labels</dt>
+            <dd>
+              <LabelsEditor repo={repo} number={number} labels={pr.labels} canAct={data.data.canAct && pr.state === "open"} />
+            </dd>
+          </div>
           {reviewers.length > 0 && (
-            <>
-              <dt className="text-muted-foreground pt-0.5">Verdicts</dt>
+            <div className={ROW}>
+              <dt className="text-muted-foreground text-xs">Verdicts</dt>
               <dd className="flex flex-wrap items-center gap-1.5">
                 {reviewers.map((r) => {
                   const s = REVIEW_STATE[r.state as keyof typeof REVIEW_STATE] ?? REVIEW_STATE.PENDING
@@ -265,11 +274,11 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
                   )
                 })}
               </dd>
-            </>
+            </div>
           )}
           {checks.length > 0 && (
-            <>
-              <dt className="text-muted-foreground">Checks</dt>
+            <div className={ROW}>
+              <dt className="text-muted-foreground text-xs">Checks</dt>
               <dd className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 {checks.map((c) => (
                   <span key={c.name} className="flex items-center gap-1 text-xs">
@@ -278,7 +287,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
                   </span>
                 ))}
               </dd>
-            </>
+            </div>
           )}
         </dl>
           </div>
