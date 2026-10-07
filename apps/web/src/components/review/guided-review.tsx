@@ -14,6 +14,7 @@ import { Checklist } from "@/components/review/checklist"
 import { FileDiff } from "@/components/review/file-diff"
 import { GuidePanel } from "@/components/review/guide-panel"
 import { ReviewActions } from "@/components/review/review-actions"
+import { LabelsEditor } from "@/components/review/labels-editor"
 import { ReviewerPicker } from "@/components/review/reviewer-picker"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -100,6 +101,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
           </a>
         </div>
         {pr.state === "open" && <ReviewerPicker repo={repo} number={number} />}
+        <LabelsEditor repo={repo} number={number} labels={pr.labels} canAct={data.data.canAct && pr.state === "open"} />
         <div className="flex flex-wrap gap-4 text-sm">
           {reviewers.length > 0 && (
             <div className="flex flex-wrap items-center gap-1">

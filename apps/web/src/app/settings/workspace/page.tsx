@@ -394,6 +394,41 @@ function TeamsCard({ workspaceId }: { workspaceId: string }) {
   )
 }
 
+function StuckCard({ workspaceId, hours }: { workspaceId: string; hours: number }) {
+  const trpc = useTRPC()
+  const queryClient = useQueryClient()
+  const [value, setValue] = useState(String(hours))
+  const save = useMutation(
+    trpc.workspace.setStuckHours.mutationOptions({
+      onSuccess: () => queryClient.invalidateQueries(trpc.workspace.settings.queryFilter()),
+    })
+  )
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Stuck threshold</CardTitle>
+        <CardDescription>PRs waiting on review longer than this are flagged on the board and in the Slack digest.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form
+          className="flex items-center gap-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            save.mutate({ workspaceId, hours: Number(value) })
+          }}
+        >
+          <Input type="number" min={1} max={336} className="w-24" value={value} onChange={(e) => setValue(e.target.value)} aria-label="Hours" />
+          <span className="text-sm">hours</span>
+          <Button type="submit" variant="outline" disabled={save.isPending || Number(value) === hours}>
+            Save
+          </Button>
+          {save.error && <span className="text-destructive text-sm">{save.error.message}</span>}
+        </form>
+      </CardContent>
+    </Card>
+  )
+}
+
 function SecurityCard({ workspaceId, require2fa }: { workspaceId: string; require2fa: boolean }) {
   const trpc = useTRPC()
   const queryClient = useQueryClient()
@@ -632,6 +667,7 @@ function Content() {
       <MembersCard workspaceId={workspace.id} canManage={can["members.manage"]} myRole={settings.data!.role} />
       {can["members.manage"] && <InvitesCard workspaceId={workspace.id} />}
       {can["members.manage"] && <TeamsCard workspaceId={workspace.id} />}
+      {can["workspace.manage"] && <StuckCard workspaceId={workspace.id} hours={settings.data!.stuckHours} />}
       {can["workspace.manage"] && <SecurityCard workspaceId={workspace.id} require2fa={settings.data!.require2fa} />}
       {can["workspace.manage"] && (
         <DataCard workspaceId={workspace.id} name={workspace.name} canDelete={can["workspace.delete"]} />
