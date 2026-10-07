@@ -11,6 +11,7 @@ import { CommandPalette } from "@/components/command-palette"
 import { NewIssueButton } from "@/components/new-issue/button"
 import { NewIssueProvider } from "@/components/new-issue/provider"
 import { DashboardButton, DashboardShell, type DashboardShellNavSection } from "@/components/obsidian/dashboard-shell"
+import { ShellSlotsContext, useShellSlotsState } from "@/components/shell-slots"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { UserMenu } from "@/components/user-menu"
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace"
@@ -103,6 +104,7 @@ function Frame({ title, description, actions, width, children }: { title?: strin
   const { workspace } = useWorkspace()
   const settings = useWorkspaceSettings(workspace?.id)
   const inSettings = pathname.startsWith("/settings")
+  const slots = useShellSlotsState()
 
   // PRs waiting on this person: the one number worth showing in the sidebar.
   const waiting = useQuery({
@@ -171,7 +173,8 @@ function Frame({ title, description, actions, width, children }: { title?: strin
   )
 
   return (
-    <div className="h-svh">
+    <ShellSlotsContext.Provider value={{ filters: slots.filters, actions: slots.actions, setHasFilters: slots.setHasFilters, setHasActions: slots.setHasActions }}>
+    <div className="h-dvh">
       <DashboardShell
         brand={{ name: "Docks", description: workspace?.name, logo: <BrandMark /> }}
         navigation={navigation}
@@ -190,14 +193,18 @@ function Frame({ title, description, actions, width, children }: { title?: strin
             localStorage.setItem(WIDTH_KEY, String(w))
           } catch {}
         }}
-        className="h-svh"
+        filters={slots.hasFilters ? <div ref={slots.setFilters} className="contents" /> : undefined}
+        toolbarActions={slots.hasActions ? <div ref={slots.setActions} className="contents" /> : undefined}
+        className="h-dvh"
       >
-        <div className={cn("animate-in fade-in slide-in-from-bottom-1 mx-auto flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-200 md:px-6 lg:px-8 lg:py-8", WIDTH[width])}>
+        {/* Left-aligned with the header and the toolbar (all at 16px), so every page shares one left edge. */}
+        <div className={cn("animate-in fade-in slide-in-from-bottom-1 flex w-full min-w-0 flex-col gap-6 px-4 py-4 duration-200 md:py-6", WIDTH[width])}>
           {intro}
           {children}
         </div>
       </DashboardShell>
     </div>
+    </ShellSlotsContext.Provider>
   )
 }
 

@@ -8,7 +8,8 @@ import { AppShell } from "@/components/app-shell"
 import { RankedBars } from "@/components/charts/ranked-bars"
 import { TrendChart } from "@/components/charts/trend-chart"
 import { Panel, StatStrip } from "@/components/panel"
-import { FilterSelect, ToggleChip, Toolbar } from "@/components/toolbar"
+import { ShellFilters } from "@/components/shell-slots"
+import { FilterSelect, ToggleChip } from "@/components/toolbar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useWorkspace } from "@/hooks/use-workspace"
 import { useTRPC } from "@/trpc/react"
@@ -26,7 +27,7 @@ function Insights({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="space-y-6">
-      <Toolbar>
+      <ShellFilters>
         <FilterSelect
           label="Range"
           value={String(days)}
@@ -52,7 +53,7 @@ function Insights({ workspaceId }: { workspaceId: string }) {
           />
         )}
         {data.data?.canSeePeople && <ToggleChip on={perPerson} label="Per person" onChange={setPerPerson} />}
-      </Toolbar>
+      </ShellFilters>
 
       {data.isPending ? (
         <Skeleton className="h-64 w-full rounded-xl" />
