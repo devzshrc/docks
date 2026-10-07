@@ -18,20 +18,35 @@ export function FlipText({ children, className }: FlipTextProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const reduceMotion = useReducedMotion();
 
+  // Characters are grouped by word so a long line only ever wraps between words.
+  let offset = 0;
+  const words = children.split(" ").map((word) => {
+    const start = offset;
+    offset += word.length + 1;
+    return { word, start };
+  });
+
   return (
-    <span className={cn("inline-flex flex-wrap", className)} aria-label={children} role="text">
-      {children.split("").map((char, index) => (
-        <motion.span
-          key={index}
-          aria-hidden
-          className="inline-block"
-          onMouseEnter={() => setHoveredIndex(index)}
-          onMouseLeave={() => setHoveredIndex(null)}
-          animate={reduceMotion ? undefined : { rotateX: hoveredIndex === index ? 360 : 0, y: hoveredIndex === index ? -4 : 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-        >
-          {char === " " ? " " : char}
-        </motion.span>
+    <span className={cn("inline-flex flex-wrap gap-x-[0.28em]", className)}>
+      <span className="sr-only">{children}</span>
+      {words.map(({ word, start }) => (
+        <span key={start} className="inline-flex whitespace-nowrap" aria-hidden>
+          {word.split("").map((char, i) => {
+            const index = start + i;
+            return (
+              <motion.span
+                key={index}
+                className="inline-block"
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                animate={reduceMotion ? undefined : { rotateX: hoveredIndex === index ? 360 : 0, y: hoveredIndex === index ? -4 : 0 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                {char}
+              </motion.span>
+            );
+          })}
+        </span>
       ))}
     </span>
   );

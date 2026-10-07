@@ -6,5 +6,7 @@ Copied from the ObsidianUI registry (`https://www.obsidianui.dev/r/{name}.json`)
 - `obsidian-theme.css` maps the library's palette variables onto our tokens in `app/globals.css`.
 - `flip-text` is the docs' hover version, with aria-label and reduced-motion handling.
 - `discover-button` has a local `size="sm"` and uses Next `Link` for internal hrefs.
-- Not installed: split-showcase, art-gallery (three.js), hover-img, draggable-marquee, text-stream (gsap): landing-page effects.
+- Landing page (`components/landing/`): `split-showcase`, `hover-img`, `draggable-marquee`, `text-stream` (gsap), also `discover-button` and `flip-text`. The JSX ones are loosely typed ports (`@ts-nocheck`).
+- `flip-text` groups characters by word so headlines wrap between words only.
+- Not installed: `art-gallery` (needs three.js and real artwork).
 - Confirm the library's licence terms before shipping.
