@@ -70,17 +70,9 @@ function tokenColumns(t: TokenResponse) {
   };
 }
 
-/** Finish the OAuth flow: verify state, exchange code, store identity + tokens. */
-export async function completeAuthorization(userId: string, code: string, state: string) {
-  if (!verifyState(state, userId)) throw new Error("Invalid or expired state");
-  const tokens = await tokenRequest({ code, redirect_uri: redirectUri() });
-  const me = await userClient(async () => tokens.access_token!).me();
-  const values = {
-    userId,
-    githubLogin: me.login,
-    githubUserId: me.id,
-    ...tokenColumns(tokens),
-  };
+/** Store a person's GitHub identity and tokens, then refresh which repos they can see. */
+async function saveIdentity(userId: string, me: { id: number; login: string }, columns: ReturnType<typeof tokenColumns>) {
+  const values = { userId, githubLogin: me.login, githubUserId: me.id, ...columns };
   // One GitHub account per app user; re-linking moves it to the latest user.
   await db.transaction(async (tx) => {
     await tx.delete(schema.githubIdentity).where(eq(schema.githubIdentity.githubUserId, me.id));
@@ -91,6 +83,41 @@ export async function completeAuthorization(userId: string, code: string, state:
   });
   await syncUserRepos(userId).catch(() => enqueue("sync_user_repos", { userId }));
   await track(userId, null, "github_connected");
+}
+
+/** Finish the OAuth flow: verify state, exchange code, store identity + tokens. */
+export async function completeAuthorization(userId: string, code: string, state: string) {
+  if (!verifyState(state, userId)) throw new Error("Invalid or expired state");
+  const tokens = await tokenRequest({ code, redirect_uri: redirectUri() });
+  const me = await userClient(async () => tokens.access_token!).me();
+  await saveIdentity(userId, me, tokenColumns(tokens));
+}
+
+export interface SignInTokens {
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  accessTokenExpiresAt?: Date | null;
+  refreshTokenExpiresAt?: Date | null;
+}
+
+/** Sealed token columns from what Better Auth received on sign-in. Pure apart from encryption. */
+export function columnsFromSignIn(t: SignInTokens & { accessToken: string }) {
+  return {
+    accessTokenEncrypted: encrypt(t.accessToken),
+    accessTokenExpiresAt: t.accessTokenExpiresAt ?? null,
+    refreshTokenEncrypted: t.refreshToken ? encrypt(t.refreshToken) : null,
+    refreshTokenExpiresAt: t.refreshToken ? (t.refreshTokenExpiresAt ?? null) : null,
+  };
+}
+
+/**
+ * "Continue with GitHub" already gave us a user-to-server token, so signing in also connects the account:
+ * no second "Connect GitHub" step before the person can review and merge as themselves.
+ */
+export async function linkFromSignIn(userId: string, tokens: SignInTokens) {
+  if (!tokens.accessToken) return;
+  const me = await userClient(async () => tokens.accessToken!).me();
+  await saveIdentity(userId, me, columnsFromSignIn({ ...tokens, accessToken: tokens.accessToken }));
 }
 
 /** Valid access token for a user, refreshing it when it's about to expire. */

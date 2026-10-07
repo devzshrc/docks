@@ -70,12 +70,13 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
+          <CardTitle>Welcome back</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Sign in to keep reviewing.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-5">
+          <GitHubSignIn />
           <form onSubmit={onSubmit}>
             <FieldGroup>
               <Field>
@@ -131,7 +132,6 @@ export function LoginForm({
                     )}
                   </FieldDescription>
                 )}
-                <GitHubSignIn />
                 <FieldDescription className="text-center">
                   Don&apos;t have an account?{" "}
                   <Link href={altHref} className="underline underline-offset-4">

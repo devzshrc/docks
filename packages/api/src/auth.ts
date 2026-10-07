@@ -3,7 +3,9 @@ import { track } from "./analytics.js";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { twoFactor } from "better-auth/plugins";
+import { and, eq } from "drizzle-orm";
 import { actionEmail, sendEmail } from "./email.js";
+import { linkFromSignIn } from "./review/github-user.js";
 
 /**
  * Better Auth instance — email + password, GitHub sign-in, TOTP 2FA.
@@ -29,6 +31,27 @@ const github =
     : undefined;
 
 export const githubLoginEnabled = Boolean(github);
+
+async function scrubGithubTokens(account: {
+  id: string;
+  userId: string;
+  providerId: string;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  accessTokenExpiresAt?: Date | null;
+  refreshTokenExpiresAt?: Date | null;
+}) {
+  if (account.providerId !== "github" || !account.accessToken) return;
+  try {
+    await linkFromSignIn(account.userId, account);
+    await db
+      .update(schema.account)
+      .set({ accessToken: null, refreshToken: null, idToken: null })
+      .where(and(eq(schema.account.id, account.id), eq(schema.account.providerId, "github")));
+  } catch (err) {
+    console.error(`[auth] couldn't link GitHub after sign-in: ${(err as Error).message}`);
+  }
+}
 
 export const auth = betterAuth({
   appName: "Docks",
@@ -65,11 +88,16 @@ export const auth = betterAuth({
     },
   },
   socialProviders: github,
+  // Same verified email on GitHub and on an existing account: one person, one account.
+  account: { accountLinking: { enabled: true, trustedProviders: ["github"] } },
   user: {
     deleteUser: { enabled: true },
   },
   databaseHooks: {
     user: { create: { after: async (user) => void (await track(user.id, null, "signed_up")) } },
+    // After GitHub sign-in: connect the account for acting as the person (encrypted), then drop Better Auth's
+    // plaintext copy of the tokens. A failure here must never block the login itself.
+    account: { create: { after: scrubGithubTokens }, update: { after: scrubGithubTokens } },
   },
   // Built-in limiter on /api/auth/* (sign-in, sign-up, reset).
   rateLimit: { enabled: true, window: 60, max: 30 },
