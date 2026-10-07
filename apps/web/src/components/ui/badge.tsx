@@ -4,30 +4,33 @@ import { cn } from "@/lib/utils"
 import { Slot } from "radix-ui"
 
 const badgeVariants = cva(
-  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3",
+  "inline-flex h-[22px] w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border px-2 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/40 [&>svg]:pointer-events-none [&>svg]:size-3",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
-        secondary:
-          "bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
-        destructive:
-          "bg-destructive text-white focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 [a&]:hover:bg-destructive/90",
-        outline:
-          "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-        ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 [a&]:hover:underline",
+        // Neutral by default; colour only carries state.
+        default: "border-info-border bg-info-bg text-info-text",
+        secondary: "border-neutral-border bg-neutral-bg text-neutral-text",
+        neutral: "border-neutral-border bg-neutral-bg text-neutral-text",
+        destructive: "border-danger-border bg-danger-bg text-danger-text",
+        success: "border-success-border bg-success-bg text-success-text",
+        warning: "border-warning-border bg-warning-bg text-warning-text",
+        info: "border-info-border bg-info-bg text-info-text",
+        violet: "border-violet-border bg-violet-bg text-violet-text",
+        outline: "border-border-control bg-transparent text-muted-foreground [a&]:hover:bg-hover [a&]:hover:text-foreground",
+        ghost: "border-transparent bg-transparent text-muted-foreground [a&]:hover:bg-hover",
+        link: "border-transparent text-primary underline-offset-4 [a&]:hover:underline",
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "secondary",
     },
   }
 )
 
 function Badge({
   className,
-  variant = "default",
+  variant = "secondary",
   asChild = false,
   ...props
 }: React.ComponentProps<"span"> &

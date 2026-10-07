@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 
 import { FileIcon } from "@/components/file-icon"
+import { GhAvatar } from "@/components/gh-avatar"
 import { Collapse } from "@/components/motion"
 import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/react"
@@ -60,8 +61,7 @@ export function AssigneeChips({
               on ? "border-primary/30 bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`https://github.com/${p.login}.png?size=40`} alt="" className="size-5 rounded-full" />
+            <GhAvatar login={p.login} />
             <span className="font-medium">{p.login}</span>
             {p.reasons[0] && <span className="text-muted-foreground hidden sm:inline">· {p.reasons[0]}</span>}
           </button>

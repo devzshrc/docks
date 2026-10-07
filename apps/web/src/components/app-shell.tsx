@@ -7,9 +7,9 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 
 const WIDTH = {
-  narrow: "max-w-3xl", // settings and forms
-  default: "max-w-6xl",
-  wide: "max-w-[96rem]", // board and code review
+  narrow: "max-w-[720px]", // settings and forms
+  default: "max-w-[1040px]",
+  wide: "max-w-[1360px]", // board and code review
 } as const
 
 /**
@@ -44,11 +44,11 @@ export function AppShell({
         <AppSidebar variant="inset" />
         <SidebarInset className="min-w-0">
           <SiteHeader />
-          <div className={cn("animate-in fade-in slide-in-from-bottom-1 mx-auto flex w-full min-w-0 flex-1 flex-col gap-8 px-4 py-6 duration-200 md:px-8 md:py-8", WIDTH[width])}>
+          <div className={cn("animate-in fade-in slide-in-from-bottom-1 mx-auto flex w-full min-w-0 flex-1 flex-col gap-6 px-4 py-6 duration-200 md:px-6 lg:px-8 lg:py-8", WIDTH[width])}>
             {title && (
-              <header className="flex flex-wrap items-end justify-between gap-4">
+              <header className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 space-y-1">
-                  <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+                  <h1 className="text-xl font-medium tracking-tight">{title}</h1>
                   {description && <p className="text-muted-foreground max-w-2xl text-sm">{description}</p>}
                 </div>
                 {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

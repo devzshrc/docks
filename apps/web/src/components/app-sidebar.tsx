@@ -7,7 +7,6 @@ import {
   IconCreditCard,
   IconFolders,
   IconGitPullRequest,
-  IconInnerShadowTop,
   IconPlugConnected,
   IconUserCircle,
   IconUsers,
@@ -21,9 +20,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { useSession } from "@/lib/auth-client"
 
@@ -47,20 +43,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
-            >
-              <Link href="/review">
-                <IconInnerShadowTop className="size-5!" />
-                <span className="text-base font-semibold">Docks</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader className="h-12 justify-center border-b border-hairline px-3 py-0">
+        <Link href="/review" className="flex h-8 items-center gap-2.5 rounded-lg px-1 text-sm font-medium">
+          <span className="bg-foreground text-background flex size-6 items-center justify-center rounded-md text-xs font-medium" aria-hidden>
+            D
+          </span>
+          Docks
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <NavMain label="Review" items={navReview} />

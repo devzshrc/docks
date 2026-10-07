@@ -11,32 +11,10 @@ import { GettingStarted } from "@/components/getting-started"
 import { ReviewBoard } from "@/components/review/board"
 import { fromParams, serverFilters, toParams, type UiFilters } from "@/components/review/board-filters"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { FilterSelect, Toolbar, ToggleChip, ToolbarSearch } from "@/components/toolbar"
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace"
 import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/react"
-
-const SELECT = "border-input bg-background h-9 rounded-md border px-2.5 text-sm"
-
-/** Quick filter as a pill: reads as a filter, not a form field. */
-function Chip({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={on}
-      onClick={() => onChange(!on)}
-      className={cn(
-        "h-7 rounded-full border px-3 text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-95",
-        on && "anim-pop",
-        on
-          ? "border-primary/30 bg-primary/10 text-primary"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-      )}
-    >
-      {label}
-    </button>
-  )
-}
 
 function Board({ workspaceId }: { workspaceId: string }) {
   const trpc = useTRPC()
@@ -97,21 +75,13 @@ function Board({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          ref={search}
-          type="search"
-          placeholder="Search ( / )"
-          aria-label="Search pull requests"
-          className="h-9 min-w-48 flex-1 md:max-w-64"
-          value={filters.q}
-          onChange={(e) => set({ q: e.target.value })}
-        />
+      <Toolbar>
+        <ToolbarSearch ref={search} placeholder="Search ( / )" aria-label="Search pull requests" value={filters.q} onChange={(e) => set({ q: e.target.value })} />
         <button
           type="button"
           aria-expanded={filtersOpen}
           onClick={() => setFiltersOpen((o) => !o)}
-          className="hover:bg-muted flex h-9 items-center gap-2 rounded-lg border px-3 text-sm transition-colors md:hidden"
+          className="tex-neutral flex h-8 items-center gap-2 rounded-full px-3 text-xs md:hidden"
         >
           Filters
           {activeCount > 0 && <span className="bg-primary text-primary-foreground rounded-full px-1.5 text-[11px] tabular-nums">{activeCount}</span>}
@@ -120,81 +90,74 @@ function Board({ workspaceId }: { workspaceId: string }) {
           </span>
         </button>
         <div className={cn("animate-in fade-in contents duration-150", !filtersOpen && "max-md:hidden")}>
-        <select
-          className={SELECT}
-          aria-label="Repository"
-          value={filters.repoIds[0] ?? ""}
-          onChange={(e) => set({ repoIds: e.target.value ? [Number(e.target.value)] : [] })}
-        >
-          <option value="">All repositories</option>
-          {data?.repos.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.fullName}
-            </option>
-          ))}
-        </select>
-        <select className={SELECT} aria-label="Author" value={filters.author ?? ""} onChange={(e) => set({ author: e.target.value || undefined })}>
-          <option value="">Any author</option>
-          {data?.authors.map((a) => (
-            <option key={a}>{a}</option>
-          ))}
-        </select>
-        {data && data.labels.length > 0 && (
-          <select className={SELECT} aria-label="Label" value={filters.label ?? ""} onChange={(e) => set({ label: e.target.value || undefined })}>
-            <option value="">Any label</option>
-            {data.labels.map((l) => (
-              <option key={l}>{l}</option>
-            ))}
-          </select>
-        )}
-        {data && data.teams.length > 0 && (
-          <select className={SELECT} aria-label="Team" value={filters.teamId ?? ""} onChange={(e) => set({ teamId: e.target.value || undefined })}>
-            <option value="">Any team</option>
-            {data.teams.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
+          <FilterSelect label="Repository" value={String(filters.repoIds[0] ?? "")} onChange={(v) => set({ repoIds: v ? [Number(v)] : [] })}>
+            <option value="">All</option>
+            {data?.repos.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.fullName}
               </option>
             ))}
-          </select>
-        )}
-        <select className={SELECT} aria-label="Size" value={filters.size ?? ""} onChange={(e) => set({ size: (e.target.value || undefined) as UiFilters["size"] })}>
-          <option value="">Any size</option>
-          <option value="S">Small (&lt;100 lines)</option>
-          <option value="M">Medium</option>
-          <option value="L">Large (500+)</option>
-        </select>
-        <select className={SELECT} aria-label="Sort" value={filters.sort} onChange={(e) => set({ sort: e.target.value as UiFilters["sort"] })}>
-          <option value="oldest">Oldest first</option>
-          <option value="biggest">Biggest first</option>
-          <option value="risk">Most at risk</option>
-        </select>
+          </FilterSelect>
+          <FilterSelect label="Author" value={filters.author ?? ""} onChange={(v) => set({ author: v || undefined })}>
+            <option value="">Anyone</option>
+            {data?.authors.map((a) => (
+              <option key={a}>{a}</option>
+            ))}
+          </FilterSelect>
+          {data && data.labels.length > 0 && (
+            <FilterSelect label="Label" value={filters.label ?? ""} onChange={(v) => set({ label: v || undefined })}>
+              <option value="">Any</option>
+              {data.labels.map((l) => (
+                <option key={l}>{l}</option>
+              ))}
+            </FilterSelect>
+          )}
+          {data && data.teams.length > 0 && (
+            <FilterSelect label="Team" value={filters.teamId ?? ""} onChange={(v) => set({ teamId: v || undefined })}>
+              <option value="">Any</option>
+              {data.teams.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </FilterSelect>
+          )}
+          <FilterSelect label="Size" value={filters.size ?? ""} onChange={(v) => set({ size: (v || undefined) as UiFilters["size"] })}>
+            <option value="">Any</option>
+            <option value="S">Small (&lt;100 lines)</option>
+            <option value="M">Medium</option>
+            <option value="L">Large (500+)</option>
+          </FilterSelect>
+          <FilterSelect label="Sort" value={filters.sort} onChange={(v) => set({ sort: v as UiFilters["sort"] })}>
+            <option value="oldest">Oldest first</option>
+            <option value="biggest">Biggest first</option>
+            <option value="risk">Most at risk</option>
+          </FilterSelect>
+          <span className="bg-hairline mx-1 hidden h-5 w-px md:block" aria-hidden />
+          <ToggleChip on={filters.mine} label="Mine" onChange={(v) => set({ mine: v })} />
+          <ToggleChip on={filters.waitingOnMe} label="Waiting on me" onChange={(v) => set({ waitingOnMe: v })} />
+          <ToggleChip on={filters.priority} label="Priority" onChange={(v) => set({ priority: v })} />
+          <ToggleChip on={filters.includeDrafts} label="Drafts" onChange={(v) => set({ includeDrafts: v })} />
         </div>
-      </div>
-      <div className={cn("-mt-3 flex flex-wrap items-center gap-2", !filtersOpen && "max-md:hidden")}>
-        <Chip on={filters.mine} label="Mine" onChange={(v) => set({ mine: v })} />
-        <Chip on={filters.waitingOnMe} label="Waiting on me" onChange={(v) => set({ waitingOnMe: v })} />
-        <Chip on={filters.priority} label="Priority" onChange={(v) => set({ priority: v })} />
-        <Chip on={filters.includeDrafts} label="Show drafts" onChange={(v) => set({ includeDrafts: v })} />
-        <span className="flex-1" />
         {active && (
-          <Button size="sm" variant="ghost" onClick={() => router.replace(pathname)}>
-            Clear filters
-          </Button>
+          <span className="ml-auto flex items-center gap-1">
+            <Button size="sm" variant="ghost" onClick={() => router.replace(pathname)}>
+              Clear
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={saveView.isPending}
+              onClick={() => {
+                const name = prompt("Name this view")?.trim()
+                if (name) saveView.mutate({ workspaceId, name, query: toParams(filters) })
+              }}
+            >
+              Save view
+            </Button>
+          </span>
         )}
-        {active && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={saveView.isPending}
-            onClick={() => {
-              const name = prompt("Name this view")?.trim()
-              if (name) saveView.mutate({ workspaceId, name, query: toParams(filters) })
-            }}
-          >
-            Save view
-          </Button>
-        )}
-      </div>
+      </Toolbar>
       {views.data && views.data.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="text-muted-foreground">Views</span>
