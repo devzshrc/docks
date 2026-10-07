@@ -214,7 +214,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
               )}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto max-sm:-mx-4 max-sm:w-[calc(100%+2rem)] max-sm:px-4 sm:flex-wrap sm:overflow-visible [&>*]:shrink-0">
             <a href={pr.url} target="_blank" rel="noreferrer" className="tex-neutral flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium">
               GitHub <IconExternalLink className="size-3.5" aria-hidden />
             </a>
