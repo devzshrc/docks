@@ -66,6 +66,8 @@ const SETTINGS_TABS = [
 ]
 
 function activeIdFor(pathname: string) {
+  if (pathname.startsWith("/deadlines")) return "deadlines";
+  if (pathname.startsWith("/releases")) return "releases";
   if (pathname.startsWith("/inbox")) return "inbox";
   if (pathname.startsWith("/settings")) return "settings"
   if (pathname.startsWith("/insights")) return "insights"
@@ -164,6 +166,8 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
   const triageCount = triage.data?.triage ?? 0
 
   const nav = [
+    { id: "deadlines", label: "Deadlines", icon: ReviewsIcon, href: "/deadlines", count: 0 },
+    { id: "releases", label: "Releases", icon: IssuesIcon, href: "/releases", count: 0 },
     {
       id: "inbox",
       label: "Inbox",

@@ -1,5 +1,6 @@
 "use client"
 
+import { answerStillValid } from "@/lib/checklist"
 import type { Guide } from "@docks/api"
 import { IconFileCode } from "@tabler/icons-react"
 import { useReviewSession } from "@/hooks/use-review-session";
@@ -21,25 +22,23 @@ export function Checklist({
   const session = useReviewSession();
   const ids = items.map((item) => JSON.stringify([item.question, item.files]));
   const revision = `${storageKey}:${JSON.stringify(ids)}`;
-  const checked =
-    session.data.checklist.revision === revision
-      ? session.data.checklist.checked
-      : [];
-  const done = ids.flatMap((id, i) => (checked.includes(id) ? [i] : []));
+  const answers = session.data.checklist.answers ?? {};
+  const validAnswer = (id: string, files: string[]) => {
+    const answer = answers[id];
+    if (!answer) return session.data.checklist.revision === revision && session.data.checklist.checked.includes(id);
+    return answerStillValid(answer, files, session.headSha, session.fileShas, session.paid);
+  };
+  const done = ids.flatMap((id, i) => validAnswer(id, items[i]!.files) ? [i] : []);
   function toggle(i: number) {
     const id = ids[i]!;
+    const checked = done.includes(i);
     session.update((state) => {
-      const previous =
-        state.checklist.revision === revision ? state.checklist.checked : [];
-      return {
-        ...state,
-        checklist: {
-          revision,
-          checked: previous.includes(id)
-            ? previous.filter((x) => x !== id)
-            : [...previous, id],
-        },
-      };
+      const next = { ...(state.checklist.answers ?? {}) };
+      if (checked) delete next[id];
+      else next[id] = { headSha: session.headSha, files: Object.fromEntries(items[i]!.files.map((path) => [path, session.fileShas[path] ?? ""])) };
+      // Remove entries for questions no longer present in this guide.
+      for (const key of Object.keys(next)) if (!ids.includes(key)) delete next[key];
+      return { ...state, checklist: { revision, checked: checked ? ids.filter((key, j) => j !== i && done.includes(j)) : [...ids.filter((key, j) => done.includes(j)), id], answers: next } };
     });
   }
 
@@ -106,6 +105,7 @@ export function Checklist({
                     )}
                   >
                     {item.question}
+                    {!checked && answers[ids[i]!]?.headSha && <span className="ml-2 text-xs text-warning">Needs another check</span>}
                   </span>
                   {item.files.length > 0 && (
                     <span className="flex flex-wrap gap-1.5">

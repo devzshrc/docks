@@ -21,6 +21,7 @@ export const sessionData = z
     checklist: z.object({
       revision: z.string().max(100_000),
       checked: z.array(z.string().max(5000)).max(100),
+      answers: z.record(z.string().max(5000), z.object({ headSha: z.string().regex(/^[a-f0-9]{40}$/), files: z.record(z.string().max(500), z.string().max(100)).refine((v) => Object.keys(v).length <= 100) })).refine((v) => Object.keys(v).length <= 100).optional(),
     }),
     lastLocation: z
       .object({

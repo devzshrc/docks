@@ -15,6 +15,8 @@ const KINDS = {
   thread_reply: "Reply to your conversation",
   review_submitted: "Review on your PR",
   check_failed: "Check failed on your PR",
+  review_reminder: "Review deadline approaching",
+  review_overdue: "Review overdue",
 } as const;
 
 function Inbox({ workspaceId }: { workspaceId: string }) {

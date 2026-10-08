@@ -23,7 +23,7 @@ export interface ReviewSessionData {
     body: string;
     headSha: string;
   }[];
-  checklist: { revision: string; checked: string[] };
+  checklist: { revision: string; checked: string[]; answers?: Record<string, { headSha: string; files: Record<string, string> }> };
   lastLocation: { path: string; line?: number } | null;
 }
 

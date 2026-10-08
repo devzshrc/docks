@@ -241,3 +241,9 @@ export async function sendTestDigest(workspaceId: string) {
   const text = (await digestText(workspaceId)) ?? "No PRs are stuck waiting for review. Nice.";
   await post(integration.webhookUrlEncrypted, text);
 }
+
+/** Uses the existing configured channel. No new Slack scopes or direct messages. */
+export async function sendReviewAlert(workspaceId: string, text: string) {
+  const integration = await integrationFor(workspaceId);
+  if (integration) await post(integration.webhookUrlEncrypted, text);
+}

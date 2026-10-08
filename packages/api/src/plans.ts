@@ -63,3 +63,8 @@ export async function assertCanEnableRepo(workspaceId: string) {
     });
   }
 }
+
+/** Paid writes and automation stop on downgrade. Existing reports remain readable. */
+export async function assertTeam(workspaceId: string) {
+  if (await workspacePlan(workspaceId) !== "team") throw new TRPCError({ code: "FORBIDDEN", message: "This feature requires the Team plan." });
+}

@@ -1,3 +1,5 @@
+import { collectEvidence } from "../delivery/evidence.js";
+import { reconcileDeadlines } from "../delivery/deadlines.js";
 import { db, schema } from "@docks/db";
 import { track } from "../analytics.js";
 import { and, eq, isNull, notInArray, sql } from "drizzle-orm";
@@ -169,6 +171,8 @@ export async function syncPr(repoId: number, number: number) {
       repoId,
       prNumber: number,
       reviewerLogin: r.user!.login,
+      commitSha: r.commit_id ?? null,
+      userType: r.user!.type ?? null,
       state: r.state,
       submittedAt: new Date(r.submitted_at!),
     }));
@@ -264,6 +268,9 @@ export async function syncPr(repoId: number, number: number) {
       );
     }
   });
+
+  await collectEvidence(repoId, pr, reviews, checks);
+  await reconcileDeadlines(repoId, pr, reviews);
 
   // New, ready PR with nobody asked to review: auto-assign once if the repo wants it (plan M4).
   const [pullRow] = await db

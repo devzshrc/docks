@@ -18,6 +18,8 @@ export const INBOX_KINDS = [
   "thread_reply",
   "review_submitted",
   "check_failed",
+  "review_reminder",
+  "review_overdue",
 ] as const;
 export type InboxKind = (typeof INBOX_KINDS)[number];
 export interface InboxContext {

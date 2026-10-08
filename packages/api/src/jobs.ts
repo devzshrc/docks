@@ -10,6 +10,10 @@ export const MAX_ATTEMPTS = 5;
 
 /** Thrown by handlers when retrying can't help (bad credentials, invalid input). */
 export class PermanentJobError extends Error {}
+/** Scheduling delays do not consume the external-service retry budget. */
+export class RetryJobAtError extends Error {
+  constructor(public readonly runAfter: Date) { super("Deferred until working hours"); }
+}
 
 /** Enqueue unless an identical job is already queued (webhooks fire in bursts). */
 export async function enqueue(type: JobType, payload: Record<string, unknown>) {
@@ -55,6 +59,10 @@ export async function completeJob(id: number) {
 
 /** Exponential backoff: 30s, 1m, 2m, 4m, then give up. */
 export async function failJob(job: Job, error: unknown) {
+  if (error instanceof RetryJobAtError) {
+    await db.update(schema.jobs).set({ status: "queued", attempts: Math.max(0, job.attempts - 1), runAfter: error.runAfter }).where(eq(schema.jobs.id, job.id));
+    return;
+  }
   const giveUp = job.attempts >= MAX_ATTEMPTS || error instanceof PermanentJobError;
   await db
     .update(schema.jobs)
