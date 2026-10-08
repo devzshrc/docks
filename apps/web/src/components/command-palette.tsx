@@ -33,6 +33,7 @@ import { useTRPC } from "@/trpc/react"
 type IconDef = typeof Search01Icon
 
 const PAGES: { label: string; href: string; icon: IconDef }[] = [
+  { label: "Inbox", href: "/inbox", icon: Clock01Icon },
   { label: "Reviews", href: "/review", icon: DashboardCircleIcon },
   { label: "Issues", href: "/issues", icon: CheckListIcon },
   { label: "My issues", href: "/issues?view=mine", icon: CheckListIcon },

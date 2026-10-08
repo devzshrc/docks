@@ -8,6 +8,7 @@ import {
   completeJob,
   failJob,
   purgeOldPatches,
+  processInboxEvent,
   scheduleDigests,
   scheduleUserRepoSync,
   scheduleWeeklyReports,
@@ -24,6 +25,9 @@ import { syncUserRepos } from "./handlers/sync-user-repos.js";
 import { weeklyReport } from "./handlers/weekly-report.js";
 
 export const handlers: Record<Job["type"], (payload: unknown) => Promise<void>> = {
+  inbox_event: async (payload) => {
+    await processInboxEvent((payload as { eventId: string }).eventId);
+  },
   sync_repo: syncRepo,
   sync_pr: syncPr,
   generate_guide: generateGuide,

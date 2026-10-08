@@ -2,14 +2,14 @@
 
 import type { Guide } from "@docks/api"
 import { IconFileCode } from "@tabler/icons-react"
-import { useEffect, useState } from "react"
+import { useReviewSession } from "@/hooks/use-review-session";
 
 import { Count, DrawTick, useJustBecame } from "@/components/motion"
 import { cn } from "@/lib/utils"
 
 /**
  * Reviewer checklist questions linked to files (§5.3). Ticks are a personal
- * aid kept in this browser, per commit; they're never posted to GitHub.
+ * aid synchronized privately, per commit; they're never posted to GitHub.
  */
 export function Checklist({
   items,
@@ -18,22 +18,29 @@ export function Checklist({
   items: Guide["checklist"]
   storageKey: string
 }) {
-  const [done, setDone] = useState<number[]>([])
-
-  useEffect(() => {
-    try {
-      setDone(JSON.parse(localStorage.getItem(storageKey) ?? "[]"))
-    } catch {
-      setDone([])
-    }
-  }, [storageKey])
-
+  const session = useReviewSession();
+  const ids = items.map((item) => JSON.stringify([item.question, item.files]));
+  const revision = `${storageKey}:${JSON.stringify(ids)}`;
+  const checked =
+    session.data.checklist.revision === revision
+      ? session.data.checklist.checked
+      : [];
+  const done = ids.flatMap((id, i) => (checked.includes(id) ? [i] : []));
   function toggle(i: number) {
-    const next = done.includes(i) ? done.filter((d) => d !== i) : [...done, i]
-    setDone(next)
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(next))
-    } catch {}
+    const id = ids[i]!;
+    session.update((state) => {
+      const previous =
+        state.checklist.revision === revision ? state.checklist.checked : [];
+      return {
+        ...state,
+        checklist: {
+          revision,
+          checked: previous.includes(id)
+            ? previous.filter((x) => x !== id)
+            : [...previous, id],
+        },
+      };
+    });
   }
 
   const complete = items.length > 0 && done.length === items.length

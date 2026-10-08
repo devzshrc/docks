@@ -20,3 +20,10 @@ Postgres is Supabase, reached from the API Worker through Hyperdrive. Background
 - Node: `pnpm --filter @docks/server dev` (Express-free Hono server plus the poll loop).
 - Worker: copy secrets into `apps/server/.dev.vars`, then `pnpm --filter @docks/server cf:dev` (Hyperdrive uses the local Docker Postgres).
 - Web on Workers runtime: `pnpm --filter @docks/web preview`.
+
+## Review inbox and recovery rollout
+
+- Apply migration `0020_numerous_venom.sql` before deploying the API and web. It adds review events, personal inbox items, and private review sessions without changing existing data.
+- Subscribe the GitHub App to `pull_request`, `pull_request_review`, `pull_request_review_comment`, `check_run`, and `status` events. The existing job worker delivers inbox items. Only events received after deployment appear in the inbox.
+- Merge readiness reads branch protection and active rulesets with the connected user's GitHub permissions. If GitHub does not return complete requirements, the UI shows an unknown state and a link to GitHub.
+- Draft recovery uses server versions to detect concurrent edits. Local copies are scoped to the signed-in account. Users must explicitly choose a copy after a save conflict.

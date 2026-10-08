@@ -2,6 +2,7 @@ import { router } from "../trpc.js";
 import { adminRouter } from "./admin.js";
 import { billingRouter } from "./billing.js";
 import { healthRouter } from "./health.js";
+import { inboxRouter } from "./inbox.js";
 import { insightsRouter } from "./insights.js";
 import { integrationRouter } from "./integration.js";
 import { issueRouter } from "./issue.js";
@@ -20,6 +21,7 @@ export const appRouter = router({
   issue: issueRouter,
   issues: issuesRouter,
   people: peopleRouter,
+  inbox: inboxRouter,
   insights: insightsRouter,
   admin: adminRouter,
   billing: billingRouter,

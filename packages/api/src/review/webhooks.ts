@@ -1,6 +1,8 @@
 import { db, schema } from "@docks/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { captureInboxEvents } from "../inbox.js";
+import type { InboxPayload } from "./inbox-events.js";
 import { enqueue } from "../jobs.js";
 import type { GhIssueRest } from "./github.js";
 import { upsertIssue } from "./issues-sync.js";
@@ -18,13 +20,13 @@ export function verifyGithubSignature(rawBody: Buffer, signature: string | undef
   return expected.length === given.length && timingSafeEqual(expected, given);
 }
 
-interface Payload {
+interface Payload extends InboxPayload {
   action?: string;
   installation?: { id: number };
   repository?: { id: number };
-  pull_request?: { number: number };
+  pull_request?: InboxPayload["pull_request"];
   issue?: GhIssueRest;
-  check_run?: { pull_requests: { number: number }[] };
+  check_run?: InboxPayload["check_run"];
   check_suite?: { pull_requests: { number: number }[] };
 }
 
@@ -49,7 +51,13 @@ async function knownInstallation(id: number) {
 }
 
 /** Do the minimum inline; anything that calls GitHub per PR goes to the job queue. */
-export async function handleGithubEvent(event: string, payload: Payload) {
+export async function handleGithubEvent(
+  event: string,
+  payload: Payload,
+  deliveryId: string = createHmac("sha256", "inbox")
+    .update(JSON.stringify(payload))
+    .digest("hex"),
+) {
   const installationId = payload.installation?.id;
 
   if (event === "installation" && installationId) {
@@ -75,13 +83,26 @@ export async function handleGithubEvent(event: string, payload: Payload) {
   const repoId = payload.repository?.id;
   if (!repoId || !(await knownRepo(repoId))) return;
 
+  if (event === "status" && payload.sha) {
+    const pulls = await db.select({ number: schema.pullRequest.number, title: schema.pullRequest.title }).from(schema.pullRequest).where(and(eq(schema.pullRequest.repoId, repoId), eq(schema.pullRequest.headSha, payload.sha), eq(schema.pullRequest.state, "open")));
+    for (const pull of pulls) {
+      await captureInboxEvents(repoId, event, { ...payload, pull_request: { ...pull, head: { sha: payload.sha } } }, deliveryId);
+      await enqueue("sync_pr", { repoId, number: pull.number });
+    }
+    return;
+  }
+  await captureInboxEvents(repoId, event, payload, deliveryId);
+
   // Issue events carry the whole issue; store it without a round trip. (PRs also arrive as `issue_comment`.)
   if ((event === "issues" || event === "issue_comment") && payload.issue && !payload.issue.pull_request) {
     await upsertIssue(repoId, payload.issue);
     return;
   }
 
-  if (PR_EVENTS.has(event) && payload.pull_request) {
+  if (
+    (PR_EVENTS.has(event) || event === "pull_request_review_comment") &&
+    payload.pull_request
+  ) {
     await enqueue("sync_pr", { repoId, number: payload.pull_request.number });
     return;
   }

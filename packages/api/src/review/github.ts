@@ -150,9 +150,13 @@ export interface GhReview {
   user: GhUser | null;
   state: string;
   submitted_at: string | null;
+  commit_id?: string;
 }
 
 export interface GhCheckRun {
+  id?: number;
+  html_url?: string;
+  app?: { id: number };
   name: string;
   status: string;
   conclusion: string | null;
@@ -315,6 +319,12 @@ export function installationClient(installationId: number) {
   const { call, paginate, graphql } = clientFor(() => getInstallationToken(installationId));
   return {
     ...issueApi(call, paginate),
+    reviewComments: (repo: string, n: number) =>
+      paginate<{
+        id: number;
+        in_reply_to_id?: number;
+        user: { login: string } | null;
+      }>(`/repos/${repo}/pulls/${n}/comments?per_page=100`),
     listRepos: () =>
       paginate<GhRepo, { repositories: GhRepo[] }>(
         "/installation/repositories?per_page=100",
@@ -476,6 +486,63 @@ export function userClient(getToken: () => Promise<string>) {
   return {
     ...issueApi(call, paginate),
     me: () => call<GhUser>("/user"),
+    getPull: (repo: string, n: number) =>
+      call<GhPull>(`/repos/${repo}/pulls/${n}`),
+    mergeSnapshot: async (repo: string, n: number) => {
+      const [owner, name] = repo.split("/");
+      const snapshot =
+        (
+          await graphql<{
+            repository: { pullRequest: MergeSnapshot | null } | null;
+          }>(MERGE_QUERY, { owner, name, number: n })
+        ).repository?.pullRequest ?? null;
+      if (!snapshot) return null;
+      try {
+        const rules = await paginate<{
+          type: string;
+          parameters?: {
+            required_approving_review_count?: number;
+            required_review_thread_resolution?: boolean;
+            required_status_checks?: { context: string }[];
+          };
+        }>(
+          `/repos/${repo}/rules/branches/${encodeURIComponent(snapshot.baseRefName)}?per_page=100`,
+        );
+        const protection = snapshot.baseRef?.branchProtectionRule;
+        snapshot.requirements = {
+          known: true,
+          conversations: Boolean(
+            protection?.requiresConversationResolution ||
+            rules.some((r) => r.parameters?.required_review_thread_resolution),
+          ),
+          approvals: Math.max(
+            protection?.requiredApprovingReviewCount ?? 0,
+            ...rules.map(
+              (r) => r.parameters?.required_approving_review_count ?? 0,
+            ),
+          ),
+          checks: [
+            ...new Set([
+              ...(protection?.requiredStatusChecks?.map((c) => c.context) ??
+                []),
+              ...rules.flatMap(
+                (r) =>
+                  r.parameters?.required_status_checks?.map((c) => c.context) ??
+                  [],
+              ),
+            ]),
+          ],
+        };
+      } catch {
+        snapshot.requirements = {
+          known: false,
+          conversations: false,
+          approvals: 0,
+          checks: [],
+        };
+      }
+      return snapshot;
+    },
     /** Installations of our App this person can access. */
     installations: () =>
       paginate<{ id: number }, { installations: { id: number }[] }>(
@@ -495,12 +562,14 @@ export function userClient(getToken: () => Promise<string>) {
       event: "APPROVE" | "REQUEST_CHANGES" | "COMMENT",
       body: string,
       comments: NewLineComment[] = [],
+      headSha?: string,
     ) =>
       call<GhReview>(`/repos/${repo}/pulls/${n}/reviews`, {
         method: "POST",
         body: JSON.stringify({
           event,
           body,
+          ...(headSha ? { commit_id: headSha } : {}),
           comments: comments.map((c) => ({
             path: c.path,
             body: c.body,
@@ -579,10 +648,15 @@ export function userClient(getToken: () => Promise<string>) {
         method: "DELETE",
         body: JSON.stringify({ reviewers: logins }),
       }),
-    merge: (repo: string, n: number, method: "merge" | "squash" | "rebase") =>
+    merge: (
+      repo: string,
+      n: number,
+      method: "merge" | "squash" | "rebase",
+      sha: string,
+    ) =>
       call<{ merged: boolean; message: string }>(`/repos/${repo}/pulls/${n}/merge`, {
         method: "PUT",
-        body: JSON.stringify({ merge_method: method }),
+        body: JSON.stringify({ merge_method: method, sha }),
       }),
   };
 }
@@ -596,3 +670,76 @@ export async function getInstallation(installationId: number) {
 export function installUrl(state: string): string {
   return `https://github.com/apps/${env("GITHUB_APP_SLUG")}/installations/new?state=${encodeURIComponent(state)}`;
 }
+
+export interface MergeSnapshot {
+  headRefOid: string;
+  baseRefName: string;
+  baseRef: {
+    branchProtectionRule: {
+      requiresConversationResolution: boolean;
+      requiredApprovingReviewCount: number;
+      requiredStatusChecks: { context: string }[] | null;
+    } | null;
+  } | null;
+  requirements?: {
+    known: boolean;
+    conversations: boolean;
+    approvals: number;
+    checks: string[];
+  };
+  state: string;
+  isDraft: boolean;
+  mergeable: string;
+  mergeStateStatus: string;
+  reviewDecision: string | null;
+  viewerCanMergeAsAdmin: boolean;
+  commits: {
+    nodes: {
+      commit: {
+        statusCheckRollup: {
+          contexts: {
+            pageInfo: { hasNextPage: boolean };
+            nodes: (
+              | {
+                  __typename: "CheckRun";
+                  name: string;
+                  status: string;
+                  conclusion: string | null;
+                  detailsUrl: string | null;
+                  isRequired: boolean;
+                }
+              | {
+                  __typename: "StatusContext";
+                  context: string;
+                  state: string;
+                  targetUrl: string | null;
+                  isRequired: boolean;
+                }
+            )[];
+          };
+        } | null;
+      };
+    }[];
+  };
+  reviewThreads: {
+    pageInfo: { hasNextPage: boolean };
+    nodes: {
+      id: string;
+      isResolved: boolean;
+      comments: { nodes: { url: string }[] };
+    }[];
+  };
+}
+
+const MERGE_QUERY = `query($owner:String!,$name:String!,$number:Int!){
+  repository(owner:$owner,name:$name){ pullRequest(number:$number){
+    baseRefName baseRef{ branchProtectionRule{ requiresConversationResolution requiredApprovingReviewCount requiredStatusChecks{ context } } }
+    headRefOid state isDraft mergeable mergeStateStatus reviewDecision viewerCanMergeAsAdmin
+    commits(last:1){ nodes{ commit{ statusCheckRollup{ contexts(first:100){
+      pageInfo{hasNextPage} nodes{ __typename
+        ... on CheckRun{ name status conclusion detailsUrl isRequired(pullRequestNumber:$number) }
+        ... on StatusContext{ context state targetUrl isRequired(pullRequestNumber:$number) }
+      } } } } } }
+    reviewThreads(first:100){ pageInfo{hasNextPage} nodes{ id isResolved comments(first:1){nodes{url}} } }
+  } }
+}`;

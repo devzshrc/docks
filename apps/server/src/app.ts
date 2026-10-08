@@ -64,7 +64,11 @@ export function createApp(opts: { afterWebhook?: () => void } = {}) {
     }
     const event = c.req.header("x-github-event") ?? "";
     try {
-      await handleGithubEvent(event, JSON.parse(body.toString("utf8")));
+      await handleGithubEvent(
+        event,
+        JSON.parse(body.toString("utf8")),
+        c.req.header("x-github-delivery"),
+      );
       opts.afterWebhook?.();
       return c.json({ ok: true }, 202);
     } catch (err) {

@@ -66,6 +66,7 @@ const SETTINGS_TABS = [
 ]
 
 function activeIdFor(pathname: string) {
+  if (pathname.startsWith("/inbox")) return "inbox";
   if (pathname.startsWith("/settings")) return "settings"
   if (pathname.startsWith("/insights")) return "insights"
   if (pathname.startsWith("/team") || pathname.startsWith("/people")) return "team"
@@ -143,6 +144,14 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
     staleTime: 60_000,
     retry: false,
   })
+  const inbox = useQuery({
+    ...trpc.inbox.unreadCount.queryOptions({
+      workspaceId: workspace?.id ?? "",
+    }),
+    enabled: Boolean(workspace),
+    refetchInterval: 30_000,
+    retry: false,
+  });
   const waitingCount = waiting.data?.cards.length ?? 0
 
   // Open issues nobody has picked up: the triage queue.
@@ -155,6 +164,13 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
   const triageCount = triage.data?.triage ?? 0
 
   const nav = [
+    {
+      id: "inbox",
+      label: "Inbox",
+      icon: IssuesIcon,
+      href: "/inbox",
+      count: inbox.data ?? 0,
+    },
     { id: "reviews", label: "Reviews", icon: ReviewsIcon, href: "/review", count: waitingCount },
     { id: "issues", label: "Issues", icon: IssuesIcon, href: "/issues", count: triageCount },
     { id: "insights", label: "Insights", icon: InsightsIcon, href: "/insights", count: 0 },
