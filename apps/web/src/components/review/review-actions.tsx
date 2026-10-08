@@ -1,6 +1,6 @@
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -9,7 +9,7 @@ import { MentionTextarea } from "@/components/mention-textarea"
 import type { PendingComment } from "@/components/review/file-diff"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/toast"
-import { useDraft } from "@/hooks/use-draft"
+import { useReviewDraft, useReviewSession } from "@/hooks/use-review-session"
 import { optimistic } from "@/lib/optimistic"
 import { useTRPC } from "@/trpc/react"
 
@@ -27,35 +27,43 @@ const MERGE_STATE: Record<string, string> = {
 export function ReviewActions({
   repo,
   number,
+  headSha,
   canMerge,
   githubLogin,
   own = false,
   mergeableState = null,
   pending = [],
+  outdatedDrafts = false,
   onSubmitted,
   onDiscardPending,
 }: {
   repo: string
   number: number
+  headSha: string
   canMerge: boolean
   githubLogin: string | null
   /** GitHub refuses approvals and change requests from the PR's own author. */
   own?: boolean
   mergeableState?: string | null
   pending?: PendingComment[]
-  onSubmitted?: () => void
+  outdatedDrafts?: boolean
+  onSubmitted?: (comments: PendingComment[]) => void
   onDiscardPending?: () => void
 }) {
   const [method, setMethod] = useState<"squash" | "merge" | "rebase">("squash")
-  const blocked = mergeableState ? MERGE_STATE[mergeableState] : undefined
+  const legacyBlocked = mergeableState ? MERGE_STATE[mergeableState] : undefined
   const trpc = useTRPC()
+  const readiness = useQuery({ ...trpc.review.mergeReadiness.queryOptions({ repo, number }), staleTime: 15_000, refetchInterval: 30_000 })
+  const blocked = readiness.data?.state === "blocked" ? readiness.data.blockers[0]?.title : readiness.data?.state === "ready" ? undefined : legacyBlocked
   const queryClient = useQueryClient()
   const router = useRouter()
-  const [body, setBody] = useDraft(`draft:body:${repo}#${number}`, "")
+  const [body, setBody] = useReviewDraft(`draft:body:${repo}#${number}`)
+  const session = useReviewSession()
   const [error, setError] = useState<string>()
 
   const refresh = () =>
     Promise.all([
+      queryClient.invalidateQueries(trpc.review.mergeReadiness.queryFilter({ repo, number })),
       queryClient.invalidateQueries(trpc.review.get.queryFilter({ repo, number })),
       queryClient.invalidateQueries(trpc.review.board.queryFilter()),
     ])
@@ -63,13 +71,11 @@ export function ReviewActions({
   const submit = useMutation(
     trpc.review.submit.mutationOptions({
       // The comment box empties as soon as you send; it comes back if GitHub says no.
-      onMutate: () => {
-        const previous = body
-        setBody("")
-        return { previous }
-      },
+
       onSuccess: (_data, vars) => {
-        onSubmitted?.()
+        setBody((current) => current === vars.body ? "" : current)
+        onSubmitted?.(vars.comments ?? [])
+        void session.flush()
         const said = vars.event === "APPROVE" ? "Approved" : vars.event === "REQUEST_CHANGES" ? "Changes requested" : "Comment posted"
         // Keep a review session flowing: point at the next PR waiting on this person, from the cached board.
         const waiting = queryClient
@@ -83,7 +89,6 @@ export function ReviewActions({
         void refresh()
       },
       onError: (e, _vars, ctx) => {
-        if (ctx) setBody(ctx.previous)
         setError(e.message)
       },
     })
@@ -121,11 +126,18 @@ export function ReviewActions({
       setError("Add a comment first")
       return
     }
-    submit.mutate({ repo, number, event, body, comments: pending })
+    if (outdatedDrafts) { setError("Inspect outdated comment locations first"); return }
+    submit.mutate({ repo, number, headSha, event, body, comments: pending })
   }
 
   return (
     <div className="bg-background/95 border-hairline sticky bottom-0 space-y-3 border-t p-4 backdrop-blur">
+      <section aria-label="Merge readiness" className="space-y-1 text-xs">
+        <div className="flex items-center gap-2"><strong>Merge readiness</strong><span>{readiness.isPending ? "Checking GitHub…" : readiness.data?.state === "ready" ? "Ready" : readiness.data?.state === "blocked" ? "Blocked" : "Unable to verify"}</span><button type="button" className="underline" onClick={() => void readiness.refetch()}>Refresh</button></div>
+        {readiness.data?.blockers.map((b, i) => <p key={i}>{b.url ? <a href={b.url} target="_blank" rel="noreferrer" className="underline">{b.title}</a> : b.title}</p>)}
+        {readiness.data?.warnings.map((w, i) => <p key={i} className="text-muted-foreground">{w}</p>)}
+        <a href={`https://github.com/${repo}/pull/${number}`} target="_blank" rel="noreferrer" className="underline">Inspect requirements on GitHub</a>
+      </section>
       <MentionTextarea
         value={body}
         onChange={(v) => {
@@ -166,7 +178,7 @@ export function ReviewActions({
               title={blocked}
               onClick={() => {
                 setError(undefined)
-                merge.mutate({ repo, number, method })
+                merge.mutate({ repo, number, method, headSha })
               }}
             >
               Merge

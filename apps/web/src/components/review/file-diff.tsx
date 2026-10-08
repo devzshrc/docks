@@ -16,7 +16,7 @@ import { VirtualTable } from "@/components/review/virtual-rows"
 import { toast } from "@/components/toast"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { useDraft } from "@/hooks/use-draft"
+import { useReviewDraft, useReviewSession } from "@/hooks/use-review-session"
 import { optimistic } from "@/lib/optimistic"
 import {
   addedLines,
@@ -140,8 +140,9 @@ function Composer({
   onCancel: () => void
 }) {
   const trpc = useTRPC()
-  const [body, setBody] = useDraft(`draft:line:${repo}#${number}:${path}:${side}:${line}`, "")
-  const post = useMutation(trpc.review.comment.mutationOptions({ onSuccess: onPosted }))
+  const session = useReviewSession()
+  const [body, setBody] = useReviewDraft(`draft:line:${repo}#${number}:${path}:${side}:${line}@${session.headSha}`)
+  const post = useMutation(trpc.review.comment.mutationOptions({ onSuccess: (_data, vars) => { setBody((current) => current === vars.body ? "" : current); void session.flush(); onPosted() } }))
   return (
     <div className="bg-muted/40 animate-in fade-in slide-in-from-top-1 space-y-2 border-y p-2 font-sans duration-150">
       <div className="flex flex-wrap items-center gap-1.5">
@@ -164,7 +165,7 @@ function Composer({
       </div>
       <MentionTextarea value={body} onChange={setBody} rows={3} autoFocus placeholder="Leave a comment" aria-label={`Comment on line ${line}`} />
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" disabled={!body.trim()} onClick={() => onAddPending({ path, line, startLine, side, body })}>
+        <Button size="sm" disabled={!body.trim()} onClick={() => { onAddPending({ path, line, startLine, side, body }); setBody("") }}>
           Add to review
         </Button>
         <Button size="sm" variant="outline" disabled={!body.trim()} pending={post.isPending} onClick={() => post.mutate({ repo, number, path, line, startLine, side, body })}>
@@ -189,7 +190,7 @@ function ThreadView({ thread, repo, number, branch, canAct, onChanged }: { threa
   const [open, setOpen] = useState(!thread.isResolved)
   // Resolving folds the thread away; unresolving opens it again.
   useEffect(() => setOpen(!thread.isResolved), [thread.isResolved])
-  const [reply, setReply] = useDraft(`draft:reply:${repo}#${number}:${thread.id}`, "")
+  const [reply, setReply] = useReviewDraft(`draft:reply:${repo}#${number}:${thread.id}`)
   const queryClient = useQueryClient()
   const threadsFilter = trpc.review.threads.queryFilter({ repo, number })
   // Reply and resolve show up at once; GitHub's answer replaces them when it arrives.
@@ -269,7 +270,7 @@ function ThreadView({ thread, repo, number, branch, canAct, onChanged }: { threa
             <div className="space-y-2">
               <MentionTextarea value={reply} onChange={setReply} rows={2} placeholder="Reply" aria-label="Reply" />
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" disabled={!reply.trim()} pending={send.isPending} onClick={() => { const text = reply; setReply(""); send.mutate({ repo, number, commentId: thread.comments[0]!.id, body: text }, { onError: () => setReply(text) }) }}>
+                <Button size="sm" variant="outline" disabled={!reply.trim()} pending={send.isPending} onClick={() => { const text = reply; send.mutate({ repo, number, commentId: thread.comments[0]!.id, body: text }, { onSuccess: () => setReply((current) => current === text ? "" : current) }) }}>
                   Reply
                 </Button>
                 <Button size="sm" variant="ghost" pending={resolve.isPending} onClick={() => resolve.mutate({ repo, number, threadId: thread.id, resolve: !thread.isResolved })}>
@@ -426,6 +427,7 @@ export function FileDiff({
             aria-label={`Comment on ${side === "LEFT" ? "old" : "new"} line ${n}`}
             onClick={(e) => pick(e, n, side)}
             data-text={text}
+            data-review-line={side === "RIGHT" ? n : undefined}
           >
             <IconMessagePlus className="absolute top-0.5 -left-1 size-3.5 text-primary-text opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />
             {num}
@@ -519,6 +521,23 @@ export function FileDiff({
       </tr>
     )
   }
+
+  const [resumeLine, setResumeLine] = useState<number | null>(null)
+  useEffect(() => {
+    const resume = (event: Event) => {
+      const detail = (event as CustomEvent<{ path: string; line?: number }>).detail
+      if (detail.path === file.filename && detail.line) { setOpen(true); setNear(true); setResumeLine(detail.line) }
+    }
+    window.addEventListener("review-resume", resume)
+    return () => window.removeEventListener("review-resume", resume)
+  }, [file.filename])
+  useEffect(() => {
+    if (!resumeLine || !rendered) return
+    const at = mode === "split" ? splitRows.findIndex((r) => r.kind !== "hunk" && r.right?.newNo === resumeLine) : shown.findIndex((r) => r.newNo === resumeLine)
+    if (at >= 0 && jump.current) jump.current.scrollTo(at)
+    else section.current?.querySelector<HTMLElement>(`[data-review-line="${resumeLine}"]`)?.scrollIntoView({ block: "center" })
+    setResumeLine(null)
+  }, [resumeLine, rendered, mode, splitRows, shown])
 
   function unifiedRow(i: number) {
     const line = shown[i]!

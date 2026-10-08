@@ -39,3 +39,6 @@ export { protectedProcedure, publicProcedure, router } from "./trpc.js";
 export type { RoutingRule } from "@docks/db";
 export type { BlameRange, GhIssue } from "./review/github.js";
 export type { LinearIssue } from "./linear.js";
+
+export { processInboxEvent } from "./inbox.js";
+export type { ReviewSessionData } from "@docks/db";

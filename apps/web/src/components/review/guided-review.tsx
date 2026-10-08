@@ -25,8 +25,9 @@ import { ReviewerPicker } from "@/components/review/reviewer-picker"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import { useDraft } from "@/hooks/use-draft"
+import { ReviewSessionProvider, useReviewSession } from "@/hooks/use-review-session"
 import { commentLabel } from "@/lib/diff"
+import { useSession } from "@/lib/auth-client"
 import { useTRPC } from "@/trpc/react"
 
 /** One row of the details panel: fixed label column, controls aligned on a shared left edge. */
@@ -47,6 +48,11 @@ function CheckIcon({ status, conclusion }: { status: string; conclusion: string 
 
 /** Guided review view (plan.md §5.3): header, ranked file list, diffs, actions. */
 export function GuidedReview({ repo, number }: { repo: string; number: number }) {
+  const { data: auth } = useSession()
+  return <ReviewSessionProvider key={`${auth?.user.id ?? "loading"}:${repo}#${number}`} repo={repo} number={number}><GuidedReviewContent repo={repo} number={number} /></ReviewSessionProvider>
+}
+
+function GuidedReviewContent({ repo, number }: { repo: string; number: number }) {
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const queryOptions = trpc.review.get.queryOptions({ repo, number })
@@ -57,7 +63,9 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
     refetchInterval: (q) => (q.state.data?.status === "pending" ? 3_000 : false),
   })
   const [activeStep, setActiveStep] = useState<number | null>(null)
-  const [pending, setPending] = useDraft<PendingComment[]>(`draft:comments:${repo}#${number}`, [])
+  const session = useReviewSession()
+  const pending = session.data.pending
+  const setPending = (next: PendingComment[] | ((all: PendingComment[]) => PendingComment[])) => session.update((state) => ({ ...state, pending: (typeof next === "function" ? next(state.pending) : next).map((c) => ({ ...c, id: "id" in c ? String(c.id) : crypto.randomUUID(), headSha: "headSha" in c ? String(c.headSha) : session.headSha })) }))
   const [sinceOnly, setSinceOnly] = useState(false)
   // Phones: PR details and the file list start folded so the diff is one scroll away.
   const [detailsOpen, setDetailsOpen] = useState(false)
@@ -76,7 +84,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
   }
   const threads = useQuery(trpc.review.threads.queryOptions({ repo, number }))
   const since = useQuery(trpc.review.sinceLastReview.queryOptions({ repo, number }))
-  const refreshThreads = () => queryClient.invalidateQueries(trpc.review.threads.queryFilter({ repo, number }))
+  const refreshThreads = () => Promise.all([queryClient.invalidateQueries(trpc.review.threads.queryFilter({ repo, number })), queryClient.invalidateQueries(trpc.review.mergeReadiness.queryFilter({ repo, number }))])
 
   const markViewed = useMutation(
     trpc.review.markViewed.mutationOptions({
@@ -103,6 +111,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
   // Keyboard review mode. Reads live from the query cache so the handler never goes stale.
   const filesNow = () => queryClient.getQueryData(queryOptions.queryKey)?.files ?? []
   function jumpTo(path: string) {
+    session.update((state) => ({ ...state, lastLocation: { path } }))
     const id = `file-${path}`
     if (decodeURIComponent(location.hash) === `#${id}`) {
       const el = document.getElementById(id)
@@ -169,10 +178,28 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
     return () => window.removeEventListener("keydown", onKey)
   }, [])
 
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const capture = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        const path = keys.current.currentFile()
+        if (!path) return
+        const section = document.getElementById(`file-${path}`)
+        const lines = section ? [...section.querySelectorAll<HTMLElement>("[data-review-line]")] : []
+        const line = lines.find((el) => el.getBoundingClientRect().top >= 130)
+        session.update((state) => ({ ...state, lastLocation: { path, ...(line ? { line: Number(line.dataset.reviewLine) } : {}) } }))
+      }, 500)
+    }
+    window.addEventListener("scroll", capture, { passive: true })
+    return () => { clearTimeout(timer); window.removeEventListener("scroll", capture) }
+  }, [])
+
   if (data.isPending) return <Skeleton className="h-64 w-full" />
   if (data.error) return <p className="text-destructive text-sm">{data.error.message}</p>
 
   const { pr, files, reviewers, checks, me } = data.data
+  const outdatedDrafts = pending.some((c) => c.headSha !== pr.headSha)
   const viewed = files.filter((f) => f.viewed).length
   const ready = guide.data?.status === "ready" ? guide.data.guide : null
   const stepFiles =
@@ -190,6 +217,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
 
   return (
     <div className="animate-in fade-in flex flex-col gap-6 pb-20 duration-300">
+      {session.data.lastLocation && <button type="button" className="text-xs underline" onClick={() => { const location = session.data.lastLocation; if (location && files.some((f) => f.filename === location.path)) { jumpTo(location.path); window.dispatchEvent(new CustomEvent("review-resume", { detail: location })) } else document.querySelector('section[id^="file-"]')?.scrollIntoView() }}>Resume review at {session.data.lastLocation.path}</button>}
       <header className="space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <div className="min-w-0 flex-1 space-y-2">
@@ -470,6 +498,8 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
         </dl>
       </dialog>
 
+
+      {outdatedDrafts && <div role="alert" className="rounded-lg border p-3 text-sm">Some pending comments refer to an earlier commit. Inspect their locations before submission.{pending.filter((c) => c.headSha !== pr.headSha).map((c) => <div key={c.id} className="mt-2"><span>{c.path}:{c.line}</span><p className="whitespace-pre-wrap">{c.body}</p><button type="button" className="mr-3 underline" onClick={() => { jumpTo(c.path); }}>Inspect file</button><button type="button" className="mr-3 underline" onClick={() => session.update((state) => ({ ...state, pending: state.pending.map((draft) => draft.id === c.id ? { ...draft, headSha: pr.headSha } : draft) }))}>Confirm location for this commit</button><button type="button" className="underline" onClick={() => session.update((state) => ({ ...state, pending: state.pending.filter((draft) => draft.id !== c.id) }))}>Discard comment</button></div>)}</div>}
       {pr.state === "open" && data.data.canAct && (
         <div id="review-actions" className="scroll-mt-24">
         <ReviewActions
@@ -477,11 +507,13 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
           number={number}
           githubLogin={me}
           own={Boolean(me) && pr.author.toLowerCase() === me!.toLowerCase()}
-          canMerge={pr.column === "approved" && !pr.draft}
+          headSha={pr.headSha}
+          canMerge={!pr.draft}
           mergeableState={pr.mergeableState}
           pending={pending}
-          onSubmitted={() => {
-            setPending([])
+          outdatedDrafts={outdatedDrafts}
+          onSubmitted={(submitted) => {
+            session.update((state) => ({ ...state, pending: state.pending.filter((c) => !submitted.some((sent) => sent.path === c.path && sent.line === c.line && sent.side === c.side && sent.body === c.body)) }))
             void refreshThreads()
             void queryClient.invalidateQueries(trpc.review.sinceLastReview.queryFilter({ repo, number }))
           }}
