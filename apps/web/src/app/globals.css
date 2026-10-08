@@ -66,7 +66,7 @@
   --sidebar-border: rgb(15 23 42 / 0.08);
   --sidebar-ring: #2D6E9E;
   /* next/font sets the --font-*-face variables on <html> (see app/layout.tsx). */
-  --font-sans: var(--font-space-grotesk-face), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter-face), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-source-serif-face), ui-serif, serif;
   --font-display: var(--font-display-face), var(--font-source-serif-face), ui-serif, serif;
   /* UI monospace: branch names, paths, numbers. */
@@ -85,6 +85,11 @@
   --shadow-2xl: 0 24px 56px -12px rgb(0 0 0 / 0.22);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+  --success-foreground: var(--color-emerald-900);
+  --info-foreground: var(--color-violet-900);
+  --warning-foreground: var(--color-yellow-900);
+  --invert: var(--color-zinc-900);
+  --invert-foreground: var(--color-zinc-50);
 }
 
 .dark {
@@ -137,6 +142,12 @@
   --shadow-lg: 0 8px 24px -4px rgb(0 0 0 / 0.5);
   --shadow-xl: 0 16px 40px -8px rgb(0 0 0 / 0.55);
   --shadow-2xl: 0 24px 56px -12px rgb(0 0 0 / 0.6);
+  --destructive-foreground: var(--color-red-600);
+  --success-foreground: var(--color-emerald-600);
+  --info-foreground: var(--color-violet-600);
+  --warning-foreground: var(--color-yellow-600);
+  --invert: var(--color-zinc-700);
+  --invert-foreground: var(--color-zinc-50);
 }
 
 @theme {
@@ -227,6 +238,11 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+  --color-invert-foreground: var(--invert-foreground);
+  --color-invert: var(--invert);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info-foreground: var(--info-foreground);
+  --color-success-foreground: var(--success-foreground);
 }
 
 @layer base {
@@ -531,7 +547,6 @@ pre, code, kbd { font-family: var(--font-code); }
 @keyframes reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes bar-in { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
 @keyframes spin { to { transform: rotate(360deg); } }
-
 
 /* ───────────── Borderless surfaces and ObsidianUI motion ─────────────
    Panels are separated by fill (background, card, muted), not lines. Inputs are filled controls with a brand focus ring. */
