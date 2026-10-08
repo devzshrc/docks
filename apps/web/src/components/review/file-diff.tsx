@@ -594,8 +594,8 @@ export function FileDiff({
   const threadCount = threads.filter((t) => !t.isResolved).length
 
   return (
-    <section ref={section} id={`file-${file.filename}`} data-viewed={file.viewed || undefined} className="bg-card border-hairline scroll-mt-16 rounded-xl border">
-      <header className="bg-card/95 border-hairline sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-t-xl border-b px-3 py-2 text-sm backdrop-blur max-sm:gap-1.5 max-sm:py-1.5">
+    <section ref={section} id={`file-${file.filename}`} data-viewed={file.viewed || undefined} className="bg-card scroll-mt-16 rounded-lg border shadow-xs">
+      <header className="bg-card/95 border-hairline sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-t-lg border-b px-3 py-2 text-sm backdrop-blur max-sm:gap-1.5 max-sm:py-1.5">
         <button type="button" onClick={() => setOpen((o) => !o)} className="flex min-w-[12rem] flex-1 items-center gap-2 text-left" aria-expanded={open}>
           {open ? <IconChevronDown className="size-4 shrink-0" aria-hidden /> : <IconChevronRight className="size-4 shrink-0" aria-hidden />}
           <span className="truncate font-mono text-xs">{file.filename}</span>

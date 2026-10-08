@@ -6,14 +6,8 @@ import { useState } from "react"
 import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Frame, FramePanel } from "@/components/reui/frame"
+import { Timeline, TimelineContent, TimelineDate, TimelineHeader, TimelineIndicator, TimelineItem, TimelineSeparator, TimelineTitle } from "@/components/reui/timeline"
 import { useWorkspace } from "@/hooks/use-workspace"
 import { useTRPC } from "@/trpc/react"
 
@@ -38,7 +32,7 @@ function Log({ workspaceId }: { workspaceId: string }) {
       <div className="flex flex-wrap gap-2">
         <select
           aria-label="Filter by action"
-          className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-lg border px-2 text-sm"
+          className="bg-background hover:bg-muted h-8 rounded-lg border px-2 text-sm shadow-xs"
           value={action}
           onChange={(e) => setAction(e.target.value)}
         >
@@ -51,7 +45,7 @@ function Log({ workspaceId }: { workspaceId: string }) {
         </select>
         <select
           aria-label="Filter by person"
-          className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-lg border px-2 text-sm"
+          className="bg-background hover:bg-muted h-8 rounded-lg border px-2 text-sm shadow-xs"
           value={actorId}
           onChange={(e) => setActorId(e.target.value)}
         >
@@ -68,36 +62,31 @@ function Log({ workspaceId }: { workspaceId: string }) {
       ) : log.data.length === 0 ? (
         <p className="text-muted-foreground text-sm">Nothing recorded yet.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-44">When</TableHead>
-                <TableHead>Who</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Target</TableHead>
-                <TableHead>Details</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {log.data.map((e) => (
-                <TableRow key={e.id}>
-                  <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
-                    {new Date(e.at).toLocaleString()}
-                  </TableCell>
-                  <TableCell>{e.actorName ?? "Removed user"}</TableCell>
-                  <TableCell className="font-mono text-xs">{e.action}</TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {members.data?.find((m) => m.userId === e.target)?.name ?? e.target ?? ""}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground font-mono text-xs">
-                    {e.meta ? JSON.stringify(e.meta) : ""}
-                  </TableCell>
-                </TableRow>
+        <Frame spacing="sm">
+          <FramePanel className="px-6 py-5">
+            <Timeline value={log.data.length}>
+              {log.data.map((e, i) => (
+                <TimelineItem key={e.id} step={i + 1} className="group-data-[orientation=vertical]/timeline:ms-8 group-data-[orientation=vertical]/timeline:not-last:pb-6">
+                  <TimelineHeader>
+                    <TimelineSeparator className="group-data-[orientation=vertical]/timeline:-left-6 group-data-[orientation=vertical]/timeline:h-[calc(100%-1rem-0.25rem)] group-data-[orientation=vertical]/timeline:translate-y-5" />
+                    <TimelineDate className="mb-1 text-xs">{new Date(e.at).toLocaleString()}</TimelineDate>
+                    <TimelineTitle>
+                      {e.actorName ?? "Removed user"} <span className="text-muted-foreground font-normal">·</span>{" "}
+                      <span className="font-mono text-xs font-normal">{e.action}</span>
+                    </TimelineTitle>
+                    <TimelineIndicator className="group-data-[orientation=vertical]/timeline:-left-6 size-3 border-2" />
+                  </TimelineHeader>
+                  {(e.target || e.meta != null) && (
+                    <TimelineContent className="mt-1 space-y-0.5 font-mono text-xs">
+                      {e.target && <p>{members.data?.find((m) => m.userId === e.target)?.name ?? e.target}</p>}
+                      {e.meta != null && <p className="text-text-3 break-all">{JSON.stringify(e.meta)}</p>}
+                    </TimelineContent>
+                  )}
+                </TimelineItem>
               ))}
-            </TableBody>
-          </Table>
-        </div>
+            </Timeline>
+          </FramePanel>
+        </Frame>
       )}
     </div>
   )

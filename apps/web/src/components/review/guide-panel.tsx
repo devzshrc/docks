@@ -42,7 +42,7 @@ export function GuidePanel({
 
   if (!state || state.status === "pending") {
     return (
-      <section className="space-y-2 bg-card border-hairline rounded-xl border p-4" aria-busy="true">
+      <section className="space-y-2 bg-card rounded-lg border shadow-xs p-4" aria-busy="true">
         <p className="text-muted-foreground flex items-center gap-2 text-sm">
           <IconSparkles className="size-4" aria-hidden />
           Building the review guide…
@@ -57,7 +57,7 @@ export function GuidePanel({
   const ai = guide.source === "ai"
 
   return (
-    <section className="space-y-3 bg-card border-hairline rounded-xl border p-4">
+    <section className="space-y-3 bg-card rounded-lg border shadow-xs p-4">
       <div className="flex items-start gap-2">
         <p className="flex-1 text-sm">
           {ai && <IconSparkles className="text-muted-foreground mr-1.5 inline size-4" aria-label="AI summary" />}
