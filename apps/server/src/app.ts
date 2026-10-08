@@ -96,9 +96,11 @@ export function createApp(opts: { afterWebhook?: () => void } = {}) {
     Response.redirect(`${clientUrl()}/settings/integrations?${query}=${status}`, 302);
 
   app.get("/integrations/github/callback", async (c) => {
-    const back = backTo("github");
+    const [workspaceId = "", returnTo] = (c.req.query("state") ?? "").split(".");
+    const back = returnTo === "onboarding"
+      ? (status: string) => Response.redirect(`${clientUrl()}/review?github=${status}`, 302)
+      : backTo("github");
     const installationId = Number(c.req.query("installation_id"));
-    const workspaceId = c.req.query("state") ?? "";
     if (!Number.isInteger(installationId) || !workspaceId) return back("invalid");
     const user = await sessionUser(c.req.raw);
     if (!user) return back("signed-out");

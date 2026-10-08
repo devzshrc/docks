@@ -7,7 +7,7 @@ import { linearOrg, linearTeams } from "../linear.js";
 import { z } from "zod";
 import { assertCan, assertMember, audit, can } from "../access.js";
 import { getInstallation, installUrl } from "../review/github.js";
-import { authorizeUrl, githubAs, githubIdentity } from "../review/github-user.js";
+import { authorizeUrl, githubAs, githubIdentity, syncUserRepos } from "../review/github-user.js";
 import { linkInstallation } from "../review/sync.js";
 import { isValidTimezone, sendTestDigest, slackConnectUrl } from "../slack.js";
 import { protectedProcedure, router } from "../trpc.js";
@@ -15,11 +15,18 @@ import { protectedProcedure, router } from "../trpc.js";
 export const integrationRouter = router({
   /** The setup callback re-checks membership, so the workspace id is safe as `state`. */
   githubInstallUrl: protectedProcedure
-    .input(z.object({ workspaceId: z.string() }))
+    .input(z.object({ workspaceId: z.string(), returnTo: z.enum(["onboarding"]).optional() }))
     .query(async ({ ctx, input }) => {
       await assertCan(ctx.user.id, input.workspaceId, "integrations.manage");
-      return { url: installUrl(input.workspaceId) };
+      // `<workspaceId>.onboarding` sends the person back to onboarding instead of Settings (ids are UUIDs, no dots).
+      return { url: installUrl(input.returnTo ? `${input.workspaceId}.${input.returnTo}` : input.workspaceId) };
     }),
+  /** Refresh which repos this person can open on GitHub now, instead of waiting for the background job. */
+  syncMyAccess: protectedProcedure.mutation(async ({ ctx }) => {
+    if (!(await githubIdentity(ctx.user.id))) return { ok: false };
+    await syncUserRepos(ctx.user.id);
+    return { ok: true };
+  }),
   /**
    * Installations of our App this person can reach on GitHub. GitHub only redirects back after
    * a fresh install, so this is how an install that already exists gets linked to a workspace.
