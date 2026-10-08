@@ -5,14 +5,8 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
 
-import {
-  DashboardButton,
-  DashboardMenu,
-  DashboardMenuContent,
-  DashboardMenuRadioGroup,
-  DashboardMenuRadioItem,
-  DashboardMenuTrigger,
-} from "@/components/obsidian/dashboard-shell"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 
 /** One icon button; the menu offers Light, Dark and System, and colours cross-fade when it changes. */
 export function ThemeToggle() {
@@ -29,19 +23,19 @@ export function ThemeToggle() {
   }
 
   return (
-    <DashboardMenu>
-      <DashboardMenuTrigger asChild>
-        <DashboardButton variant="secondary" size="icon" aria-label="Color theme">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="secondary" size="icon" aria-label="Color theme">
           <HugeiconsIcon key={String(dark)} icon={dark ? Moon02Icon : Sun03Icon} size={16} className="animate-in spin-in-45 zoom-in-50 fade-in duration-300" />
-        </DashboardButton>
-      </DashboardMenuTrigger>
-      <DashboardMenuContent align="end" className="w-36">
-        <DashboardMenuRadioGroup value={mounted ? (theme ?? "system") : "system"} onValueChange={choose}>
-          <DashboardMenuRadioItem value="light">Light</DashboardMenuRadioItem>
-          <DashboardMenuRadioItem value="dark">Dark</DashboardMenuRadioItem>
-          <DashboardMenuRadioItem value="system">System</DashboardMenuRadioItem>
-        </DashboardMenuRadioGroup>
-      </DashboardMenuContent>
-    </DashboardMenu>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-36">
+        <DropdownMenuRadioGroup value={mounted ? (theme ?? "system") : "system"} onValueChange={choose}>
+          <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

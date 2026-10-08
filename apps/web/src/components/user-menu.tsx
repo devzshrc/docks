@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
-import { DashboardMenu, DashboardMenuContent, DashboardMenuItem, DashboardMenuLabel, DashboardMenuSeparator, DashboardMenuTrigger } from "@/components/obsidian/dashboard-shell"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { PersonAvatar } from "@/components/person-avatar"
 import { authClient, useSession } from "@/lib/auth-client"
 
@@ -15,8 +15,8 @@ export function UserMenu() {
   if (!user) return null
 
   return (
-    <DashboardMenu>
-      <DashboardMenuTrigger asChild>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <button
           type="button"
           className="hover:bg-hover flex w-full min-w-0 items-center gap-2.5 rounded-lg p-1 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
@@ -27,14 +27,14 @@ export function UserMenu() {
             <span className="text-muted-foreground truncate text-xs">{user.email}</span>
           </span>
         </button>
-      </DashboardMenuTrigger>
-      <DashboardMenuContent side="top" align="start" className="w-56">
-        <DashboardMenuLabel>Signed in as {user.name}</DashboardMenuLabel>
-        <DashboardMenuItem asChild>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="top" align="start" className="w-56">
+        <DropdownMenuLabel>Signed in as {user.name}</DropdownMenuLabel>
+        <DropdownMenuItem asChild>
           <Link href="/settings/account">Account and security</Link>
-        </DashboardMenuItem>
-        <DashboardMenuSeparator />
-        <DashboardMenuItem
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
           onSelect={async () => {
             await authClient.signOut()
             router.push("/login")
@@ -42,8 +42,8 @@ export function UserMenu() {
           }}
         >
           Sign out
-        </DashboardMenuItem>
-      </DashboardMenuContent>
-    </DashboardMenu>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

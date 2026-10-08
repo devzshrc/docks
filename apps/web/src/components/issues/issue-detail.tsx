@@ -9,7 +9,7 @@ import { GhAvatar } from "@/components/gh-avatar"
 import { AssigneeMenu, LabelMenu, MilestoneMenu } from "@/components/issues/pickers"
 import { age, LabelChip, STATUS_LABEL, StateIcon, type Outputs } from "@/components/issues/shared"
 import { useIssueActions } from "@/components/issues/use-issue-actions"
-import { DashboardMenu, DashboardMenuContent, DashboardMenuItem, DashboardMenuTrigger } from "@/components/obsidian/dashboard-shell"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Panel } from "@/components/panel"
 import { QueryError } from "@/components/query-state"
 import { FixWithAgent } from "@/components/review/agent-handoff"
@@ -46,18 +46,18 @@ function CloseMenu({ issue, onClose }: { issue: Issue; onClose: (reason: "comple
   const choices = (similar.data?.items ?? []).filter((s) => s.number !== issue.number)
   return (
     <>
-      <DashboardMenu>
-        <DashboardMenuTrigger asChild>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button size="sm" variant="outline">
             Close issue
           </Button>
-        </DashboardMenuTrigger>
-        <DashboardMenuContent align="end" className="w-56">
-          <DashboardMenuItem onSelect={() => onClose("completed")}>Close as completed</DashboardMenuItem>
-          <DashboardMenuItem onSelect={() => onClose("not_planned")}>Close as not planned</DashboardMenuItem>
-          <DashboardMenuItem onSelect={() => setDup(true)}>Close as duplicate…</DashboardMenuItem>
-        </DashboardMenuContent>
-      </DashboardMenu>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem onSelect={() => onClose("completed")}>Close as completed</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onClose("not_planned")}>Close as not planned</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setDup(true)}>Close as duplicate…</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       {dup && (
         <div className="bg-card border-hairline fixed inset-x-4 top-24 z-50 mx-auto w-full max-w-md space-y-3 rounded-xl border p-4 shadow-lg" role="dialog" aria-label="Close as duplicate">
           <p className="text-sm font-medium">Duplicate of which issue?</p>
