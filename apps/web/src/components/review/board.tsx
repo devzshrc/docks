@@ -5,6 +5,8 @@ import { useEffect, useRef } from "react"
 
 import { Count } from "@/components/motion"
 import { BoardCard } from "@/components/review/board-card"
+import { Frame, FrameHeader, FrameTitle } from "@/components/reui/frame"
+import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const LANES = [
@@ -64,33 +66,33 @@ export function ReviewBoard({
         </p>
       )}
       <div
-        className="-mx-5 flex snap-x scroll-px-5 gap-5 overflow-x-auto px-5 pb-2 md:mx-0 md:grid md:overflow-visible md:px-0"
+        className="-mx-5 flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 pb-2 md:mx-0 md:grid md:overflow-visible md:px-0"
         style={{ gridTemplateColumns: `repeat(${lanes.length}, minmax(0, 1fr))` }}
       >
         {lanes.map((lane) => {
           const items = inLane(lane.id)
           return (
-            <section key={lane.id} aria-label={lane.title} className="bg-muted/60 flex min-h-[26rem] w-[80vw] max-w-sm shrink-0 snap-start flex-col rounded-2xl p-3 md:w-auto md:max-w-none">
-              <header className="mb-3 flex items-center justify-between gap-2 px-1.5 pt-1">
-                <h2 className="text-foreground text-sm font-medium">{lane.title}</h2>
+            <Frame key={lane.id} aria-label={lane.title} spacing="sm" className="min-h-[26rem] w-[80vw] max-w-sm shrink-0 snap-start md:w-auto md:max-w-none">
+              <FrameHeader className="flex-row items-center justify-between gap-2">
+                <FrameTitle className="font-medium">{lane.title}</FrameTitle>
                 {cards && (
-                  <span className="bg-card text-muted-foreground rounded-full px-2 py-0.5 text-xs tabular-nums">
+                  <Badge variant="outline" className="bg-card tabular-nums">
                     <Count value={items.length} />
-                  </span>
+                  </Badge>
                 )}
-              </header>
+              </FrameHeader>
               {loading ? (
-                <Skeleton className="h-28 w-full rounded-xl" />
+                <Skeleton className="h-28 w-full rounded-lg" />
               ) : items.length === 0 ? (
-                <p className="text-text-3 animate-in fade-in rounded-xl bg-muted/50 px-3 py-8 text-center text-xs duration-300">Nothing here</p>
+                <p className="text-text-3 animate-in fade-in rounded-lg border border-dashed px-3 py-8 text-center text-xs duration-300">Nothing here</p>
               ) : (
-                <div className="stagger flex flex-col gap-3">
+                <div className="stagger flex flex-col gap-1.5">
                   {items.map((pr) => (
                     <BoardCard key={`${pr.repo}#${pr.number}`} pr={pr} canAct={canAct} />
                   ))}
                 </div>
               )}
-            </section>
+            </Frame>
           )
         })}
       </div>

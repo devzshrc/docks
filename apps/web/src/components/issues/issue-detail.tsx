@@ -269,7 +269,7 @@ export function IssueDetail({ repo, number }: { repo: string; number: number }) 
               Comments <span className="text-text-3 font-normal">{i.comments.length}</span>
             </h2>
             {i.comments.map((c) => (
-              <div key={c.id} className="bg-card border-hairline overflow-hidden rounded-xl border">
+              <div key={c.id} className="bg-card overflow-hidden rounded-lg border shadow-xs">
                 <div className="border-hairline text-muted-foreground flex items-center gap-2 border-b px-4 py-2 text-xs">
                   <GhAvatar login={c.author} className="size-5" />
                   <span className="text-foreground font-medium">{c.author}</span>

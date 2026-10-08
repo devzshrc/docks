@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import { Frame } from "@/components/reui/frame"
+import { Kbd } from "@/components/ui/kbd"
 
 import { IssueRow } from "@/components/issues/issue-row"
 import { AssigneeMenu, LabelMenu } from "@/components/issues/pickers"
@@ -102,7 +104,7 @@ export function IssueList({
 
   if (loading) {
     return (
-      <div className="bg-card border-hairline divide-hairline divide-y overflow-hidden rounded-xl border">
+      <div className="bg-card divide-y overflow-hidden rounded-lg border shadow-xs">
         {[0, 1, 2, 3, 4].map((n) => (
           <Skeleton key={n} className="border-hairline h-[68px] w-full rounded-none border-b" />
         ))}
@@ -151,14 +153,16 @@ export function IssueList({
           </Button>
         </div>
       )}
-      <ul ref={root} className="bg-card border-hairline divide-hairline divide-y overflow-hidden rounded-xl border">
+      <Frame spacing="xs">
+      <ul ref={root} className="bg-card divide-y overflow-hidden rounded-(--frame-panel-radius) border shadow-xs">
         {items.map((i) => (
           <IssueRow key={key(i)} issue={i} selected={selected.has(key(i))} focused={focusKey === key(i)} onToggle={() => toggle(i)} canAct={canAct} triage={triage} me={me} />
         ))}
       </ul>
+      </Frame>
       {canAct && (
         <p className="text-text-3 hidden text-xs md:block">
-          <kbd className="bg-muted rounded px-1.5 font-mono text-[10px]">j</kbd> <kbd className="bg-muted rounded px-1.5 font-mono text-[10px]">k</kbd> move · <kbd className="bg-muted rounded px-1.5 font-mono text-[10px]">x</kbd> select · <kbd className="bg-muted rounded px-1.5 font-mono text-[10px]">e</kbd> close · <kbd className="bg-muted rounded px-1.5 font-mono text-[10px]">a</kbd> assign · <kbd className="bg-muted rounded px-1.5 font-mono text-[10px]">l</kbd> label
+          <Kbd>j</Kbd> <Kbd>k</Kbd> move · <Kbd>x</Kbd> select · <Kbd>e</Kbd> close · <Kbd>a</Kbd> assign · <Kbd>l</Kbd> label
         </p>
       )}
     </div>

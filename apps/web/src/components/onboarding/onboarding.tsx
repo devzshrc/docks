@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
+import { Stepper, StepperIndicator, StepperItem, StepperNav, StepperTitle, StepperTrigger } from "@/components/reui/stepper"
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace"
 import { useSession } from "@/lib/auth-client"
 import { optimistic } from "@/lib/optimistic"
@@ -184,15 +184,24 @@ function Onboarding({
         </p>
       </header>
 
-      <div className="mt-7 space-y-2.5">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-medium">Setup progress</span>
-          <span className="text-muted-foreground tabular-nums" aria-live="polite">
-            {count} of {STEPS.length} steps
-          </span>
-        </div>
-        <Progress value={(count / STEPS.length) * 100} aria-label="Setup progress" />
-      </div>
+      <Stepper
+        value={complete ? STEPS.length + 1 : STEPS.findIndex((s) => s.id === current) + 1}
+        className="mt-7"
+        aria-label={`Setup progress: ${count} of ${STEPS.length} steps`}
+      >
+        <StepperNav className="gap-2">
+          {STEPS.map((s, i) => (
+            <StepperItem key={s.id} step={i + 1} completed={complete || done[s.id]} className="relative flex-1 items-start not-last:flex-1">
+              <StepperTrigger className="flex grow flex-col items-start gap-2 rounded-none" tabIndex={-1} onClick={(e) => e.preventDefault()}>
+                <StepperIndicator className="h-1 w-full rounded-full bg-muted data-[state=active]:bg-primary/60 data-[state=completed]:bg-primary transition-colors duration-500">
+                  <span className="sr-only">{i + 1}</span>
+                </StepperIndicator>
+                <StepperTitle className="text-muted-foreground group-data-[state=active]/step:text-foreground text-xs font-normal data-[state=active]:text-foreground data-[state=active]:font-medium">{s.label}</StepperTitle>
+              </StepperTrigger>
+            </StepperItem>
+          ))}
+        </StepperNav>
+      </Stepper>
 
       <ol className="mt-7 space-y-1">
         {STEPS.map((s) => {

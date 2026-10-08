@@ -1,6 +1,7 @@
+import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from "@/components/reui/frame"
 import { cn } from "@/lib/utils"
 
-/** Bordered surface with a header row (title, optional meta and actions). The one container for dashboard sections. */
+/** A ReUI frame: header bar (title, optional meta and actions) above an inset content panel. The one container for dashboard sections. */
 export function Panel({
   title,
   description,
@@ -17,32 +18,32 @@ export function Panel({
   children: React.ReactNode
 }) {
   return (
-    <section className={cn("bg-card border-hairline min-w-0 rounded-xl border", className)}>
+    <Frame className={cn("min-w-0", className)}>
       {(title || actions) && (
-        <header className="border-hairline flex min-h-14 items-center justify-between gap-3 border-b px-5 py-3.5">
+        <FrameHeader className="min-h-11 flex-row items-center justify-between gap-3">
           <div className="min-w-0">
-            {title && <h2 className="text-sm font-medium tracking-tight">{title}</h2>}
-            {description && <p className="text-muted-foreground text-xs">{description}</p>}
+            {title && <FrameTitle className="font-medium tracking-tight">{title}</FrameTitle>}
+            {description && <FrameDescription className="text-xs">{description}</FrameDescription>}
           </div>
           {actions}
-        </header>
+        </FrameHeader>
       )}
-      <div className={cn("p-5", bodyClassName)}>{children}</div>
-    </section>
+      <FramePanel className={cn("p-5", bodyClassName)}>{children}</FramePanel>
+    </Frame>
   )
 }
 
-/** A row of equal-width figures, each on its own tile. */
+/** A row of equal-width figures, each on its own panel inside one frame. */
 export function StatStrip({ stats }: { stats: { label: string; value: string; sub?: string }[] }) {
   return (
-    <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <Frame className="stagger grid grid-cols-2 lg:grid-cols-4">
       {stats.map((s) => (
-        <div key={s.label} className="bg-card border-hairline min-w-0 space-y-1.5 rounded-xl border p-5">
+        <FramePanel key={s.label} className="min-w-0 space-y-1.5 p-5">
           <p className="text-muted-foreground text-xs">{s.label}</p>
           <p className="text-2xl font-medium tracking-tight tabular-nums">{s.value}</p>
           <p className="text-text-3 min-h-4 text-xs">{s.sub ?? " "}</p>
-        </div>
+        </FramePanel>
       ))}
-    </div>
+    </Frame>
   )
 }

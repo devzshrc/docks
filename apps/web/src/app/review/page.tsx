@@ -179,7 +179,7 @@ function Board({ workspaceId }: { workspaceId: string }) {
         </div>
       )}
       {data && data.cards.length === 0 && !active && !filters.q && (
-        <div role="status" className="bg-card border-hairline flex items-start gap-3 rounded-xl border px-5 py-4 text-sm">
+        <div role="status" className="bg-card flex items-start gap-3 rounded-lg border shadow-xs px-5 py-4 text-sm">
           <span className="bg-primary/15 text-primary-text mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-xs" aria-hidden>
             ✓
           </span>

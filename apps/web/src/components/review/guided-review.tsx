@@ -246,7 +246,7 @@ export function GuidedReview({ repo, number }: { repo: string; number: number })
           </button>
           <div className={cn("animate-in fade-in pt-4 duration-150 lg:block lg:pt-0", detailsOpen ? "block" : "hidden")}>
         {/* Aligned label column: the eye scans down one edge instead of hunting. */}
-        <dl className="bg-card border-hairline divide-hairline divide-y rounded-xl border text-sm">
+        <dl className="bg-card divide-y rounded-lg border shadow-xs text-sm">
           {pr.state === "open" && (
             <div className={ROW}>
               <dt className="text-muted-foreground text-xs">Reviewers</dt>

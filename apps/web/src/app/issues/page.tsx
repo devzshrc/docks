@@ -161,12 +161,12 @@ function Issues({ workspaceId }: { workspaceId: string }) {
             me={me}
             empty={
               list.data?.syncing ? (
-                <div className="bg-card border-hairline rounded-xl border px-6 py-14 text-center">
+                <div className="bg-card rounded-lg border shadow-xs px-6 py-14 text-center">
                   <p className="font-medium">Importing issues from GitHub…</p>
                   <p className="text-muted-foreground mt-1 text-sm">This takes a moment the first time. They'll appear here on their own.</p>
                 </div>
               ) : (
-                <div className="bg-card border-hairline rounded-xl border px-6 py-14 text-center">
+                <div className="bg-card rounded-lg border shadow-xs px-6 py-14 text-center">
                   <p className="font-medium">{filtered ? "No issues match these filters" : empty.title}</p>
                   <p className="text-muted-foreground mt-1 text-sm">{filtered ? "Try clearing a filter." : empty.hint}</p>
                 </div>
