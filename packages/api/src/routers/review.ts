@@ -1,3 +1,4 @@
+import { workspacePlan } from "../plans.js";
 import { randomUUID } from "node:crypto";
 import { track, trackDaily } from "../analytics.js";
 import { db, schema } from "@docks/db";
@@ -150,8 +151,7 @@ async function headShaOf(repoId: number, number: number) {
   return p;
 }
 
-async function recordVisit(userId: string, repoRow: { id: number; fullName: string }, number: number) {
-  const { headSha } = await headShaOf(repoRow.id, number);
+async function recordVisit(userId: string, repoRow: { id: number; fullName: string }, number: number, headSha: string) {
   await db
     .insert(schema.reviewVisit)
     .values({ userId, repo: repoRow.fullName, prNumber: number, reviewedSha: headSha })
@@ -417,6 +417,7 @@ export const reviewRouter = router({
         mergeableState: pull.mergeableState,
       },
       checklistTemplate: await checklistTemplateOf(repoRow.id),
+      advancedReview: await workspacePlan(repoRow.workspaceId) === "team",
       canAct: can(repoRow.role, "review.act"),
       files: ranked,
       reviewers: [
@@ -484,7 +485,7 @@ export const reviewRouter = router({
       await githubAs(ctx.user.id)
         .submitReview(repoRow.fullName, input.number, input.event, input.body, input.comments, input.headSha)
         .catch(githubFailure);
-      await recordVisit(ctx.user.id, repoRow, input.number);
+      await recordVisit(ctx.user.id, repoRow, input.number, input.headSha);
       await audit(repoRow.workspaceId, ctx.user.id, `review.${input.event.toLowerCase()}`, `${repoRow.fullName}#${input.number}`);
       await track(ctx.user.id, repoRow.workspaceId, "review_submitted", { event: input.event, comments: input.comments.length });
       await refreshPr(repoRow.id, input.number);
@@ -697,7 +698,7 @@ export const reviewRouter = router({
   sinceLastReview: protectedProcedure.input(pr).query(async ({ ctx, input }) => {
     const repoRow = await repoForUser(ctx.user.id, input.repo);
     const [visit] = await db
-      .select({ sha: schema.reviewVisit.reviewedSha })
+      .select({ sha: schema.reviewVisit.reviewedSha, at: schema.reviewVisit.updatedAt })
       .from(schema.reviewVisit)
       .where(
         and(
@@ -706,16 +707,21 @@ export const reviewRouter = router({
           eq(schema.reviewVisit.prNumber, input.number),
         ),
       );
-    if (!visit) return { reviewedSha: null, files: null };
+    const identity = await githubIdentity(ctx.user.id);
+    const [external] = identity ? await db.select({ sha: schema.prReview.commitSha, at: schema.prReview.submittedAt }).from(schema.prReview).where(and(eq(schema.prReview.repoId, repoRow.id), eq(schema.prReview.prNumber, input.number), sql`lower(${schema.prReview.reviewerLogin}) = ${identity.login.toLowerCase()}`, sql`${schema.prReview.state} NOT IN ('PENDING', 'DISMISSED')`)).orderBy(desc(schema.prReview.submittedAt)).limit(1) : [];
+    const sha = visit && (!external || visit.at >= external.at) ? visit.sha : external?.sha;
+    const paid = await workspacePlan(repoRow.workspaceId) === "team";
+    if (!sha) return { reviewedSha: null, files: null, changes: null, complete: false, paid };
     const { headSha } = await headShaOf(repoRow.id, input.number);
-    if (visit.sha === headSha) return { reviewedSha: visit.sha, files: [] as string[] };
+    if (sha === headSha) return { reviewedSha: sha, files: [] as string[], changes: [], complete: true, paid };
     const { installationId } = await repoDetails(repoRow.id);
     try {
-      const cmp = await installationClient(installationId).compare(repoRow.fullName, visit.sha, headSha);
-      return { reviewedSha: visit.sha, files: (cmp.files ?? []).map((f) => f.filename) };
+      const cmp = await installationClient(installationId).compare(repoRow.fullName, sha, headSha);
+      // GitHub limits comparison file lists to 300. A diverged baseline cannot prove complete changes.
+      if (!cmp.files || cmp.files.length >= 300 || !["ahead", "identical"].includes(cmp.status)) return { reviewedSha: sha, files: null, changes: null, complete: false, paid };
+      return { reviewedSha: sha, files: cmp.files.flatMap((f) => f.previous_filename ? [f.filename, f.previous_filename] : [f.filename]), changes: paid ? cmp.files.map((f) => ({ path: f.filename, previousPath: f.previous_filename ?? null, status: f.status, patch: f.patch ?? null })) : null, complete: true, paid };
     } catch {
-      // Force-pushed away from the reviewed commit: GitHub can't compare. Treat everything as new.
-      return { reviewedSha: visit.sha, files: null };
+      return { reviewedSha: sha, files: null, changes: null, complete: false, paid };
     }
   }),
 

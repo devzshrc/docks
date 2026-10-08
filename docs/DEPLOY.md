@@ -27,3 +27,13 @@ Postgres is Supabase, reached from the API Worker through Hyperdrive. Background
 - Subscribe the GitHub App to `pull_request`, `pull_request_review`, `pull_request_review_comment`, `check_run`, and `status` events. The existing job worker delivers inbox items. Only events received after deployment appear in the inbox.
 - Merge readiness reads branch protection and active rulesets with the connected user's GitHub permissions. If GitHub does not return complete requirements, the UI shows an unknown state and a link to GitHub.
 - Draft recovery uses server versions to detect concurrent edits. Local copies are scoped to the signed-in account. Users must explicitly choose a copy after a save conflict.
+
+## Paid review workflow rollout
+
+- Apply migration `0021_stiff_the_liberteens.sql` before deploying the API and web. It adds deadline policies, cycles, notification delivery records, releases, evidence snapshots, and nullable review commit metadata.
+- The existing minute-based scheduler handles reminders and escalation. Policies are off until an owner or admin enables them on `/deadlines`. Automation and paid mutations require the Team plan at execution time.
+- Each repository policy stores its work schedule and escalation lead. Cycles retain a copy of their original policy. Draft PRs pause the clock. A new policy starts clocks when PRs next sync, without retroactive deadlines.
+- Slack alerts use the existing configured incoming-webhook channel. Inbox delivery is deduplicated. A Slack timeout after acceptance can cause a duplicate on retry because incoming webhooks provide no idempotency key.
+- `/releases` supports up to 100 explicitly selected PRs. Readiness expires after 15 minutes or a changed head. Refresh work checks the requesting user's current repository access.
+- Evidence collection uses review webhooks and PR sync, including GitHub actions performed outside Docks. Older decision history and checks at review or merge time can be incomplete. CSV/JSON exports identify gaps and record limits. Snapshots are not compliance certification or tamper-proof records.
+- Incremental review compares the last submitted review commit, including mirrored external reviews. Incomplete comparisons fall back to the full diff. Personal checklist answers persist across commits only when all linked file blobs remain unchanged.

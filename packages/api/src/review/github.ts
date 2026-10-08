@@ -96,6 +96,7 @@ export async function getInstallationToken(installationId: number): Promise<stri
 }
 
 export interface GhUser {
+  type?: string;
   login: string;
   id: number;
   avatar_url: string;
@@ -122,6 +123,8 @@ export interface GhPull {
   html_url: string;
   state: "open" | "closed";
   merged_at: string | null;
+  merged_by?: GhUser | null;
+  merge_commit_sha?: string | null;
   draft: boolean;
   user: GhUser;
   created_at: string;
@@ -353,7 +356,7 @@ export function installationClient(installationId: number) {
     },
     /** Files changed between two commits (for "since my last review"). */
     compare: (repo: string, base: string, head: string) =>
-      call<{ files?: { filename: string }[]; status: string; merge_base_commit?: { sha: string } }>(
+      call<{ files?: { filename: string; previous_filename?: string; patch?: string; status: string }[]; status: string; merge_base_commit?: { sha: string } }>(
         `/repos/${repo}/compare/${base}...${head}`,
       ),
     /** Per-line history of a file at a commit: who last changed each range, and in which PR. */

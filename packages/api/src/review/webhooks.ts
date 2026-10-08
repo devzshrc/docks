@@ -1,3 +1,4 @@
+import { collectWebhookEvidence } from "../delivery/evidence.js";
 import { db, schema } from "@docks/db";
 import { and, eq } from "drizzle-orm";
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -91,6 +92,7 @@ export async function handleGithubEvent(
     }
     return;
   }
+  await collectWebhookEvidence(repoId, event, payload);
   await captureInboxEvents(repoId, event, payload, deliveryId);
 
   // Issue events carry the whole issue; store it without a round trip. (PRs also arrive as `issue_comment`.)

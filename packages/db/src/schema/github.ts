@@ -119,6 +119,8 @@ export const prReview = pgTable(
     repoId: bigint("repo_id", { mode: "number" }).notNull(),
     prNumber: integer("pr_number").notNull(),
     reviewerLogin: text("reviewer_login").notNull(),
+    commitSha: text("commit_sha"),
+    userType: text("user_type"),
     state: text("state").notNull(),
     submittedAt: timestamptz("submitted_at").notNull(),
   },

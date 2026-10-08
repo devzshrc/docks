@@ -11,6 +11,7 @@ import {
 import { Fragment, useEffect, useRef, useState } from "react"
 
 import { Count, DrawTick, flash, useJustBecame } from "@/components/motion"
+import { DeadlinePanel } from "@/components/review/deadline-panel"
 import { Checklist } from "@/components/review/checklist"
 import { FileRail } from "@/components/review/file-rail"
 import { LinkedIssues } from "@/components/review/linked-issues"
@@ -218,6 +219,7 @@ function GuidedReviewContent({ repo, number }: { repo: string; number: number })
   return (
     <div className="animate-in fade-in flex flex-col gap-6 pb-20 duration-300">
       {session.data.lastLocation && <button type="button" className="text-xs underline" onClick={() => { const location = session.data.lastLocation; if (location && files.some((f) => f.filename === location.path)) { jumpTo(location.path); window.dispatchEvent(new CustomEvent("review-resume", { detail: location })) } else document.querySelector('section[id^="file-"]')?.scrollIntoView() }}>Resume review at {session.data.lastLocation.path}</button>}
+      <DeadlinePanel repo={repo} number={number} />
       <header className="space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <div className="min-w-0 flex-1 space-y-2">
@@ -394,6 +396,8 @@ function GuidedReviewContent({ repo, number }: { repo: string; number: number })
                   Only changes since my last review ({since.data.files.length})
                 </label>
               )}
+              {since.data?.reviewedSha && !since.data.complete && <p role="status" className="text-xs text-muted-foreground">Comparison unavailable or incomplete. Inspect the full diff below.</p>}
+              {since.data?.reviewedSha && since.data.changes && since.data.changes.length > 0 && <details className="space-y-2 rounded border p-3"><summary className="cursor-pointer text-sm">Changed hunks since submitted review ({since.data.reviewedSha.slice(0,12)})</summary><p className="text-xs text-muted-foreground">Read-only comparison. Add inline comments in the current PR diff below.</p>{since.data.changes.map((change) => <section key={change.path} className="space-y-1"><h3 className="font-mono text-xs">{change.previousPath ? `${change.previousPath} → ` : ""}{change.path} ({change.status})</h3>{change.patch ? <pre className="max-h-80 overflow-auto rounded bg-muted p-2 text-xs whitespace-pre">{change.patch}</pre> : <p className="text-xs">Patch unavailable. Inspect this file in the full diff.</p>}</section>)}</details>}
               {since.data?.reviewedSha && since.data.files?.length === 0 && (
                 <span className="text-muted-foreground">No changes since your last review.</span>
               )}

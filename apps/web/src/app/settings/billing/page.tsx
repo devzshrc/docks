@@ -77,6 +77,9 @@ function Billing({ workspaceId }: { workspaceId: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Team includes review deadlines, backup reviewer requests, release reports, review changes since your last review, and evidence exports.
+        </p>
         {checkout && CHECKOUT_STATUS[checkout] && <p className="text-sm">{CHECKOUT_STATUS[checkout]}</p>}
         <Usage label="Members" used={s.usage.members} limit={s.limits.members} />
         <Usage label="Enabled repositories" used={s.usage.repos} limit={s.limits.repos} />

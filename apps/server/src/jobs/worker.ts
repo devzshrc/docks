@@ -4,6 +4,9 @@
  * type, retries with exponential backoff (max 5 attempts, see failJob).
  */
 import {
+  refreshReleaseReadiness,
+  scheduleReviewDeadlines,
+  processReviewDeadline,
   claimNextJob,
   completeJob,
   failJob,
@@ -25,6 +28,8 @@ import { syncUserRepos } from "./handlers/sync-user-repos.js";
 import { weeklyReport } from "./handlers/weekly-report.js";
 
 export const handlers: Record<Job["type"], (payload: unknown) => Promise<void>> = {
+  review_deadline: async (payload) => processReviewDeadline((payload as { deliveryId: string }).deliveryId),
+  release_readiness: async (payload) => refreshReleaseReadiness(payload as { releaseId: string; repoId: number; number: number; userId: string }),
   inbox_event: async (payload) => {
     await processInboxEvent((payload as { eventId: string }).eventId);
   },
@@ -79,7 +84,7 @@ export async function drainQueue(budgetMs: number): Promise<void> {
  * the clock so it is safe to call from a stateless cron.
  */
 export async function runSchedules(now: Date = new Date()): Promise<void> {
-  const tasks: Promise<unknown>[] = [scheduleDigests().catch(logErr("digest scheduling"))];
+  const tasks: Promise<unknown>[] = [scheduleReviewDeadlines(now).catch(logErr("review deadline scheduling")), scheduleDigests().catch(logErr("digest scheduling"))];
   if (now.getUTCMinutes() === 0) {
     // Retention: hourly is plenty for a 30-day rule.
     tasks.push(purgeOldPatches().catch(logErr("patch retention")));

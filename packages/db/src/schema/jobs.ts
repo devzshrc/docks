@@ -7,7 +7,7 @@ export const jobs = pgTable(
   {
     id: serial("id").primaryKey(),
     type: text("type", {
-      enum: ["sync_repo", "sync_pr", "generate_guide", "slack_digest", "sync_user_repos", "auto_assign", "weekly_report", "apply_rules", "sync_issues", "sync_issue", "inbox_event"],
+      enum: ["sync_repo", "sync_pr", "generate_guide", "slack_digest", "sync_user_repos", "auto_assign", "weekly_report", "apply_rules", "sync_issues", "sync_issue", "inbox_event", "review_deadline", "release_readiness"],
     }).notNull(),
     payload: jsonb("payload").notNull(),
     status: text("status", { enum: ["queued", "running", "done", "failed"] })

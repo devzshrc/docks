@@ -25,6 +25,8 @@ type Recovery = { version: number; data: ReviewSessionData };
 type SessionContext = {
   data: ReviewSessionData;
   headSha: string;
+  fileShas: Record<string, string>;
+  paid: boolean;
   update: (fn: (data: ReviewSessionData) => ReviewSessionData) => void;
   flush: () => Promise<void>;
 };
@@ -298,7 +300,7 @@ export function ReviewSessionProvider({
   }
   return (
     <Context.Provider
-      value={{ data, headSha: pull.data?.pr.headSha ?? "", update, flush }}
+      value={{ data, headSha: pull.data?.pr.headSha ?? "", fileShas: Object.fromEntries((pull.data?.files ?? []).map((f) => [f.filename, f.sha])), paid: pull.data?.advancedReview ?? false, update, flush }}
     >
       <div
         className="mb-4 space-y-2 rounded-lg border p-3 text-xs"

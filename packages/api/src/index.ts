@@ -42,3 +42,7 @@ export type { LinearIssue } from "./linear.js";
 
 export { processInboxEvent } from "./inbox.js";
 export type { ReviewSessionData } from "@docks/db";
+
+export { scheduleReviewDeadlines, processReviewDeadline } from "./delivery/deadlines.js";
+
+export { refreshReleaseReadiness } from "./delivery/releases.js";

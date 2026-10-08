@@ -1,3 +1,5 @@
+import { deliveryRouter } from "./delivery.js";
+import { releasesRouter } from "./releases.js";
 import { router } from "../trpc.js";
 import { adminRouter } from "./admin.js";
 import { billingRouter } from "./billing.js";
@@ -13,6 +15,8 @@ import { userRouter } from "./user.js";
 import { workspaceRouter } from "./workspace.js";
 
 export const appRouter = router({
+  releases: releasesRouter,
+  delivery: deliveryRouter,
   health: healthRouter,
   user: userRouter,
   workspace: workspaceRouter,
