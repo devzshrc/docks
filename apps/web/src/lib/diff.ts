@@ -176,3 +176,22 @@ export function commentLabel(body: string): CommentLabel | null {
   const m = body.trimStart().match(/^\**\s*(nit|question|suggestion|blocking|praise)\s*(?:\([^)]*\))?\s*:/i)
   return m ? (m[1]!.toLowerCase() as CommentLabel) : null
 }
+
+/**
+ * The old-side and new-side code of each hunk as two separate streams, the way the file would read on either side,
+ * so multi-line strings and comments highlight correctly. `lines` index back into `shown` for the result.
+ */
+export function hunkStreams(shown: DiffLine[]): { old: DiffLine[]; new: DiffLine[] }[] {
+  const out: { old: DiffLine[]; new: DiffLine[] }[] = []
+  let cur: { old: DiffLine[]; new: DiffLine[] } | null = null
+  for (const l of shown) {
+    if (l.kind === "hunk" || !cur) {
+      cur = { old: [], new: [] }
+      out.push(cur)
+      if (l.kind === "hunk") continue
+    }
+    if (l.kind !== "add") cur.old.push(l)
+    if (l.kind !== "del") cur.new.push(l)
+  }
+  return out
+}

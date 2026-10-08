@@ -3,8 +3,7 @@
 import type { RankedFile } from "@docks/api"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { IconChevronDown, IconChevronRight, IconMessagePlus } from "@tabler/icons-react"
-import hljs from "highlight.js/lib/common"
-import { Fragment, useEffect, useMemo, useRef, useState } from "react"
+import { Fragment, memo, useEffect, useMemo, useRef, useState } from "react"
 
 import { MentionTextarea } from "@/components/mention-textarea"
 import { useNewIssue } from "@/components/new-issue/provider"
@@ -12,6 +11,8 @@ import { FixWithAgent } from "@/components/review/agent-handoff"
 import { BlameLine, useBlame } from "@/components/review/blame-popover"
 import { Collapse, flash } from "@/components/motion"
 import { MarkdownPreview } from "@/components/review/markdown-preview"
+import { useDiffHighlight, useFileHighlight } from "@/components/review/use-highlight"
+import { VirtualTable } from "@/components/review/virtual-rows"
 import { toast } from "@/components/toast"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -47,8 +48,10 @@ export type Thread = {
 }
 
 const ROW = { hunk: "bg-info-bg/50 text-muted-foreground", add: "bg-success/10", del: "bg-danger/10", ctx: "" } as const
-/** Rows rendered before "Show all"; keeps 5k-line generated diffs from freezing the page. */
-const ROW_CAP = 400
+/** Above this many rows a file's lines are windowed (only the ones near the viewport are mounted). */
+const VIRTUAL_AT = 300
+/** Past this many changed lines a diff waits for an explicit click before it renders at all. */
+const LARGE_DIFF = 8000
 const TIER_LABEL = { core: null, config: "config", test: "test", noise: "generated / lockfile" } as const
 
 const LABEL_STYLE: Record<CommentLabel, string> = {
@@ -97,26 +100,21 @@ function rangeIn(root: Node, [start, end]: [number, number]) {
   return null
 }
 
-/** ponytail: per-line highlighting; multi-line strings/comments may mis-colour. Switch to shiki if users notice. */
-function Code({ text, language, mark, kind }: { text: string; language: string | null; mark?: [number, number] | null; kind?: "add" | "del" }) {
-  const ref = useRef<HTMLSpanElement>(null)
-  const html = useMemo(() => {
-    if (!language || !hljs.getLanguage(language)) return null
-    try {
-      return hljs.highlight(text, { language, ignoreIllegals: true }).value
-    } catch {
-      return null
-    }
-  }, [text, language])
-  useEffect(() => {
-    const set = wordHighlights()?.[kind ?? "add"]
-    const range = mark && kind && set && ref.current ? rangeIn(ref.current, mark) : null
-    if (!range) return
-    set!.add(range)
-    return () => void set!.delete(range)
-  }, [html, text, mark?.[0], mark?.[1], kind])
-  return html ? <span ref={ref} dangerouslySetInnerHTML={{ __html: html }} /> : <span ref={ref}>{text}</span>
-}
+/** One line of code. The highlighted markup comes from the worker; until it arrives the line shows as plain text. */
+const Code = memo(
+  function Code({ text, html, mark, kind }: { text: string; html?: string; mark?: [number, number] | null; kind?: "add" | "del" }) {
+    const ref = useRef<HTMLSpanElement>(null)
+    useEffect(() => {
+      const set = wordHighlights()?.[kind ?? "add"]
+      const range = mark && kind && set && ref.current ? rangeIn(ref.current, mark) : null
+      if (!range) return
+      set!.add(range)
+      return () => void set!.delete(range)
+    }, [html, text, mark?.[0], mark?.[1], kind])
+    return html ? <span ref={ref} dangerouslySetInnerHTML={{ __html: html }} /> : <span ref={ref}>{text}</span>
+  },
+  (a, b) => a.text === b.text && a.html === b.html && a.kind === b.kind && a.mark?.[0] === b.mark?.[0] && a.mark?.[1] === b.mark?.[1]
+)
 
 function Composer({
   path,
@@ -323,16 +321,15 @@ export function FileDiff({
   }, [open])
   const [view, setView] = useState<"diff" | "full" | "preview">("diff")
   const full = view !== "diff"
-  const [showAll, setShowAll] = useState(false)
+  const [loadLarge, setLoadLarge] = useState(false)
+  const jump = useRef<{ scrollTo: (i: number) => void } | null>(null)
   const section = useRef<HTMLElement>(null)
   // Mount a file's rows only once it's near the viewport: a 300-file PR opens instantly.
   const [near, setNear] = useState(false)
   useEffect(() => {
     const el = section.current
     if (!el || near) return
-    // The page scrolls inside the app shell, not the window, so observe against that scroller.
-    const root = el.closest(".obsidian-dashboard-shell-scroll")
-    const io = new IntersectionObserver((e) => e.some((x) => x.isIntersecting) && setNear(true), { root, rootMargin: "1200px 0px" })
+    const io = new IntersectionObserver((e) => e.some((x) => x.isIntersecting) && setNear(true), { rootMargin: "1200px 0px" })
     io.observe(el)
     return () => io.disconnect()
   }, [near])
@@ -363,7 +360,24 @@ export function FileDiff({
   const blame = useBlame(repo, number, file.filename, open && near && file.status !== "added")
   const fileLines = useMemo(() => content.data?.text.split("\n"), [content.data])
   const shown = useMemo(() => withContext(lines, fileLines, above), [lines, fileLines, above])
-  const capped = !showAll && shown.length > ROW_CAP
+  const tooLarge = !full && !loadLarge && lines.length > LARGE_DIFF
+  const rendered = open && near && !tooLarge
+  const html = useDiffHighlight(shown, language, rendered && view === "diff")
+  const fileHtml = useFileHighlight(content.data?.text, language, rendered && full && view !== "preview")
+  const splitRows = useMemo(() => (mode === "split" ? toSplit(shown) : []), [shown, mode])
+  // Each row's hunk number and the last new-file line before it, so rows can render on their own when windowed.
+  const meta = useMemo(() => {
+    let hunk = -1
+    let lastNew = 0
+    const src: { hunk: boolean; newNo?: number }[] =
+      mode === "split" ? splitRows.map((r) => (r.kind === "hunk" ? { hunk: true } : { hunk: false, newNo: r.right?.newNo })) : shown.map((l) => ({ hunk: l.kind === "hunk", newNo: l.newNo }))
+    return src.map((r) => {
+      if (r.hunk) hunk++
+      const out = { hunk, lastNew }
+      if (!r.hunk && r.newNo) lastNew = r.newNo
+      return out
+    })
+  }, [shown, splitRows, mode])
   const markFor = (l?: DiffLine) => {
     const other = l && pairs.get(l)
     return other ? wordRange(l.text, other.text) : null
@@ -506,95 +520,97 @@ export function FileDiff({
     )
   }
 
-  function Unified() {
-    let hunk = -1
-    let lastNew = 0
+  function unifiedRow(i: number) {
+    const line = shown[i]!
+    if (line.kind === "hunk") return HunkRow({ text: line.text, hunk: meta[i]!.hunk, lastNew: meta[i]!.lastNew, colSpan: 3 })
+    const side: Side = line.kind === "del" ? "LEFT" : "RIGHT"
+    const n = side === "LEFT" ? line.oldNo : line.newNo
     return (
-      <tbody>
-        {(capped ? shown.slice(0, ROW_CAP) : shown).map((line: DiffLine, i) => {
-          if (line.kind === "hunk") {
-            hunk++
-            return <HunkRow key={i} text={line.text} hunk={hunk} lastNew={lastNew} colSpan={3} />
-          }
-          if (line.newNo) lastNew = line.newNo
-          const side: Side = line.kind === "del" ? "LEFT" : "RIGHT"
-          const n = side === "LEFT" ? line.oldNo : line.newNo
-          return (
-            <Fragment key={i}>
-              <tr className={cn(ROW[line.kind], line.extra && "text-muted-foreground bg-muted/30 animate-in fade-in duration-300")}>
-                <NumberCell n={line.kind === "add" ? undefined : line.oldNo} side="LEFT" text={line.text} extra={line.extra} />
-                <NumberCell n={line.kind === "del" ? undefined : line.newNo} side="RIGHT" text={line.text} extra={line.extra} />
-                <td className="px-2 whitespace-pre">
-                  <span className="text-muted-foreground mr-2 select-none">{line.kind === "add" ? "+" : line.kind === "del" ? "−" : " "}</span>
-                  <Code text={line.text} language={language} mark={markFor(line)} kind={line.kind === "del" ? "del" : "add"} />
-                </td>
-              </tr>
-              <Extras side={side} line={n} text={line.text} colSpan={3} />
-              {line.kind === "ctx" && <Extras side="LEFT" line={line.oldNo} text={line.text} colSpan={3} />}
-            </Fragment>
-          )
-        })}
-      </tbody>
+      <>
+        <tr className={cn(ROW[line.kind], line.extra && "text-muted-foreground bg-muted/30 animate-in fade-in duration-300")}>
+          {NumberCell({ n: line.kind === "add" ? undefined : line.oldNo, side: "LEFT", text: line.text, extra: line.extra })}
+          {NumberCell({ n: line.kind === "del" ? undefined : line.newNo, side: "RIGHT", text: line.text, extra: line.extra })}
+          <td className="px-2 whitespace-pre">
+            <span className="text-muted-foreground mr-2 select-none">{line.kind === "add" ? "+" : line.kind === "del" ? "−" : " "}</span>
+            <Code text={line.text} html={html.get(line)} mark={markFor(line)} kind={line.kind === "del" ? "del" : "add"} />
+          </td>
+        </tr>
+        {Extras({ side, line: n, text: line.text, colSpan: 3 })}
+        {line.kind === "ctx" && Extras({ side: "LEFT", line: line.oldNo, text: line.text, colSpan: 3 })}
+      </>
     )
   }
 
-  function Split() {
-    let hunk = -1
-    let lastNew = 0
-    const rows = toSplit(shown)
+  function splitRow(i: number) {
+    const row = splitRows[i]!
+    if (row.kind === "hunk") return HunkRow({ text: row.text, hunk: meta[i]!.hunk, lastNew: meta[i]!.lastNew, colSpan: 4 })
+    const { left, right } = row
     return (
-      <tbody>
-        {(capped ? rows.slice(0, ROW_CAP) : rows).map((row, i) => {
-          if (row.kind === "hunk") {
-            hunk++
-            return <HunkRow key={i} text={row.text} hunk={hunk} lastNew={lastNew} colSpan={4} />
-          }
-          const { left, right } = row
-          if (right?.newNo) lastNew = right.newNo
-          return (
-            <Fragment key={i}>
-              <tr>
-                <NumberCell n={left?.oldNo} side="LEFT" text={left?.text ?? ""} extra={left?.extra} />
-                <td className={cn("w-1/2 border-r px-2 whitespace-pre", left && ROW[left.kind === "ctx" ? "ctx" : "del"], left?.extra && "text-muted-foreground bg-muted/30")}>
-                  {left && <Code text={left.text} language={language} mark={markFor(left)} kind="del" />}
-                </td>
-                <NumberCell n={right?.newNo} side="RIGHT" text={right?.text ?? ""} extra={right?.extra} />
-                <td className={cn("w-1/2 px-2 whitespace-pre", right && ROW[right.kind === "ctx" ? "ctx" : "add"], right?.extra && "text-muted-foreground bg-muted/30")}>
-                  {right && <Code text={right.text} language={language} mark={markFor(right)} kind="add" />}
-                </td>
-              </tr>
-              <Extras side="LEFT" line={left?.kind === "del" ? left.oldNo : undefined} text={left?.text ?? ""} colSpan={4} />
-              <Extras side="RIGHT" line={right?.newNo} text={right?.text ?? ""} colSpan={4} />
-            </Fragment>
-          )
-        })}
-      </tbody>
+      <>
+        <tr>
+          {NumberCell({ n: left?.oldNo, side: "LEFT", text: left?.text ?? "", extra: left?.extra })}
+          <td className={cn("w-1/2 border-r px-2 whitespace-pre", left && ROW[left.kind === "ctx" ? "ctx" : "del"], left?.extra && "text-muted-foreground bg-muted/30")}>
+            {left && <Code text={left.text} html={html.get(left)} mark={markFor(left)} kind="del" />}
+          </td>
+          {NumberCell({ n: right?.newNo, side: "RIGHT", text: right?.text ?? "", extra: right?.extra })}
+          <td className={cn("w-1/2 px-2 whitespace-pre", right && ROW[right.kind === "ctx" ? "ctx" : "add"], right?.extra && "text-muted-foreground bg-muted/30")}>
+            {right && <Code text={right.text} html={html.get(right)} mark={markFor(right)} kind="add" />}
+          </td>
+        </tr>
+        {Extras({ side: "LEFT", line: left?.kind === "del" ? left.oldNo : undefined, text: left?.text ?? "", colSpan: 4 })}
+        {Extras({ side: "RIGHT", line: right?.newNo, text: right?.text ?? "", colSpan: 4 })}
+      </>
     )
   }
 
-  function FullFile() {
-    if (content.isPending) return <tbody><tr><td className="text-muted-foreground px-3 py-4">Loading file…</td></tr></tbody>
-    if (content.error) return <tbody><tr><td className="text-destructive px-3 py-4">{content.error.message}</td></tr></tbody>
-    if (view === "preview") return <tbody><tr><td><MarkdownPreview text={content.data.text} /></td></tr></tbody>
-    const added = file.patch ? addedLines(file.patch) : new Set<number>()
+  const diffRow = mode === "split" ? splitRow : unifiedRow
+  const diffCount = mode === "split" ? splitRows.length : shown.length
+  const diffCols = mode === "split" ? 4 : 3
+  const fileText = content.data?.text.split("\n")
+  const added = useMemo(() => (file.patch ? addedLines(file.patch) : new Set<number>()), [file.patch])
+
+  function fullRow(i: number) {
     return (
-      <tbody>
-        {content.data.text.split("\n").map((text, i) => (
-          <tr key={i} className={added.has(i + 1) ? ROW.add : ""}>
-            <td className="text-muted-foreground w-12 px-2 text-right select-none">{i + 1}</td>
-            <td className="px-2 whitespace-pre">
-              <Code text={text} language={language} />
-            </td>
-          </tr>
-        ))}
-      </tbody>
+      <tr className={added.has(i + 1) ? ROW.add : ""}>
+        <td className="text-muted-foreground w-12 px-2 text-right select-none">{i + 1}</td>
+        <td className="px-2 whitespace-pre">
+          <Code text={fileText![i]!} html={fileHtml[i]} />
+        </td>
+      </tr>
+    )
+  }
+
+  /** The body of the file card: diff rows, whole file, or markdown preview. Windowed once a file is long. */
+  function body() {
+    if (view === "preview") {
+      if (content.isPending) return <p className="text-muted-foreground px-3 py-4 text-sm">Loading file…</p>
+      if (content.error) return <p className="text-destructive px-3 py-4 text-sm">{content.error.message}</p>
+      return <MarkdownPreview text={content.data!.text} />
+    }
+    if (full) {
+      if (content.isPending) return <p className="text-muted-foreground px-3 py-4 text-sm">Loading file…</p>
+      if (content.error) return <p className="text-destructive px-3 py-4 text-sm">{content.error.message}</p>
+      return fileText!.length > VIRTUAL_AT ? (
+        <VirtualTable className="font-code w-full border-collapse text-[12.5px] leading-5" count={fileText!.length} colSpan={2} renderItem={fullRow} />
+      ) : (
+        <table className="font-code w-full border-collapse text-[12.5px] leading-5">
+          <tbody>{fileText!.map((_, i) => <Fragment key={i}>{fullRow(i)}</Fragment>)}</tbody>
+        </table>
+      )
+    }
+    return diffCount > VIRTUAL_AT ? (
+      <VirtualTable className="font-code w-full border-collapse text-[12.5px] leading-5" count={diffCount} colSpan={diffCols} renderItem={diffRow} handle={jump} />
+    ) : (
+      <table className="font-code w-full border-collapse text-[12.5px] leading-5">
+        <tbody>{Array.from({ length: diffCount }, (_, i) => <Fragment key={i}>{diffRow(i)}</Fragment>)}</tbody>
+      </table>
     )
   }
 
   const threadCount = threads.filter((t) => !t.isResolved).length
 
   return (
-    <section ref={section} id={`file-${file.filename}`} data-viewed={file.viewed || undefined} className="bg-card scroll-mt-16 rounded-lg border shadow-xs">
+    <section ref={section} id={`file-${file.filename}`} data-viewed={file.viewed || undefined} className={cn("bg-card scroll-mt-16 rounded-lg border shadow-xs", !near && "[contain-intrinsic-size:auto_3rem] [content-visibility:auto]")}>
       <header className="bg-card/95 border-hairline sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-t-lg border-b px-3 py-2 text-sm backdrop-blur max-sm:gap-1.5 max-sm:py-1.5">
         <button type="button" onClick={() => setOpen((o) => !o)} className="flex min-w-[12rem] flex-1 items-center gap-2 text-left" aria-expanded={open}>
           {open ? <IconChevronDown className="size-4 shrink-0" aria-hidden /> : <IconChevronRight className="size-4 shrink-0" aria-hidden />}
@@ -646,7 +662,11 @@ export function FileDiff({
             <button
               key={s.name}
               type="button"
-              onClick={() => section.current?.querySelector(`[data-hunk="${s.hunk}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" })}
+              onClick={() => {
+                const el = section.current?.querySelector(`[data-hunk="${s.hunk}"]`)
+                if (el) el.scrollIntoView({ block: "center", behavior: "smooth" })
+                else jump.current?.scrollTo(meta.findIndex((m, i) => m.hunk === s.hunk && (mode === "split" ? splitRows[i]?.kind === "hunk" : shown[i]?.kind === "hunk")))
+              }}
               className="bg-muted text-muted-foreground hover:text-foreground hover:bg-accent rounded-md px-1.5 py-0.5 font-code text-[11px] transition-colors"
             >
               {s.name}
@@ -655,28 +675,20 @@ export function FileDiff({
         </nav>
       )}
       {!near && (
-        <div aria-hidden className="bg-muted/30 m-3 animate-pulse rounded-md" style={{ height: Math.max(60, Math.min(lines.length, ROW_CAP) * 20 - 24) }} />
+        <div aria-hidden className="bg-muted/30 m-3 animate-pulse rounded-md" style={{ height: Math.max(60, Math.min(lines.length, 40) * 20 - 24) }} />
+      )}
+      {near && tooLarge && (
+        <div className="text-muted-foreground flex flex-col items-center gap-2 px-3 py-8 text-center text-sm">
+          <p>This is a large diff ({lines.length.toLocaleString()} lines), so it isn&apos;t shown until you ask.</p>
+          <Button size="sm" variant="outline" onClick={() => setLoadLarge(true)}>
+            Show diff
+          </Button>
+        </div>
       )}
       {near &&
+        !tooLarge &&
         (full || file.patch ? (
-          <div className={cn("rounded-b-xl", view !== "preview" && "overflow-x-auto")}>
-            {view === "preview" ? (
-              <table className="w-full"><FullFile /></table>
-            ) : (
-              <table className="font-code w-full border-collapse text-[12.5px] leading-5">
-                {full ? <FullFile /> : mode === "split" ? <Split /> : <Unified />}
-              </table>
-            )}
-            {!full && capped && (
-              <button
-                type="button"
-                onClick={() => setShowAll(true)}
-                className="text-muted-foreground hover:text-foreground hover:bg-muted/60 w-full border-t py-2 text-xs transition-colors"
-              >
-                Show all {shown.length.toLocaleString()} lines
-              </button>
-            )}
-          </div>
+          <div className={cn("rounded-b-xl", view !== "preview" && "overflow-x-auto")}>{body()}</div>
         ) : (
           <p className="text-muted-foreground px-3 py-4 text-sm">
             {file.status === "renamed" ? "File renamed without changes." : "Diff not shown (binary file or too large for GitHub to include)."}
