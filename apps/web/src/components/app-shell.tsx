@@ -190,7 +190,7 @@ function Frame({ title, description, actions, width, children }: { title?: strin
       </div>
     )
   ) : (
-    description && <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">{description}</p>
+    description && <p data-page-intro className="text-muted-foreground max-w-2xl text-sm leading-relaxed">{description}</p>
   )
 
   return (

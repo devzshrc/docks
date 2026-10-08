@@ -6,7 +6,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 
 import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
-import { GettingStarted } from "@/components/getting-started"
+import { OnboardingGate } from "@/components/onboarding/onboarding"
 import { ReviewBoard } from "@/components/review/board"
 import { fromParams, serverFilters, toParams, type UiFilters } from "@/components/review/board-filters"
 import { Button } from "@/components/ui/button"
@@ -56,16 +56,6 @@ function Board({ workspaceId }: { workspaceId: string }) {
 
   if (board.error) return <QueryError error={board.error} onRetry={() => void board.refetch()} />
   const data = board.data
-  if (data && data.repos.length === 0) {
-    return (
-      <GettingStarted
-        hasWorkspace
-        hasRepos
-        hasEnabledRepo={false}
-        hasGithubAccount={Boolean(account.data?.login)}
-      />
-    )
-  }
 
   const q = filters.q.trim().toLowerCase()
   const cards = data?.cards.filter((c) => !q || `${c.repo}#${c.number} ${c.title}`.toLowerCase().includes(q))
@@ -186,6 +176,19 @@ function Board({ workspaceId }: { workspaceId: string }) {
           ))}
         </div>
       )}
+      {data && data.cards.length === 0 && !active && !filters.q && (
+        <div role="status" className="bg-card border-hairline flex items-start gap-3 rounded-xl border px-5 py-4 text-sm">
+          <span className="bg-primary/15 text-primary-text mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-xs" aria-hidden>
+            ✓
+          </span>
+          <div className="space-y-0.5">
+            <p className="font-medium">No open pull requests right now</p>
+            <p className="text-muted-foreground">
+              Docks is watching {data.repos.length === 1 ? data.repos[0]!.fullName : `${data.repos.length} repositories`}. New and existing pull requests show up here within a minute.
+            </p>
+          </div>
+        </div>
+      )}
       {needsGithub && (
         <p className="text-muted-foreground text-sm">Connect your GitHub account (Integrations) to use “Mine” and “Waiting on me”.</p>
       )}
@@ -201,14 +204,9 @@ function Board({ workspaceId }: { workspaceId: string }) {
 }
 
 function Content() {
-  const { workspace, isPending } = useWorkspace()
-  if (isPending) return null
-  if (!workspace) {
-    return <GettingStarted hasWorkspace={false} hasRepos={false} hasEnabledRepo={false} hasGithubAccount={false} />
-  }
   return (
     <Suspense>
-      <Board workspaceId={workspace.id} />
+      <OnboardingGate>{(workspaceId) => <Board workspaceId={workspaceId} />}</OnboardingGate>
     </Suspense>
   )
 }

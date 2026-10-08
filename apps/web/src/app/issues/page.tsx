@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 
 import { AppShell } from "@/components/app-shell"
-import { GettingStarted } from "@/components/getting-started"
+import { OnboardingGate } from "@/components/onboarding/onboarding"
 import { IssueBoard } from "@/components/issues/issue-board"
 import { IssueInsights } from "@/components/issues/issue-insights"
 import { IssueList } from "@/components/issues/issue-list"
@@ -78,9 +78,6 @@ function Issues({ workspaceId }: { workspaceId: string }) {
 
   const error = isList ? list.error : filters.view === "board" ? board.error : null
   if (error) return <QueryError error={error} onRetry={() => void (isList ? list : board).refetch()} />
-  if (list.data && list.data.repos.length === 0) {
-    return <GettingStarted hasWorkspace hasRepos hasEnabledRepo={false} hasGithubAccount={Boolean(me)} />
-  }
 
   const repos = list.data?.repos ?? []
   const fixedAssignee = filters.view === "triage" || filters.view === "mine"
@@ -190,12 +187,9 @@ function Issues({ workspaceId }: { workspaceId: string }) {
 }
 
 function Content() {
-  const { workspace, isPending } = useWorkspace()
-  if (isPending) return null
-  if (!workspace) return <GettingStarted hasWorkspace={false} hasRepos={false} hasEnabledRepo={false} hasGithubAccount={false} />
   return (
     <Suspense>
-      <Issues workspaceId={workspace.id} />
+      <OnboardingGate>{(workspaceId) => <Issues workspaceId={workspaceId} />}</OnboardingGate>
     </Suspense>
   )
 }

@@ -1,8 +1,10 @@
 /*
  * Maps ObsidianUI's palette variables onto Docks' tokens (globals.css), so the vendored components follow our
  * light/dark themes. `:root:root` gives specificity (0,3,0), above the library's own `.dark .obsidian-*` rules.
- * Menus and popovers render in a portal, hence the `-layer` class.
+ * Menus and popovers render in a portal, hence the `-layer` class. The palette is also set on the root, because
+ * `components/ui/button` uses the same recipe on pages outside the shell (sign-in, landing, invites).
  */
+:root:root,
 :root:root .obsidian-dashboard-shell,
 :root:root .obsidian-dashboard-shell-layer {
   --obsidian-dashboard-shell-background: var(--background);
