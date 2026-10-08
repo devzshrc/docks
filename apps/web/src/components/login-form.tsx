@@ -1,5 +1,7 @@
 "use client"
 
+import { AppIcon } from "@/components/app-icon"
+
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import * as React from "react"
@@ -70,6 +72,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
+          <AppIcon className="mb-3 size-10" />
           <CardTitle>Welcome back</CardTitle>
           <CardDescription>
             Sign in to keep reviewing.

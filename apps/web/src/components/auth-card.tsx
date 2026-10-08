@@ -1,3 +1,4 @@
+import { AppIcon } from "@/components/app-icon"
 import {
   Card,
   CardContent,
@@ -20,6 +21,7 @@ export function AuthCard({
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <Card data-auth className="w-full max-w-[380px]">
         <CardHeader>
+          <AppIcon className="mb-3 size-10" />
           <CardTitle>{title}</CardTitle>
           {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>

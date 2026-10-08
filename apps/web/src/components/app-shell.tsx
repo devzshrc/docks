@@ -31,7 +31,8 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabList, Tab } from "@/components/base/tabs/tabs"
+import { AppIcon } from "@/components/app-icon"
 import { ShellSlotsContext, useShellSlotsState } from "@/components/shell-slots"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { UserMenu } from "@/components/user-menu"
@@ -200,7 +201,7 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
   return (
     <ShellSlotsContext.Provider value={{ filters: slots.filters, actions: slots.actions, setHasFilters: slots.setHasFilters, setHasActions: slots.setHasActions }}>
       <SidebarProvider style={{ "--sidebar-width": "15rem" } as React.CSSProperties}>
-        <Sidebar>
+        <Sidebar variant="floating">
           <SidebarHeader className="px-3 py-3">
             <Link href="/review" className="flex items-center gap-2.5 rounded-lg p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
               <BrandMark />
@@ -267,15 +268,15 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
             </div>
           </header>
           {inSettings && (
-            <div className="border-b px-4 md:px-6">
-              <Tabs value={activeTab} onValueChange={(v) => router.push(v)}>
-                <TabsList variant="line" className="h-10 gap-1 bg-transparent p-0">
+            <div className="overflow-x-auto border-b px-4 md:px-6">
+              <Tabs selectedKey={activeTab} onSelectionChange={(v) => router.push(String(v))}>
+                <TabList aria-label="Settings" className="h-11 min-w-max">
                   {tabs.map((t) => (
-                    <TabsTrigger key={t.value} value={t.value}>
+                    <Tab key={t.value} id={t.value}>
                       {t.label}
-                    </TabsTrigger>
+                    </Tab>
                   ))}
-                </TabsList>
+                </TabList>
               </Tabs>
             </div>
           )}
@@ -285,7 +286,7 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
               {slots.hasActions && <div ref={slots.setActions} className="ml-auto flex items-center gap-2" />}
             </div>
           )}
-          <div className={cn("animate-in fade-in slide-in-from-bottom-1 flex w-full min-w-0 flex-col gap-8 px-4 py-6 duration-200 md:px-6 md:py-8", WIDTH[width])}>
+          <div className={cn("animate-in fade-in slide-in-from-bottom-1 flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-200 md:px-6 md:py-8", WIDTH[width])}>
             {intro}
             {children}
           </div>
@@ -295,10 +296,4 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
   )
 }
 
-function BrandMark() {
-  return (
-    <span className="bg-foreground text-background flex size-7 items-center justify-center rounded-lg text-xs font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.2)]" aria-hidden>
-      D
-    </span>
-  )
-}
+function BrandMark() { return <AppIcon className="size-8 shrink-0" /> }

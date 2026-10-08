@@ -1,3 +1,7 @@
+"use client";
+
+import { StatCards } from "@/components/application/dashboard/stat-cards"
+import { RiGitPullRequestLine, RiTimeLine, RiCheckboxCircleLine, RiBarChartLine } from "@remixicon/react"
 import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from "@/components/reui/frame"
 import { cn } from "@/lib/utils"
 
@@ -33,17 +37,8 @@ export function Panel({
   )
 }
 
-/** A row of equal-width figures, each on its own panel inside one frame. */
+/** BoardUI metric cards using real workspace figures. */
 export function StatStrip({ stats }: { stats: { label: string; value: string; sub?: string }[] }) {
-  return (
-    <Frame className="stagger grid grid-cols-2 lg:grid-cols-4">
-      {stats.map((s) => (
-        <FramePanel key={s.label} className="min-w-0 space-y-1.5 p-5">
-          <p className="text-muted-foreground text-xs">{s.label}</p>
-          <p className="text-2xl font-medium tracking-tight tabular-nums">{s.value}</p>
-          <p className="text-text-3 min-h-4 text-xs">{s.sub ?? " "}</p>
-        </FramePanel>
-      ))}
-    </Frame>
-  )
+  const icons = [RiGitPullRequestLine, RiTimeLine, RiCheckboxCircleLine, RiBarChartLine]
+  return <StatCards stats={stats.map((stat, i) => ({ icon: icons[i % icons.length]!, label: stat.label, value: stat.value, description: stat.sub, deltaColor: "neutral" }))} />
 }

@@ -3,10 +3,9 @@
 import { Search01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { ChevronDownIcon } from "lucide-react"
+import { Select, SelectItem } from "@/components/base/select/select"
 
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
@@ -40,30 +39,10 @@ export function FilterSelect({
   options: { value: string; label: string }[]
   className?: string
 }) {
-  const current = options.find((o) => o.value === value)?.label ?? value
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" aria-label={`${label}: ${current}`} className={cn("group h-8 gap-0 overflow-hidden px-0 shadow-xs", className)}>
-          <span className="text-muted-foreground px-2.5 font-normal">{label}</span>
-          <span aria-hidden className="bg-border h-full w-px" />
-          <span className="flex items-center gap-1.5 px-2.5">
-            {current}
-            <ChevronDownIcon aria-hidden className="text-muted-foreground size-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-          </span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-44">
-        <DropdownMenuLabel>{label}</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={value === "" ? ALL : value} onValueChange={(v) => onChange(v === ALL ? "" : v)}>
-          {options.map((o) => (
-            <DropdownMenuRadioItem key={o.value} value={o.value === "" ? ALL : o.value}>
-              {o.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Select aria-label={label} size="sm" selectedKey={value || ALL} onSelectionChange={(key) => onChange(key === ALL ? "" : String(key))} className={className} renderValue={({ selectedText }) => <span className="flex items-center gap-2"><span className="text-text-secondary">{label}</span><span className="text-text-primary">{selectedText}</span></span>}>
+      {options.map((option) => <SelectItem key={option.value || ALL} id={option.value || ALL} textValue={option.label}>{option.label}</SelectItem>)}
+    </Select>
   )
 }
 
@@ -71,7 +50,7 @@ export function FilterSelect({
 export function ToggleChip({ on, label, onChange, count }: { on: boolean; label: string; onChange: (v: boolean) => void; count?: number }) {
   return (
     <Button
-      variant="ghost"
+      variant={on ? "ghost" : "outline"}
       size="sm"
       aria-pressed={on}
       onClick={() => onChange(!on)}

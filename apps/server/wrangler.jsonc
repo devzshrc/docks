@@ -24,7 +24,7 @@
   ],
   // Non-secret config. Secrets: `wrangler secret put <NAME>` (see docs/DEPLOY.md).
   "vars": {
-    "CLIENT_URL": "https://app.devzshrc.in",
+    "CLIENT_URL": "https://docks.devzshrc.in",
     "BETTER_AUTH_URL": "https://api.devzshrc.in",
     "COOKIE_DOMAIN": ".devzshrc.in"
   }
