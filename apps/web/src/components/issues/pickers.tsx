@@ -4,14 +4,7 @@ import { IconCheck } from "@tabler/icons-react"
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
-import {
-  DashboardMenu,
-  DashboardMenuContent,
-  DashboardMenuItem,
-  DashboardMenuLabel,
-  DashboardMenuSeparator,
-  DashboardMenuTrigger,
-} from "@/components/obsidian/dashboard-shell"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/react"
@@ -72,29 +65,29 @@ export function AssigneeMenu({
   const toggle = (login: string) => onChange(current.includes(login) ? current.filter((l) => l !== login) : [...current, login])
 
   return (
-    <DashboardMenu open={isOpen} onOpenChange={(o) => { setInner(o); onOpenChange?.(o); if (!o) setQ("") }}>
-      <DashboardMenuTrigger asChild>{children}</DashboardMenuTrigger>
-      <DashboardMenuContent align="start" className="max-h-80 w-60 overflow-y-auto">
-        <DashboardMenuLabel>Assign to</DashboardMenuLabel>
+    <DropdownMenu open={isOpen} onOpenChange={(o) => { setInner(o); onOpenChange?.(o); if (!o) setQ("") }}>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-80 w-60 overflow-y-auto">
+        <DropdownMenuLabel>Assign to</DropdownMenuLabel>
         <Filterable placeholder="Filter people" value={q} onChange={setQ} />
         {meta.isPending && <p className="text-muted-foreground px-3 py-2 text-xs">Loading…</p>}
         {meta.error && <p className="text-destructive px-3 py-2 text-xs">{meta.error.message}</p>}
         {meta.data && people.length === 0 && <p className="text-muted-foreground px-3 py-2 text-xs">No one matches</p>}
         {people.map((login) => (
-          <DashboardMenuItem key={login} onSelect={(e) => { e.preventDefault(); toggle(login) }}>
+          <DropdownMenuItem key={login} onSelect={(e) => { e.preventDefault(); toggle(login) }}>
             <Check on={current.includes(login)} />
             <span className="truncate">{login}</span>
             {login === me && <span className="text-text-3 ml-auto text-[11px]">you</span>}
-          </DashboardMenuItem>
+          </DropdownMenuItem>
         ))}
         {current.length > 0 && (
           <>
-            <DashboardMenuSeparator />
-            <DashboardMenuItem onSelect={() => onChange([])}>Clear assignees</DashboardMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => onChange([])}>Clear assignees</DropdownMenuItem>
           </>
         )}
-      </DashboardMenuContent>
-    </DashboardMenu>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -122,23 +115,23 @@ export function LabelMenu({
   const toggle = (name: string) => onChange(current.includes(name) ? current.filter((l) => l !== name) : [...current, name])
 
   return (
-    <DashboardMenu open={isOpen} onOpenChange={(o) => { setInner(o); onOpenChange?.(o); if (!o) setQ("") }}>
-      <DashboardMenuTrigger asChild>{children}</DashboardMenuTrigger>
-      <DashboardMenuContent align="start" className="max-h-80 w-60 overflow-y-auto">
-        <DashboardMenuLabel>Labels</DashboardMenuLabel>
+    <DropdownMenu open={isOpen} onOpenChange={(o) => { setInner(o); onOpenChange?.(o); if (!o) setQ("") }}>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-80 w-60 overflow-y-auto">
+        <DropdownMenuLabel>Labels</DropdownMenuLabel>
         <Filterable placeholder="Filter labels" value={q} onChange={setQ} />
         {meta.isPending && <p className="text-muted-foreground px-3 py-2 text-xs">Loading…</p>}
         {meta.error && <p className="text-destructive px-3 py-2 text-xs">{meta.error.message}</p>}
         {meta.data && labels.length === 0 && <p className="text-muted-foreground px-3 py-2 text-xs">No labels match</p>}
         {labels.map((l) => (
-          <DashboardMenuItem key={l.name} onSelect={(e) => { e.preventDefault(); toggle(l.name) }}>
+          <DropdownMenuItem key={l.name} onSelect={(e) => { e.preventDefault(); toggle(l.name) }}>
             <Check on={current.includes(l.name)} />
             <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: `#${l.color}` }} aria-hidden />
             <span className="truncate">{l.name}</span>
-          </DashboardMenuItem>
+          </DropdownMenuItem>
         ))}
-      </DashboardMenuContent>
-    </DashboardMenu>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -157,26 +150,26 @@ export function MilestoneMenu({
   const [open, setOpen] = useState(false)
   const meta = useRepoMeta(repo, open)
   return (
-    <DashboardMenu open={open} onOpenChange={setOpen}>
-      <DashboardMenuTrigger asChild>{children}</DashboardMenuTrigger>
-      <DashboardMenuContent align="start" className="max-h-80 w-60 overflow-y-auto">
-        <DashboardMenuLabel>Milestone</DashboardMenuLabel>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-80 w-60 overflow-y-auto">
+        <DropdownMenuLabel>Milestone</DropdownMenuLabel>
         {meta.isPending && <p className="text-muted-foreground px-3 py-2 text-xs">Loading…</p>}
         {meta.error && <p className="text-destructive px-3 py-2 text-xs">{meta.error.message}</p>}
         {meta.data && meta.data.milestones.length === 0 && <p className="text-muted-foreground px-3 py-2 text-xs">No open milestones</p>}
         {meta.data?.milestones.map((m) => (
-          <DashboardMenuItem key={m.number} onSelect={() => onChange(m.number)}>
+          <DropdownMenuItem key={m.number} onSelect={() => onChange(m.number)}>
             <Check on={current === m.title} />
             <span className="truncate">{m.title}</span>
-          </DashboardMenuItem>
+          </DropdownMenuItem>
         ))}
         {current && (
           <>
-            <DashboardMenuSeparator />
-            <DashboardMenuItem onSelect={() => onChange(null)}>Clear milestone</DashboardMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => onChange(null)}>Clear milestone</DropdownMenuItem>
           </>
         )}
-      </DashboardMenuContent>
-    </DashboardMenu>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

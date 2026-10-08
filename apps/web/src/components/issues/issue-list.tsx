@@ -10,7 +10,7 @@ import type { IssueItem } from "@/components/issues/shared"
 import { useIssueActions } from "@/components/issues/use-issue-actions"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { DashboardMenu, DashboardMenuContent, DashboardMenuItem, DashboardMenuTrigger } from "@/components/obsidian/dashboard-shell"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 const key = (i: IssueItem) => `${i.repo}#${i.number}`
 const typing = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))
@@ -125,17 +125,17 @@ export function IssueList({
             </Button>
           ) : (
             <>
-              <DashboardMenu>
-                <DashboardMenuTrigger asChild>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" disabled={bulk.isPending}>
                     Close
                   </Button>
-                </DashboardMenuTrigger>
-                <DashboardMenuContent align="start">
-                  <DashboardMenuItem onSelect={() => bulk.mutate({ items: refs(chosen), action: { type: "close", reason: "completed" } })}>Close as completed</DashboardMenuItem>
-                  <DashboardMenuItem onSelect={() => bulk.mutate({ items: refs(chosen), action: { type: "close", reason: "not_planned" } })}>Close as not planned</DashboardMenuItem>
-                </DashboardMenuContent>
-              </DashboardMenu>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onSelect={() => bulk.mutate({ items: refs(chosen), action: { type: "close", reason: "completed" } })}>Close as completed</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => bulk.mutate({ items: refs(chosen), action: { type: "close", reason: "not_planned" } })}>Close as not planned</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <AssigneeMenu repo={sameRepo} current={[]} me={me} open={assignOpen} onOpenChange={setAssignOpen} onChange={(next) => next[0] && bulk.mutate({ items: refs(chosen), action: { type: "assign", login: next[0] } })}>
                 <Button size="sm" variant="outline" disabled={!sameRepo || bulk.isPending} title={sameRepo ? undefined : "Select issues from one repository to assign"}>
                   Assign

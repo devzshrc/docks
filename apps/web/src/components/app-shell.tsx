@@ -4,13 +4,34 @@ import { Analytics01Icon, CheckListIcon, GitPullRequestIcon, Search01Icon, Setti
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useQuery } from "@tanstack/react-query"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+
 
 import { RequireAuth } from "@/components/auth-guard"
 import { CommandPalette } from "@/components/command-palette"
 import { NewIssueButton } from "@/components/new-issue/button"
 import { NewIssueProvider } from "@/components/new-issue/provider"
-import { DashboardButton, DashboardShell, type DashboardShellNavSection } from "@/components/obsidian/dashboard-shell"
+import Link from "next/link"
+
+import { Button } from "@/components/ui/button"
+import { Kbd } from "@/components/ui/kbd"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ShellSlotsContext, useShellSlotsState } from "@/components/shell-slots"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { UserMenu } from "@/components/user-menu"
@@ -59,8 +80,8 @@ function titleFor(pathname: string, title?: string) {
   if (pr) {
     return (
       <>
-        <span className="text-(--obsidian-dashboard-shell-text-subtle) font-normal">Reviews / </span>
-        {pr[1]}/{pr[2]} <span className="text-(--obsidian-dashboard-shell-text-subtle) font-normal">#{pr[3]}</span>
+        <span className="text-muted-foreground font-normal">Reviews / </span>
+        {pr[1]}/{pr[2]} <span className="text-muted-foreground font-normal">#{pr[3]}</span>
       </>
     )
   }
@@ -68,15 +89,13 @@ function titleFor(pathname: string, title?: string) {
   if (issue) {
     return (
       <>
-        <span className="text-(--obsidian-dashboard-shell-text-subtle) font-normal">Issues / </span>
-        {issue[1]}/{issue[2]} <span className="text-(--obsidian-dashboard-shell-text-subtle) font-normal">#{issue[3]}</span>
+        <span className="text-muted-foreground font-normal">Issues / </span>
+        {issue[1]}/{issue[2]} <span className="text-muted-foreground font-normal">#{issue[3]}</span>
       </>
     )
   }
   return title ?? ""
 }
-
-const WIDTH_KEY = "docks:sidebar-width"
 
 /**
  * Authenticated page chrome, built on ObsidianUI's DashboardShell: resizable sidebar with a sliding active pill,
@@ -99,16 +118,16 @@ export function AppShell({
   return (
     <RequireAuth>
       <NewIssueProvider>
-        <Frame title={title} description={description} actions={actions} width={width}>
+        <ShellFrame title={title} description={description} actions={actions} width={width}>
           {children}
-        </Frame>
+        </ShellFrame>
         <CommandPalette />
       </NewIssueProvider>
     </RequireAuth>
   )
 }
 
-function Frame({ title, description, actions, width, children }: { title?: string; description?: React.ReactNode; actions?: React.ReactNode; width: keyof typeof WIDTH; children: React.ReactNode }) {
+function ShellFrame({ title, description, actions, width, children }: { title?: string; description?: React.ReactNode; actions?: React.ReactNode; width: keyof typeof WIDTH; children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const trpc = useTRPC()
@@ -135,52 +154,17 @@ function Frame({ title, description, actions, width, children }: { title?: strin
   })
   const triageCount = triage.data?.triage ?? 0
 
-  const navigation = useMemo<DashboardShellNavSection[]>(
-    () => [
-      {
-        id: "review",
-        title: "Review",
-        items: [
-          { id: "reviews", label: "Reviews", icon: ReviewsIcon, href: "/review", count: waitingCount > 0 ? waitingCount : undefined },
-          { id: "issues", label: "Issues", icon: IssuesIcon, href: "/issues", count: triageCount > 0 ? triageCount : undefined },
-          { id: "insights", label: "Insights", icon: InsightsIcon, href: "/insights" },
-          { id: "team", label: "Team", icon: TeamIcon, href: "/team" },
-        ],
-      },
-    ],
-    [waitingCount, triageCount]
-  )
-
-  // Sidebar width is remembered per browser.
-  const [sidebarWidth, setSidebarWidth] = useState(240)
-  useEffect(() => {
-    try {
-      const saved = Number(localStorage.getItem(WIDTH_KEY))
-      if (saved >= 200 && saved <= 400) setSidebarWidth(saved)
-    } catch {}
-  }, [])
+  const nav = [
+    { id: "reviews", label: "Reviews", icon: ReviewsIcon, href: "/review", count: waitingCount },
+    { id: "issues", label: "Issues", icon: IssuesIcon, href: "/issues", count: triageCount },
+    { id: "insights", label: "Insights", icon: InsightsIcon, href: "/insights", count: 0 },
+    { id: "team", label: "Team", icon: TeamIcon, href: "/team", count: 0 },
+  ]
+  const activeId = activeIdFor(pathname)
 
   const canAudit = settings.data ? settings.data.can["audit.read"] : true
   const tabs = SETTINGS_TABS.filter((t) => t.value !== "/settings/audit" || canAudit)
   const activeTab = tabs.find((t) => pathname === t.value || pathname.startsWith(`${t.value}/`))?.value ?? tabs[0]!.value
-
-  const headerActions = (
-    <>
-      {actions}
-      <DashboardButton
-        variant="secondary"
-        aria-label="Search or jump to"
-        onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
-        className="gap-2"
-      >
-        <HugeiconsIcon icon={Search01Icon} size={12} aria-hidden />
-        <span className="hidden sm:inline">Search</span>
-        <kbd className="bg-muted text-text-3 hidden rounded px-1.5 font-mono text-[10px] sm:inline">⌘K</kbd>
-      </DashboardButton>
-      <NewIssueButton />
-      <ThemeToggle />
-    </>
-  )
 
   const intro = inSettings ? (
     (title || description) && (
@@ -195,36 +179,98 @@ function Frame({ title, description, actions, width, children }: { title?: strin
 
   return (
     <ShellSlotsContext.Provider value={{ filters: slots.filters, actions: slots.actions, setHasFilters: slots.setHasFilters, setHasActions: slots.setHasActions }}>
-    <div className="h-dvh">
-      <DashboardShell
-        brand={{ name: "Docks", description: workspace?.name ?? "Code review", logo: <BrandMark /> }}
-        navigation={navigation}
-        secondaryNavigation={[{ id: "settings", label: "Settings", icon: SettingsIcon, href: "/settings/workspace" }]}
-        sidebarFooter={<UserMenu />}
-        activeItemId={activeIdFor(pathname)}
-        title={inSettings ? "Settings" : titleFor(pathname, title)}
-        headerActions={headerActions}
-        tabs={inSettings ? tabs : undefined}
-        tab={inSettings ? activeTab : undefined}
-        onTabChange={(value) => router.push(value)}
-        sidebarWidth={sidebarWidth}
-        onSidebarWidthChange={(w) => {
-          setSidebarWidth(w)
-          try {
-            localStorage.setItem(WIDTH_KEY, String(w))
-          } catch {}
-        }}
-        filters={slots.hasFilters ? <div ref={slots.setFilters} className="contents" /> : undefined}
-        toolbarActions={slots.hasActions ? <div ref={slots.setActions} className="contents" /> : undefined}
-        className="h-dvh"
-      >
-        {/* Left-aligned with the header and the toolbar (all at 16px), so every page shares one left edge. */}
-        <div className={cn("animate-in fade-in slide-in-from-bottom-1 flex w-full min-w-0 flex-col gap-8 px-5 py-6 duration-200 md:px-8 md:py-8", WIDTH[width])}>
-          {intro}
-          {children}
-        </div>
-      </DashboardShell>
-    </div>
+      <SidebarProvider style={{ "--sidebar-width": "15rem" } as React.CSSProperties}>
+        <Sidebar>
+          <SidebarHeader className="px-3 py-3">
+            <Link href="/review" className="flex items-center gap-2.5 rounded-lg p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+              <BrandMark />
+              <span className="grid leading-tight">
+                <span className="text-sm font-medium">Docks</span>
+                <span className="text-muted-foreground truncate text-xs">{workspace?.name ?? "Code review"}</span>
+              </span>
+            </Link>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Review</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {nav.map((n) => (
+                    <SidebarMenuItem key={n.id}>
+                      <SidebarMenuButton asChild isActive={activeId === n.id}>
+                        <Link href={n.href}>
+                          <n.icon />
+                          <span>{n.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                      {n.count > 0 && <SidebarMenuBadge>{n.count}</SidebarMenuBadge>}
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+          <SidebarFooter className="gap-1 p-2">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={activeId === "settings"}>
+                  <Link href="/settings/workspace">
+                    <SettingsIcon />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+            <UserMenu />
+          </SidebarFooter>
+          <SidebarRail />
+        </Sidebar>
+        <SidebarInset className="min-w-0">
+          <header className="bg-background/80 sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b px-4 backdrop-blur md:px-6">
+            <SidebarTrigger className="-ml-1.5" />
+            <h1 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">{inSettings ? "Settings" : titleFor(pathname, title)}</h1>
+            <div className="flex items-center gap-2">
+              {actions}
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label="Search or jump to"
+                onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+                className="gap-2 shadow-xs"
+              >
+                <HugeiconsIcon icon={Search01Icon} size={12} aria-hidden />
+                <span className="hidden sm:inline">Search</span>
+                <Kbd className="hidden sm:inline-flex">⌘K</Kbd>
+              </Button>
+              <NewIssueButton />
+              <ThemeToggle />
+            </div>
+          </header>
+          {inSettings && (
+            <div className="border-b px-4 md:px-6">
+              <Tabs value={activeTab} onValueChange={(v) => router.push(v)}>
+                <TabsList variant="line" className="h-10 gap-1 bg-transparent p-0">
+                  {tabs.map((t) => (
+                    <TabsTrigger key={t.value} value={t.value}>
+                      {t.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
+          )}
+          {(slots.hasFilters || slots.hasActions) && (
+            <div className="flex flex-wrap items-center gap-2 border-b px-4 py-2.5 md:px-6">
+              {slots.hasFilters && <div ref={slots.setFilters} className="contents" />}
+              {slots.hasActions && <div ref={slots.setActions} className="ml-auto flex items-center gap-2" />}
+            </div>
+          )}
+          <div className={cn("animate-in fade-in slide-in-from-bottom-1 flex w-full min-w-0 flex-col gap-8 px-4 py-6 duration-200 md:px-6 md:py-8", WIDTH[width])}>
+            {intro}
+            {children}
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
     </ShellSlotsContext.Provider>
   )
 }
