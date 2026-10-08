@@ -1,5 +1,7 @@
 "use client"
 
+import { AppIcon } from "@/components/app-icon"
+
 import Link from "next/link"
 import * as React from "react"
 
@@ -70,6 +72,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     return (
       <Card {...props}>
         <CardHeader>
+          <AppIcon className="mb-3 size-10" />
           <CardTitle>Check your email</CardTitle>
           <CardDescription>
             We sent a confirmation link to {sentTo}. Open it to finish creating your account.

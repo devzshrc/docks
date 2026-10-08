@@ -1,0 +1,40 @@
+/* Docks brand: violet actions, citrus details, warm neutral surfaces.
+   BoardUI semantic tokens and legacy UI aliases resolve to the same palette. */
+:root {
+  --color-accent-50: #f5f2ff;
+  --color-accent-100: #ede7ff;
+  --color-accent-200: #ddd0ff;
+  --color-accent-300: #c6acff;
+  --color-accent-400: #ab80ff;
+  --color-accent-500: #8951ef;
+  --color-accent-600: #7136d1;
+  --color-accent-700: #5e29b1;
+  --color-accent-800: #4f258f;
+  --color-accent-900: #422371;
+  --color-accent-950: #281344;
+  --color-background-full: #f7f7f2;
+  --color-background-primary-default: #ffffff;
+  --color-background-secondary-default: #f2f1ec;
+  --color-background-tertiary-default: #eeede8;
+  --color-text-secondary: #68665f;
+  --color-text-tertiary: #76746c;
+  --color-brand-lime: #d7f36b;
+  --color-brand-ink: #282b1c;
+  --font-sans: var(--font-inter-face), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono-face), ui-monospace, monospace;
+}
+.dark {
+  --color-background-full: #141318;
+  --color-background-primary-default: #1d1b22;
+  --color-background-secondary-default: #25222c;
+  --color-background-tertiary-default: #2b2734;
+  --color-text-primary: #f4f1f8;
+  --color-text-secondary: #b1aaba;
+  --color-text-tertiary: #a099aa;
+  --color-accent-500: #925cf0;
+  --color-accent-600: #8046de;
+}
+@theme inline {
+  --color-brand-lime: var(--color-brand-lime);
+  --color-brand-ink: var(--color-brand-ink);
+}

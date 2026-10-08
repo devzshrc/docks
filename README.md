@@ -1,12 +1,14 @@
 # Docks — production-grade Turborepo + tRPC monorepo
 
+Live: [docks.devzshrc.in](https://docks.devzshrc.in)
+
 Next.js client (`apps/web`) → Express tRPC server (`apps/server`) sharing routers via `@docks/api` (`packages/api`), auth via Better Auth + Postgres (Drizzle).
 
 ## Stack
 
 - Turborepo 2 + pnpm workspaces + TypeScript strict
 - tRPC v11 + SuperJSON + Zod validation
-- Next.js 15 (client) with `@trpc/tanstack-react-query` + TanStack Query v5 + shadcn/ui
+- Next.js 15 (client) with `@trpc/tanstack-react-query` + TanStack Query v5 + BoardUI (with existing Radix adapters)
 - Express 4 + helmet + cors + morgan (server)
 - Better Auth 1.x (email + password) + Drizzle ORM + Postgres 16 (docker compose)
 

@@ -1,5 +1,6 @@
 "use client"
 
+import { Checkbox } from "@/components/base/checkbox/checkbox"
 import { answerStillValid } from "@/lib/checklist"
 import type { Guide } from "@docks/api"
 import { IconFileCode } from "@tabler/icons-react"
@@ -84,17 +85,12 @@ export function Checklist({
           return (
             <li key={i}>
               {/* The whole row is the hit target; file links inside don't toggle it. */}
-              <label
-                htmlFor={`check-${i}`}
+              <Checkbox
+                aria-label={item.question}
+                isSelected={checked}
+                onChange={() => toggle(i)}
                 className="hover:bg-muted/70 flex cursor-pointer gap-3 rounded-lg px-2 py-2.5 transition-colors"
               >
-                <input
-                  type="checkbox"
-                  id={`check-${i}`}
-                  className="mt-[3px] size-4"
-                  checked={checked}
-                  onChange={() => toggle(i)}
-                />
                 <span className="min-w-0 flex-1 space-y-1.5">
                   <span
                     className={cn(
@@ -124,7 +120,7 @@ export function Checklist({
                     </span>
                   )}
                 </span>
-              </label>
+              </Checkbox>
             </li>
           )
         })}

@@ -1,43 +1,47 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "../styles/theme.css";
+@import "../styles/typography.css";
+@import "../styles/docks-theme.css";
+@import "../styles/globals.css";
 
 @custom-variant dark (&:is(.dark *));
 
 /*
  * Docks design tokens. One system, two designed themes (not inverted).
  * Surfaces step by lightness, edges are hairlines, depth comes from the "raised" ring on controls.
- * Type is Space Grotesk at 14/12, weights 400/500; code uses Geist Mono. Radii: 4 / 6 / 8 / 12 / full.
+ * Type is Inter at 14/12, weights 400/500; code uses Geist Mono. Radii: 4 / 6 / 8 / 12 / full.
  */
 :root {
   /* Surfaces */
-  --background: #f6f7f9;
-  --card: #ffffff;
-  --popover: #ffffff;
-  --muted: #f0f2f5;
-  --secondary: #f0f2f5;
-  --accent: #eaedf1;
-  --raised: #ffffff;
-  --hover: #eceff3;
-  --field: #f0f2f5;
-  --field-hover: #e8ebf0;
+  --background: var(--color-background-full);
+  --card: var(--color-background-primary-default);
+  --popover: var(--color-background-primary-default);
+  --muted: var(--color-background-secondary-default);
+  --secondary: var(--color-background-secondary-default);
+  --accent: var(--color-background-primary-hover);
+  --raised: var(--color-background-primary-default);
+  --hover: var(--color-background-primary-hover);
+  --field: var(--color-background-tertiary-default);
+  --field-hover: var(--color-background-secondary-hover);
   /* Text: foreground / secondary / tertiary */
-  --foreground: #0f1419;
-  --card-foreground: #0f1419;
-  --popover-foreground: #0f1419;
-  --secondary-foreground: #3b4654;
-  --accent-foreground: #0f1419;
-  --muted-foreground: #5a6674;
-  --text-3: #8a94a1;
+  --foreground: var(--color-text-primary);
+  --card-foreground: var(--color-text-primary);
+  --popover-foreground: var(--color-text-primary);
+  --secondary-foreground: var(--color-text-secondary);
+  --accent-foreground: var(--color-text-primary);
+  --muted-foreground: var(--color-text-secondary);
+  --text-3: var(--color-text-tertiary);
   /* Edges */
-  --border: rgb(15 23 42 / 0.08);
-  --hairline: rgb(15 23 42 / 0.08);
-  --input: rgb(15 23 42 / 0.12);
-  --border-control: rgb(15 23 42 / 0.16);
+  --border: var(--color-separator-border);
+  --hairline: var(--color-separator-border);
+  --input: var(--color-border-button-default);
+  --border-control: var(--color-border-button-hover);
   /* Brand + feedback */
-  --primary: #2D6E9E;
-  --primary-text: #245a82;
-  --primary-foreground: #ffffff;
-  --ring: #2D6E9E;
+  --primary: var(--color-accent-600);
+  --primary-text: var(--color-button-ghost-foreground);
+  --primary-foreground: var(--color-text-white);
+  --ring: var(--color-border-focus-ring);
   --destructive: #e5484d;
   --destructive-foreground: #ffffff;
   /* Status pills: tinted fill + matching border + readable text */
@@ -57,18 +61,18 @@
   --chart-4: #1b4766;
   --chart-5: #7bb0d6;
   /* Sidebar shares the page surface; the hairline separates it */
-  --sidebar: #fbfbfc;
-  --sidebar-foreground: #0f1720;
-  --sidebar-primary: #2D6E9E;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eceff3;
-  --sidebar-accent-foreground: #0f1720;
-  --sidebar-border: rgb(15 23 42 / 0.08);
-  --sidebar-ring: #2D6E9E;
+  --sidebar: var(--color-background-primary-default);
+  --sidebar-foreground: var(--color-text-primary);
+  --sidebar-primary: var(--color-accent-600);
+  --sidebar-primary-foreground: var(--color-text-white);
+  --sidebar-accent: var(--color-button-ghost-background);
+  --sidebar-accent-foreground: var(--color-button-ghost-foreground);
+  --sidebar-border: var(--color-separator-border);
+  --sidebar-ring: var(--color-border-focus-ring);
   /* next/font sets the --font-*-face variables on <html> (see app/layout.tsx). */
   --font-sans: var(--font-inter-face), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-source-serif-face), ui-serif, serif;
-  --font-display: var(--font-display-face), var(--font-source-serif-face), ui-serif, serif;
+  --font-serif: ui-serif, serif;
+  --font-display: var(--font-sans);
   /* UI monospace: branch names, paths, numbers. */
   --font-mono: var(--font-geist-mono-face), ui-monospace, monospace;
   /* Code: diffs, full files, code in comments. */
@@ -93,32 +97,32 @@
 }
 
 .dark {
-  --background: #0e1012;
-  --card: #15181c;
-  --popover: #1a1e23;
-  --muted: #1b1f24;
-  --secondary: #1b1f24;
-  --accent: #23282e;
-  --raised: #1b1f24;
-  --hover: #22272d;
-  --field: #1b1f24;
-  --field-hover: #23282e;
-  --foreground: #eef1f5;
-  --card-foreground: #eef1f5;
-  --popover-foreground: #eef1f5;
-  --secondary-foreground: #c3cad3;
-  --accent-foreground: #f3f5f8;
-  --muted-foreground: #8b95a2;
-  --text-3: #6c7683;
-  --border: rgb(255 255 255 / 0.07);
-  --hairline: rgb(255 255 255 / 0.07);
-  --input: rgb(255 255 255 / 0.11);
-  --border-control: rgb(255 255 255 / 0.15);
-  --primary-foreground: #ffffff;
-  --primary-text: #7fb6e2;
-  --primary: #2D6E9E;
-  --ring: #2D6E9E;
-  --sidebar-primary: #2D6E9E;
+  --background: var(--color-background-full);
+  --card: var(--color-background-primary-default);
+  --popover: var(--color-background-primary-default);
+  --muted: var(--color-background-secondary-default);
+  --secondary: var(--color-background-secondary-default);
+  --accent: var(--color-background-primary-hover);
+  --raised: var(--color-background-primary-default);
+  --hover: var(--color-background-primary-hover);
+  --field: var(--color-background-tertiary-default);
+  --field-hover: var(--color-background-secondary-hover);
+  --foreground: var(--color-text-primary);
+  --card-foreground: var(--color-text-primary);
+  --popover-foreground: var(--color-text-primary);
+  --secondary-foreground: var(--color-text-secondary);
+  --accent-foreground: var(--color-text-primary);
+  --muted-foreground: var(--color-text-secondary);
+  --text-3: var(--color-text-tertiary);
+  --border: var(--color-separator-border);
+  --hairline: var(--color-separator-border);
+  --input: var(--color-border-button-default);
+  --border-control: var(--color-border-button-hover);
+  --primary-foreground: var(--color-text-white);
+  --primary-text: var(--color-button-ghost-foreground);
+  --primary: var(--color-accent-600);
+  --ring: var(--color-border-focus-ring);
+  --sidebar-primary: var(--color-accent-600);
   --destructive: #f97373;
   --success: #22c55e;  --success-bg: #1f3a2d;  --success-border: transparent;  --success-text: #86e0a8;
   --warning: #fbbf24;  --warning-bg: #33301a;  --warning-border: transparent;  --warning-text: #f6d77a;
@@ -133,11 +137,11 @@
   --chart-3: #2b6a96;
   --chart-4: #8bbadb;
   --chart-5: #1f567d;
-  --sidebar: #0b0d0f;
-  --sidebar-foreground: #eef2f6;
-  --sidebar-accent: #1b1f24;
-  --sidebar-accent-foreground: #f4f7fa;
-  --sidebar-border: rgb(255 255 255 / 0.07);
+  --sidebar: var(--color-background-primary-default);
+  --sidebar-foreground: var(--color-text-primary);
+  --sidebar-accent: var(--color-button-ghost-background);
+  --sidebar-accent-foreground: var(--color-button-ghost-foreground);
+  --sidebar-border: var(--color-separator-border);
   --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.4);
   --shadow-lg: 0 8px 24px -4px rgb(0 0 0 / 0.5);
   --shadow-xl: 0 16px 40px -8px rgb(0 0 0 / 0.55);
@@ -280,7 +284,7 @@
   }
 
   /* Checkboxes: 16px, hairline box, solid accent when on. */
-  input[type="checkbox"] {
+  input[type="checkbox"]:not([data-react-aria-pressable]) {
     appearance: none;
     flex-shrink: 0;
     border: 1px solid var(--input);
@@ -291,7 +295,7 @@
     cursor: pointer;
     transition: background 120ms, border-color 120ms;
   }
-  input[type="checkbox"]::before {
+  input[type="checkbox"]:not([data-react-aria-pressable])::before {
     content: "";
     width: 0.6em;
     height: 0.6em;
@@ -300,18 +304,18 @@
     transform: scale(0);
     transition: transform 120ms;
   }
-  input[type="checkbox"]:checked {
+  input[type="checkbox"]:not([data-react-aria-pressable]):checked {
     border-color: var(--primary);
     background: var(--primary);
   }
-  input[type="checkbox"]:checked::before {
+  input[type="checkbox"]:not([data-react-aria-pressable]):checked::before {
     transform: scale(1);
   }
-  input[type="checkbox"]:focus-visible {
+  input[type="checkbox"]:not([data-react-aria-pressable]):focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent);
   }
-  input[type="checkbox"]:disabled {
+  input[type="checkbox"]:not([data-react-aria-pressable]):disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -507,31 +511,19 @@ pre, code, kbd { font-family: var(--font-code); }
   }
 
   /* Checkbox press + pop on check. */
-  input[type="checkbox"]:active { transform: scale(0.88); }
-  input[type="checkbox"]:checked { animation: pop 200ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  input[type="checkbox"]:not([data-react-aria-pressable]):active { transform: scale(0.88); }
+  input[type="checkbox"]:not([data-react-aria-pressable]):checked { animation: pop 200ms cubic-bezier(0.34, 1.56, 0.64, 1); }
 
   /* Primary buttons brighten a touch on hover (already textured). */
   .tex-primary { transition: background 150ms, box-shadow 150ms, transform 100ms; }
 
   /* Sidebar: active item gets a small accent bar that grows in. */
-  [data-slot="sidebar-menu-button"][data-active="true"]::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 22%;
-    bottom: 22%;
-    width: 2px;
-    border-radius: 2px;
-    background: var(--primary);
-    transform-origin: center;
-    animation: bar-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
   [data-slot="sidebar-menu-button"] { position: relative; transition: background-color 150ms, color 150ms, padding 200ms; }
   [data-slot="sidebar-menu-button"]:active { transform: scale(0.985); }
 
   @media (prefers-reduced-motion: reduce) {
     dialog[open], dialog[open]::backdrop, [role="alert"], .anim-pop, .anim-pulse-once, .anim-shake, .anim-reveal,
-    input[type="checkbox"]:checked, [data-slot="sidebar-menu-button"][data-active="true"]::before { animation: none !important; }
+    input[type="checkbox"]:not([data-react-aria-pressable]):checked, [data-slot="sidebar-menu-button"][data-active="true"]::before { animation: none !important; }
     .draw-tick path { animation: none; stroke-dashoffset: 0; }
     .anim-spin { animation-duration: 1.6s; }
     html.theme-fade, html.theme-fade * { transition: none !important; }
@@ -551,17 +543,17 @@ pre, code, kbd { font-family: var(--font-code); }
 /* ───────────── Borderless surfaces and ObsidianUI motion ─────────────
    Panels are separated by fill (background, card, muted), not lines. Inputs are filled controls with a brand focus ring. */
 @layer base {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(.input-bare),
+  input:not(.board-input):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(.input-bare),
   textarea:not(.input-bare),
   select:not(.select-bare):not(.input-bare) {
     background-color: var(--field);
     border-color: var(--input);
     transition: background-color 150ms, border-color 150ms, box-shadow 150ms;
   }
-  input:not([type="checkbox"]):not([type="radio"]):not(.input-bare):hover,
+  input:not(.board-input):not([type="checkbox"]):not([type="radio"]):not(.input-bare):hover,
   textarea:not(.input-bare):hover,
   select:not(.select-bare):not(.input-bare):hover { background-color: var(--field-hover); border-color: var(--border-control); }
-  input:not([type="checkbox"]):not([type="radio"]):not(.input-bare):focus-visible,
+  input:not(.board-input):not([type="checkbox"]):not([type="radio"]):not(.input-bare):focus-visible,
   textarea:not(.input-bare):focus-visible,
   select:not(.select-bare):not(.input-bare):focus-visible {
     outline: none;
@@ -569,7 +561,7 @@ pre, code, kbd { font-family: var(--font-code); }
     background-color: var(--card);
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent);
   }
-  input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
+  input[type="checkbox"]:not([data-react-aria-pressable]), input[type="radio"] { accent-color: var(--primary); }
   ::selection { background: color-mix(in oklab, var(--primary) 30%, transparent); }
 }
 

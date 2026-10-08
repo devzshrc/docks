@@ -37,3 +37,9 @@ Postgres is Supabase, reached from the API Worker through Hyperdrive. Background
 - `/releases` supports up to 100 explicitly selected PRs. Readiness expires after 15 minutes or a changed head. Refresh work checks the requesting user's current repository access.
 - Evidence collection uses review webhooks and PR sync, including GitHub actions performed outside Docks. Older decision history and checks at review or merge time can be incomplete. CSV/JSON exports identify gaps and record limits. Snapshots are not compliance certification or tamper-proof records.
 - Incremental review compares the last submitted review commit, including mirrored external reviews. Incomplete comparisons fall back to the full diff. Personal checklist answers persist across commits only when all linked file blobs remain unchanged.
+
+## Canonical web domain
+
+- The web origin is `https://docks.devzshrc.in`. Set API `CLIENT_URL` to this origin so auth, invitations, billing returns, and notification links use it. The API origin remains `https://api.devzshrc.in`; GitHub and Slack callback URLs stay on that API origin.
+- Keep `app.devzshrc.in` attached to the web Worker for existing bookmarks. Middleware redirects old-host requests to the new host with HTTP 308, preserving their path and query.
+- Auth cookies continue to use `.devzshrc.in`. The new custom domain is managed by Wrangler and Cloudflare.
