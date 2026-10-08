@@ -15,6 +15,7 @@ import { MarkdownPreview } from "@/components/review/markdown-preview"
 import { toast } from "@/components/toast"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { useDraft } from "@/hooks/use-draft"
 import { optimistic } from "@/lib/optimistic"
 import {
   addedLines,
@@ -141,7 +142,7 @@ function Composer({
   onCancel: () => void
 }) {
   const trpc = useTRPC()
-  const [body, setBody] = useState("")
+  const [body, setBody] = useDraft(`draft:line:${repo}#${number}:${path}:${side}:${line}`, "")
   const post = useMutation(trpc.review.comment.mutationOptions({ onSuccess: onPosted }))
   return (
     <div className="bg-muted/40 animate-in fade-in slide-in-from-top-1 space-y-2 border-y p-2 font-sans duration-150">
@@ -190,7 +191,7 @@ function ThreadView({ thread, repo, number, branch, canAct, onChanged }: { threa
   const [open, setOpen] = useState(!thread.isResolved)
   // Resolving folds the thread away; unresolving opens it again.
   useEffect(() => setOpen(!thread.isResolved), [thread.isResolved])
-  const [reply, setReply] = useState("")
+  const [reply, setReply] = useDraft(`draft:reply:${repo}#${number}:${thread.id}`, "")
   const queryClient = useQueryClient()
   const threadsFilter = trpc.review.threads.queryFilter({ repo, number })
   // Reply and resolve show up at once; GitHub's answer replaces them when it arrives.

@@ -8,6 +8,7 @@ import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { OnboardingGate } from "@/components/onboarding/onboarding"
 import { ReviewBoard } from "@/components/review/board"
+import { Greeting } from "@/components/review/greeting"
 import { fromParams, serverFilters, toParams, type UiFilters } from "@/components/review/board-filters"
 import { Button } from "@/components/ui/button"
 import { ShellActions, ShellFilters } from "@/components/shell-slots"
@@ -65,6 +66,7 @@ function Board({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="space-y-6">
+      <Greeting workspaceId={workspaceId} cards={data?.cards ?? []} />
       <ShellFilters>
         <ToolbarSearch ref={search} placeholder="Search ( / )" aria-label="Search pull requests" value={filters.q} onChange={(e) => set({ q: e.target.value })} />
         <button
@@ -213,7 +215,7 @@ function Content() {
 
 export default function Page() {
   return (
-    <AppShell title="Reviews" description="Open pull requests across your repositories, grouped by where they are in review." width="wide">
+    <AppShell title="Reviews" width="wide">
       <Content />
     </AppShell>
   )

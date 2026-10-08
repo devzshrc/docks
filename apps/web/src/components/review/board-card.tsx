@@ -6,6 +6,7 @@ import { IconCircleCheck, IconCircleDot, IconCircleX, IconStar, IconStarFilled }
 import Link from "next/link"
 
 import { GhAvatar } from "@/components/gh-avatar"
+import { PrPreview } from "@/components/review/pr-preview"
 import { optimistic } from "@/lib/optimistic"
 import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/react"
@@ -61,6 +62,7 @@ export function BoardCard({ pr, canAct }: { pr: BoardCardData; canAct: boolean }
           {pr.priority ? <IconStarFilled className="anim-pop size-4 text-amber-500" /> : <IconStar className="size-4" />}
         </button>
       )}
+      <PrPreview repo={pr.repo} number={pr.number}>
       <Link
         href={`/review/${pr.repo}/${pr.number}`}
         onMouseEnter={prefetch}
@@ -71,6 +73,7 @@ export function BoardCard({ pr, canAct }: { pr: BoardCardData; canAct: boolean }
           <span className="text-text-3 font-normal">#{pr.number}</span> {pr.title}
         </div>
       </Link>
+      </PrPreview>
       <div className="text-muted-foreground mt-3 flex items-center gap-2 text-xs">
         <GhAvatar login={pr.author.login} src={pr.author.avatar_url} className="size-4 text-[9px]" />
         <span className="min-w-0 truncate">{pr.author.login}</span>

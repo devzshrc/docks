@@ -14,6 +14,7 @@ import { Panel } from "@/components/panel"
 import { QueryError } from "@/components/query-state"
 import { FixWithAgent } from "@/components/review/agent-handoff"
 import { MarkdownPreview } from "@/components/review/markdown-preview"
+import { useDraft } from "@/hooks/use-draft"
 import { optimistic } from "@/lib/optimistic"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -148,7 +149,7 @@ export function IssueDetail({ repo, number }: { repo: string; number: number }) 
   const [title, setTitle] = useState("")
   const [editingBody, setEditingBody] = useState(false)
   const [body, setBody] = useState("")
-  const [draft, setDraft] = useState("")
+  const [draft, setDraft] = useDraft(`draft:issue-comment:${repo}#${number}`, "")
 
   if (q.isPending) return <Skeleton className="h-96 w-full rounded-xl" />
   if (q.error) return <QueryError error={q.error} onRetry={() => void q.refetch()} />

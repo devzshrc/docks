@@ -58,6 +58,11 @@ export function useIssueActions() {
         ],
         { settled: refresh },
       ),
+      onSuccess: (_d, v) => {
+        // Closing is the one edit people regret: offer Undo instead of asking first.
+        if (v.patch.state === "closed") toast(`Closed #${v.number}`, "success", { label: "Undo", onClick: () => update.mutate({ repo: v.repo, number: v.number, patch: { state: "open" } }) })
+        else if (v.patch.state === "open") toast(`Reopened #${v.number}`)
+      },
     }),
   )
 
@@ -68,10 +73,13 @@ export function useIssueActions() {
         [onLists<BulkVars>((row, v) => (v.items.some((i) => i.repo === row.repo && i.number === row.number) ? applyPatch(row, bulkPatch(row, v.action)) : undefined))],
         { settled: refresh, toastError: true },
       ),
-      onSuccess: ({ results }) => {
+      onSuccess: ({ results }, v) => {
         const failed = results.filter((r) => !r.ok)
         const ok = results.length - failed.length
-        if (ok) toast(`Updated ${ok} issue${ok === 1 ? "" : "s"}`)
+        const done = results.filter((r) => r.ok).map((r) => ({ repo: r.repo, number: r.number }))
+        const n = `${ok} issue${ok === 1 ? "" : "s"}`
+        if (ok && v.action.type === "close") toast(`Closed ${n}`, "success", { label: "Undo", onClick: () => bulk.mutate({ items: done, action: { type: "reopen" } }) })
+        else if (ok) toast(`Updated ${n}`)
         if (failed.length) toast(`${failed.length} failed: ${failed[0]!.error ?? "unknown error"}`, "error")
       },
     }),

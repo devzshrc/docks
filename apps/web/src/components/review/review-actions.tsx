@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { MentionTextarea } from "@/components/mention-textarea"
@@ -49,6 +50,7 @@ export function ReviewActions({
   const blocked = mergeableState ? MERGE_STATE[mergeableState] : undefined
   const trpc = useTRPC()
   const queryClient = useQueryClient()
+  const router = useRouter()
   const [body, setBody] = useDraft(`draft:body:${repo}#${number}`, "")
   const [error, setError] = useState<string>()
 
@@ -68,13 +70,16 @@ export function ReviewActions({
       },
       onSuccess: (_data, vars) => {
         onSubmitted?.()
-        toast(
-          vars.event === "APPROVE"
-            ? "Approved"
-            : vars.event === "REQUEST_CHANGES"
-              ? "Changes requested"
-              : "Comment posted"
-        )
+        const said = vars.event === "APPROVE" ? "Approved" : vars.event === "REQUEST_CHANGES" ? "Changes requested" : "Comment posted"
+        // Keep a review session flowing: point at the next PR waiting on this person, from the cached board.
+        const waiting = queryClient
+          .getQueriesData<{ cards: { repo: string; number: number; title: string }[] }>(trpc.review.board.queryFilter())
+          .filter(([key]) => (key[1] as { input?: { filters?: { waitingOnMe?: boolean } } } | undefined)?.input?.filters?.waitingOnMe)
+          .flatMap(([, d]) => d?.cards ?? [])
+        const next = waiting.find((c) => !(c.repo === repo && c.number === number))
+        if (vars.event === "COMMENT") toast(said)
+        else if (next) toast(`${said}. Next up: ${next.title}`, "success", { label: "Open", onClick: () => router.push(`/review/${next.repo}/${next.number}`) })
+        else toast(`${said}. Nothing else is waiting on you.`)
         void refresh()
       },
       onError: (e, _vars, ctx) => {
