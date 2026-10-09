@@ -1,71 +1,72 @@
-"use client"
+"use client";
+import { Button as ShadcnButton } from "@/components/ui/button";
 
-import { AppIcon } from "@/components/app-icon"
+import { AppIcon } from "@/components/app-icon";
 
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import * as React from "react"
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 
-import { GitHubSignIn } from "@/components/github-sign-in"
-import { Button } from "@/components/ui/button"
+import { GitHubSignIn } from "@/components/github-sign-in";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { authClient } from "@/lib/auth-client"
-import { cn, nextPath } from "@/lib/utils"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
+import { cn, nextPath } from "@/lib/utils";
 
 /** Keep ?next= when switching between login and signup (client-only, after hydration). */
 function useWithNext(path: string) {
-  const [href, setHref] = React.useState(path)
+  const [href, setHref] = React.useState(path);
   React.useEffect(() => {
-    const next = new URLSearchParams(window.location.search).get("next")
-    if (next) setHref(`${path}?next=${encodeURIComponent(next)}`)
-  }, [path])
-  return href
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (next) setHref(`${path}?next=${encodeURIComponent(next)}`);
+  }, [path]);
+  return href;
 }
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const router = useRouter()
-  const altHref = useWithNext("/signup")
-  const [email, setEmail] = React.useState("")
-  const [password, setPassword] = React.useState("")
-  const [error, setError] = React.useState<string | null>(null)
-  const [pending, setPending] = React.useState(false)
-  const [unverified, setUnverified] = React.useState(false)
-  const [resent, setResent] = React.useState(false)
+  const router = useRouter();
+  const altHref = useWithNext("/signup");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [error, setError] = React.useState<string | null>(null);
+  const [pending, setPending] = React.useState(false);
+  const [unverified, setUnverified] = React.useState(false);
+  const [resent, setResent] = React.useState(false);
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setPending(true)
-    setUnverified(false)
-    const { error } = await authClient.signIn.email({ email, password })
-    setPending(false)
+    e.preventDefault();
+    setError(null);
+    setPending(true);
+    setUnverified(false);
+    const { error } = await authClient.signIn.email({ email, password });
+    setPending(false);
     if (error) {
       if (error.status === 403) {
-        setUnverified(true)
-        return
+        setUnverified(true);
+        return;
       }
-      setError(error.message ?? "Sign-in failed")
-      return
+      setError(error.message ?? "Sign-in failed");
+      return;
     }
-    router.push(nextPath())
-    router.refresh()
+    router.push(nextPath());
+    router.refresh();
   }
 
   return (
@@ -74,9 +75,7 @@ export function LoginForm({
         <CardHeader>
           <AppIcon className="mb-3 size-10" />
           <CardTitle>Welcome back</CardTitle>
-          <CardDescription>
-            Sign in to keep reviewing.
-          </CardDescription>
+          <CardDescription>Sign in to keep reviewing.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <GitHubSignIn />
@@ -96,7 +95,10 @@ export function LoginForm({
               <Field>
                 <div className="flex items-center justify-between">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <Link href="/forgot-password" className="text-sm underline-offset-4 hover:underline">
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm underline-offset-4 hover:underline"
+                  >
                     Forgot password?
                   </Link>
                 </div>
@@ -119,19 +121,20 @@ export function LoginForm({
                     {resent ? (
                       "Sent again."
                     ) : (
-                      <button
+                      <ShadcnButton
+                        variant="ghost"
                         type="button"
                         className="underline underline-offset-4"
                         onClick={async () => {
                           await authClient.sendVerificationEmail({
                             email,
                             callbackURL: `${window.location.origin}${nextPath()}`,
-                          })
-                          setResent(true)
+                          });
+                          setResent(true);
                         }}
                       >
                         Send it again
-                      </button>
+                      </ShadcnButton>
                     )}
                   </FieldDescription>
                 )}
@@ -147,5 +150,5 @@ export function LoginForm({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

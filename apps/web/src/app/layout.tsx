@@ -5,9 +5,7 @@ import { Toaster } from "@/components/toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { cn } from "@/lib/utils";
-import { DirectionProvider } from "@/components/foundations/direction/direction";
 import "./globals.css";
-import "@/components/obsidian/obsidian-theme.css";
 
 // Inter for UI text. Geist Mono for code and monospace (paths, numbers).
 // Variables live on <html> so the :root theme tokens in globals.css can reference them.
@@ -36,12 +34,10 @@ export default function RootLayout({
     >
       <body className="font-sans antialiased">
         <ThemeProvider>
-          <DirectionProvider locale="en-US">
-            <TRPCReactProvider>
-              <TooltipProvider>{children}</TooltipProvider>
-              <Toaster />
-            </TRPCReactProvider>
-          </DirectionProvider>
+          <TRPCReactProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+            <Toaster />
+          </TRPCReactProvider>
         </ThemeProvider>
       </body>
     </html>

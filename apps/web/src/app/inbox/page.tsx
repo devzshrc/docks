@@ -1,4 +1,6 @@
 "use client";
+import { Button as ShadcnButton } from "@/components/ui/button";
+import { NativeSelect as ShadcnSelect } from "@/components/ui-compat/native-select";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -80,7 +82,7 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
                 : "Reminders"}
           </Button>
         ))}
-        <select
+        <ShadcnSelect
           aria-label="Repository"
           className="bg-background rounded border px-2 text-sm"
           value={repoId ?? ""}
@@ -95,8 +97,8 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
               {r.fullName}
             </option>
           ))}
-        </select>
-        <select
+        </ShadcnSelect>
+        <ShadcnSelect
           aria-label="Event"
           className="bg-background rounded border px-2 text-sm"
           value={kind ?? ""}
@@ -115,7 +117,7 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
               {label}
             </option>
           ))}
-        </select>
+        </ShadcnSelect>
       </div>
       {error && (
         <p role="alert" className="text-destructive text-sm">
@@ -144,7 +146,8 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
                   {item.occurredAt.toLocaleString()}
                 </span>
               </div>
-              <button
+              <ShadcnButton
+                variant="ghost"
                 type="button"
                 disabled={busy}
                 className="text-left font-medium underline underline-offset-4"
@@ -152,11 +155,13 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
                   try {
                     await read.mutateAsync({ id: item.id });
                     router.push(`/review/${item.repo}/${item.number}`);
-                  } catch { /* The mutation error appears above the inbox. */ }
+                  } catch {
+                    /* The mutation error appears above the inbox. */
+                  }
                 }}
               >
                 {item.title}
-              </button>
+              </ShadcnButton>
               <p className="text-muted-foreground text-xs">
                 {item.repo}#{item.number}
                 {item.context.actor && ` · ${item.context.actor}`}
