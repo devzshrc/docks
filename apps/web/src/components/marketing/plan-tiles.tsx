@@ -2,73 +2,69 @@ import { RiCheckLine } from "@remixicon/react";
 import type { ReactNode } from "react";
 
 import { PLANS, TEAM_PRICE } from "@/components/marketing/plans";
-import { cn } from "@/lib/utils";
+import { cx } from "@/utils/cx";
 
-/** Plan tiles adapt to their surrounding surface; Team keeps its graphite highlight. */
+/**
+ * A plan on the night surface: hairline glass, light type. Team is picked out by a thin sky edge and a
+ * soft glow from above rather than a solid slab, so the pair stays airy.
+ */
 export function PlanTile({
   plan,
   action,
   price,
   note,
+  footer,
   className,
-  darkSurface = false,
 }: {
   plan: "free" | "team";
   action: ReactNode;
   price?: ReactNode;
   note?: ReactNode;
+  /** Pinned to the bottom of the card, under the feature list. */
+  footer?: ReactNode;
   className?: string;
-  darkSurface?: boolean;
 }) {
   const p = PLANS[plan];
-  const dark = plan === "team";
+  const team = plan === "team";
   return (
-    <div
-      className={cn(
-        "relative flex flex-col overflow-hidden rounded-[28px] p-7 md:p-9",
-        dark
-          ? "bg-[#111113] text-white shadow-[0_40px_80px_-30px_rgb(17_17_19/0.55)]"
-          : darkSurface ? "border border-white/10 bg-[#09090b] text-white" : "bg-[#f4f4f5] text-[#111113]",
-        className,
-      )}
-    >
-      {dark && (
-        <>
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-56" style={{ background: "radial-gradient(80% 100% at 50% 0%, rgb(3 105 161 / 0.55), rgb(122 92 255 / 0.15) 45%, transparent 75%)" }} />
-          <div aria-hidden className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-        </>
-      )}
-      <div className="relative flex items-center justify-between gap-3">
-        <h3 className="text-[19px] font-semibold tracking-[-0.025em]">{p.name}</h3>
-        {dark && (
-          <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11.5px] font-medium text-white/80 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1)]">
-            For growing teams
-          </span>
+    <div className={cx("group/plan relative isolate rounded-[26px] p-px", team ? "bg-gradient-to-b from-sky-300/45 via-sky-400/10 to-white/[0.06]" : "bg-white/[0.08]", className)}>
+      <div className="relative flex h-full flex-col overflow-hidden rounded-[25px] bg-[#07090c] p-7 md:p-9">
+        {team && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-48 opacity-80 transition-opacity duration-700 group-hover/plan:opacity-100"
+            style={{ background: "radial-gradient(70% 100% at 50% 0%, rgb(3 105 161 / 0.32), transparent 72%)" }}
+          />
         )}
-      </div>
-      <p className={cn("relative mt-1.5 text-[15px]", dark || darkSurface ? "text-white/55" : "text-[#6b6b70]")}>{p.blurb}</p>
-      <div className="relative mt-8 flex items-baseline gap-2">
-        {price ?? (
-          <span className="text-[56px] leading-none font-semibold tracking-[-0.05em] tabular-nums">
-            ${plan === "team" ? TEAM_PRICE : 0}
-          </span>
-        )}
-        <span className={cn("text-[14px]", dark || darkSurface ? "text-white/50" : "text-[#8b8b92]")}>
-          {plan === "team" ? "per member / month" : "forever"}
-        </span>
-      </div>
-      {note && <div className={cn("relative mt-2 text-[13px]", dark || darkSurface ? "text-white/50" : "text-[#8b8b92]")}>{note}</div>}
-      <div className="relative mt-7">{action}</div>
-      <ul className="relative mt-8 grid gap-3.5 text-[14.5px]">
-        {p.features.map((f) => (
-          <li key={f} className="flex items-start gap-3">
-            <span className={cn("mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-full", dark || darkSurface ? "bg-[#0369a1] text-white" : "bg-[#0369a1]/10 text-[#0369a1]")}>
-              <RiCheckLine className="size-3" />
+        <div className="relative flex items-center justify-between gap-3">
+          <h3 className="text-[15px] font-medium tracking-[-0.01em] text-white/90">{p.name}</h3>
+          {team && (
+            <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-2.5 py-1 text-[11px] font-medium text-sky-200">For growing teams</span>
+          )}
+        </div>
+        <div className="relative mt-7 flex items-baseline gap-2">
+          {price ?? (
+            <span className="text-[52px] leading-none font-light tracking-[-0.045em] text-white tabular-nums">
+              <span className="me-0.5 align-top text-[22px] tracking-normal text-white/50">$</span>
+              {team ? TEAM_PRICE : 0}
             </span>
-            <span className={dark || darkSurface ? "text-white/85" : "text-[#3f3f46]"}>{f}</span>
-          </li>
-        ))}
-      </ul>
+          )}
+          <span className="text-[13px] text-white/40">{team ? "per member / month" : "forever"}</span>
+        </div>
+        <p className="relative mt-3 text-[14.5px] leading-relaxed text-white/50">{p.blurb}</p>
+        {note && <div className="relative mt-1 text-[13px] text-white/40">{note}</div>}
+        <div className="relative mt-7">{action}</div>
+        <div aria-hidden="true" className="relative mt-8 h-px bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-transparent" />
+        <ul className="relative mt-7 grid gap-3.5 text-[14px]">
+          {p.features.map((f) => (
+            <li key={f} className="flex items-start gap-3 text-white/70">
+              <RiCheckLine aria-hidden="true" className={cx("mt-0.5 size-4 shrink-0", team ? "text-sky-300" : "text-white/35")} />
+              {f}
+            </li>
+          ))}
+        </ul>
+        {footer && <div className="relative mt-auto pt-2">{footer}</div>}
+      </div>
     </div>
   );
 }

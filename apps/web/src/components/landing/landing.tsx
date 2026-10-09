@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  RiArrowDownLine,
   RiArrowRightLine,
   RiCheckLine,
   RiGithubFill,
@@ -14,12 +15,14 @@ import {
   RiUserStarLine,
 } from "@remixicon/react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { Work_Sans } from "next/font/google";
+import { Bricolage_Grotesque, Instrument_Serif, Kalam, Work_Sans } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 
 import { BrandIcon } from "@/components/brand-icons";
+import { CrowdStrip } from "@/components/landing/crowd-strip";
+import { HeroBackdrop, HeroCards, Rise, RotatingWord, useHeroPointer } from "@/components/landing/hero-stage";
 import { useGithubStart } from "@/components/landing/use-github-start";
 import { Grain } from "@/components/marketing/backdrop";
 import { ClosingCta } from "@/components/marketing/closing-cta";
@@ -35,8 +38,13 @@ import { MarketingFrame, PillButton } from "@/components/marketing/site-chrome";
 import { Button } from "@/components/ui/button";
 import { Skiper39 } from "@/components/ui/skiper39";
 import { useSession } from "@/lib/auth-client";
+import { cx } from "@/utils/cx";
 
 const heroFont = Work_Sans({ subsets: ["latin"], display: "swap" });
+// The headline: a quirky grotesk, an italic serif for the word that changes, and a hand for the Hinglish asides.
+const displayFont = Bricolage_Grotesque({ subsets: ["latin"], display: "swap" });
+const serifFont = Instrument_Serif({ subsets: ["latin"], weight: "400", style: "italic", display: "swap" });
+const handFont = Kalam({ subsets: ["latin"], weight: ["400", "700"], display: "swap" });
 
 const WORKS_WITH = [
   { icon: <RiGithubFill className="size-[22px]" />, label: "GitHub" },
@@ -56,7 +64,11 @@ export function Landing() {
   }, [data, router]);
 
   const startButton = (tone: "brand" | "white" = "brand", size: "md" | "lg" = "lg") => (
-    <PillButton tone={tone} size={size} onClick={() => void start()} disabled={pending}>
+    <PillButton tone={tone} size={size} onClick={() => void start()} disabled={pending} className="overflow-hidden">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 start-0 w-1/3 -translate-x-full skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover/pill:translate-x-[400%]"
+      />
       <RiGithubFill />
       {pending ? "Connecting…" : "Start with GitHub"}
     </PillButton>
@@ -86,51 +98,122 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
   const rotateX = useTransform(scrollYProgress, [0, 1], [reduce ? 0 : 16, 0]);
   const scale = useTransform(scrollYProgress, [0, 1], [reduce ? 1 : 0.92, 1]);
   const y = useTransform(scrollYProgress, [0, 1], [reduce ? 0 : 40, 0]);
+  const pointer = useHeroPointer();
 
   return (
-    <section className="relative isolate">
-      <Skiper39 className={`${heroFont.className} bg-black text-white`}>
-        <a
-          href="#order"
-          className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3 py-2 text-caption-1-medium text-white/70 outline-none transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400"
-        >
-          <RiGitBranchLine aria-hidden="true" className="size-4 shrink-0 text-hue-blue" />
-          Guided review order for every pull request
-          <RiArrowRightLine aria-hidden="true" className="size-3.5 shrink-0" />
-        </a>
-        <div className="relative">
+    <section ref={pointer.ref} className="group/hero relative isolate">
+      <Skiper39 className={`${heroFont.className} bg-black text-white`} backdrop={<HeroBackdrop />} crowd={<CrowdStrip />}>
+        <HeroCards pointer={pointer} />
+        <Rise>
+          <a
+            href="#order"
+            className="group/badge relative inline-flex items-center gap-2 overflow-hidden rounded-full border border-white/15 bg-white/[0.04] py-1.5 ps-1.5 pe-3 text-caption-1-medium text-white/70 outline-none transition-colors hover:border-white/25 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400"
+          >
+            <motion.span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 start-0 w-1/3 skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/15 to-transparent"
+              initial={{ x: "-120%" }}
+              animate={reduce ? undefined : { x: "420%" }}
+              transition={{ duration: 1.6, delay: 1.4, repeat: Infinity, repeatDelay: 4.5, ease: "easeInOut" }}
+            />
+            <span className="rounded-full bg-sky-400/15 px-2 py-0.5 text-[10.5px] font-semibold tracking-wide text-sky-300 uppercase">New</span>
+            <RiGitBranchLine aria-hidden="true" className="size-4 shrink-0 text-hue-blue" />
+            Guided review order for every pull request
+            <RiArrowRightLine aria-hidden="true" className="size-3.5 shrink-0 transition-transform duration-300 group-hover/badge:translate-x-0.5" />
+          </a>
+        </Rise>
+        <Rise delay={0.1} className="relative">
           <div aria-hidden="true" className="pointer-events-none absolute -start-24 top-0 hidden -rotate-12 md:block">
-            <div className="flex size-16 items-center justify-center rounded-3xl border border-white/15 bg-[#080808] text-white shadow-lg">
+            <motion.div
+              animate={reduce ? undefined : { y: [0, -6, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              className="flex size-16 items-center justify-center rounded-3xl border border-white/15 bg-[#080808] text-white shadow-lg"
+            >
               <RiGithubFill className="size-9" />
-            </div>
-            <div className="ms-12 mt-2 h-6 w-10 rounded-es-3xl border-s-2 border-b-2 border-dashed border-separator-border" />
+            </motion.div>
+            <svg viewBox="0 0 44 28" fill="none" className="ms-12 mt-2 h-7 w-11 text-white/25">
+              <motion.path
+                d="M2 0V14Q2 26 14 26H44"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeDasharray="3 5"
+                animate={reduce ? undefined : { strokeDashoffset: [0, -16] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+              />
+            </svg>
           </div>
-          <h1 className="text-display-3-semibold text-balance text-white md:text-display-1-semibold">
-            <span className="block">Code review,</span>
-            <span className="block">without the wait.</span>
+          <h1 className={cx(displayFont.className, "text-[2.6rem] leading-[1.02] font-semibold tracking-[-0.045em] text-balance text-white md:text-[4.4rem]")}>
+            <span className="sr-only">Code review, without the wait.</span>
+            <span aria-hidden="true" className="block">Code review,</span>
+            <span aria-hidden="true" className="block">
+              without the <RotatingWord className={cx(serifFont.className, "text-[1.12em] font-normal tracking-[-0.01em]")} />
+            </span>
           </h1>
-          <div aria-hidden="true" className="pointer-events-none absolute -end-28 bottom-0 hidden rotate-12 md:flex md:flex-col md:items-center md:gap-2">
-            <div className="flex size-16 items-center justify-center rounded-3xl border border-white/15 bg-[#080808] text-sky-300 shadow-lg">
-              <RiGitBranchLine className="size-9" />
-            </div>
-            <span className="rounded-full border border-white/15 bg-black px-3 py-1 text-caption-1-medium text-white/70">ship it!</span>
+          <div aria-hidden="true" className="pointer-events-none absolute -end-28 bottom-0 hidden rotate-12 md:block">
+            <motion.div
+              animate={reduce ? undefined : { y: [0, -6, 0] }}
+              transition={{ duration: 5.6, delay: 0.8, repeat: Infinity, ease: "easeInOut" }}
+              className="flex flex-col items-center gap-2"
+            >
+              <div className="flex size-16 items-center justify-center rounded-3xl border border-white/15 bg-[#080808] text-sky-300 shadow-lg">
+                <RiGitBranchLine className="size-9" />
+              </div>
+              <span className={cx(handFont.className, "text-[19px] whitespace-nowrap text-sky-300")}>chalo, ship karo!</span>
+            </motion.div>
           </div>
-        </div>
-        <p className="max-w-xl text-headline-regular text-white/65 md:text-title-3-regular">
-          One queue for every pull request: who is waiting, what blocks the merge, and the order to read the change.
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        </Rise>
+        <Rise delay={0.2} className="flex flex-col items-center gap-3">
+          <p className="max-w-xl text-headline-regular text-white/65 md:text-title-3-regular">
+            One queue for every pull request: who is waiting, what blocks the merge, and the order to read the change.
+          </p>
+          <p className={cx(handFont.className, "-rotate-1 text-[19px] text-sky-200/75 md:text-[21px]")}>
+            matlab, ab koi{" "}
+            <span className="relative inline-block text-sky-200">
+              &ldquo;bhai, PR dekh lo?&rdquo; nahi
+              <svg aria-hidden="true" viewBox="0 0 200 12" preserveAspectRatio="none" className="absolute inset-x-0 -bottom-1.5 h-2.5 w-full text-sky-400/70">
+                <motion.path
+                  d="M2 8 C 40 2, 70 11, 100 6 S 160 2, 198 7"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  initial={reduce ? false : { pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.9, delay: 1.2, ease: EASE }}
+                />
+              </svg>
+            </span>
+          </p>
+        </Rise>
+        <Rise delay={0.3} className="flex flex-wrap items-center justify-center gap-3">
           {startButton}
-          <Button asChild variant="outline" size="none" className="h-13 gap-2 border-white/20 bg-white/[0.04] px-7 text-headline-medium text-white hover:bg-white/10">
-            <a href="#product">See how it works</a>
+          <Button asChild variant="outline" size="none" className="group/how h-13 gap-2 border-white/20 bg-white/[0.04] px-7 text-headline-medium text-white hover:bg-white/10">
+            <a href="#product">
+              See how it works
+              <RiArrowDownLine aria-hidden="true" className="size-4 text-white/60 transition-transform duration-300 group-hover/how:translate-y-0.5" />
+            </a>
           </Button>
-        </div>
-        <p role={notice ? "status" : undefined} className="text-body-2-regular text-white/45">
-          {notice ?? "Free for up to 5 people and 3 repositories. No card needed."}
-        </p>
+        </Rise>
+        <Rise delay={0.4}>
+          {notice ? (
+            <p role="status" className="text-body-2-regular text-white/45">
+              {notice}
+            </p>
+          ) : (
+            <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-body-2-regular text-white/45">
+              {["Free for up to 5 people", "3 repositories", "No card needed"].map((item) => (
+                <li key={item} className="flex items-center gap-1.5">
+                  <RiCheckLine aria-hidden="true" className="size-3.5 text-sky-300/80" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Rise>
       </Skiper39>
 
-      <div ref={stage} className="relative mx-auto -mt-[18vh] max-w-[1280px] px-3 [perspective:1600px] md:-mt-[24vh] md:px-8">
+      <div ref={stage} className="relative mx-auto -mt-14 max-w-[1280px] px-3 [perspective:1600px] md:-mt-16 md:px-8">
         <div aria-hidden className="pointer-events-none absolute inset-x-[8%] top-[12%] -z-10 h-[70%] rounded-[50%] bg-[radial-gradient(closest-side,rgb(3_105_161/0.3),rgb(125_200_235/0.08)_55%,transparent)] blur-3xl" />
         <motion.div
           style={{ rotateX, scale, y }}
@@ -329,7 +412,7 @@ function PricingTeaser({ startButton }: { startButton: React.ReactNode }) {
       </Reveal>
       <div className="mx-auto mt-16 grid max-w-[920px] gap-3 md:grid-cols-2">
         <Reveal>
-          <PlanTile plan="free" darkSurface className="h-full" action={<PillButton href="/signup" className="w-full">Start free</PillButton>} />
+          <PlanTile plan="free" className="h-full" action={<PillButton href="/signup" className="w-full">Start free</PillButton>} />
         </Reveal>
         <Reveal delay={0.08}>
           <PlanTile plan="team" className="h-full" action={<div className="[&>*]:w-full">{startButton}</div>} />
