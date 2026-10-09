@@ -77,7 +77,7 @@ function SeatEstimator() {
 function Cell({ value, dark }: { value: boolean | string; dark?: boolean }) {
   if (typeof value === "string") return <span className={cn("text-[14px]", dark ? "font-medium text-[#111113]" : "text-[#55555b]")}>{value}</span>;
   return value ? (
-    <span className={cn("inline-flex size-5 items-center justify-center rounded-full", dark ? "bg-[#4124fb] text-white" : "bg-[#4124fb]/10 text-[#4124fb]")} aria-label="Included">
+    <span className={cn("inline-flex size-5 items-center justify-center rounded-full", dark ? "bg-[#e8590c] text-white" : "bg-[#e8590c]/10 text-[#e8590c]")} aria-label="Included">
       <RiCheckLine className="size-3" />
     </span>
   ) : (

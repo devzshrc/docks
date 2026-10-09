@@ -61,7 +61,7 @@ export function ReviewOrder() {
   const s = STEPS[active]!;
 
   return (
-    <div ref={ref} role="img" aria-label="A pull request's files grouped into three steps: rate limiter, login flow, then tests. The diff for each step plays in turn." className="overflow-hidden rounded-2xl bg-[#161616] text-[#f9fbff] shadow-[0_40px_80px_-24px_rgb(0_0_0/0.45),0_0_0_1px_rgb(0_0_0/0.9)]">
+    <div ref={ref} role="img" aria-label="A pull request's files grouped into three steps: rate limiter, login flow, then tests. The diff for each step plays in turn." className="overflow-hidden rounded-[18px] bg-[#161616] text-[#f9fbff] shadow-[0_0_0_1px_rgb(0_0_0/0.9)]">
       <div className="flex h-9 items-center gap-3 border-b border-[#232323] bg-[#1a1a1a] px-3.5">
         <TrafficLights />
         <span className="ml-2 truncate text-[11.5px] text-[#8a8a8a]">api #418 · Rate-limit login attempts</span>

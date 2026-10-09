@@ -46,12 +46,12 @@ export function PillButton({
   disabled?: boolean;
 }) {
   const classes = cn(
-    "group/pill relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full font-medium tracking-[-0.01em] whitespace-nowrap outline-none transition-[background-color,box-shadow,transform,color] duration-200 ease-power3-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#4124fb]/50 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 [&_svg]:size-4 [&_svg]:shrink-0",
+    "group/pill relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full font-medium tracking-[-0.01em] whitespace-nowrap outline-none transition-[background-color,box-shadow,transform,color] duration-200 ease-power3-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#e8590c]/50 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 [&_svg]:size-4 [&_svg]:shrink-0",
     size === "sm" && "h-9 px-4 text-sm",
     size === "md" && "h-11 px-5 text-[15px]",
     size === "lg" && "h-[52px] px-7 text-base",
     tone === "brand" &&
-      "bg-[#4124fb] text-white shadow-[0_1px_2px_rgb(33_14_160/0.35),0_10px_28px_-8px_rgb(65_36_251/0.6),0_0_0_1px_#2f15d6,inset_0_1px_0_rgb(255_255_255/0.25),inset_0_-6px_12px_rgb(0_0_0/0.12)] hover:bg-[#4b30ff] hover:shadow-[0_1px_2px_rgb(33_14_160/0.35),0_14px_34px_-8px_rgb(65_36_251/0.7),0_0_0_1px_#2f15d6,inset_0_1px_0_rgb(255_255_255/0.25),inset_0_-6px_12px_rgb(0_0_0/0.12)]",
+      "bg-[#e8590c] text-white shadow-[0_1px_2px_rgb(154_52_18/0.35),0_10px_28px_-8px_rgb(232_89_12/0.6),0_0_0_1px_#c2410c,inset_0_1px_0_rgb(255_255_255/0.25),inset_0_-6px_12px_rgb(0_0_0/0.12)] hover:bg-[#f06a1f] hover:shadow-[0_1px_2px_rgb(154_52_18/0.35),0_14px_34px_-8px_rgb(232_89_12/0.7),0_0_0_1px_#c2410c,inset_0_1px_0_rgb(255_255_255/0.25),inset_0_-6px_12px_rgb(0_0_0/0.12)]",
     tone === "dark" &&
       "bg-[#111113] text-white shadow-[0_1px_2px_rgb(0_0_0/0.2),0_8px_24px_-8px_rgb(0_0_0/0.35),inset_0_1px_0_rgb(255_255_255/0.12)] hover:bg-[#2a2a2e]",
     tone === "light" &&
@@ -91,7 +91,7 @@ function SiteNav() {
       <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-8 px-5 md:px-8">
         <Link
           href="/"
-          className="flex items-center gap-2 rounded-lg text-[17px] font-semibold tracking-[-0.03em] outline-none focus-visible:ring-2 focus-visible:ring-[#4124fb]/50"
+          className="flex items-center gap-2 rounded-lg text-[17px] font-semibold tracking-[-0.03em] outline-none focus-visible:ring-2 focus-visible:ring-[#e8590c]/50"
         >
           <AppIcon className="size-7" />
           Docks

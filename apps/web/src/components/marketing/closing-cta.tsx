@@ -18,7 +18,7 @@ export function ClosingCta({
         <NightLight className="-z-10" />
         <Reveal>
           <h2 className="mx-auto max-w-[16ch] text-[clamp(2.6rem,6.4vw,5.25rem)] leading-[0.98] font-semibold tracking-[-0.05em] text-balance">
-            Your team&rsquo;s reviews, <span className="bg-gradient-to-r from-[#a99dff] to-[#e0a8ff] bg-clip-text text-transparent">finally in order.</span>
+            Your team&rsquo;s reviews, <span className="bg-gradient-to-r from-[#fdba74] to-[#fb923c] bg-clip-text text-transparent">finally in order.</span>
           </h2>
           <p className="mx-auto mt-7 max-w-[30rem] text-[17px] leading-relaxed text-white/60">
             Connect GitHub, pick your repositories, and see your queue in under a minute.

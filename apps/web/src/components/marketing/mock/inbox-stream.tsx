@@ -26,7 +26,7 @@ export function InboxStream() {
   const visible = ITEMS.slice(0, shown).reverse();
 
   return (
-    <div ref={ref} role="img" aria-label="Docks inbox: review requests, failed checks, mentions, deadlines and merges in one list" className="w-full max-w-[460px] overflow-hidden rounded-2xl bg-[#161616] text-[#f9fbff] shadow-[0_40px_80px_-24px_rgb(0_0_0/0.45),0_0_0_1px_rgb(0_0_0/0.9)]">
+    <div ref={ref} role="img" aria-label="Docks inbox: review requests, failed checks, mentions, deadlines and merges in one list" className="w-full overflow-hidden rounded-[18px] bg-[#161616] text-[#f9fbff] shadow-[0_0_0_1px_rgb(0_0_0/0.9)]">
       <div className="flex items-center justify-between border-b border-[#232323] px-4 py-3">
         <span className="flex items-center gap-2 text-[13.5px] font-medium">
           Inbox
@@ -44,7 +44,7 @@ export function InboxStream() {
           {allRead ? "All caught up" : "Mark all read"}
         </span>
       </div>
-      <div className="flex h-[372px] flex-col gap-2 overflow-hidden p-3">
+      <div className="flex h-[330px] flex-col gap-2 overflow-hidden p-3">
         <AnimatePresence initial={false}>
           {visible.map((it) => (
             <motion.div
