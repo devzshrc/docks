@@ -63,7 +63,7 @@ export function Landing() {
   );
 
   return (
-    <MarketingFrame>
+    <MarketingFrame dark>
       <main>
         <Hero startButton={startButton()} notice={notice} />
         <WorksWith />
@@ -89,10 +89,10 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
 
   return (
     <section className="relative isolate">
-      <Skiper39 className={heroFont.className}>
+      <Skiper39 className={`${heroFont.className} bg-black text-white`}>
         <a
           href="#order"
-          className="inline-flex items-center gap-2 rounded-full border border-separator-border bg-background-secondary-default px-3 py-2 text-caption-1-medium text-text-secondary outline-none transition-colors hover:text-text-primary focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+          className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3 py-2 text-caption-1-medium text-white/70 outline-none transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400"
         >
           <RiGitBranchLine aria-hidden="true" className="size-4 shrink-0 text-hue-blue" />
           Guided review order for every pull request
@@ -100,44 +100,44 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
         </a>
         <div className="relative">
           <div aria-hidden="true" className="pointer-events-none absolute -start-24 top-0 hidden -rotate-12 md:block">
-            <div className="flex size-16 items-center justify-center rounded-3xl border border-border-button-default bg-background-primary-default text-text-primary shadow-lg">
+            <div className="flex size-16 items-center justify-center rounded-3xl border border-white/15 bg-[#080808] text-white shadow-lg">
               <RiGithubFill className="size-9" />
             </div>
             <div className="ms-12 mt-2 h-6 w-10 rounded-es-3xl border-s-2 border-b-2 border-dashed border-separator-border" />
           </div>
-          <h1 className="text-display-3-semibold text-balance text-text-primary md:text-display-1-semibold">
+          <h1 className="text-display-3-semibold text-balance text-white md:text-display-1-semibold">
             <span className="block">Code review,</span>
             <span className="block">without the wait.</span>
           </h1>
           <div aria-hidden="true" className="pointer-events-none absolute -end-28 bottom-0 hidden rotate-12 md:flex md:flex-col md:items-center md:gap-2">
-            <div className="flex size-16 items-center justify-center rounded-3xl border border-border-button-default bg-background-secondary-default text-hue-blue shadow-lg">
+            <div className="flex size-16 items-center justify-center rounded-3xl border border-white/15 bg-[#080808] text-sky-300 shadow-lg">
               <RiGitBranchLine className="size-9" />
             </div>
-            <span className="rounded-full border border-separator-border bg-background-primary-default px-3 py-1 text-caption-1-medium text-text-secondary">ship it!</span>
+            <span className="rounded-full border border-white/15 bg-black px-3 py-1 text-caption-1-medium text-white/70">ship it!</span>
           </div>
         </div>
-        <p className="max-w-xl text-headline-regular text-text-secondary md:text-title-3-regular">
+        <p className="max-w-xl text-headline-regular text-white/65 md:text-title-3-regular">
           One queue for every pull request: who is waiting, what blocks the merge, and the order to read the change.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           {startButton}
-          <Button asChild variant="outline" size="none" className="h-13 gap-2 px-7 text-headline-medium text-text-primary">
+          <Button asChild variant="outline" size="none" className="h-13 gap-2 border-white/20 bg-white/[0.04] px-7 text-headline-medium text-white hover:bg-white/10">
             <a href="#product">See how it works</a>
           </Button>
         </div>
-        <p role={notice ? "status" : undefined} className="text-body-2-regular text-text-tertiary">
+        <p role={notice ? "status" : undefined} className="text-body-2-regular text-white/45">
           {notice ?? "Free for up to 5 people and 3 repositories. No card needed."}
         </p>
       </Skiper39>
 
-      <div ref={stage} className="relative mx-auto mt-8 max-w-[1280px] px-3 [perspective:1600px] md:mt-12 md:px-8">
-        <div aria-hidden className="pointer-events-none absolute inset-x-[8%] top-[12%] -z-10 h-[70%] rounded-[50%] bg-[radial-gradient(closest-side,rgb(3_105_161/0.45),rgb(125_200_235/0.2)_55%,transparent)] blur-3xl" />
+      <div ref={stage} className="relative mx-auto -mt-[18vh] max-w-[1280px] px-3 [perspective:1600px] md:-mt-[24vh] md:px-8">
+        <div aria-hidden className="pointer-events-none absolute inset-x-[8%] top-[12%] -z-10 h-[70%] rounded-[50%] bg-[radial-gradient(closest-side,rgb(3_105_161/0.3),rgb(125_200_235/0.08)_55%,transparent)] blur-3xl" />
         <motion.div
           style={{ rotateX, scale, y }}
           initial={reduce ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.2, delay: 0.5, ease: EASE }}
-          className="origin-top rounded-[22px] bg-gradient-to-b from-white/70 to-white/30 p-1.5 shadow-[0_0_0_1px_rgb(255_255_255/0.6),0_0_0_2px_rgb(3_105_161/0.08),0_60px_120px_-30px_rgb(5_35_60/0.55),0_30px_60px_-30px_rgb(0_0_0/0.45)] backdrop-blur md:rounded-[30px] md:p-2.5"
+          className="origin-top rounded-[22px] bg-gradient-to-b from-white/15 to-white/[0.04] p-1.5 shadow-[0_0_0_1px_rgb(255_255_255/0.12),0_0_0_2px_rgb(3_105_161/0.08),0_60px_120px_-30px_rgb(5_35_60/0.55),0_30px_60px_-30px_rgb(0_0_0/0.45)] backdrop-blur md:rounded-[30px] md:p-2.5"
         >
           <AppWindow className="md:rounded-[22px]" />
         </motion.div>
@@ -149,10 +149,10 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
 function WorksWith() {
   return (
     <section aria-label="Works with" className="mx-auto max-w-[1200px] px-5 pt-20 pb-8 md:px-8">
-      <p className="text-center text-[13.5px] text-[#8b8b92]">Works with the tools your team already uses</p>
-      <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-10 gap-y-5 text-[#a1a1aa]">
+      <p className="text-center text-[13.5px] text-white/45">Works with the tools your team already uses</p>
+      <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-10 gap-y-5 text-white/45">
         {WORKS_WITH.map((w) => (
-          <li key={w.label} className="flex items-center gap-2 text-[17px] font-medium tracking-[-0.02em] transition-colors duration-300 hover:text-[#111113]">
+          <li key={w.label} className="flex items-center gap-2 text-[17px] font-medium tracking-[-0.02em] transition-colors duration-300 hover:text-white">
             {w.icon}
             {w.label}
           </li>
@@ -164,13 +164,13 @@ function WorksWith() {
 
 function Stage({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`relative isolate overflow-hidden rounded-[24px] bg-[#f4f4f5] ${className ?? ""}`}>
+    <div className={`relative isolate overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#08090b] ${className ?? ""}`}>
       <div
         aria-hidden
         className="absolute inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(60% 60% at 85% 0%, rgb(3 105 161 / 0.16), transparent 70%), radial-gradient(50% 60% at 8% 100%, rgb(170 225 240 / 0.1), transparent 70%), radial-gradient(70% 70% at 50% 50%, rgb(125 200 235 / 0.06), transparent 70%)",
+            "radial-gradient(60% 60% at 85% 0%, rgb(3 105 161 / 0.16), transparent 70%), radial-gradient(50% 60% at 8% 100%, rgb(170 225 240 / 0.04), transparent 70%), radial-gradient(70% 70% at 50% 50%, rgb(125 200 235 / 0.025), transparent 70%)",
         }}
       />
       <Grain opacity={0.05} className="-z-10" />
@@ -189,14 +189,14 @@ function InboxSection() {
     <section id="product" className="mx-auto max-w-[1200px] scroll-mt-24 px-5 py-24 md:px-8 md:py-36">
       <div className="grid items-center gap-14 lg:grid-cols-[1fr_1.05fr] lg:gap-20">
         <Reveal>
-          <DisplayHeading align="left" eyebrow="Inbox" title="Your morning," muted="already sorted." />
-          <p className="mt-7 max-w-[30rem] text-[17px] leading-relaxed text-[#55555b]">
+          <DisplayHeading dark align="left" eyebrow="Inbox" title="Your morning," muted="already sorted." />
+          <p className="mt-7 max-w-[30rem] text-[17px] leading-relaxed text-white/60">
             Everything that needs you, from every repository, in the order it needs you. Clear it before stand-up and get back to
             building.
           </p>
           <ul className="mt-8 grid gap-4">
             {points.map((p) => (
-              <li key={p} className="flex items-start gap-3 text-[15.5px] text-[#3f3f46]">
+              <li key={p} className="flex items-start gap-3 text-[15.5px] text-white/75">
                 <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#0369a1] text-white">
                   <RiCheckLine className="size-3" />
                 </span>
@@ -222,11 +222,11 @@ function OrderSection() {
     { icon: RiGitBranchLine, title: "A checklist per repo", body: "The questions your team always asks, ready on every pull request." },
   ];
   return (
-    <section id="order" className="scroll-mt-24 bg-[#fafafa] py-24 md:py-36">
+    <section id="order" className="scroll-mt-24 bg-[#030303] py-24 md:py-36">
       <div className="mx-auto max-w-[1200px] px-5 md:px-8">
         <Reveal>
-          <DisplayHeading eyebrow="Guided review" title="Read every change" muted="in the order it makes sense." />
-          <p className="mx-auto mt-7 max-w-[36rem] text-center text-[17px] leading-relaxed text-[#55555b]">
+          <DisplayHeading dark eyebrow="Guided review" title="Read every change" muted="in the order it makes sense." />
+          <p className="mx-auto mt-7 max-w-[36rem] text-center text-[17px] leading-relaxed text-white/60">
             GitHub lists files alphabetically. Docks lists them the way the author would explain them: the new idea first, the
             wiring next, the proof last.
           </p>
@@ -240,10 +240,10 @@ function OrderSection() {
         </Reveal>
         <div className="mt-16 grid gap-10 md:grid-cols-3 md:gap-8">
           {features.map((f, i) => (
-            <Reveal key={f.title} delay={i * 0.08} className="border-t border-black/[0.08] pt-6">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-[#0369a1]/[0.08] text-[#0369a1] ring-1 ring-[#0369a1]/15 ring-inset"><f.icon className="size-[18px]" /></span>
+            <Reveal key={f.title} delay={i * 0.08} className="border-t border-white/[0.12] pt-6 text-white">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-sky-400/10 text-sky-300 ring-1 ring-sky-300/15 ring-inset"><f.icon className="size-[18px]" /></span>
               <h3 className="mt-4 text-[17px] font-semibold tracking-[-0.02em]">{f.title}</h3>
-              <p className="mt-2 text-[15px] leading-relaxed text-[#6b6b70]">{f.body}</p>
+              <p className="mt-2 text-[15px] leading-relaxed text-white/55">{f.body}</p>
             </Reveal>
           ))}
         </div>
@@ -262,7 +262,7 @@ function WorkflowSection() {
   return (
     <section id="workflow" className="mx-auto max-w-[1200px] scroll-mt-24 px-5 py-24 md:px-8 md:py-36">
       <Reveal>
-        <DisplayHeading eyebrow="Workflow" title="From pull request" muted="to the right person." />
+        <DisplayHeading dark eyebrow="Workflow" title="From pull request" muted="to the right person." />
       </Reveal>
       <Reveal delay={0.1} className="mt-16">
         <Stage className="px-5 py-12 md:px-8 md:py-14">
@@ -271,10 +271,10 @@ function WorkflowSection() {
       </Reveal>
       <div className="mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
         {features.map((f, i) => (
-          <Reveal key={f.title} delay={i * 0.06} className="border-t border-black/[0.08] pt-6">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-[#0369a1]/[0.08] text-[#0369a1] ring-1 ring-[#0369a1]/15 ring-inset"><f.icon className="size-[18px]" /></span>
+          <Reveal key={f.title} delay={i * 0.06} className="border-t border-white/[0.12] pt-6 text-white">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-sky-400/10 text-sky-300 ring-1 ring-sky-300/15 ring-inset"><f.icon className="size-[18px]" /></span>
             <h3 className="mt-4 text-[17px] font-semibold tracking-[-0.02em]">{f.title}</h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-[#6b6b70]">{f.body}</p>
+            <p className="mt-2 text-[15px] leading-relaxed text-white/55">{f.body}</p>
           </Reveal>
         ))}
       </div>
@@ -284,19 +284,19 @@ function WorkflowSection() {
 
 function BentoSection() {
   return (
-    <section className="bg-[#fafafa] py-24 md:py-36">
+    <section className="bg-[#030303] py-24 md:py-36">
       <div className="mx-auto max-w-[1200px] px-5 md:px-8">
         <Reveal>
-          <DisplayHeading eyebrow="Everything else" title="A whole review desk." muted="One tab." />
+          <DisplayHeading dark eyebrow="Everything else" title="A whole review desk." muted="One tab." />
         </Reveal>
         <div className="mt-16 grid gap-3 md:grid-cols-6">
           <Reveal className="md:col-span-4">
-            <BentoCard className="h-full" title="Nothing waits overnight." body="Deadlines count work hours. When one is about to slip, a backup reviewer is asked before anyone notices.">
+            <BentoCard tone="dark" className="h-full" title="Nothing waits overnight." body="Deadlines count work hours. When one is about to slip, a backup reviewer is asked before anyone notices.">
               <DeadlineBoard />
             </BentoCard>
           </Reveal>
           <Reveal className="md:col-span-2" delay={0.06}>
-            <BentoCard className="h-full" title="Know when it ships." body="Group pull requests into a release and watch it fill up.">
+            <BentoCard tone="dark" className="h-full" title="Know when it ships." body="Group pull requests into a release and watch it fill up.">
               <ReleaseRing />
             </BentoCard>
           </Reveal>
@@ -306,12 +306,12 @@ function BentoSection() {
             </BentoCard>
           </Reveal>
           <Reveal className="md:col-span-2" delay={0.08}>
-            <BentoCard className="h-full" title="See the queue get shorter." body="Hours to first review, week by week, for the whole team.">
+            <BentoCard tone="dark" className="h-full" title="See the queue get shorter." body="Hours to first review, week by week, for the whole team.">
               <InsightBars />
             </BentoCard>
           </Reveal>
           <Reveal className="md:col-span-2" delay={0.12}>
-            <BentoCard className="h-full" title="Hand the fix to an agent." body="Send review notes to Claude Code, Codex or Cursor in one click.">
+            <BentoCard tone="dark" className="h-full" title="Hand the fix to an agent." body="Send review notes to Claude Code, Codex or Cursor in one click.">
               <AgentStack />
             </BentoCard>
           </Reveal>
@@ -325,18 +325,18 @@ function PricingTeaser({ startButton }: { startButton: React.ReactNode }) {
   return (
     <section className="mx-auto max-w-[1200px] px-5 py-24 md:px-8 md:py-36">
       <Reveal>
-        <DisplayHeading eyebrow="Pricing" title="Free to start." muted="Simple when you grow." />
+        <DisplayHeading dark eyebrow="Pricing" title="Free to start." muted="Simple when you grow." />
       </Reveal>
       <div className="mx-auto mt-16 grid max-w-[920px] gap-3 md:grid-cols-2">
         <Reveal>
-          <PlanTile plan="free" className="h-full" action={<PillButton href="/signup" tone="dark" className="w-full">Start free</PillButton>} />
+          <PlanTile plan="free" darkSurface className="h-full" action={<PillButton href="/signup" className="w-full">Start free</PillButton>} />
         </Reveal>
         <Reveal delay={0.08}>
           <PlanTile plan="team" className="h-full" action={<div className="[&>*]:w-full">{startButton}</div>} />
         </Reveal>
       </div>
       <Reveal className="mt-10 text-center">
-        <a href="/pricing" className="inline-flex items-center gap-1.5 text-[15px] font-medium text-[#111113] underline-offset-4 hover:underline">
+        <a href="/pricing" className="inline-flex items-center gap-1.5 text-[15px] font-medium text-white/75 underline-offset-4 hover:text-white hover:underline">
           Compare every feature
           <RiArrowRightLine className="size-4" />
         </a>
@@ -349,10 +349,10 @@ function FaqSection() {
   return (
     <section id="faq" className="mx-auto max-w-[880px] scroll-mt-24 px-5 pb-24 md:px-8 md:pb-36">
       <Reveal>
-        <h2 className="text-[clamp(2.4rem,5.4vw,4.25rem)] leading-none font-semibold tracking-[-0.045em]">Questions.</h2>
+        <h2 className="text-[clamp(2.4rem,5.4vw,4.25rem)] leading-none font-semibold tracking-[-0.045em] text-white">Questions.</h2>
       </Reveal>
       <Reveal delay={0.08} className="mt-12">
-        <Faq />
+        <Faq dark />
       </Reveal>
     </section>
   );

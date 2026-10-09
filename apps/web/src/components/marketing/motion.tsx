@@ -40,6 +40,7 @@ export function DisplayHeading({
   muted,
   className,
   align = "center",
+  dark = false,
   as: Tag = "h2",
 }: {
   eyebrow?: string;
@@ -47,6 +48,7 @@ export function DisplayHeading({
   muted?: ReactNode;
   className?: string;
   align?: "center" | "left";
+  dark?: boolean;
   as?: "h1" | "h2";
 }) {
   return (
@@ -56,7 +58,7 @@ export function DisplayHeading({
           {eyebrow}
         </p>
       )}
-      <Tag className="text-[clamp(2.4rem,5.4vw,4.25rem)] leading-[1.02] font-semibold tracking-[-0.045em] text-balance">
+      <Tag className={cn("text-[clamp(2.4rem,5.4vw,4.25rem)] leading-[1.02] font-semibold tracking-[-0.045em] text-balance", dark && "text-white")}>
         <span className="block">{title}</span>
         {muted && (
           <span className="block bg-gradient-to-r from-[#a8a29e] via-[#b8b2ad] to-[#d6d3d1] bg-clip-text pb-[0.06em] text-transparent">

@@ -6,11 +6,11 @@ import { Accordion as AccordionPrimitive } from "radix-ui";
 import { FAQ } from "@/components/marketing/plans";
 
 /** Large, quiet accordion: one question open at a time, a plus that turns into a minus. */
-export function Faq({ items = FAQ }: { items?: readonly { q: string; a: string }[] }) {
+export function Faq({ items = FAQ, dark = false }: { items?: readonly { q: string; a: string }[]; dark?: boolean }) {
   return (
-    <AccordionPrimitive.Root type="single" collapsible defaultValue={items[0]?.q} className="border-t border-black/[0.08]">
+    <AccordionPrimitive.Root type="single" collapsible defaultValue={items[0]?.q} className={dark ? "border-t border-white/10 text-white" : "border-t border-black/[0.08]"}>
       {items.map((item) => (
-        <AccordionPrimitive.Item key={item.q} value={item.q} className="border-b border-black/[0.08]">
+        <AccordionPrimitive.Item key={item.q} value={item.q} className={dark ? "border-b border-white/10" : "border-b border-black/[0.08]"}>
           <AccordionPrimitive.Header>
             <AccordionPrimitive.Trigger className="group flex w-full cursor-pointer items-center justify-between gap-6 py-6 text-left text-[18px] tracking-[-0.02em] outline-none focus-visible:underline md:text-[19px]">
               {item.q}
@@ -20,7 +20,7 @@ export function Faq({ items = FAQ }: { items?: readonly { q: string; a: string }
             </AccordionPrimitive.Trigger>
           </AccordionPrimitive.Header>
           <AccordionPrimitive.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-            <p className="max-w-[44rem] pb-7 text-[16px] leading-relaxed text-[#6b6b70]">{item.a}</p>
+            <p className={dark ? "max-w-[44rem] pb-7 text-[16px] leading-relaxed text-white/60" : "max-w-[44rem] pb-7 text-[16px] leading-relaxed text-[#6b6b70]"}>{item.a}</p>
           </AccordionPrimitive.Content>
         </AccordionPrimitive.Item>
       ))}

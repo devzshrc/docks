@@ -55,16 +55,16 @@ export function DeadlineBoard() {
         const pct = (left / d.total) * 100;
         const risky = pct < 20;
         return (
-          <div key={d.n} className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-[0_1px_2px_rgb(0_0_0/0.05),0_0_0_1px_rgb(0_0_0/0.04)]">
+          <div key={d.n} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#171717] p-3 text-white shadow-[0_8px_22px_-14px_rgb(0_0_0/0.7)]">
             <Face who={d.who} className="size-7 text-[9px]" />
             <div className="grid min-w-0 flex-1 gap-1.5">
               <div className="flex items-center justify-between gap-2 text-[13px]">
-                <span className="truncate font-medium tracking-[-0.01em]"><span className="text-[#a1a1aa]">#{d.n}</span> {d.title}</span>
-                <motion.span key={left} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={cn("shrink-0 text-[12px] tabular-nums", risky ? "text-[#d97706]" : "text-[#6b6b70]")}>
+                <span className="truncate font-medium tracking-[-0.01em]"><span className="text-white/40">#{d.n}</span> {d.title}</span>
+                <motion.span key={left} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={cn("shrink-0 text-[12px] tabular-nums", risky ? "text-amber-300" : "text-white/50")}>
                   {left < 1 ? `${Math.round(left * 60)}m` : `${left}h`} left
                 </motion.span>
               </div>
-              <span className="h-1.5 overflow-hidden rounded-full bg-[#ececee]">
+              <span className="h-1.5 overflow-hidden rounded-full bg-[#303030]">
                 <motion.span className={cn("block h-full rounded-full", risky ? "bg-[#f59e0b]" : "bg-[#0369a1]")} animate={{ width: `${pct}%` }} transition={{ duration: 1, ease: EASE }} />
               </span>
             </div>
@@ -75,7 +75,7 @@ export function DeadlineBoard() {
                   animate={{ opacity: 1, scale: 1, width: "auto" }}
                   exit={{ opacity: 0, width: 0 }}
                   transition={{ duration: 0.5, ease: EASE }}
-                  className="hidden shrink-0 items-center gap-1 overflow-hidden rounded-full bg-[#eef4ff] px-2.5 py-1 text-[11.5px] whitespace-nowrap text-[#1d4ed8] sm:flex"
+                  className="hidden shrink-0 items-center gap-1 overflow-hidden rounded-full bg-[#1d2b3e] px-2.5 py-1 text-[11.5px] whitespace-nowrap text-[#bfdbfe] sm:flex"
                 >
                   <RiUserFollowLine className="size-3" />
                   Backup asked
@@ -102,21 +102,21 @@ export function ReleaseRing() {
     <div ref={ref} aria-hidden className="flex w-full items-center gap-5">
       <span className="relative size-[88px] shrink-0">
         <svg viewBox="0 0 80 80" className="size-full -rotate-90">
-          <circle cx="40" cy="40" r={r} stroke="#e4e4e7" strokeWidth="6" fill="none" />
+          <circle cx="40" cy="40" r={r} stroke="#383838" strokeWidth="6" fill="none" />
           <motion.circle cx="40" cy="40" r={r} stroke={pct === 1 ? "#16a34a" : "#0369a1"} strokeWidth="6" strokeLinecap="round" fill="none" strokeDasharray={c} animate={{ strokeDashoffset: c * (1 - pct) }} transition={{ duration: 0.8, ease: EASE }} />
         </svg>
         <span className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-[19px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{ready}/4</span>
-          <span className="mt-1 text-[10px] text-[#8b8b92]">ready</span>
+          <span className="mt-1 text-[10px] text-white/45">ready</span>
         </span>
       </span>
       <ul className="grid min-w-0 flex-1 gap-1.5">
         {RELEASE.map((t, i) => (
           <li key={t} className="flex items-center gap-2 text-[12.5px]">
-            <span className={cn("flex size-4 shrink-0 items-center justify-center rounded-full transition-colors duration-300", i < ready ? "bg-[#16a34a] text-white" : "border border-[#d4d4d8]")}>
+            <span className={cn("flex size-4 shrink-0 items-center justify-center rounded-full transition-colors duration-300", i < ready ? "bg-[#16a34a] text-white" : "border border-[#454545]")}>
               {i < ready && <RiCheckLine className="size-2.5" />}
             </span>
-            <span className={cn("truncate transition-colors duration-300", i < ready ? "text-[#111113]" : "text-[#a1a1aa]")}>{t}</span>
+            <span className={cn("truncate transition-colors duration-300", i < ready ? "text-white/85" : "text-white/40")}>{t}</span>
           </li>
         ))}
       </ul>
@@ -136,7 +136,7 @@ export function CommandK() {
   const q = QUERIES[step % QUERIES.length]!;
   return (
     <div ref={ref} aria-hidden className="w-full">
-      <div className="overflow-hidden rounded-2xl bg-white/[0.1] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.14),0_20px_40px_-20px_rgb(0_0_0/0.5)] backdrop-blur">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#111316] shadow-[0_20px_40px_-20px_rgb(0_0_0/0.7)] backdrop-blur">
         <div className="flex items-center gap-2 border-b border-white/[0.08] px-3.5 py-3 text-[13px]">
           <RiSearchLine className="size-3.5 text-white/40" />
           <AnimatePresence mode="wait">
@@ -152,7 +152,7 @@ export function CommandK() {
         </div>
         <AnimatePresence mode="wait">
           <motion.div key={q.hit} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: 0.12 * q.q.length + 0.1, duration: 0.4, ease: EASE }} className="flex items-center gap-2 px-2 py-2">
-            <span className="flex w-full items-center gap-2 rounded-lg bg-white/[0.14] px-2.5 py-2 text-[12.5px]">
+            <span className="flex w-full items-center gap-2 rounded-lg border border-white/[0.08] bg-[#1b1e22] px-2.5 py-2 text-[12.5px]">
               <q.icon className="size-3.5 text-white/50" />
               <span className="truncate">{q.hit}</span>
               <RiArrowRightSLine className="ml-auto size-3.5 text-white/40" />
@@ -182,7 +182,7 @@ export function InsightBars() {
           />
         ))}
       </div>
-      <div className="mt-3 flex justify-between text-[11px] text-[#8b8b92]">
+      <div className="mt-3 flex justify-between text-[11px] text-white/45">
         <span>7 weeks ago</span>
         <span>This week</span>
       </div>
@@ -201,13 +201,13 @@ export function AgentStack() {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.1 * i, ease: EASE }}
-          className="flex items-center gap-3 rounded-2xl bg-white p-2.5 pr-3 text-[13px] font-medium shadow-[0_1px_2px_rgb(0_0_0/0.05),0_0_0_1px_rgb(0_0_0/0.04)]"
+          className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#171717] p-2.5 pr-3 text-[13px] font-medium text-white shadow-[0_8px_22px_-14px_rgb(0_0_0/0.7)]"
         >
-          <span className="flex size-7 items-center justify-center rounded-[9px] bg-[#f4f4f5]" style={{ color }}>
+          <span className="flex size-7 items-center justify-center rounded-[9px] bg-[#292929]" style={{ color }}>
             <BrandIcon brand={b} className="size-4" />
           </span>
           {name}
-          <span className="ml-auto text-[11.5px] font-normal text-[#8b8b92]">Fix the review notes</span>
+          <span className="ml-auto text-[11.5px] font-normal text-white/45">Fix the review notes</span>
         </motion.span>
       ))}
     </div>

@@ -16,13 +16,13 @@ const LINKS = [
   { href: "/#faq", label: "FAQ" },
 ];
 
-/** Marketing pages are always light, whatever theme the app uses. */
-export function MarketingFrame({ children }: { children: ReactNode }) {
+/** Marketing frame can use a page-specific dark palette, independent of the app theme. */
+export function MarketingFrame({ children, dark = true }: { children: ReactNode; dark?: boolean }) {
   return (
-    <div className="light relative min-h-svh overflow-x-clip bg-white text-[#111113] antialiased">
-      <SiteNav />
+    <div className={cn("relative min-h-svh overflow-x-clip antialiased", dark ? "dark marketing-dark bg-black text-white" : "light bg-white text-[#111113]")}>
+      <SiteNav dark={dark} />
       {children}
-      <SiteFooter />
+      <SiteFooter dark={dark} />
     </div>
   );
 }
@@ -62,7 +62,7 @@ export function PillButton({
   );
   if (href)
     return (
-      <Link href={href} className={classes}>
+      <Link href={href} data-slot="button" className={classes}>
         {children}
       </Link>
     );
@@ -73,7 +73,7 @@ export function PillButton({
   );
 }
 
-function SiteNav() {
+function SiteNav({ dark }: { dark: boolean }) {
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -84,8 +84,11 @@ function SiteNav() {
       className={cn(
         "sticky top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-300 ease-power3-out",
         scrolled || open
-          ? "bg-white/[0.86] shadow-[0_1px_0_rgb(0_0_0/0.06)] backdrop-blur-xl backdrop-saturate-150"
+          ? dark
+            ? "bg-black/[0.86] shadow-[0_1px_0_rgb(255_255_255/0.08)] backdrop-blur-xl backdrop-saturate-150"
+            : "bg-white/[0.86] shadow-[0_1px_0_rgb(0_0_0/0.06)] backdrop-blur-xl backdrop-saturate-150"
           : "bg-transparent",
+        dark && "text-white",
       )}
     >
       <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-8 px-5 md:px-8">
@@ -101,7 +104,7 @@ function SiteNav() {
             <Link
               key={l.href}
               href={l.href}
-              className="text-[14px] text-[#55555b] transition-colors duration-150 hover:text-[#111113]"
+              className={cn("text-[14px] transition-colors duration-150", dark ? "text-white/65 hover:text-white" : "text-[#55555b] hover:text-[#111113]")}
             >
               {l.label}
             </Link>
@@ -110,7 +113,7 @@ function SiteNav() {
         <div className="ml-auto hidden items-center gap-2 md:flex">
           <Link
             href="/login"
-            className="rounded-full px-3 py-2 text-[14px] text-[#55555b] transition-colors hover:text-[#111113]"
+            className={cn("rounded-full px-3 py-2 text-[14px] transition-colors", dark ? "text-white/65 hover:text-white" : "text-[#55555b] hover:text-[#111113]")}
           >
             Sign in
           </Link>
@@ -120,7 +123,7 @@ function SiteNav() {
         </div>
         <button
           type="button"
-          className="ml-auto flex size-10 items-center justify-center rounded-full md:hidden"
+          className={cn("ml-auto flex size-10 items-center justify-center rounded-full md:hidden", dark && "text-white")}
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
@@ -136,7 +139,7 @@ function SiteNav() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.35, ease: EASE }}
-            className="overflow-hidden md:hidden"
+            className={cn("overflow-hidden md:hidden", dark && "bg-black text-white")}
           >
             <div className="flex flex-col gap-1 px-5 pt-2 pb-6">
               {LINKS.map((l) => (
@@ -144,13 +147,13 @@ function SiteNav() {
                   key={l.href}
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="border-b border-black/5 py-3 text-[17px] tracking-[-0.02em]"
+                  className={cn("border-b py-3 text-[17px] tracking-[-0.02em]", dark ? "border-white/10" : "border-black/5")}
                 >
                   {l.label}
                 </Link>
               ))}
               <div className="mt-4 grid grid-cols-2 gap-2">
-                <PillButton href="/login" tone="light">
+                <PillButton href="/login" tone={dark ? "white" : "light"}>
                   Sign in
                 </PillButton>
                 <PillButton href="/signup">Start free</PillButton>
@@ -189,27 +192,27 @@ const FOOTER = [
   },
 ];
 
-function SiteFooter() {
+function SiteFooter({ dark }: { dark: boolean }) {
   return (
-    <footer className="relative border-t border-black/[0.06]">
+    <footer className={cn("relative border-t", dark ? "border-white/10" : "border-black/[0.06]")}>
       <div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-16 md:grid-cols-[1.4fr_repeat(3,1fr)] md:px-8">
         <div className="flex flex-col gap-4">
           <Link href="/" className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.03em]">
             <AppIcon className="size-7" />
             Docks
           </Link>
-          <p className="max-w-[16rem] text-sm leading-relaxed text-[#6b6b70]">
+          <p className={cn("max-w-[16rem] text-sm leading-relaxed", dark ? "text-white/55" : "text-[#6b6b70]")}>
             Guided code review for GitHub teams. From review to release.
           </p>
         </div>
         {FOOTER.map((col) => (
           <div key={col.title} className="flex flex-col gap-3">
-            <p className="text-[13px] font-medium text-[#111113]">{col.title}</p>
+            <p className={cn("text-[13px] font-medium", dark ? "text-white" : "text-[#111113]")}>{col.title}</p>
             {col.links.map((l) => (
               <Link
                 key={l.label}
                 href={l.href}
-                className="inline-flex items-center gap-1 text-sm text-[#6b6b70] transition-colors hover:text-[#111113]"
+                className={cn("inline-flex items-center gap-1 text-sm transition-colors", dark ? "text-white/55 hover:text-white" : "text-[#6b6b70] hover:text-[#111113]")}
               >
                 {l.label}
                 {"external" in l && <RiArrowRightUpLine aria-hidden className="size-3.5" />}
@@ -218,7 +221,7 @@ function SiteFooter() {
           </div>
         ))}
       </div>
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3 border-t border-black/[0.06] px-5 py-6 text-[13px] text-[#8b8b92] md:px-8">
+      <div className={cn("mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3 border-t px-5 py-6 text-[13px] md:px-8", dark ? "border-white/10 text-white/40" : "border-black/[0.06] text-[#8b8b92]")}>
         <span>© {new Date().getFullYear()} Docks</span>
         <span>Made for teams that ship carefully.</span>
       </div>

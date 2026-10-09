@@ -4,19 +4,21 @@ import type { ReactNode } from "react";
 import { PLANS, TEAM_PRICE } from "@/components/marketing/plans";
 import { cn } from "@/lib/utils";
 
-/** Free is a quiet gray tile; Team is graphite with a soft light along its top edge. */
+/** Plan tiles adapt to their surrounding surface; Team keeps its graphite highlight. */
 export function PlanTile({
   plan,
   action,
   price,
   note,
   className,
+  darkSurface = false,
 }: {
   plan: "free" | "team";
   action: ReactNode;
   price?: ReactNode;
   note?: ReactNode;
   className?: string;
+  darkSurface?: boolean;
 }) {
   const p = PLANS[plan];
   const dark = plan === "team";
@@ -26,7 +28,7 @@ export function PlanTile({
         "relative flex flex-col overflow-hidden rounded-[28px] p-7 md:p-9",
         dark
           ? "bg-[#111113] text-white shadow-[0_40px_80px_-30px_rgb(17_17_19/0.55)]"
-          : "bg-[#f4f4f5] text-[#111113]",
+          : darkSurface ? "border border-white/10 bg-[#09090b] text-white" : "bg-[#f4f4f5] text-[#111113]",
         className,
       )}
     >
@@ -44,26 +46,26 @@ export function PlanTile({
           </span>
         )}
       </div>
-      <p className={cn("relative mt-1.5 text-[15px]", dark ? "text-white/55" : "text-[#6b6b70]")}>{p.blurb}</p>
+      <p className={cn("relative mt-1.5 text-[15px]", dark || darkSurface ? "text-white/55" : "text-[#6b6b70]")}>{p.blurb}</p>
       <div className="relative mt-8 flex items-baseline gap-2">
         {price ?? (
           <span className="text-[56px] leading-none font-semibold tracking-[-0.05em] tabular-nums">
             ${plan === "team" ? TEAM_PRICE : 0}
           </span>
         )}
-        <span className={cn("text-[14px]", dark ? "text-white/50" : "text-[#8b8b92]")}>
+        <span className={cn("text-[14px]", dark || darkSurface ? "text-white/50" : "text-[#8b8b92]")}>
           {plan === "team" ? "per member / month" : "forever"}
         </span>
       </div>
-      {note && <div className={cn("relative mt-2 text-[13px]", dark ? "text-white/50" : "text-[#8b8b92]")}>{note}</div>}
+      {note && <div className={cn("relative mt-2 text-[13px]", dark || darkSurface ? "text-white/50" : "text-[#8b8b92]")}>{note}</div>}
       <div className="relative mt-7">{action}</div>
       <ul className="relative mt-8 grid gap-3.5 text-[14.5px]">
         {p.features.map((f) => (
           <li key={f} className="flex items-start gap-3">
-            <span className={cn("mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-full", dark ? "bg-[#0369a1] text-white" : "bg-[#0369a1]/10 text-[#0369a1]")}>
+            <span className={cn("mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-full", dark || darkSurface ? "bg-[#0369a1] text-white" : "bg-[#0369a1]/10 text-[#0369a1]")}>
               <RiCheckLine className="size-3" />
             </span>
-            <span className={dark ? "text-white/85" : "text-[#3f3f46]"}>{f}</span>
+            <span className={dark || darkSurface ? "text-white/85" : "text-[#3f3f46]"}>{f}</span>
           </li>
         ))}
       </ul>

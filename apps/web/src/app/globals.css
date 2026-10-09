@@ -3,7 +3,7 @@
 @import "../styles/typography.css";
 @custom-variant dark (&:where(.dark, .dark *):not(:where(.light, .light *)));
 
-/* Light tokens. `.light` re-applies them inside a dark page (marketing pages are always light). */
+/* Light tokens remain available for isolated light content. The website uses forced dark mode. */
 :root,
 .light {
   color-scheme: light;
@@ -146,30 +146,30 @@
   --hue-orange: #fb923c;
   --hue-purple: #c084fc;
   --hue-red: #f87171;
-  --background: #161616;
+  --background: #000000;
   --foreground: #f9fbff;
-  --card: #1b1c1e;
+  --card: #090a0c;
   --card-foreground: #f9fbff;
-  --popover: #191919;
+  --popover: #0c0d0f;
   --popover-foreground: #f9fbff;
   --primary: #4124fb;
   --primary-hover: #4b30ff;
   --primary-foreground: #f9fbff;
-  --secondary: #1e1e1e;
+  --secondary: #101114;
   --secondary-foreground: #f9fbff;
-  --muted: #2a2a2a;
+  --muted: #17191c;
   --muted-foreground: #8a8a8a;
-  --accent: #232323;
+  --accent: #141619;
   --accent-foreground: #f9fbff;
   --destructive: #f97373;
   --border: #232323;
   --input: #393939;
   --ring: #676767;
-  --sidebar: #171717;
+  --sidebar: #050607;
   --sidebar-foreground: #8a8a8a;
-  --sidebar-primary: #2a2a2a;
+  --sidebar-primary: #17191c;
   --sidebar-primary-foreground: #f9fbff;
-  --sidebar-accent: #1b1b1b;
+  --sidebar-accent: #101114;
   --sidebar-accent-foreground: #f9fbff;
   --sidebar-border: #232323;
   --sidebar-ring: #676767;
@@ -203,6 +203,28 @@
   --tag-amber-bg: #31221b; --tag-amber-border: #6c4830; --tag-amber-text: #fed7aa;
   --tag-teal-bg: #102a27; --tag-teal-border: #3b6149; --tag-teal-text: #86efac;
   --tag-neutral-bg: #2a2a2a; --tag-neutral-border: #363636; --tag-neutral-text: #cfcfcf;
+}
+.marketing-dark {
+  --mk-bg: #070809;
+  --mk-bar: #0b0c0e;
+  --mk-side: #090a0b;
+  --mk-side2: #0d0e10;
+  --mk-border: #1a1c1f;
+  --mk-fg: #f4f6f8;
+  --mk-muted: #a0a4aa;
+  --mk-subtle: #838890;
+  --mk-faint: #70767e;
+  --mk-raise: #141619;
+  --mk-ctrl: #0e1012;
+  --mk-line: #282b30;
+  --mk-card: #111316;
+  --mk-chip: #d2d6db;
+  --mk-soft: #aab0b8;
+  --mk-icon: #d0d4dd;
+  --mk-faint2: #4b5058;
+  --mk-tagb: #34383e;
+  --mk-track: #30343a;
+  --mk-text2: #d2d6db;
 }
 .light {
   color: var(--foreground);
@@ -306,6 +328,19 @@
   --ease-smooth-in-out: cubic-bezier(0.7, 0, 0, 1);
 }
 @layer base {
+  /* Product surfaces stay square; buttons retain their own corner styles, including linked buttons. */
+  *:not(:where(button, [role="button"], [data-slot="button"], input[type="button"], input[type="submit"], input[type="reset"])),
+  *::before,
+  *::after,
+  ::file-selector-button {
+    border-radius: 0 !important;
+  }
+  input::-webkit-slider-thumb {
+    border-radius: 0 !important;
+  }
+  input::-moz-range-thumb {
+    border-radius: 0 !important;
+  }
   * {
     @apply border-border outline-ring/50;
   }

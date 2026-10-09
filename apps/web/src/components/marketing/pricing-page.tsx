@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 
 import { useGithubStart } from "@/components/landing/use-github-start";
-import { HeroLight } from "@/components/marketing/backdrop";
 import { ClosingCta } from "@/components/marketing/closing-cta";
 import { Faq } from "@/components/marketing/faq";
 import { DisplayHeading, EASE, Reveal } from "@/components/marketing/motion";
@@ -75,13 +74,13 @@ function SeatEstimator() {
 }
 
 function Cell({ value, dark }: { value: boolean | string; dark?: boolean }) {
-  if (typeof value === "string") return <span className={cn("text-[14px]", dark ? "font-medium text-[#111113]" : "text-[#55555b]")}>{value}</span>;
+  if (typeof value === "string") return <span className={cn("text-[14px]", dark ? "font-medium text-text-primary" : "text-text-secondary")}>{value}</span>;
   return value ? (
     <span className={cn("inline-flex size-5 items-center justify-center rounded-full", dark ? "bg-[#0369a1] text-white" : "bg-[#0369a1]/10 text-[#0369a1]")} aria-label="Included">
       <RiCheckLine className="size-3" />
     </span>
   ) : (
-    <RiSubtractLine className="inline size-4 text-[#c4c4c9]" aria-label="Not included" />
+    <RiSubtractLine className="inline size-4 text-text-tertiary" aria-label="Not included" />
   );
 }
 
@@ -95,14 +94,13 @@ export function PricingPage() {
   );
 
   return (
-    <MarketingFrame>
+    <MarketingFrame dark>
       <main>
         <section className="relative isolate -mt-16 pt-16">
-          <HeroLight />
           <div className="mx-auto max-w-[1200px] px-5 pt-16 md:px-8 md:pt-24">
             <motion.div initial={{ opacity: 0, y: 18, filter: "blur(8px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 1, ease: EASE }}>
-              <DisplayHeading as="h1" eyebrow="Pricing" title="Start free." muted="Grow without surprises." className="[&_h1]:text-[clamp(2.8rem,7vw,5.5rem)]" />
-              <p className="mx-auto mt-7 max-w-[34rem] text-center text-[17px] leading-relaxed text-[#55555b] md:text-[19px]">
+              <DisplayHeading dark as="h1" eyebrow="Pricing" title="Start free." muted="Grow without surprises." className="[&_h1]:text-[clamp(2.8rem,7vw,5.5rem)]" />
+              <p className="mx-auto mt-7 max-w-[34rem] text-center text-[17px] leading-relaxed text-text-secondary md:text-[19px]">
                 Every team gets the review queue and guided review. Team adds the tools that keep reviews on time, up to the release.
               </p>
             </motion.div>
@@ -110,6 +108,7 @@ export function PricingPage() {
               <Reveal>
                 <PlanTile
                   plan="free"
+                  darkSurface
                   className="h-full"
                   note={`For teams of up to ${FREE_MEMBERS}. No card needed.`}
                   action={<PillButton href="/signup" className="w-full">Start free</PillButton>}
@@ -119,7 +118,7 @@ export function PricingPage() {
                 <PlanTile plan="team" className="h-full" note={<SeatEstimator />} action={github("white", "w-full")} />
               </Reveal>
             </div>
-            <p className="mt-6 text-center text-[13px] text-[#8b8b92]">
+            <p className="mt-6 text-center text-[13px] text-text-tertiary">
               Prices in USD. Team is billed monthly for each workspace member, plus applicable taxes.
             </p>
           </div>
@@ -128,48 +127,48 @@ export function PricingPage() {
         <section className="mx-auto max-w-[1200px] px-5 py-24 md:px-8 md:py-32">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
             {INCLUDED.map((f, i) => (
-              <Reveal key={f.title} delay={i * 0.06} className="border-t border-black/[0.08] pt-6">
+              <Reveal key={f.title} delay={i * 0.06} className="border-t border-separator-border pt-6">
                 <f.icon className="size-5" />
                 <h3 className="mt-4 text-[16px] font-semibold tracking-[-0.02em]">{f.title}</h3>
-                <p className="mt-2 text-[14.5px] leading-relaxed text-[#6b6b70]">{f.body}</p>
+                <p className="mt-2 text-[14.5px] leading-relaxed text-text-secondary">{f.body}</p>
               </Reveal>
             ))}
           </div>
         </section>
 
-        <section className="bg-[#fafafa] py-24 md:py-32">
+        <section className="bg-background-secondary-default py-24 md:py-32">
           <div className="mx-auto max-w-[1040px] px-5 md:px-8">
             <Reveal>
-              <DisplayHeading title="Compare plans." muted="Line by line." />
+              <DisplayHeading dark title="Compare plans." muted="Line by line." />
             </Reveal>
             <Reveal delay={0.08} className="mt-14">
-              <div className="overflow-clip rounded-[28px] bg-white shadow-[0_0_0_1px_rgb(0_0_0/0.05),0_30px_60px_-40px_rgb(0_0_0/0.25)]">
-                <div className="sticky top-16 z-10 grid grid-cols-[1.6fr_1fr_1fr] items-end gap-4 border-b border-black/[0.06] bg-white/90 px-5 py-5 backdrop-blur md:px-8">
-                  <span className="text-[13px] text-[#8b8b92]">Features</span>
+              <div className="overflow-clip rounded-[28px] bg-background-primary-default shadow-[0_0_0_1px_rgb(0_0_0/0.05),0_30px_60px_-40px_rgb(0_0_0/0.25)]">
+                <div className="sticky top-16 z-10 grid grid-cols-[1.6fr_1fr_1fr] items-end gap-4 border-b border-separator-border bg-background-primary-default px-5 py-5 backdrop-blur md:px-8">
+                  <span className="text-[13px] text-text-tertiary">Features</span>
                   <span className="grid justify-items-center gap-2 text-center">
                     <span className="text-[15px] font-semibold tracking-[-0.02em]">Free</span>
-                    <span className="hidden text-[12.5px] text-[#8b8b92] sm:block">$0</span>
+                    <span className="hidden text-[12.5px] text-text-tertiary sm:block">$0</span>
                   </span>
                   <span className="grid justify-items-center gap-2 text-center">
                     <span className="text-[15px] font-semibold tracking-[-0.02em]">Team</span>
-                    <span className="hidden text-[12.5px] text-[#8b8b92] sm:block">${TEAM_PRICE} per member</span>
+                    <span className="hidden text-[12.5px] text-text-tertiary sm:block">${TEAM_PRICE} per member</span>
                   </span>
                 </div>
                 {COMPARE.map((g) => (
                   <div key={g.group}>
-                    <div className="bg-[#fafafa] px-5 py-3 text-[12px] font-medium tracking-[0.06em] text-[#8b8b92] uppercase md:px-8">{g.group}</div>
+                    <div className="bg-background-secondary-default px-5 py-3 text-[12px] font-medium tracking-[0.06em] text-text-tertiary uppercase md:px-8">{g.group}</div>
                     {g.rows.map(([label, free, team]) => (
-                      <div key={label} className="grid grid-cols-[1.6fr_1fr_1fr] items-center gap-4 border-t border-black/[0.05] px-5 py-4 transition-colors hover:bg-[#fafafa] md:px-8">
-                        <span className="text-[14.5px] text-[#3f3f46]">{label}</span>
+                      <div key={label} className="grid grid-cols-[1.6fr_1fr_1fr] items-center gap-4 border-t border-separator-border px-5 py-4 transition-colors hover:bg-background-secondary-default md:px-8">
+                        <span className="text-[14.5px] text-text-primary">{label}</span>
                         <span className="text-center"><Cell value={free} /></span>
                         <span className="text-center"><Cell value={team} dark /></span>
                       </div>
                     ))}
                   </div>
                 ))}
-                <div className="grid grid-cols-[1.6fr_1fr_1fr] items-center gap-4 border-t border-black/[0.06] px-5 py-6 md:px-8">
+                <div className="grid grid-cols-[1.6fr_1fr_1fr] items-center gap-4 border-t border-separator-border px-5 py-6 md:px-8">
                   <span />
-                  <span className="flex justify-center"><PillButton href="/signup" tone="light" size="sm">Start free</PillButton></span>
+                  <span className="flex justify-center"><PillButton href="/signup" tone="dark" size="sm">Start free</PillButton></span>
                   <span className="flex justify-center"><PillButton href="/settings/billing" size="sm">Choose Team</PillButton></span>
                 </div>
               </div>
@@ -182,7 +181,7 @@ export function PricingPage() {
             <h2 className="text-[clamp(2.4rem,5.4vw,4.25rem)] leading-none font-semibold tracking-[-0.045em]">Questions.</h2>
           </Reveal>
           <Reveal delay={0.08} className="mt-12">
-            <Faq />
+            <Faq dark />
           </Reveal>
         </section>
 
