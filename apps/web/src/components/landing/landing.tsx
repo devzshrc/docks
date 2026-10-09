@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  RiArrowDownLine,
   RiArrowRightLine,
   RiCheckLine,
   RiGithubFill,
@@ -15,13 +14,14 @@ import {
   RiUserStarLine,
 } from "@remixicon/react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { Work_Sans } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 
 import { BrandIcon } from "@/components/brand-icons";
 import { useGithubStart } from "@/components/landing/use-github-start";
-import { Grain, HeroLight } from "@/components/marketing/backdrop";
+import { Grain } from "@/components/marketing/backdrop";
 import { ClosingCta } from "@/components/marketing/closing-cta";
 import { Faq } from "@/components/marketing/faq";
 import { AppWindow } from "@/components/marketing/mock/app-window";
@@ -32,7 +32,11 @@ import { ReviewOrder } from "@/components/marketing/mock/review-order";
 import { DisplayHeading, EASE, Reveal } from "@/components/marketing/motion";
 import { PlanTile } from "@/components/marketing/plan-tiles";
 import { MarketingFrame, PillButton } from "@/components/marketing/site-chrome";
+import { Button } from "@/components/ui/button";
+import { Skiper39 } from "@/components/ui/skiper39";
 import { useSession } from "@/lib/auth-client";
+
+const heroFont = Work_Sans({ subsets: ["latin"], display: "swap" });
 
 const WORKS_WITH = [
   { icon: <RiGithubFill className="size-[22px]" />, label: "GitHub" },
@@ -83,48 +87,50 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
   const scale = useTransform(scrollYProgress, [0, 1], [reduce ? 1 : 0.92, 1]);
   const y = useTransform(scrollYProgress, [0, 1], [reduce ? 0 : 40, 0]);
 
-  const intro = (i: number) => ({
-    initial: reduce ? false : { opacity: 0, y: 18, filter: "blur(8px)" },
-    animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-    transition: { duration: 1, delay: 0.08 + i * 0.1, ease: EASE },
-  });
-
   return (
-    <section className="relative isolate -mt-16 pt-16">
-      <HeroLight />
-      <div className="mx-auto max-w-[1200px] px-5 pt-16 text-center md:px-8 md:pt-24">
-        <motion.a
-          {...intro(0)}
+    <section className="relative isolate">
+      <Skiper39 className={heroFont.className}>
+        <a
           href="#order"
-          className="mx-auto inline-flex items-center gap-2 rounded-full bg-white/70 py-1 pr-3 pl-1 text-[13px] text-[#55555b] shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_2px_rgb(0_0_0/0.04)] backdrop-blur transition-colors hover:text-[#111113]"
+          className="inline-flex items-center gap-2 rounded-full border border-separator-border bg-background-secondary-default px-3 py-2 text-caption-1-medium text-text-secondary outline-none transition-colors hover:text-text-primary focus-visible:ring-2 focus-visible:ring-border-focus-ring"
         >
-          <span className="rounded-full bg-[#0369a1] px-2 py-0.5 text-[11.5px] font-medium text-white">New</span>
+          <RiGitBranchLine aria-hidden="true" className="size-4 shrink-0 text-hue-blue" />
           Guided review order for every pull request
-          <RiArrowRightLine className="size-3.5" />
-        </motion.a>
-        <motion.h1
-          {...intro(1)}
-          className="mx-auto mt-8 max-w-[15ch] text-[clamp(3.4rem,9.5vw,8rem)] leading-[0.92] font-semibold tracking-[-0.055em] text-balance"
-        >
-          <span className="block">Code review,</span>
-          <span className="block text-[#0369a1]">without the wait.</span>
-        </motion.h1>
-        <motion.p {...intro(2)} className="mx-auto mt-8 max-w-[36rem] text-[17px] leading-relaxed text-[#55555b] md:text-[19px]">
+          <RiArrowRightLine aria-hidden="true" className="size-3.5 shrink-0" />
+        </a>
+        <div className="relative">
+          <div aria-hidden="true" className="pointer-events-none absolute -start-24 top-0 hidden -rotate-12 md:block">
+            <div className="flex size-16 items-center justify-center rounded-3xl border border-border-button-default bg-background-primary-default text-text-primary shadow-lg">
+              <RiGithubFill className="size-9" />
+            </div>
+            <div className="ms-12 mt-2 h-6 w-10 rounded-es-3xl border-s-2 border-b-2 border-dashed border-separator-border" />
+          </div>
+          <h1 className="text-display-3-semibold text-balance text-text-primary md:text-display-1-semibold">
+            <span className="block">Code review,</span>
+            <span className="block">without the wait.</span>
+          </h1>
+          <div aria-hidden="true" className="pointer-events-none absolute -end-28 bottom-0 hidden rotate-12 md:flex md:flex-col md:items-center md:gap-2">
+            <div className="flex size-16 items-center justify-center rounded-3xl border border-border-button-default bg-background-secondary-default text-hue-blue shadow-lg">
+              <RiGitBranchLine className="size-9" />
+            </div>
+            <span className="rounded-full border border-separator-border bg-background-primary-default px-3 py-1 text-caption-1-medium text-text-secondary">ship it!</span>
+          </div>
+        </div>
+        <p className="max-w-xl text-headline-regular text-text-secondary md:text-title-3-regular">
           One queue for every pull request: who is waiting, what blocks the merge, and the order to read the change.
-        </motion.p>
-        <motion.div {...intro(3)} className="mt-10 flex flex-wrap items-center justify-center gap-3">
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
           {startButton}
-          <PillButton tone="light" size="lg" href="#product">
-            See how it works
-            <RiArrowDownLine />
-          </PillButton>
-        </motion.div>
-        <motion.p {...intro(4)} className="mt-5 text-[13.5px] text-[#8b8b92]">
+          <Button asChild variant="outline" size="none" className="h-13 gap-2 px-7 text-headline-medium text-text-primary">
+            <a href="#product">See how it works</a>
+          </Button>
+        </div>
+        <p role={notice ? "status" : undefined} className="text-body-2-regular text-text-tertiary">
           {notice ?? "Free for up to 5 people and 3 repositories. No card needed."}
-        </motion.p>
-      </div>
+        </p>
+      </Skiper39>
 
-      <div ref={stage} className="relative mx-auto mt-16 max-w-[1280px] px-3 [perspective:1600px] md:mt-20 md:px-8">
+      <div ref={stage} className="relative mx-auto mt-8 max-w-[1280px] px-3 [perspective:1600px] md:mt-12 md:px-8">
         <div aria-hidden className="pointer-events-none absolute inset-x-[8%] top-[12%] -z-10 h-[70%] rounded-[50%] bg-[radial-gradient(closest-side,rgb(3_105_161/0.45),rgb(125_200_235/0.2)_55%,transparent)] blur-3xl" />
         <motion.div
           style={{ rotateX, scale, y }}
