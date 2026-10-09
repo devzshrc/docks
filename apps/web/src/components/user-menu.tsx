@@ -8,14 +8,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PersonAvatar } from "@/components/person-avatar";
 import { authClient, useSession } from "@/lib/auth-client";
 
-/** The signed-in person, pinned to the bottom of the sidebar. Opens a menu with Account and Sign out. */
+/** The signed-in person as a header pill (avatar and first name). Opens a menu with Account and Sign out. */
 export function UserMenu() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -26,26 +25,38 @@ export function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <ShadcnButton
-          variant="ghost"
-          type="button"
-          className="hover:bg-hover flex w-full min-w-0 items-center gap-2.5 rounded-lg p-1 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          variant="outline"
+          size="sm"
+          aria-label={`Account menu for ${user.name}`}
+          className="gap-1.5 py-1 pr-2.5 pl-1 font-normal has-[>svg]:pl-1"
         >
+          <PersonAvatar
+            seed={user.id}
+            name={user.name}
+            src={user.image}
+            className="size-5"
+          />
+          <span className="hidden max-w-28 truncate sm:inline">
+            {user.name.split(" ")[0]}
+          </span>
+        </ShadcnButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60">
+        <div className="flex items-center gap-2.5 px-2 py-2">
           <PersonAvatar
             seed={user.id}
             name={user.name}
             src={user.image}
             className="size-8"
           />
-          <span className="grid min-w-0 flex-1 leading-tight">
-            <span className="truncate text-sm font-medium">{user.name}</span>
+          <span className="grid min-w-0 leading-tight">
+            <span className="truncate text-[13px] font-medium">{user.name}</span>
             <span className="text-muted-foreground truncate text-xs">
               {user.email}
             </span>
           </span>
-        </ShadcnButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="top" align="start" className="w-56">
-        <DropdownMenuLabel>Signed in as {user.name}</DropdownMenuLabel>
+        </div>
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/settings/account">Account and security</Link>
         </DropdownMenuItem>

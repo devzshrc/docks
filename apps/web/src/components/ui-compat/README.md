@@ -1,12 +1,13 @@
 # UI compatibility adapters
 
-Docks uses core [shadcn/ui](https://ui.shadcn.com/) components, installed with
-shadcn CLI 4.21.4 (new-york, neutral, Radix). Components are in `../ui/` and their
-MIT license is retained there. The theme uses the standard neutral colors in
-`src/app/globals.css`; charts use grayscale tokens.
+Docks uses [shadcn/ui](https://ui.shadcn.com/) components in `../ui/`, restyled
+after the Sales CRM reference: Geist type, pill buttons with layered inset
+highlights, tag tones, and dense tables. Tokens (colors, shadows, tag tones)
+are in `src/app/globals.css`. Dark is the default theme. Marketing pages wrap
+their content in `.light`, which re-applies the light tokens and turns off
+`dark:` variants.
 
 These adapters preserve the application's existing string-value form contracts
 and compose core components for sessions, sync history, and grouped panels.
-New views should use core components directly. The only local extension to the
-core Button is `pending`, which disables the button and sets `aria-busy` without
-changing its default appearance.
+New views use core components directly. The only local extension to the core
+Button is `pending`, which disables the button and sets `aria-busy`.

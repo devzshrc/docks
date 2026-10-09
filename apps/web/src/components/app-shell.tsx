@@ -10,6 +10,9 @@ import {
   RiBarChartBoxLine,
   RiTeamLine,
   RiSettings3Line,
+  RiUserAddLine,
+  RiWallet3Line,
+  RiNotification3Line,
 } from "@remixicon/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +25,6 @@ import { NewIssueProvider } from "@/components/new-issue/provider";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Kbd } from "@/components/ui/kbd";
 import {
   Sidebar,
   SidebarContent,
@@ -200,50 +202,37 @@ function ShellFrame({
   });
   const triageCount = triage.data?.triage ?? 0;
 
-  const nav = [
+  const navGroups: {
+    title?: string;
+    items: {
+      id: string;
+      label: string;
+      icon: typeof RiInboxLine;
+      href: string;
+      count: number;
+    }[];
+  }[] = [
     {
-      id: "deadlines",
-      label: "Deadlines",
-      icon: RiCalendarScheduleLine,
-      href: "/deadlines",
-      count: 0,
+      items: [
+        { id: "inbox", label: "Inbox", icon: RiInboxLine, href: "/inbox", count: inbox.data ?? 0 },
+        { id: "reviews", label: "Reviews", icon: RiGitPullRequestLine, href: "/review", count: waitingCount },
+        { id: "issues", label: "Issues", icon: RiBugLine, href: "/issues", count: triageCount },
+      ],
     },
     {
-      id: "releases",
-      label: "Releases",
-      icon: RiRocketLine,
-      href: "/releases",
-      count: 0,
+      title: "Planning",
+      items: [
+        { id: "deadlines", label: "Deadlines", icon: RiCalendarScheduleLine, href: "/deadlines", count: 0 },
+        { id: "releases", label: "Releases", icon: RiRocketLine, href: "/releases", count: 0 },
+      ],
     },
     {
-      id: "inbox",
-      label: "Inbox",
-      icon: RiInboxLine,
-      href: "/inbox",
-      count: inbox.data ?? 0,
+      title: "Team",
+      items: [
+        { id: "insights", label: "Insights", icon: RiBarChartBoxLine, href: "/insights", count: 0 },
+        { id: "team", label: "People", icon: RiTeamLine, href: "/team", count: 0 },
+      ],
     },
-    {
-      id: "reviews",
-      label: "Reviews",
-      icon: RiGitPullRequestLine,
-      href: "/review",
-      count: waitingCount,
-    },
-    {
-      id: "issues",
-      label: "Issues",
-      icon: RiBugLine,
-      href: "/issues",
-      count: triageCount,
-    },
-    {
-      id: "insights",
-      label: "Insights",
-      icon: RiBarChartBoxLine,
-      href: "/insights",
-      count: 0,
-    },
-    { id: "team", label: "Team", icon: RiTeamLine, href: "/team", count: 0 },
   ];
   const activeId = activeIdFor(pathname);
 
@@ -287,47 +276,62 @@ function ShellFrame({
       }}
     >
       <SidebarProvider
-        style={{ "--sidebar-width": "15rem" } as React.CSSProperties}
+        style={{ "--sidebar-width": "15.875rem" } as React.CSSProperties}
       >
-        <Sidebar variant="floating">
-          <SidebarHeader className="px-3 py-3">
+        <Sidebar className="border-sidebar-border">
+          <SidebarHeader className="border-sidebar-border bg-sidebar-accent gap-0 border-b p-3">
             <Link
               href="/review"
-              className="flex items-center gap-2.5 rounded-lg p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="flex items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
-              <BrandMark />
-              <span className="grid leading-tight">
-                <span className="text-sm font-medium">Docks</span>
-                <span className="text-muted-foreground truncate text-xs">
-                  Code review
+              <AppIcon className="size-8 shrink-0" />
+              <span className="grid min-w-0 gap-1 leading-none">
+                <span className="truncate text-sm font-medium tracking-[-0.01em]">
+                  {workspace?.name ?? "Docks"}
+                </span>
+                <span className="text-subtle truncate text-xs">
+                  Code review workspace
                 </span>
               </span>
             </Link>
           </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Review</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {nav.map((n) => (
-                    <SidebarMenuItem key={n.id}>
-                      <SidebarMenuButton asChild isActive={activeId === n.id}>
-                        <Link href={n.href}>
-                          <n.icon />
-                          <span>{n.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                      {n.count > 0 && (
-                        <SidebarMenuBadge>{n.count}</SidebarMenuBadge>
-                      )}
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+          <SidebarContent className="gap-0">
+            {navGroups.map((group, i) => (
+              <SidebarGroup
+                key={group.title ?? i}
+                className={cn(
+                  "gap-1 p-3",
+                  i < navGroups.length - 1 && "border-sidebar-border border-b",
+                )}
+              >
+                {group.title && (
+                  <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+                )}
+                <SidebarGroupContent>
+                  <SidebarMenu className="gap-0">
+                    {group.items.map((n) => (
+                      <SidebarMenuItem
+                        key={n.id}
+                        className={cn(activeId === n.id && "my-px")}
+                      >
+                        <SidebarMenuButton asChild isActive={activeId === n.id}>
+                          <Link href={n.href}>
+                            <n.icon />
+                            <span>{n.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                        {n.count > 0 && (
+                          <SidebarMenuBadge>{n.count}</SidebarMenuBadge>
+                        )}
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
           </SidebarContent>
-          <SidebarFooter className="gap-1 p-2">
-            <SidebarMenu>
+          <SidebarFooter className="gap-0 p-0">
+            <SidebarMenu className="border-sidebar-border gap-0 border-t p-3">
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={activeId === "settings"}>
                   <Link href="/settings/workspace">
@@ -336,76 +340,137 @@ function ShellFrame({
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/team">
+                    <RiUserAddLine />
+                    <span>Invite teammates</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
-            <UserMenu />
+            {billing.data && (
+              <div className="border-sidebar-border bg-sidebar-accent flex items-center justify-between gap-2 border-t p-4">
+                <div className="grid min-w-0 gap-1.5 leading-none">
+                  <span className="truncate text-sm font-medium tracking-[-0.01em]">
+                    {billing.data.plan === "team" ? "Team plan" : "Free plan"}
+                  </span>
+                  <span className="text-subtle truncate text-xs">
+                    {billing.data.plan === "team"
+                      ? "Every review tool on"
+                      : "Up to 5 people"}
+                  </span>
+                </div>
+                <Button asChild variant="secondary" size="sm">
+                  <Link href="/settings/billing">
+                    <RiWallet3Line aria-hidden />
+                    {billing.data.plan === "team" ? "Billing" : "Upgrade"}
+                  </Link>
+                </Button>
+              </div>
+            )}
           </SidebarFooter>
           <SidebarRail />
         </Sidebar>
         <SidebarInset className="min-w-0">
-          <header className="bg-background/80 sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b px-4 backdrop-blur md:px-6">
-            <SidebarTrigger className="-ml-1.5" />
-            <h1 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">
-              {inSettings ? "Settings" : titleFor(pathname, title)}
-            </h1>
-            <div className="flex items-center gap-2">
-              {billing.data && (
-                <Link
-                  href="/settings/billing"
-                  aria-label={`Current plan: ${billing.data.plan === "team" ? "Team" : "Free"}. View billing`}
-                  className="rounded-full border bg-muted/40 px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted"
+          <header className="bg-background/85 sticky top-0 z-20 shrink-0 backdrop-blur-md">
+            <div className="flex h-[58px] items-center gap-2 px-4 md:px-5">
+              <SidebarTrigger className="text-muted-foreground -ml-1 rounded-full" />
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <h1 className="min-w-0 truncate text-base leading-none font-medium tracking-[-0.01em]">
+                  {inSettings ? "Settings" : titleFor(pathname, title)}
+                </h1>
+                {billing.data && !inSettings && (
+                  <Link
+                    href="/settings/billing"
+                    aria-label={`Current plan: ${billing.data.plan === "team" ? "Team" : "Free"}. View billing`}
+                    className="bg-muted/70 border-line-strong hidden shrink-0 items-center gap-1 rounded-full border py-[3px] pr-[7px] pl-[5px] text-xs leading-none transition-colors hover:bg-muted sm:inline-flex"
+                  >
+                    <span className="bg-status size-1.5 rounded-full shadow-[0_0_0_2px_color-mix(in_oklab,var(--status)_25%,transparent)]" />
+                    {billing.data.plan === "team" ? "Team" : "Free"}
+                  </Link>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                {actions}
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label="Search or jump to"
+                  aria-keyshortcuts="Meta+K Control+K"
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new KeyboardEvent("keydown", { key: "k", metaKey: true }),
+                    )
+                  }
                 >
-                  {billing.data.plan === "team" ? "Team" : "Free"} plan
-                </Link>
-              )}
-              {actions}
-              <Button
-                variant="outline"
-                size="sm"
-                aria-label="Search or jump to"
-                onClick={() =>
-                  window.dispatchEvent(
-                    new KeyboardEvent("keydown", { key: "k", metaKey: true }),
-                  )
-                }
-                className="gap-2 shadow-xs"
-              >
-                <HugeiconsIcon icon={Search01Icon} size={12} aria-hidden />
-                <span className="hidden sm:inline">Search</span>
-                <Kbd className="hidden sm:inline-flex">⌘K</Kbd>
-              </Button>
-              <NewIssueButton />
-              <ThemeToggle />
+                  <HugeiconsIcon icon={Search01Icon} size={14} aria-hidden />
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="icon-sm"
+                  className="relative hidden sm:inline-flex"
+                >
+                  <Link
+                    href="/inbox"
+                    aria-label={
+                      inbox.data ? `Inbox, ${inbox.data} unread` : "Inbox"
+                    }
+                  >
+                    <RiNotification3Line aria-hidden />
+                    {(inbox.data ?? 0) > 0 && (
+                      <span className="bg-danger ring-background absolute top-[7px] right-[8px] size-[5px] rounded-full ring-2" />
+                    )}
+                  </Link>
+                </Button>
+                <div className="hidden sm:contents">
+                  <ThemeToggle />
+                </div>
+                <NewIssueButton />
+                <UserMenu />
+              </div>
             </div>
+            {inSettings ? (
+              <div className="overflow-x-auto border-b px-4 md:px-5">
+                <Tabs value={activeTab} onValueChange={(v) => router.push(v)}>
+                  <TabList
+                    variant="line"
+                    aria-label="Settings"
+                    className="h-11 min-w-max gap-5 p-0"
+                  >
+                    {tabs.map((t) => (
+                      <Tab
+                        key={t.value}
+                        value={t.value}
+                        className="h-full flex-none after:bottom-0!"
+                      >
+                        {t.label}
+                      </Tab>
+                    ))}
+                  </TabList>
+                </Tabs>
+              </div>
+            ) : (
+              <div className="border-b" />
+            )}
           </header>
-          {inSettings && (
-            <div className="overflow-x-auto border-b px-4 md:px-6">
-              <Tabs value={activeTab} onValueChange={(v) => router.push(v)}>
-                <TabList aria-label="Settings" className="h-11 min-w-max">
-                  {tabs.map((t) => (
-                    <Tab key={t.value} value={t.value}>
-                      {t.label}
-                    </Tab>
-                  ))}
-                </TabList>
-              </Tabs>
-            </div>
-          )}
           {(slots.hasFilters || slots.hasActions) && (
-            <div className="flex flex-wrap items-center gap-2 border-b px-4 py-2.5 md:px-6">
+            <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3 md:px-5">
               {slots.hasFilters && (
                 <div ref={slots.setFilters} className="contents" />
               )}
               {slots.hasActions && (
                 <div
                   ref={slots.setActions}
-                  className="ml-auto flex items-center gap-2"
+                  className="ml-auto flex items-center gap-1.5"
                 />
               )}
             </div>
           )}
           <div
             className={cn(
-              "animate-in fade-in slide-in-from-bottom-1 flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-200 md:px-6 md:py-8",
+              "animate-in fade-in slide-in-from-bottom-1 ease-power3-out flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-300 md:px-5 md:py-7",
               WIDTH[width],
             )}
           >
@@ -416,8 +481,4 @@ function ShellFrame({
       </SidebarProvider>
     </ShellSlotsContext.Provider>
   );
-}
-
-function BrandMark() {
-  return <AppIcon className="size-8 shrink-0" />;
 }

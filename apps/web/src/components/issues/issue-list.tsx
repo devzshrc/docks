@@ -142,7 +142,7 @@ export function IssueList({
 
   if (loading) {
     return (
-      <div className="bg-card divide-y overflow-hidden rounded-lg border shadow-xs">
+      <div className="bg-card shadow-card divide-y overflow-hidden rounded-xl">
         {[0, 1, 2, 3, 4].map((n) => (
           <Skeleton
             key={n}
@@ -273,11 +273,8 @@ export function IssueList({
           </Button>
         </div>
       )}
-      <Frame spacing="xs">
-        <ul
-          ref={root}
-          className="bg-card divide-y overflow-hidden rounded-(--frame-panel-radius) border shadow-xs"
-        >
+      <Frame spacing="xs" className="gap-0 overflow-hidden py-0">
+        <ul ref={root} className="divide-y">
           {items.map((i) => (
             <IssueRow
               key={key(i)}
