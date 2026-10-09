@@ -18,6 +18,7 @@ const buttonVariants = cva(
           "bg-muted text-foreground shadow-control hover:bg-accent dark:hover:bg-[#333333]",
         ghost:
           "text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground dark:hover:bg-white/[0.06]",
+        row: "h-auto justify-start rounded-lg text-left leading-normal font-normal whitespace-normal text-foreground hover:bg-foreground/[0.05] active:scale-100 dark:hover:bg-white/[0.05]",
         link: "rounded-none text-foreground underline decoration-from-font underline-offset-2 hover:text-soft active:scale-100",
       },
       size: {
@@ -29,6 +30,7 @@ const buttonVariants = cva(
         "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-[30px]",
         "icon-lg": "size-10",
+        none: "",
       },
     },
     defaultVariants: {

@@ -65,7 +65,7 @@ export function FlowDiagram() {
             <g key={i}>
               <motion.path
                 d={p.d}
-                stroke="#d4d4d8"
+                stroke="#c9c3f5"
                 strokeWidth="1.5"
                 initial={reduce ? false : { pathLength: 0 }}
                 whileInView={{ pathLength: 1 }}
@@ -104,10 +104,10 @@ export function FlowDiagram() {
                 transition={{ duration: 2.6, delay: i * 1.3, repeat: Infinity, ease: "easeOut" }}
               />
             ))}
-            <span className="absolute inset-0 rounded-[32px] bg-white shadow-[0_0_0_1px_rgb(0_0_0/0.05),0_20px_40px_-12px_rgb(65_36_251/0.35)]" />
+            <span className="absolute inset-0 rounded-[32px] bg-white shadow-[0_0_0_1px_rgb(65_36_251/0.12),0_24px_50px_-12px_rgb(65_36_251/0.55)]" />
             <AppIcon className="relative size-[76px]" />
           </span>
-          <span className="flex items-center gap-2 rounded-full bg-[#111113] px-3 py-1.5 text-[11.5px] font-medium tracking-[0.02em] text-white">
+          <span className="flex items-center gap-2 rounded-full bg-[#4124fb] px-3 py-1.5 text-[11.5px] font-medium tracking-[0.02em] text-white">
             <span className="size-1.5 animate-pulse rounded-full bg-[#22c55e]" />
             ROUTING
             <span className="font-mono text-white/60 tabular-nums"><Clock /></span>

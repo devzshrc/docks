@@ -419,7 +419,8 @@ function GuidedReviewContent({
         </div>
         <div>
           <ShadcnButton
-            variant="ghost"
+            variant="row"
+            size="none"
             type="button"
             aria-expanded={detailsOpen}
             onClick={() => setDetailsOpen((o) => !o)}
@@ -514,7 +515,8 @@ function GuidedReviewContent({
         <aside className="space-y-4 lg:sticky lg:top-4 lg:space-y-6 lg:self-start">
           <div>
             <ShadcnButton
-              variant="ghost"
+              variant="row"
+            size="none"
               type="button"
               aria-expanded={filesOpen}
               onClick={() => setFilesOpen((o) => !o)}
@@ -697,8 +699,8 @@ function GuidedReviewContent({
       {files.length > 0 && (
         <div
           className={cn(
-            "bg-popover/95 animate-in fade-in slide-in-from-bottom-3 fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 sm:right-6 sm:bottom-6 flex items-center gap-3 rounded-full border py-1.5 pr-1.5 pl-4 text-sm shadow-lg backdrop-blur duration-300 transition-colors",
-            allViewed && "border-emerald-500/40",
+            "bg-popover/90 shadow-overlay animate-in fade-in slide-in-from-top-3 fixed top-[70px] right-4 z-30 flex items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4 text-[13px] backdrop-blur-md transition-colors duration-300 sm:right-6",
+            allViewed && "shadow-[0_16px_40px_rgb(0_0_0/0.4),0_0_0_1px_color-mix(in_oklab,var(--success)_45%,transparent)]",
           )}
         >
           {viewed < files.length ? (
@@ -708,10 +710,10 @@ function GuidedReviewContent({
                 {files.length - viewed === 1 ? "" : "s"} left
               </span>
               <ShadcnButton
-                variant="ghost"
+                size="xs"
                 type="button"
                 onClick={() => nextUnviewed(currentFile())}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-3 py-1 text-xs font-medium transition-colors"
+                className="h-7 px-3"
               >
                 Next unviewed ↓
               </ShadcnButton>
@@ -723,14 +725,14 @@ function GuidedReviewContent({
               </span>
               {pr.state === "open" && data.data.canAct && (
                 <ShadcnButton
-                  variant="ghost"
+                  size="xs"
                   type="button"
                   onClick={() =>
                     document
                       .getElementById("review-actions")
                       ?.scrollIntoView({ behavior: "smooth", block: "center" })
                   }
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-3 py-1 text-xs font-medium transition-colors"
+                  className="h-7 px-3"
                 >
                   Submit review
                 </ShadcnButton>

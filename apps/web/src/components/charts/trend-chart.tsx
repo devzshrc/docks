@@ -1,4 +1,5 @@
 "use client";
+import { ChartGhost } from "@/components/ui/empty-preview";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
@@ -11,6 +12,7 @@ export function TrendChart({
   label,
   ariaLabel,
   format = (v) => String(v),
+  color,
   height = 200,
 }: {
   rows: TrendRow[];
@@ -22,14 +24,17 @@ export function TrendChart({
 }) {
   if (!rows.some((row) => row.value !== null))
     return (
-      <p className="py-10 text-center text-sm text-muted-foreground">
-        No data yet
-      </p>
+      <div className="relative py-4" role="img" aria-label={`${ariaLabel}: no data yet`}>
+        <ChartGhost />
+        <p className="text-muted-foreground absolute inset-0 flex items-center justify-center text-[13px]">
+          No data yet. It fills in as pull requests are reviewed.
+        </p>
+      </div>
     );
   return (
     <div aria-label={ariaLabel}>
       <ChartContainer
-        config={{ value: { label, color: "var(--chart-1)" } }}
+        config={{ value: { label, color: color ?? "var(--chart-1)" } }}
         className="w-full"
         style={{ height }}
       >

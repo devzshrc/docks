@@ -123,7 +123,8 @@ function CloseMenu({
               {choices.map((s) => (
                 <li key={s.number}>
                   <ShadcnButton
-                    variant="ghost"
+                    variant="row"
+            size="none"
                     type="button"
                     className="hover:bg-hover w-full rounded-md px-2 py-1.5 text-left text-sm"
                     onClick={() => onClose("duplicate", s.number)}

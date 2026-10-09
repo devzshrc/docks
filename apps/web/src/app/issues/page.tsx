@@ -1,5 +1,7 @@
 "use client"
 
+import { RiBugLine, RiDownloadCloud2Line, RiFilterOffLine } from "@remixicon/react";
+import { EmptyPreview, GhostRow } from "@/components/ui/empty-preview";
 import { useQuery } from "@tanstack/react-query"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useMemo, useRef, useState } from "react"
@@ -161,14 +163,24 @@ function Issues({ workspaceId }: { workspaceId: string }) {
             me={me}
             empty={
               list.data?.syncing ? (
-                <div className="bg-card rounded-lg border shadow-xs px-6 py-14 text-center">
-                  <p className="font-medium">Importing issues from GitHub…</p>
-                  <p className="text-muted-foreground mt-1 text-sm">This takes a moment the first time. They'll appear here on their own.</p>
+                <div className="bg-card shadow-card rounded-xl">
+                  <EmptyPreview icon={RiDownloadCloud2Line} hue="green" title="Importing issues from GitHub…" description="This takes a moment the first time. They appear here on their own." />
                 </div>
               ) : (
-                <div className="bg-card rounded-lg border shadow-xs px-6 py-14 text-center">
-                  <p className="font-medium">{filtered ? "No issues match these filters" : empty.title}</p>
-                  <p className="text-muted-foreground mt-1 text-sm">{filtered ? "Try clearing a filter." : empty.hint}</p>
+                <div className="bg-card shadow-card rounded-xl">
+                  <EmptyPreview
+                    icon={filtered ? RiFilterOffLine : RiBugLine}
+                    hue="green"
+                    title={filtered ? "No issues match these filters" : empty.title}
+                    description={filtered ? "Try clearing a filter." : empty.hint}
+                    preview={
+                      <>
+                        <GhostRow hue="green" accent="chip" wide={66} />
+                        <GhostRow hue="red" accent="chip" wide={50} />
+                        <GhostRow hue="blue" accent="chip" wide={58} />
+                      </>
+                    }
+                  />
                 </div>
               )
             }

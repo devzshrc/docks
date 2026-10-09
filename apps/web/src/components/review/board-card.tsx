@@ -83,7 +83,7 @@ export function BoardCard({
   return (
     <div
       className={cn(
-        "group bg-card surface-hover relative rounded-lg border p-3.5 text-sm shadow-xs focus-within:ring-3 focus-within:ring-ring/40",
+        "group bg-card shadow-card relative rounded-lg p-3.5 text-sm transition-[transform,background-color] duration-150 ease-power3-out hover:-translate-y-px hover:bg-accent/60 focus-within:ring-3 focus-within:ring-ring/40 dark:hover:bg-[#202123]",
       )}
     >
       {canAct && (

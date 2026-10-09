@@ -95,7 +95,8 @@ export function FileRail({ files }: { files: RankedFile[] }) {
             return (
               <div key={dir}>
                 <ShadcnButton
-                  variant="ghost"
+                  variant="row"
+            size="none"
                   type="button"
                   aria-expanded={open}
                   onClick={() => setClosed((c) => ({ ...c, [dir]: open }))}

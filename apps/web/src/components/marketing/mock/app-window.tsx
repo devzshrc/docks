@@ -48,6 +48,11 @@ const ROWS: Row[] = [
   { n: 407, title: "Search index for docs", repo: "docs", labels: [{ label: "Docs", tone: "green" }, { label: "Search", tone: "blue" }], who: "leo", size: "M", review: 100, trend: [2, 3, 5, 4, 6, 7, 9], waiting: "4h", ci: "pass" },
   { n: 404, title: "Retry webhooks with backoff", repo: "api", labels: [{ label: "Reliability", tone: "orange" }], who: "sam", size: "M", review: 65, trend: [4, 2, 3, 5, 4, 6, 6], waiting: "9h", ci: "pass" },
   { n: 401, title: "Audit log export to CSV", repo: "api", labels: [{ label: "Compliance", tone: "purple" }], who: "ivy", size: "S", review: 90, trend: [1, 2, 4, 5, 5, 7, 8], waiting: "1h", ci: "pass" },
+  { n: 399, title: "Dark mode for the settings page", repo: "web", labels: [{ label: "UI", tone: "teal" }, { label: "Polish", tone: "amber" }], who: "raj", size: "M", review: 40, trend: [2, 2, 3, 3, 4, 3, 5], waiting: "5h", ci: "run" },
+  { n: 396, title: "Split invoices by currency", repo: "billing", labels: [{ label: "Feature", tone: "purple" }], who: "mei", size: "L", review: 20, trend: [1, 3, 2, 4, 3, 5, 4], waiting: "8h", ci: "pass" },
+  { n: 393, title: "Index slow queries on events", repo: "api", labels: [{ label: "Perf", tone: "amber" }, { label: "DB", tone: "blue" }], who: "leo", size: "S", review: 75, trend: [3, 4, 4, 6, 7, 7, 8], waiting: "2h", ci: "pass" },
+  { n: 390, title: "Fix Safari login redirect", repo: "web", labels: [{ label: "Bug", tone: "red" }], who: "sam", size: "S", review: 55, trend: [2, 1, 3, 2, 4, 5, 6], waiting: "3h", ci: "fail" },
+  { n: 388, title: "Docs for routing rules", repo: "docs", labels: [{ label: "Docs", tone: "green" }], who: "ivy", size: "S", review: 85, trend: [1, 2, 2, 3, 5, 6, 7], waiting: "30m", ci: "pass" },
 ];
 
 const ORDER = [
@@ -61,12 +66,12 @@ const TIMELINE = [1500, 1100, 700, 1300, 1100, 1100, 1700, 1300];
 
 const CURSOR = [
   { left: "78%", top: "92%" },
-  { left: "34%", top: "47.5%" },
-  { left: "34%", top: "47.5%" },
-  { left: "88%", top: "86%" },
-  { left: "88%", top: "86%" },
-  { left: "88%", top: "86%" },
-  { left: "88%", top: "86%" },
+  { left: "34%", top: "37.5%" },
+  { left: "34%", top: "37.5%" },
+  { left: "90%", top: "93%" },
+  { left: "90%", top: "93%" },
+  { left: "90%", top: "93%" },
+  { left: "90%", top: "93%" },
   { left: "60%", top: "75%" },
 ];
 
@@ -95,9 +100,9 @@ export function AppWindow({ className }: { className?: string }) {
       ref={ref}
       role="img"
       aria-label="Docks Reviews screen: a table of pull requests with labels, authors, review progress and checks. One pull request opens into a guided review with three steps."
-      className={cn("relative overflow-hidden rounded-[14px] bg-[#161616] text-[#f9fbff] [font-feature-settings:'ss01']", className)}
+      className={cn("relative flex flex-col overflow-hidden rounded-[14px] bg-[#161616] text-[#f9fbff] [font-feature-settings:'ss01'] md:aspect-[16/10]", className)}
     >
-      <div className="flex h-9 items-center gap-3 border-b border-[#232323] bg-[#1a1a1a] px-3.5">
+      <div className="flex h-9 shrink-0 items-center gap-3 border-b border-[#232323] bg-[#1a1a1a] px-3.5">
         <TrafficLights />
         <span className="mx-auto flex items-center gap-1.5 rounded-md bg-[#232323] px-3 py-1 font-mono text-[10.5px] text-[#8a8a8a]">
           docks.app/review
@@ -105,7 +110,7 @@ export function AppWindow({ className }: { className?: string }) {
         <span className="w-[42px]" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[208px_1fr]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[208px_1fr]">
         <aside aria-hidden className="hidden flex-col border-r border-[#232323] bg-[#171717] lg:flex">
           <div className="flex items-center gap-2 border-b border-[#232323] bg-[#1b1b1b] p-3">
             <AppIcon className="size-7" />
@@ -141,7 +146,7 @@ export function AppWindow({ className }: { className?: string }) {
           </div>
         </aside>
 
-        <div className="relative min-w-0">
+        <div className="relative flex min-h-0 min-w-0 flex-col">
           <div className="flex items-center justify-between gap-2 px-4 py-3">
             <div className="flex items-center gap-2">
               <span className="text-[14px] font-medium">Reviews</span>
@@ -187,10 +192,10 @@ export function AppWindow({ className }: { className?: string }) {
                 </span>
               ))}
             </div>
-            <span className="text-[11px] text-[#676767]">7 open · 2 need you</span>
+            <span className="text-[11px] text-[#676767]">12 open · 2 need you</span>
           </div>
 
-          <div className="border-t border-[#232323]">
+          <div className="flex min-h-0 flex-1 flex-col border-t border-[#232323]">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:grid-cols-[minmax(0,2.3fr)_minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.1fr)] border-b border-[#232323] px-4 py-2.5 text-[11px] text-[#676767] md:grid-cols-[minmax(0,2.3fr)_minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.9fr)]">
               <span className="flex items-center gap-3"><span className="size-3 rounded-[3px] border border-[#393939]" />Pull request</span>
               <span className="hidden sm:block">Labels</span>
@@ -199,6 +204,7 @@ export function AppWindow({ className }: { className?: string }) {
               <span className="hidden md:block">Activity</span>
               <span className="text-right">Waiting</span>
             </div>
+            <div className="min-h-0 flex-1 overflow-hidden">
             {ROWS.map((r, i) => {
               const isPicked = i === 0 && picked;
               const approved = i === 0 && done;
@@ -237,8 +243,9 @@ export function AppWindow({ className }: { className?: string }) {
                 </motion.div>
               );
             })}
-            <div className="grid grid-cols-2 text-[11px] text-[#676767] md:grid-cols-3">
-              <span className="px-4 py-2.5"><span className="text-[#cfcfcf]">7</span> pull requests in view</span>
+            </div>
+            <div className="mt-auto grid shrink-0 grid-cols-2 border-t border-[#232323] bg-[#161616] text-[11px] text-[#676767] md:grid-cols-3">
+              <span className="px-4 py-2.5"><span className="text-[#cfcfcf]">12</span> pull requests in view</span>
               <span className="border-l border-[#232323] px-4 py-2.5">2 waiting over 24h</span>
               <span className="hidden border-l border-[#232323] px-4 py-2.5 md:block">Median first review 3h</span>
             </div>

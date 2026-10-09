@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/utils";
 import {
   Children,
   isValidElement,
@@ -34,6 +35,11 @@ export function NativeSelect({
       else visit((node.props as { children?: ReactNode }).children);
     });
   visit(children);
+  // Older call sites pass square, bordered classes; keep only layout classes so every select is the same pill.
+  const kept = className
+    ?.split(/\s+/)
+    .filter((c) => !/^(rounded(-.*)?|border(-.*)?|bg-.*|px-.*|py-.*|text-(sm|xs|base)|shadow.*)$/.test(c))
+    .join(" ");
   const key = (v: unknown) => (v === "" || v == null ? "__all__" : String(v));
   return (
     <Select
@@ -49,7 +55,7 @@ export function NativeSelect({
         } as ChangeEvent<HTMLSelectElement>);
       }}
     >
-      <SelectTrigger id={id} className={className} aria-label={label}>
+      <SelectTrigger id={id} size="sm" className={cn("h-[30px] text-xs", kept)} aria-label={label}>
         <SelectValue placeholder={label ?? "Choose an option"} />
       </SelectTrigger>
       <SelectContent>

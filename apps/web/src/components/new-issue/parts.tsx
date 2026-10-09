@@ -119,7 +119,8 @@ export function SimilarStrip({ repo, title }: { repo: string; title: string }) {
       aria-live="polite"
     >
       <ShadcnButton
-        variant="ghost"
+        variant="row"
+            size="none"
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}

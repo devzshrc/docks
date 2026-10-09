@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/utils";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { NativeSelect as ShadcnSelect } from "@/components/ui-compat/native-select";
 
@@ -188,8 +189,18 @@ export function ReviewActions({
     <div className="bg-background/95 border-hairline sticky bottom-0 space-y-3 border-t p-4 backdrop-blur">
       <section aria-label="Merge readiness" className="space-y-1 text-xs">
         <div className="flex items-center gap-2">
-          <strong>Merge readiness</strong>
-          <span>
+          <strong className="font-medium">Merge readiness</strong>
+          <span
+            className={cn(
+              "inline-flex h-5 items-center gap-1 rounded-full border px-2 text-[11px]",
+              readiness.data?.state === "ready"
+                ? "border-(--tag-green-border) bg-(--tag-green-bg) text-(--tag-green-text)"
+                : readiness.data?.state === "blocked"
+                  ? "border-(--tag-red-border) bg-(--tag-red-bg) text-(--tag-red-text)"
+                  : "border-(--tag-neutral-border) bg-(--tag-neutral-bg) text-(--tag-neutral-text)",
+            )}
+          >
+            <span className="size-1.5 rounded-full bg-current" aria-hidden />
             {readiness.isPending
               ? "Checking GitHub…"
               : readiness.data?.state === "ready"
