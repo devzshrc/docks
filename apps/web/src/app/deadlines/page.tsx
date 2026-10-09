@@ -1,13 +1,19 @@
 "use client";
+
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/base/buttons/button";
+import { Input } from "@/components/base/input/input";
+import { Select, SelectItem } from "@/components/base/select/select";
+import { Checkbox } from "@/components/base/checkbox/checkbox";
+import { Chip } from "@/components/base/badges/chip";
 import { QueryError } from "@/components/query-state";
 import { BackupReviewer } from "@/components/review/backup-reviewer";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useTRPC } from "@/trpc/react";
+
 type Rules = {
   hours: number;
   reminderHours: number;
@@ -19,6 +25,10 @@ type Rules = {
   };
   leadUserId: string;
 };
+const panel =
+  "rounded-3xl border border-border-button-default bg-background-primary-default";
+const caption = "text-body-2-regular text-text-secondary";
+
 function Policy({
   repo,
   initial,
@@ -45,169 +55,181 @@ function Policy({
         ]),
     }),
   );
-  const field = "bg-background rounded border p-2";
+  const locked = disabled || save.isPending;
+  const schedule = (patch: Partial<Rules["schedule"]>) =>
+    setRules({ ...rules, schedule: { ...rules.schedule, ...patch } });
+  const valid =
+    rules.hours >= 1 &&
+    rules.hours <= 80 &&
+    rules.reminderHours >= 0 &&
+    rules.reminderHours < rules.hours &&
+    rules.schedule.days.length > 0 &&
+    rules.schedule.startHour < rules.schedule.endHour &&
+    Boolean(rules.leadUserId);
   return (
-    <form
-      className="space-y-3 rounded-lg border p-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        save.mutate({ repo, enabled: active, rules });
-      }}
-    >
-      <h2 className="font-medium">{repo}</h2>
-      <label className="flex gap-2">
-        <input
-          type="checkbox"
-          checked={active}
-          disabled={disabled && !enabled}
-          onChange={(e) => setActive(e.target.checked)}
-        />
-        Enable review deadlines
-      </label>
-      <fieldset
-        disabled={disabled || save.isPending}
-        className="flex flex-wrap gap-3"
+    <details className={panel}>
+      <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-3xl p-5 outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+        <div className="min-w-0 space-y-1">
+          <h3 className="break-words text-body-medium text-text-primary">
+            {repo}
+          </h3>
+          <p className={caption}>
+            {enabled
+              ? `${initial.hours} working hours · ${initial.schedule.timezone}`
+              : "Set a deadline, work schedule, and escalation lead"}
+          </p>
+        </div>
+        <Chip color={enabled ? "lime" : "neutral"} variant="caption">
+          {enabled ? "Enabled" : "Not configured"}
+        </Chip>
+      </summary>
+      <form
+        className="space-y-5 border-t border-separator-border p-5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate({ repo, enabled: active, rules });
+        }}
       >
-        <label>
-          Deadline (working hours)
-          <input
-            className={`${field} block w-24`}
-            type="number"
-            min={1}
-            max={80}
-            value={rules.hours}
-            onChange={(e) =>
-              setRules({ ...rules, hours: Number(e.target.value) })
-            }
-          />
-        </label>
-        <label>
-          Remind before (working hours)
-          <input
-            className={`${field} block w-24`}
-            type="number"
-            min={0}
-            max={79}
-            value={rules.reminderHours}
-            onChange={(e) =>
-              setRules({ ...rules, reminderHours: Number(e.target.value) })
-            }
-          />
-        </label>
-        <label>
-          Timezone
-          <input
-            className={`${field} block`}
-            value={rules.schedule.timezone}
-            onChange={(e) =>
-              setRules({
-                ...rules,
-                schedule: { ...rules.schedule, timezone: e.target.value },
-              })
-            }
-          />
-        </label>
-        <label>
-          Work starts
-          <select
-            className={`${field} block`}
-            value={rules.schedule.startHour}
-            onChange={(e) =>
-              setRules({
-                ...rules,
-                schedule: {
-                  ...rules.schedule,
-                  startHour: Number(e.target.value),
-                },
-              })
-            }
-          >
-            {Array.from({ length: 24 }, (_, h) => (
-              <option key={h} value={h}>
-                {h}:00
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Work ends
-          <select
-            className={`${field} block`}
-            value={rules.schedule.endHour}
-            onChange={(e) =>
-              setRules({
-                ...rules,
-                schedule: {
-                  ...rules.schedule,
-                  endHour: Number(e.target.value),
-                },
-              })
-            }
-          >
-            {Array.from({ length: 24 }, (_, h) => (
-              <option key={h + 1} value={h + 1}>
-                {h + 1}:00
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Escalation lead
-          <select
-            className={`${field} block`}
-            value={rules.leadUserId}
-            onChange={(e) => setRules({ ...rules, leadUserId: e.target.value })}
-          >
-            <option value="">Choose a lead</option>
-            {leads.map((lead) => (
-              <option key={lead.userId} value={lead.userId}>
-                {lead.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div
-          className="w-full flex flex-wrap gap-3"
-          role="group"
-          aria-label={`Working days for ${repo}`}
+        <Checkbox
+          isSelected={active}
+          isDisabled={save.isPending || (disabled && !enabled)}
+          onChange={setActive}
         >
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => (
-            <label key={day}>
-              <input
-                type="checkbox"
-                checked={rules.schedule.days.includes(i)}
-                onChange={(e) =>
-                  setRules({
-                    ...rules,
-                    schedule: {
-                      ...rules.schedule,
-                      days: e.target.checked
-                        ? [...rules.schedule.days, i]
-                        : rules.schedule.days.filter((d) => d !== i),
-                    },
+          Enable review deadlines
+        </Checkbox>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Input
+            label="Deadline (working hours)"
+            type="number"
+            value={String(rules.hours)}
+            onChange={(v) => setRules({ ...rules, hours: Number(v) })}
+            isDisabled={locked}
+          />
+          <Input
+            label="Remind before (working hours)"
+            type="number"
+            value={String(rules.reminderHours)}
+            onChange={(v) => setRules({ ...rules, reminderHours: Number(v) })}
+            hint="Must be shorter than the deadline."
+            isDisabled={locked}
+          />
+          <Input
+            label="Timezone"
+            value={rules.schedule.timezone}
+            onChange={(timezone) => schedule({ timezone })}
+            hint="Use an IANA name, such as Asia/Kolkata."
+            isDisabled={locked}
+          />
+          <div className="space-y-1">
+            <p className="text-body-medium text-text-primary">Work starts</p>
+            <Select
+              aria-label={`Work starts for ${repo}`}
+              selectedKey={String(rules.schedule.startHour)}
+              onSelectionChange={(v) => schedule({ startHour: Number(v) })}
+              isDisabled={locked}
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <SelectItem
+                  key={h}
+                  id={String(h)}
+                >{`${String(h).padStart(2, "0")}:00`}</SelectItem>
+              ))}
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <p className="text-body-medium text-text-primary">Work ends</p>
+            <Select
+              aria-label={`Work ends for ${repo}`}
+              selectedKey={String(rules.schedule.endHour)}
+              onSelectionChange={(v) => schedule({ endHour: Number(v) })}
+              isDisabled={locked}
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <SelectItem
+                  key={h + 1}
+                  id={String(h + 1)}
+                >{`${String(h + 1).padStart(2, "0")}:00`}</SelectItem>
+              ))}
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <p className="text-body-medium text-text-primary">
+              Escalation lead
+            </p>
+            <Select
+              aria-label={`Escalation lead for ${repo}`}
+              placeholder="Choose a lead"
+              selectedKey={rules.leadUserId || null}
+              onSelectionChange={(v) =>
+                setRules({ ...rules, leadUserId: String(v ?? "") })
+              }
+              isDisabled={locked}
+            >
+              {leads.map((lead) => (
+                <SelectItem key={lead.userId} id={lead.userId}>
+                  {lead.name}
+                </SelectItem>
+              ))}
+            </Select>
+          </div>
+        </div>
+        <fieldset className="space-y-2" disabled={locked}>
+          <legend className="text-body-medium text-text-primary">
+            Working days
+          </legend>
+          <div className="flex flex-wrap gap-4">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => (
+              <Checkbox
+                key={day}
+                isDisabled={locked}
+                isSelected={rules.schedule.days.includes(i)}
+                onChange={(checked) =>
+                  schedule({
+                    days: checked
+                      ? [...rules.schedule.days, i]
+                      : rules.schedule.days.filter((d) => d !== i),
                   })
                 }
-              />{" "}
-              {day}
-            </label>
-          ))}
+              >
+                {day}
+              </Checkbox>
+            ))}
+          </div>
+        </fieldset>
+        <p className={caption}>
+          One reminder and one escalation per review. Drafts pause the clock.
+          Changes apply to new review cycles after the next sync.
+        </p>
+        {!valid && active && !disabled && (
+          <p
+            role="alert"
+            className="text-body-2-regular text-text-error-primary"
+          >
+            Choose working days and a lead. The end time must follow the start
+            time, and the reminder must be shorter than the deadline.
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="submit"
+            size="small"
+            disabled={
+              save.isPending ||
+              (active && !valid) ||
+              (disabled && (active || !enabled))
+            }
+          >
+            {save.isPending ? "Saving…" : "Save policy"}
+          </Button>
+          {save.isSuccess && (
+            <p role="status" className={caption}>
+              Policy saved.
+            </p>
+          )}
         </div>
-      </fieldset>
-      <p className="text-xs text-muted-foreground">
-        One reminder and one escalation per review cycle. Existing deadlines
-        keep their saved policy. New policies start clocks when PRs next sync.
-        Drafts pause the clock.
-      </p>
-      <Button
-        type="submit"
-        size="sm"
-        disabled={save.isPending || (disabled && (active || !enabled))}
-      >
-        {save.isPending ? "Saving…" : "Save policy"}
-      </Button>
-      {save.error && <QueryError error={save.error} />}
-      {save.isSuccess && <p role="status">Policy saved.</p>}
-    </form>
+        {save.error && <QueryError error={save.error} />}
+      </form>
+    </details>
   );
 }
 function Deadlines({ workspaceId }: { workspaceId: string }) {
@@ -222,73 +244,145 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
   });
   return (
     <div className="space-y-6">
-      <p>
-        Review deadlines respect the workspace work schedule. Leads can request
-        a backup when a review is overdue.
-      </p>
       {policies.data?.plan === "free" && (
-        <p className="rounded border p-3">
-          Deadline automation and backup requests require the{" "}
-          <Link className="underline" href="/settings/billing">
+        <div className="rounded-xl bg-background-secondary-default p-4 text-body-2-regular text-text-secondary">
+          Automate deadlines and request backup reviewers with the{" "}
+          <Link
+            className="text-text-primary underline underline-offset-4"
+            href="/settings/billing"
+          >
             Team plan
           </Link>
-          . Existing records remain readable.
-        </p>
+          . You can still view existing deadlines.
+        </div>
       )}
       {policies.error && <QueryError error={policies.error} />}
-      <section aria-label="Active review deadlines" className="space-y-3">
-        <h2 className="font-medium">Active reviews</h2>
-        <label>
-          <input
-            type="checkbox"
-            checked={overdueOnly}
-            onChange={(e) => setOverdueOnly(e.target.checked)}
-          />{" "}
-          Overdue only
-        </label>
-        {cycles.isPending && <p>Loading deadlines…</p>}
-        {cycles.error && <QueryError error={cycles.error} />}
-        {cycles.data?.length === 0 && <p>No active review deadlines.</p>}
-        {cycles.data?.map(({ cycle, repo, title }) => (
-          <article key={cycle.id} className="space-y-2 rounded-lg border p-3">
-            <Link
-              className="font-medium underline"
-              href={`/review/${repo}/${cycle.prNumber}`}
-            >
-              {repo} #{cycle.prNumber}: {title}
-            </Link>
-            <p className="text-sm">
-              {cycle.kind === "first"
-                ? "First review"
-                : `Review by ${cycle.reviewer}`}{" "}
-              ·{" "}
-              {cycle.pausedAt
-                ? "Paused"
-                : cycle.dueAt.getTime() <= Date.now()
-                  ? "Overdue"
-                  : "Due"}{" "}
-              {cycle.dueAt.toLocaleString()} ({cycle.rules.schedule.timezone})
+      <section aria-label="Active review deadlines" className={panel}>
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-separator-border p-5">
+          <div className="space-y-1">
+            <h2 className="text-headline-medium text-text-primary">
+              Active reviews
+            </h2>
+            <p className={caption}>
+              Earliest deadlines first. Open a pull request to take action.
             </p>
-            {policies.data?.canManage &&
-              policies.data.plan === "team" &&
-              !cycle.pausedAt &&
-              cycle.dueAt.getTime() <= Date.now() && (
-                <BackupReviewer
-                  repo={repo}
-                  number={cycle.prNumber}
-                  cycleId={cycle.id}
-                  assigned={cycle.backupLogin}
-                />
-              )}
-          </article>
-        ))}
+          </div>
+          <Checkbox isSelected={overdueOnly} onChange={setOverdueOnly}>
+            Overdue only
+          </Checkbox>
+        </div>
+        {cycles.isPending && (
+          <p
+            role="status"
+            className="p-6 text-body-regular text-text-secondary"
+          >
+            Loading deadlines…
+          </p>
+        )}
+        {cycles.error && (
+          <div className="p-5">
+            <QueryError
+              error={cycles.error}
+              onRetry={() => void cycles.refetch()}
+            />
+          </div>
+        )}
+        {cycles.data?.length === 0 && (
+          <div className="space-y-2 p-8 text-center">
+            <h3 className="text-body-medium text-text-primary">
+              {overdueOnly ? "No overdue reviews" : "No active deadlines"}
+            </h3>
+            <p className={caption}>
+              {overdueOnly
+                ? "Your current reviews are on track. Switch off the filter to see all deadlines."
+                : "Enable a repository policy below. Deadlines appear after the next pull request sync."}
+            </p>
+          </div>
+        )}
+        <div className="divide-y divide-separator-border">
+          {cycles.data?.map(({ cycle, repo, title }) => {
+            const overdue =
+              !cycle.pausedAt && cycle.dueAt.getTime() <= Date.now();
+            const due = cycle.dueAt.toLocaleString(undefined, {
+              timeZone: cycle.rules.schedule.timezone,
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            return (
+              <article key={cycle.id} className="space-y-3 p-5">
+                <div className="flex flex-col justify-between gap-3 sm:flex-row">
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-caption-1-medium text-text-tertiary">
+                      {repo} · #{cycle.prNumber}
+                    </p>
+                    <Link
+                      className="block break-words text-body-medium text-text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+                      href={`/review/${repo}/${cycle.prNumber}`}
+                    >
+                      {title}
+                    </Link>
+                    <p className={caption}>
+                      {cycle.kind === "first"
+                        ? "Awaiting first review"
+                        : `Reviewer: ${cycle.reviewer}`}
+                    </p>
+                  </div>
+                  <div className="shrink-0 space-y-1 sm:text-end">
+                    <Chip
+                      color={
+                        cycle.pausedAt ? "neutral" : overdue ? "rose" : "cyan"
+                      }
+                      variant="caption"
+                    >
+                      {cycle.pausedAt
+                        ? "Paused"
+                        : overdue
+                          ? "Overdue"
+                          : "Upcoming"}
+                    </Chip>
+                    <p className={caption}>{due}</p>
+                    <p className="text-caption-1-medium text-text-tertiary">
+                      {cycle.rules.schedule.timezone}
+                    </p>
+                  </div>
+                </div>
+                {policies.data?.canManage &&
+                  policies.data.plan === "team" &&
+                  overdue && (
+                    <BackupReviewer
+                      repo={repo}
+                      number={cycle.prNumber}
+                      cycleId={cycle.id}
+                      assigned={cycle.backupLogin}
+                    />
+                  )}
+              </article>
+            );
+          })}
+        </div>
         {cycles.data?.length === 100 && (
-          <p>Showing the first 100 deadlines, earliest first.</p>
+          <p className="p-5 text-body-2-regular text-text-secondary">
+            Showing the first 100 deadlines, earliest first.
+          </p>
         )}
       </section>
       {policies.data?.canManage && (
-        <section className="space-y-3">
-          <h2 className="font-medium">Repository policies</h2>
+        <section aria-label="Repository policies" className="space-y-3">
+          <div className="space-y-1">
+            <h2 className="text-headline-medium text-text-primary">
+              Repository policies
+            </h2>
+            <p className={caption}>
+              Expand a repository to set its review schedule.
+            </p>
+          </div>
+          {policies.data.repos.length === 0 && (
+            <p className="p-5 text-body-regular text-text-secondary">
+              Connect a repository in Settings to configure deadlines.
+            </p>
+          )}
           {policies.data.repos.map((repo) => {
             const policy = policies.data.policies.find(
               (p) => p.repoId === repo.id,
@@ -324,11 +418,14 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
 export default function Page() {
   const { workspace } = useWorkspace();
   return (
-    <AppShell title="Review deadlines">
+    <AppShell
+      title="Deadlines"
+      description="Keep reviews moving with working-hour deadlines and backup reviewers."
+    >
       {workspace ? (
         <Deadlines key={workspace.id} workspaceId={workspace.id} />
       ) : (
-        <p>Loading workspace…</p>
+        <p className={caption}>Loading workspace…</p>
       )}
     </AppShell>
   );
