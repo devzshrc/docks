@@ -34,6 +34,7 @@ export function Landing() {
           Docks
         </Link>
         <div className="flex items-center gap-3">
+          <Link href="/pricing" className="text-body-medium text-text-secondary hover:text-text-primary">Pricing</Link>
           <ThemeToggle />
           <Link
             href="/login"

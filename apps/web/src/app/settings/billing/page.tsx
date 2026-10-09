@@ -7,6 +7,7 @@ import { Suspense } from "react"
 
 import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
+import { PlanCards } from "@/components/plan-cards"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -39,7 +40,7 @@ function Usage({ label, used, limit }: { label: string; used: number; limit: num
       {limit !== null && (
         <div className="bg-muted h-1.5 rounded-full">
           <div
-            className={pct >= 100 ? "bg-destructive h-1.5 rounded-full" : "h-1.5 rounded-full bg-emerald-600"}
+            className={pct >= 100 ? "bg-destructive h-1.5 rounded-full" : "h-1.5 rounded-full bg-primary"}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -64,44 +65,30 @@ function Billing({ workspaceId }: { workspaceId: string }) {
   const team = s.plan === "team"
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {team ? "Team plan" : "Free plan"}
-          {s.status && s.status !== "active" && <Badge variant="destructive">{s.status.replace("_", " ")}</Badge>}
-        </CardTitle>
-        <CardDescription>
-          {team
-            ? `Billed per member each month${s.currentPeriodEnd ? `, renews ${new Date(s.currentPeriodEnd).toLocaleDateString()}` : ""}.`
-            : "Up to 5 people and 3 repositories. Team removes the limits and is billed per member."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Team includes review deadlines, backup reviewer requests, release reports, review changes since your last review, and evidence exports.
-        </p>
-        {checkout && CHECKOUT_STATUS[checkout] && <p className="text-sm">{CHECKOUT_STATUS[checkout]}</p>}
-        <Usage label="Members" used={s.usage.members} limit={s.limits.members} />
-        <Usage label="Enabled repositories" used={s.usage.repos} limit={s.limits.repos} />
-        {s.canManage ? (
-          <div className="flex gap-2">
-            {!team && (
-              <Button onClick={() => upgrade.mutate({ workspaceId })} disabled={upgrade.isPending}>
-                Upgrade to Team
-              </Button>
-            )}
-            {s.hasBillingAccount && (
-              <Button variant="outline" onClick={() => portal.mutate({ workspaceId })} disabled={portal.isPending}>
-                Manage billing
-              </Button>
-            )}
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-sm">Only workspace owners can change the plan.</p>
-        )}
-        {error && <p className="text-destructive text-sm">{error.message}</p>}
-      </CardContent>
-    </Card>
+    <div className="space-y-8">
+      <div className="max-w-xl space-y-2">
+        <p className="text-2xl font-medium tracking-tight">A plan for the way you ship.</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">Start small. Add deadlines, release visibility, and review evidence as your team grows.</p>
+      </div>
+      {checkout && CHECKOUT_STATUS[checkout] && <p role="status" className="rounded-lg border bg-muted/40 p-4 text-sm">{CHECKOUT_STATUS[checkout]}</p>}
+      <PlanCards current={s.plan} actions={{
+        free: <Button variant="outline" className="w-full" disabled>{team ? "Included in Team" : "Your current plan"}</Button>,
+        team: team ? <Button className="w-full" disabled>You're on Team</Button> : <Button className="w-full" onClick={() => upgrade.mutate({ workspaceId })} disabled={!s.canManage || upgrade.isPending}>{upgrade.isPending ? "Opening checkout…" : "Upgrade to Team"}</Button>,
+      }} />
+      <p className="text-xs text-muted-foreground">Team is billed monthly per workspace member. Applicable taxes are added at checkout.</p>
+      {!s.canManage && <p className="text-sm text-muted-foreground">Only workspace owners can change the plan.</p>}
+      {error && <p role="alert" className="text-destructive text-sm">{error.message}</p>}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">Workspace usage {s.status && s.status !== "active" && <Badge variant="destructive">{s.status.replace("_", " ")}</Badge>}</CardTitle>
+          <CardDescription>{team ? `Team plan${s.currentPeriodEnd ? ` · Renews ${new Date(s.currentPeriodEnd).toLocaleDateString()}` : ""}` : "Free plan · 5 people and 3 repositories"}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid gap-6 sm:grid-cols-2"><Usage label="Members" used={s.usage.members} limit={s.limits.members} /><Usage label="Enabled repositories" used={s.usage.repos} limit={s.limits.repos} /></div>
+          {s.canManage && s.hasBillingAccount && <Button variant="outline" onClick={() => portal.mutate({ workspaceId })} disabled={portal.isPending}>Manage billing</Button>}
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 
