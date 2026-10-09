@@ -12,7 +12,7 @@ export function AppIcon(props: ComponentProps<"svg">) {
       />
       <path
         d="m28 32 6 6 16-17"
-        className="stroke-brand-lime"
+        className="stroke-primary-foreground"
         strokeWidth="6"
         strokeLinecap="round"
         strokeLinejoin="round"

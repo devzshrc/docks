@@ -1,12 +1,13 @@
 "use client";
+import { Button as ShadcnButton } from "@/components/ui/button";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { Button } from "@/components/base/buttons/button";
-import { Input } from "@/components/base/input/input";
-import { Select, SelectItem } from "@/components/base/select/select";
-import { Chip } from "@/components/base/badges/chip";
+import { Button } from "@/components/ui-compat/controls";
+import { Input } from "@/components/ui-compat/controls";
+import { Select, SelectItem } from "@/components/ui-compat/controls";
+import { Chip } from "@/components/ui-compat/controls";
 import { RiAddLine, RiRefreshLine } from "@remixicon/react";
 import { cx } from "@/utils/cx";
 import { QueryError } from "@/components/query-state";
@@ -462,7 +463,8 @@ function Releases({
               RELEASES
             </h2>
             {list.data?.map((release) => (
-              <button
+              <ShadcnButton
+                variant="ghost"
                 key={release.id}
                 type="button"
                 aria-pressed={selectedId === release.id}
@@ -493,7 +495,7 @@ function Releases({
                     </span>
                   )}
                 </span>
-              </button>
+              </ShadcnButton>
             ))}
           </nav>
           {selectedId && (

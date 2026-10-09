@@ -1,4 +1,6 @@
 "use client";
+import { Button as ShadcnButton } from "@/components/ui/button";
+import { Textarea as ShadcnTextarea } from "@/components/ui/textarea";
 
 import type { ReviewSessionData } from "@docks/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -300,7 +302,16 @@ export function ReviewSessionProvider({
   }
   return (
     <Context.Provider
-      value={{ data, headSha: pull.data?.pr.headSha ?? "", fileShas: Object.fromEntries((pull.data?.files ?? []).map((f) => [f.filename, f.sha])), paid: pull.data?.advancedReview ?? false, update, flush }}
+      value={{
+        data,
+        headSha: pull.data?.pr.headSha ?? "",
+        fileShas: Object.fromEntries(
+          (pull.data?.files ?? []).map((f) => [f.filename, f.sha]),
+        ),
+        paid: pull.data?.advancedReview ?? false,
+        update,
+        flush,
+      }}
     >
       <div
         className="mb-4 space-y-2 rounded-lg border p-3 text-xs"
@@ -309,22 +320,24 @@ export function ReviewSessionProvider({
         <div className="flex flex-wrap items-center gap-3">
           <span>{status}</span>
           {loaded && (
-            <button
+            <ShadcnButton
+              variant="ghost"
               type="button"
               className="underline"
               onClick={() => void flush()}
             >
               Save now
-            </button>
+            </ShadcnButton>
           )}
           {(query.error || (conflictRef.current && !conflict)) && (
-            <button
+            <ShadcnButton
+              variant="ghost"
               type="button"
               className="underline"
               onClick={() => void query.refetch()}
             >
               Retry connection
-            </button>
+            </ShadcnButton>
           )}
         </div>
         {Object.keys(data.textDrafts).length > 0 && (
@@ -333,7 +346,7 @@ export function ReviewSessionProvider({
             {Object.entries(data.textDrafts).map(([k, v]) => (
               <label key={k} className="block">
                 {k}
-                <textarea
+                <ShadcnTextarea
                   readOnly
                   className="bg-background h-20 w-full border"
                   value={v}
@@ -346,9 +359,14 @@ export function ReviewSessionProvider({
           <div>
             Local drafts from the previous version exist. Import only if these
             drafts belong to you.{" "}
-            <button type="button" className="underline" onClick={importLegacy}>
+            <ShadcnButton
+              variant="ghost"
+              type="button"
+              className="underline"
+              onClick={importLegacy}
+            >
               Import local drafts
-            </button>
+            </ShadcnButton>
           </div>
         )}
         {conflict && (
@@ -358,7 +376,7 @@ export function ReviewSessionProvider({
               <summary>Compare copies</summary>
               <label>
                 Current device
-                <textarea
+                <ShadcnTextarea
                   readOnly
                   className="bg-background h-32 w-full border"
                   value={JSON.stringify(data, null, 2)}
@@ -366,7 +384,7 @@ export function ReviewSessionProvider({
               </label>
               <label>
                 Other device
-                <textarea
+                <ShadcnTextarea
                   readOnly
                   className="bg-background h-32 w-full border"
                   value={JSON.stringify(conflict.data, null, 2)}
@@ -374,21 +392,24 @@ export function ReviewSessionProvider({
               </label>
             </details>
             <div className="flex gap-3">
-              <button
+              <ShadcnButton
+                variant="ghost"
                 type="button"
                 className="underline"
                 onClick={() => choose(true)}
               >
                 Keep current device
-              </button>
-              <button
+              </ShadcnButton>
+              <ShadcnButton
+                variant="ghost"
                 type="button"
                 className="underline"
                 onClick={() => choose(false)}
               >
                 Use other device
-              </button>
-              <button
+              </ShadcnButton>
+              <ShadcnButton
+                variant="ghost"
                 type="button"
                 className="underline"
                 onClick={() => {
@@ -412,7 +433,7 @@ export function ReviewSessionProvider({
                 }}
               >
                 Download both copies
-              </button>
+              </ShadcnButton>
             </div>
           </div>
         )}

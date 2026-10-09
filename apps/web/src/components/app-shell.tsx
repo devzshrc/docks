@@ -1,20 +1,28 @@
-"use client"
+"use client";
 
-import { Search01Icon } from "@hugeicons/core-free-icons"
-import { RiCalendarScheduleLine, RiRocketLine, RiInboxLine, RiGitPullRequestLine, RiBugLine, RiBarChartBoxLine, RiTeamLine, RiSettings3Line } from "@remixicon/react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { useQuery } from "@tanstack/react-query"
-import { usePathname, useRouter } from "next/navigation"
+import { Search01Icon } from "@hugeicons/core-free-icons";
+import {
+  RiCalendarScheduleLine,
+  RiRocketLine,
+  RiInboxLine,
+  RiGitPullRequestLine,
+  RiBugLine,
+  RiBarChartBoxLine,
+  RiTeamLine,
+  RiSettings3Line,
+} from "@remixicon/react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useQuery } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
 
+import { RequireAuth } from "@/components/auth-guard";
+import { CommandPalette } from "@/components/command-palette";
+import { NewIssueButton } from "@/components/new-issue/button";
+import { NewIssueProvider } from "@/components/new-issue/provider";
+import Link from "next/link";
 
-import { RequireAuth } from "@/components/auth-guard"
-import { CommandPalette } from "@/components/command-palette"
-import { NewIssueButton } from "@/components/new-issue/button"
-import { NewIssueProvider } from "@/components/new-issue/provider"
-import Link from "next/link"
-
-import { Button } from "@/components/ui/button"
-import { Kbd } from "@/components/ui/kbd"
+import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
 import {
   Sidebar,
   SidebarContent,
@@ -31,21 +39,28 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { Tabs, TabList, Tab } from "@/components/base/tabs/tabs"
-import { AppIcon } from "@/components/app-icon"
-import { ShellSlotsContext, useShellSlotsState } from "@/components/shell-slots"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { UserMenu } from "@/components/user-menu"
-import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace"
-import { cn } from "@/lib/utils"
-import { useTRPC } from "@/trpc/react"
+} from "@/components/ui/sidebar";
+import {
+  Tabs,
+  TabsList as TabList,
+  TabsTrigger as Tab,
+} from "@/components/ui/tabs";
+import { AppIcon } from "@/components/app-icon";
+import {
+  ShellSlotsContext,
+  useShellSlotsState,
+} from "@/components/shell-slots";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/user-menu";
+import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace";
+import { cn } from "@/lib/utils";
+import { useTRPC } from "@/trpc/react";
 
 const WIDTH = {
   narrow: "max-w-[720px]", // single-column forms
   default: "max-w-[1200px]", // every dashboard and settings page shares one left edge
   wide: "max-w-[1360px]", // board and code review
-} as const
+} as const;
 
 const SETTINGS_TABS = [
   { value: "/settings/workspace", label: "Workspace" },
@@ -54,45 +69,48 @@ const SETTINGS_TABS = [
   { value: "/settings/billing", label: "Billing" },
   { value: "/settings/audit", label: "Audit log" },
   { value: "/settings/account", label: "Account" },
-]
+];
 
 function activeIdFor(pathname: string) {
   if (pathname.startsWith("/deadlines")) return "deadlines";
   if (pathname.startsWith("/releases")) return "releases";
   if (pathname.startsWith("/inbox")) return "inbox";
-  if (pathname.startsWith("/settings")) return "settings"
-  if (pathname.startsWith("/insights")) return "insights"
-  if (pathname.startsWith("/team") || pathname.startsWith("/people")) return "team"
-  if (pathname.startsWith("/issues")) return "issues"
-  if (pathname.startsWith("/review")) return "reviews"
-  return undefined
+  if (pathname.startsWith("/settings")) return "settings";
+  if (pathname.startsWith("/insights")) return "insights";
+  if (pathname.startsWith("/team") || pathname.startsWith("/people"))
+    return "team";
+  if (pathname.startsWith("/issues")) return "issues";
+  if (pathname.startsWith("/review")) return "reviews";
+  return undefined;
 }
 
 /** "Reviews / owner/repo #12" for pull request pages, otherwise the page's own title. */
 function titleFor(pathname: string, title?: string) {
-  const pr = pathname.match(/^\/review\/([^/]+)\/([^/]+)\/(\d+)/)
+  const pr = pathname.match(/^\/review\/([^/]+)\/([^/]+)\/(\d+)/);
   if (pr) {
     return (
       <>
         <span className="text-muted-foreground font-normal">Reviews / </span>
-        {pr[1]}/{pr[2]} <span className="text-muted-foreground font-normal">#{pr[3]}</span>
+        {pr[1]}/{pr[2]}{" "}
+        <span className="text-muted-foreground font-normal">#{pr[3]}</span>
       </>
-    )
+    );
   }
-  const issue = pathname.match(/^\/issues\/([^/]+)\/([^/]+)\/(\d+)/)
+  const issue = pathname.match(/^\/issues\/([^/]+)\/([^/]+)\/(\d+)/);
   if (issue) {
     return (
       <>
         <span className="text-muted-foreground font-normal">Issues / </span>
-        {issue[1]}/{issue[2]} <span className="text-muted-foreground font-normal">#{issue[3]}</span>
+        {issue[1]}/{issue[2]}{" "}
+        <span className="text-muted-foreground font-normal">#{issue[3]}</span>
       </>
-    )
+    );
   }
-  return title ?? ""
+  return title ?? "";
 }
 
 /**
- * Authenticated page chrome, built on ObsidianUI's DashboardShell: resizable sidebar with a sliding active pill,
+ * Authenticated page chrome, built on shadcn Sidebar: resizable sidebar with a sliding active pill,
  * mobile drawer, title row with actions, and tabs for Settings. Pages keep passing title, description, actions, width.
  */
 export function AppShell({
@@ -103,46 +121,66 @@ export function AppShell({
   children,
 }: {
   /** Omit for pages that render their own heading (e.g. a pull request). */
-  title?: string
-  description?: React.ReactNode
-  actions?: React.ReactNode
-  width?: keyof typeof WIDTH
-  children: React.ReactNode
+  title?: string;
+  description?: React.ReactNode;
+  actions?: React.ReactNode;
+  width?: keyof typeof WIDTH;
+  children: React.ReactNode;
 }) {
   return (
     <RequireAuth>
       <NewIssueProvider>
-        <ShellFrame title={title} description={description} actions={actions} width={width}>
+        <ShellFrame
+          title={title}
+          description={description}
+          actions={actions}
+          width={width}
+        >
           {children}
         </ShellFrame>
         <CommandPalette />
       </NewIssueProvider>
     </RequireAuth>
-  )
+  );
 }
 
-function ShellFrame({ title, description, actions, width, children }: { title?: string; description?: React.ReactNode; actions?: React.ReactNode; width: keyof typeof WIDTH; children: React.ReactNode }) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const trpc = useTRPC()
-  const { workspace } = useWorkspace()
-  const settings = useWorkspaceSettings(workspace?.id)
+function ShellFrame({
+  title,
+  description,
+  actions,
+  width,
+  children,
+}: {
+  title?: string;
+  description?: React.ReactNode;
+  actions?: React.ReactNode;
+  width: keyof typeof WIDTH;
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const trpc = useTRPC();
+  const { workspace } = useWorkspace();
+  const settings = useWorkspaceSettings(workspace?.id);
   const billing = useQuery({
     ...trpc.billing.status.queryOptions({ workspaceId: workspace?.id ?? "" }),
     enabled: Boolean(workspace),
     staleTime: 30_000,
     refetchInterval: 60_000,
-  })
-  const inSettings = pathname.startsWith("/settings")
-  const slots = useShellSlotsState()
+  });
+  const inSettings = pathname.startsWith("/settings");
+  const slots = useShellSlotsState();
 
   // PRs waiting on this person: the one number worth showing in the sidebar.
   const waiting = useQuery({
-    ...trpc.review.board.queryOptions({ workspaceId: workspace?.id ?? "", filters: { sort: "oldest", waitingOnMe: true } }),
+    ...trpc.review.board.queryOptions({
+      workspaceId: workspace?.id ?? "",
+      filters: { sort: "oldest", waitingOnMe: true },
+    }),
     enabled: Boolean(workspace),
     staleTime: 60_000,
     retry: false,
-  })
+  });
   const inbox = useQuery({
     ...trpc.inbox.unreadCount.queryOptions({
       workspaceId: workspace?.id ?? "",
@@ -151,7 +189,7 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
     refetchInterval: 30_000,
     retry: false,
   });
-  const waitingCount = waiting.data?.cards.length ?? 0
+  const waitingCount = waiting.data?.cards.length ?? 0;
 
   // Open issues nobody has picked up: the triage queue.
   const triage = useQuery({
@@ -159,12 +197,24 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
     enabled: Boolean(workspace),
     staleTime: 60_000,
     retry: false,
-  })
-  const triageCount = triage.data?.triage ?? 0
+  });
+  const triageCount = triage.data?.triage ?? 0;
 
   const nav = [
-    { id: "deadlines", label: "Deadlines", icon: RiCalendarScheduleLine, href: "/deadlines", count: 0 },
-    { id: "releases", label: "Releases", icon: RiRocketLine, href: "/releases", count: 0 },
+    {
+      id: "deadlines",
+      label: "Deadlines",
+      icon: RiCalendarScheduleLine,
+      href: "/deadlines",
+      count: 0,
+    },
+    {
+      id: "releases",
+      label: "Releases",
+      icon: RiRocketLine,
+      href: "/releases",
+      count: 0,
+    },
     {
       id: "inbox",
       label: "Inbox",
@@ -172,38 +222,85 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
       href: "/inbox",
       count: inbox.data ?? 0,
     },
-    { id: "reviews", label: "Reviews", icon: RiGitPullRequestLine, href: "/review", count: waitingCount },
-    { id: "issues", label: "Issues", icon: RiBugLine, href: "/issues", count: triageCount },
-    { id: "insights", label: "Insights", icon: RiBarChartBoxLine, href: "/insights", count: 0 },
+    {
+      id: "reviews",
+      label: "Reviews",
+      icon: RiGitPullRequestLine,
+      href: "/review",
+      count: waitingCount,
+    },
+    {
+      id: "issues",
+      label: "Issues",
+      icon: RiBugLine,
+      href: "/issues",
+      count: triageCount,
+    },
+    {
+      id: "insights",
+      label: "Insights",
+      icon: RiBarChartBoxLine,
+      href: "/insights",
+      count: 0,
+    },
     { id: "team", label: "Team", icon: RiTeamLine, href: "/team", count: 0 },
-  ]
-  const activeId = activeIdFor(pathname)
+  ];
+  const activeId = activeIdFor(pathname);
 
-  const canAudit = settings.data ? settings.data.can["audit.read"] : true
-  const tabs = SETTINGS_TABS.filter((t) => t.value !== "/settings/audit" || canAudit)
-  const activeTab = tabs.find((t) => pathname === t.value || pathname.startsWith(`${t.value}/`))?.value ?? tabs[0]!.value
+  const canAudit = settings.data ? settings.data.can["audit.read"] : true;
+  const tabs = SETTINGS_TABS.filter(
+    (t) => t.value !== "/settings/audit" || canAudit,
+  );
+  const activeTab =
+    tabs.find((t) => pathname === t.value || pathname.startsWith(`${t.value}/`))
+      ?.value ?? tabs[0]!.value;
 
-  const intro = inSettings ? (
-    (title || description) && (
-      <div className="space-y-1">
-        {title && <h2 className="text-base font-medium tracking-tight">{title}</h2>}
-        {description && <p className="text-muted-foreground max-w-2xl text-sm">{description}</p>}
-      </div>
-    )
-  ) : (
-    description && <p data-page-intro className="text-muted-foreground max-w-2xl text-sm leading-relaxed">{description}</p>
-  )
+  const intro = inSettings
+    ? (title || description) && (
+        <div className="space-y-1">
+          {title && (
+            <h2 className="text-base font-medium tracking-tight">{title}</h2>
+          )}
+          {description && (
+            <p className="text-muted-foreground max-w-2xl text-sm">
+              {description}
+            </p>
+          )}
+        </div>
+      )
+    : description && (
+        <p
+          data-page-intro
+          className="text-muted-foreground max-w-2xl text-sm leading-relaxed"
+        >
+          {description}
+        </p>
+      );
 
   return (
-    <ShellSlotsContext.Provider value={{ filters: slots.filters, actions: slots.actions, setHasFilters: slots.setHasFilters, setHasActions: slots.setHasActions }}>
-      <SidebarProvider style={{ "--sidebar-width": "15rem" } as React.CSSProperties}>
+    <ShellSlotsContext.Provider
+      value={{
+        filters: slots.filters,
+        actions: slots.actions,
+        setHasFilters: slots.setHasFilters,
+        setHasActions: slots.setHasActions,
+      }}
+    >
+      <SidebarProvider
+        style={{ "--sidebar-width": "15rem" } as React.CSSProperties}
+      >
         <Sidebar variant="floating">
           <SidebarHeader className="px-3 py-3">
-            <Link href="/review" className="flex items-center gap-2.5 rounded-lg p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+            <Link
+              href="/review"
+              className="flex items-center gap-2.5 rounded-lg p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
               <BrandMark />
               <span className="grid leading-tight">
                 <span className="text-sm font-medium">Docks</span>
-                <span className="text-muted-foreground truncate text-xs">Code review</span>
+                <span className="text-muted-foreground truncate text-xs">
+                  Code review
+                </span>
               </span>
             </Link>
           </SidebarHeader>
@@ -220,7 +317,9 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
                           <span>{n.label}</span>
                         </Link>
                       </SidebarMenuButton>
-                      {n.count > 0 && <SidebarMenuBadge>{n.count}</SidebarMenuBadge>}
+                      {n.count > 0 && (
+                        <SidebarMenuBadge>{n.count}</SidebarMenuBadge>
+                      )}
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
@@ -245,15 +344,29 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
         <SidebarInset className="min-w-0">
           <header className="bg-background/80 sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b px-4 backdrop-blur md:px-6">
             <SidebarTrigger className="-ml-1.5" />
-            <h1 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">{inSettings ? "Settings" : titleFor(pathname, title)}</h1>
+            <h1 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">
+              {inSettings ? "Settings" : titleFor(pathname, title)}
+            </h1>
             <div className="flex items-center gap-2">
-              {billing.data && <Link href="/settings/billing" aria-label={`Current plan: ${billing.data.plan === "team" ? "Team" : "Free"}. View billing`} className="rounded-full border bg-muted/40 px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted">{billing.data.plan === "team" ? "Team" : "Free"} plan</Link>}
+              {billing.data && (
+                <Link
+                  href="/settings/billing"
+                  aria-label={`Current plan: ${billing.data.plan === "team" ? "Team" : "Free"}. View billing`}
+                  className="rounded-full border bg-muted/40 px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted"
+                >
+                  {billing.data.plan === "team" ? "Team" : "Free"} plan
+                </Link>
+              )}
               {actions}
               <Button
                 variant="outline"
                 size="sm"
                 aria-label="Search or jump to"
-                onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+                onClick={() =>
+                  window.dispatchEvent(
+                    new KeyboardEvent("keydown", { key: "k", metaKey: true }),
+                  )
+                }
                 className="gap-2 shadow-xs"
               >
                 <HugeiconsIcon icon={Search01Icon} size={12} aria-hidden />
@@ -266,10 +379,10 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
           </header>
           {inSettings && (
             <div className="overflow-x-auto border-b px-4 md:px-6">
-              <Tabs selectedKey={activeTab} onSelectionChange={(v) => router.push(String(v))}>
+              <Tabs value={activeTab} onValueChange={(v) => router.push(v)}>
                 <TabList aria-label="Settings" className="h-11 min-w-max">
                   {tabs.map((t) => (
-                    <Tab key={t.value} id={t.value}>
+                    <Tab key={t.value} value={t.value}>
                       {t.label}
                     </Tab>
                   ))}
@@ -279,18 +392,32 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
           )}
           {(slots.hasFilters || slots.hasActions) && (
             <div className="flex flex-wrap items-center gap-2 border-b px-4 py-2.5 md:px-6">
-              {slots.hasFilters && <div ref={slots.setFilters} className="contents" />}
-              {slots.hasActions && <div ref={slots.setActions} className="ml-auto flex items-center gap-2" />}
+              {slots.hasFilters && (
+                <div ref={slots.setFilters} className="contents" />
+              )}
+              {slots.hasActions && (
+                <div
+                  ref={slots.setActions}
+                  className="ml-auto flex items-center gap-2"
+                />
+              )}
             </div>
           )}
-          <div className={cn("animate-in fade-in slide-in-from-bottom-1 flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-200 md:px-6 md:py-8", WIDTH[width])}>
+          <div
+            className={cn(
+              "animate-in fade-in slide-in-from-bottom-1 flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-200 md:px-6 md:py-8",
+              WIDTH[width],
+            )}
+          >
             {intro}
             {children}
           </div>
         </SidebarInset>
       </SidebarProvider>
     </ShellSlotsContext.Provider>
-  )
+  );
 }
 
-function BrandMark() { return <AppIcon className="size-8 shrink-0" /> }
+function BrandMark() {
+  return <AppIcon className="size-8 shrink-0" />;
+}

@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { Checkbox } from "@/components/base/checkbox/checkbox"
-import { answerStillValid } from "@/lib/checklist"
-import type { Guide } from "@docks/api"
-import { IconFileCode } from "@tabler/icons-react"
+import { Checkbox } from "@/components/ui-compat/controls";
+import { answerStillValid } from "@/lib/checklist";
+import type { Guide } from "@docks/api";
+import { IconFileCode } from "@tabler/icons-react";
 import { useReviewSession } from "@/hooks/use-review-session";
 
-import { Count, DrawTick, useJustBecame } from "@/components/motion"
-import { cn } from "@/lib/utils"
+import { Count, DrawTick, useJustBecame } from "@/components/motion";
+import { cn } from "@/lib/utils";
 
 /**
  * Reviewer checklist questions linked to files (§5.3). Ticks are a personal
@@ -17,8 +17,8 @@ export function Checklist({
   items,
   storageKey,
 }: {
-  items: Guide["checklist"]
-  storageKey: string
+  items: Guide["checklist"];
+  storageKey: string;
 }) {
   const session = useReviewSession();
   const ids = items.map((item) => JSON.stringify([item.question, item.files]));
@@ -26,38 +26,71 @@ export function Checklist({
   const answers = session.data.checklist.answers ?? {};
   const validAnswer = (id: string, files: string[]) => {
     const answer = answers[id];
-    if (!answer) return session.data.checklist.revision === revision && session.data.checklist.checked.includes(id);
-    return answerStillValid(answer, files, session.headSha, session.fileShas, session.paid);
+    if (!answer)
+      return (
+        session.data.checklist.revision === revision &&
+        session.data.checklist.checked.includes(id)
+      );
+    return answerStillValid(
+      answer,
+      files,
+      session.headSha,
+      session.fileShas,
+      session.paid,
+    );
   };
-  const done = ids.flatMap((id, i) => validAnswer(id, items[i]!.files) ? [i] : []);
+  const done = ids.flatMap((id, i) =>
+    validAnswer(id, items[i]!.files) ? [i] : [],
+  );
   function toggle(i: number) {
     const id = ids[i]!;
     const checked = done.includes(i);
     session.update((state) => {
       const next = { ...(state.checklist.answers ?? {}) };
       if (checked) delete next[id];
-      else next[id] = { headSha: session.headSha, files: Object.fromEntries(items[i]!.files.map((path) => [path, session.fileShas[path] ?? ""])) };
+      else
+        next[id] = {
+          headSha: session.headSha,
+          files: Object.fromEntries(
+            items[i]!.files.map((path) => [path, session.fileShas[path] ?? ""]),
+          ),
+        };
       // Remove entries for questions no longer present in this guide.
-      for (const key of Object.keys(next)) if (!ids.includes(key)) delete next[key];
-      return { ...state, checklist: { revision, checked: checked ? ids.filter((key, j) => j !== i && done.includes(j)) : [...ids.filter((key, j) => done.includes(j)), id], answers: next } };
+      for (const key of Object.keys(next))
+        if (!ids.includes(key)) delete next[key];
+      return {
+        ...state,
+        checklist: {
+          revision,
+          checked: checked
+            ? ids.filter((key, j) => j !== i && done.includes(j))
+            : [...ids.filter((key, j) => done.includes(j)), id],
+          answers: next,
+        },
+      };
     });
   }
 
-  const complete = items.length > 0 && done.length === items.length
-  const justDone = useJustBecame(complete)
-  if (!items.length) return null
+  const complete = items.length > 0 && done.length === items.length;
+  const justDone = useJustBecame(complete);
+  if (!items.length) return null;
 
   return (
     <section aria-labelledby="checklist-heading" className="space-y-3">
       <div className="space-y-2">
         <div className="flex items-baseline justify-between gap-2">
-          <h3 id="checklist-heading" className="text-sm font-semibold tracking-tight">
+          <h3
+            id="checklist-heading"
+            className="text-sm font-semibold tracking-tight"
+          >
             Before you approve
           </h3>
           <span
             className={cn(
               "text-xs tabular-nums",
-              complete ? "font-medium text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+              complete
+                ? "font-medium text-emerald-600 dark:text-emerald-400"
+                : "text-muted-foreground",
             )}
           >
             {complete ? (
@@ -73,7 +106,11 @@ export function Checklist({
         </div>
         <div className="bg-muted h-1 overflow-hidden rounded-full" aria-hidden>
           <div
-            className={cn("h-full rounded-full transition-[width,background-color] duration-300", complete ? "bg-emerald-500" : "bg-primary", justDone && "anim-pulse-once")}
+            className={cn(
+              "h-full rounded-full transition-[width,background-color] duration-300",
+              complete ? "bg-emerald-500" : "bg-primary",
+              justDone && "anim-pulse-once",
+            )}
             style={{ width: `${(done.length / items.length) * 100}%` }}
           />
         </div>
@@ -81,7 +118,7 @@ export function Checklist({
 
       <ul className="-mx-2 space-y-0.5">
         {items.map((item, i) => {
-          const checked = done.includes(i)
+          const checked = done.includes(i);
           return (
             <li key={i}>
               {/* The whole row is the hit target; file links inside don't toggle it. */}
@@ -95,13 +132,15 @@ export function Checklist({
                   <span
                     className={cn(
                       "block text-[13.5px] leading-relaxed transition-colors",
-                      checked
-                        ? "text-muted-foreground"
-                        : "text-foreground"
+                      checked ? "text-muted-foreground" : "text-foreground",
                     )}
                   >
                     {item.question}
-                    {!checked && answers[ids[i]!]?.headSha && <span className="ml-2 text-xs text-warning">Needs another check</span>}
+                    {!checked && answers[ids[i]!]?.headSha && (
+                      <span className="ml-2 text-xs text-warning">
+                        Needs another check
+                      </span>
+                    )}
                   </span>
                   {item.files.length > 0 && (
                     <span className="flex flex-wrap gap-1.5">
@@ -113,7 +152,10 @@ export function Checklist({
                           onClick={(e) => e.stopPropagation()}
                           className="bg-muted text-muted-foreground hover:text-foreground hover:bg-accent inline-flex max-w-full items-center gap-1 rounded-md px-1.5 py-0.5 font-code text-[11px] transition-colors"
                         >
-                          <IconFileCode className="size-3 shrink-0" aria-hidden />
+                          <IconFileCode
+                            className="size-3 shrink-0"
+                            aria-hidden
+                          />
                           <span className="truncate">{f.split("/").pop()}</span>
                         </a>
                       ))}
@@ -122,9 +164,9 @@ export function Checklist({
                 </span>
               </Checkbox>
             </li>
-          )
+          );
         })}
       </ul>
     </section>
-  )
+  );
 }

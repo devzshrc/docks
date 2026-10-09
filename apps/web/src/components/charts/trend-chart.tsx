@@ -1,55 +1,75 @@
-"use client"
-
-import { defineChart, lineY } from "@tanstack/charts"
-import { Chart } from "@tanstack/charts/react"
-import { scaleLinear } from "@tanstack/charts/scales/linear"
-import { scalePoint } from "@tanstack/charts/scales/point"
-import { tooltip } from "@tanstack/charts/tooltip"
-import { useMemo } from "react"
-
-export type TrendRow = { label: string; value: number | null }
-
-/** One weekly series as a line with points (Insights, admin metrics). */
+"use client";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+export type TrendRow = { label: string; value: number | null };
 export function TrendChart({
   rows,
   label,
   ariaLabel,
   format = (v) => String(v),
-  color = "#2D6E9E",
   height = 200,
 }: {
-  rows: TrendRow[]
-  label: string
-  ariaLabel: string
-  format?: (v: number) => string
-  color?: string
-  height?: number
+  rows: TrendRow[];
+  label: string;
+  ariaLabel: string;
+  format?: (v: number) => string;
+  color?: string;
+  height?: number;
 }) {
-  const definition = useMemo(
-    () =>
-      defineChart({
-        marks: [
-          lineY(rows, {
-            x: "label",
-            y: "value",
-            points: true,
-            stroke: color,
-          }),
-        ],
-        scales: {
-          x: { scale: () => scalePoint<string>().padding(0.3) },
-          y: { scale: scaleLinear, nice: true, grid: true, axis: { label, ticks: { count: 4, format } } },
-        },
-        tooltip: {
-          use: tooltip,
-          format: (point) => `Week of ${point.datum.label}: ${point.datum.value === null ? "no data" : format(point.datum.value)}`,
-        },
-      }),
-    [rows, label, format, color]
-  )
+  if (!rows.some((row) => row.value !== null))
+    return (
+      <p className="py-10 text-center text-sm text-muted-foreground">
+        No data yet
+      </p>
+    );
   return (
-    <div className="anim-reveal">
-      <Chart definition={definition} height={height} ariaLabel={ariaLabel} />
+    <div aria-label={ariaLabel}>
+      <ChartContainer
+        config={{ value: { label, color: "var(--chart-1)" } }}
+        className="w-full"
+        style={{ height }}
+      >
+        <LineChart
+          accessibilityLayer
+          data={rows}
+          margin={{ left: 0, right: 12 }}
+        >
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="label"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+          />
+          <YAxis
+            tickFormatter={format}
+            tickLine={false}
+            axisLine={false}
+            width={48}
+          />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                formatter={(value) => format(Number(value))}
+              />
+            }
+          />
+          <Line
+            dataKey="value"
+            type="linear"
+            stroke="var(--color-value)"
+            strokeWidth={2}
+            dot={{ r: 3 }}
+            connectNulls={false}
+            isAnimationActive={false}
+          />
+        </LineChart>
+      </ChartContainer>
+      <p className="mt-2 text-xs text-muted-foreground">{label}</p>
     </div>
-  )
+  );
 }

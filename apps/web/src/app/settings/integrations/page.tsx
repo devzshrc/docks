@@ -1,54 +1,58 @@
-"use client"
+"use client";
+import { NativeSelect as ShadcnSelect } from "@/components/ui-compat/native-select";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { IconBrandGithub } from "@tabler/icons-react"
-import { useSearchParams } from "next/navigation"
-import { Suspense, useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { IconBrandGithub } from "@tabler/icons-react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
-import { AppShell } from "@/components/app-shell"
-import { StatusBars } from "@/components/obsidian/status-bars"
-import { Button } from "@/components/ui/button"
+import { AppShell } from "@/components/app-shell";
+import { StatusBars } from "@/components/ui-compat/status-history";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useWorkspace } from "@/hooks/use-workspace"
-import { useTRPC } from "@/trpc/react"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useWorkspace } from "@/hooks/use-workspace";
+import { useTRPC } from "@/trpc/react";
 
 const GITHUB_STATUS: Record<string, string> = {
   connected: "GitHub connected. Repositories are syncing in the background.",
   failed: "Couldn't link the GitHub installation. Try again.",
   "signed-out": "Your session expired. Sign in and install again.",
   invalid: "GitHub sent an incomplete response. Try again.",
-}
+};
 
 function CreateWorkspace() {
-  const trpc = useTRPC()
-  const queryClient = useQueryClient()
-  const [name, setName] = useState("")
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
   const create = useMutation(
     trpc.workspace.create.mutationOptions({
-      onSuccess: () => queryClient.invalidateQueries(trpc.workspace.list.queryFilter()),
-    })
-  )
+      onSuccess: () =>
+        queryClient.invalidateQueries(trpc.workspace.list.queryFilter()),
+    }),
+  );
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Create your workspace</CardTitle>
-        <CardDescription>A workspace holds your team, repositories and billing.</CardDescription>
+        <CardDescription>
+          A workspace holds your team, repositories and billing.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form
           className="flex gap-2"
           onSubmit={(e) => {
-            e.preventDefault()
-            if (name.trim()) create.mutate({ name })
+            e.preventDefault();
+            if (name.trim()) create.mutate({ name });
           }}
         >
           <Input
@@ -62,26 +66,32 @@ function CreateWorkspace() {
           </Button>
         </form>
         {create.error && (
-          <p className="text-destructive mt-2 text-sm">{create.error.message}</p>
+          <p className="text-destructive mt-2 text-sm">
+            {create.error.message}
+          </p>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function GitHubCard({ workspaceId }: { workspaceId: string }) {
-  const trpc = useTRPC()
-  const params = useSearchParams()
-  const status = params.get("github")
-  const queryClient = useQueryClient()
-  const install = useQuery(trpc.integration.githubInstallUrl.queryOptions({ workspaceId }))
-  const existing = useQuery(trpc.integration.githubInstallations.queryOptions({ workspaceId }))
+  const trpc = useTRPC();
+  const params = useSearchParams();
+  const status = params.get("github");
+  const queryClient = useQueryClient();
+  const install = useQuery(
+    trpc.integration.githubInstallUrl.queryOptions({ workspaceId }),
+  );
+  const existing = useQuery(
+    trpc.integration.githubInstallations.queryOptions({ workspaceId }),
+  );
   const link = useMutation(
     trpc.integration.linkGithubInstallation.mutationOptions({
       onSuccess: () => void queryClient.invalidateQueries(),
     }),
-  )
-  const unlinked = existing.data?.filter((i) => !i.linked) ?? []
+  );
+  const unlinked = existing.data?.filter((i) => !i.linked) ?? [];
 
   return (
     <Card>
@@ -91,12 +101,17 @@ function GitHubCard({ workspaceId }: { workspaceId: string }) {
           GitHub
         </CardTitle>
         <CardDescription>
-          Install the GitHub App on your organization and choose which repositories to include.
+          Install the GitHub App on your organization and choose which
+          repositories to include.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {status && GITHUB_STATUS[status] && (
-          <p className={status === "connected" ? "text-sm" : "text-destructive text-sm"}>
+          <p
+            className={
+              status === "connected" ? "text-sm" : "text-destructive text-sm"
+            }
+          >
             {GITHUB_STATUS[status]}
           </p>
         )}
@@ -113,24 +128,31 @@ function GitHubCard({ workspaceId }: { workspaceId: string }) {
               Already installed on GitHub? Link it to this workspace:
             </p>
             {unlinked.map((i) => (
-              <div key={i.id} className="flex items-center justify-between gap-3">
+              <div
+                key={i.id}
+                className="flex items-center justify-between gap-3"
+              >
                 <span className="text-sm font-medium">{i.login}</span>
                 <Button
                   size="sm"
                   variant="outline"
                   disabled={link.isPending}
-                  onClick={() => link.mutate({ workspaceId, installationId: i.id })}
+                  onClick={() =>
+                    link.mutate({ workspaceId, installationId: i.id })
+                  }
                 >
                   Link
                 </Button>
               </div>
             ))}
-            {link.error && <p className="text-destructive text-sm">{link.error.message}</p>}
+            {link.error && (
+              <p className="text-destructive text-sm">{link.error.message}</p>
+            )}
           </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 const ACCOUNT_STATUS: Record<string, string> = {
@@ -138,13 +160,13 @@ const ACCOUNT_STATUS: Record<string, string> = {
   failed: "Couldn't connect your GitHub account. Try again.",
   "signed-out": "Your session expired. Sign in and connect again.",
   invalid: "GitHub sent an incomplete response. Try again.",
-}
+};
 
 function GitHubAccountCard() {
-  const trpc = useTRPC()
-  const params = useSearchParams()
-  const status = params.get("account")
-  const account = useQuery(trpc.integration.githubAccount.queryOptions())
+  const trpc = useTRPC();
+  const params = useSearchParams();
+  const status = params.get("account");
+  const account = useQuery(trpc.integration.githubAccount.queryOptions());
 
   return (
     <Card>
@@ -156,20 +178,30 @@ function GitHubAccountCard() {
       </CardHeader>
       <CardContent className="space-y-3">
         {status && ACCOUNT_STATUS[status] && (
-          <p className={status === "connected" ? "text-sm" : "text-destructive text-sm"}>
+          <p
+            className={
+              status === "connected" ? "text-sm" : "text-destructive text-sm"
+            }
+          >
             {ACCOUNT_STATUS[status]}
           </p>
         )}
         {account.data?.login && (
           <p className="text-sm">
-            Connected as <span className="font-medium">{account.data.login}</span>
+            Connected as{" "}
+            <span className="font-medium">{account.data.login}</span>
           </p>
         )}
         {account.data &&
           (account.data.connectUrl ? (
-            <Button asChild variant={account.data.login ? "outline" : "default"}>
+            <Button
+              asChild
+              variant={account.data.login ? "outline" : "default"}
+            >
               <a href={account.data.connectUrl}>
-                {account.data.login ? "Reconnect GitHub" : "Connect GitHub account"}
+                {account.data.login
+                  ? "Reconnect GitHub"
+                  : "Connect GitHub account"}
               </a>
             </Button>
           ) : (
@@ -179,7 +211,7 @@ function GitHubAccountCard() {
           ))}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 const SLACK_STATUS: Record<string, string> = {
@@ -188,53 +220,77 @@ const SLACK_STATUS: Record<string, string> = {
   failed: "Couldn't connect Slack. Try again.",
   "signed-out": "Your session expired. Sign in and connect again.",
   invalid: "Slack sent an incomplete response. Try again.",
-}
+};
 
-const HOURS = Array.from({ length: 24 }, (_, h) => h)
+const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const formatHour = (h: number) =>
-  new Date(2000, 0, 1, h).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+  new Date(2000, 0, 1, h).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
 function SlackCard({ workspaceId }: { workspaceId: string }) {
-  const trpc = useTRPC()
-  const queryClient = useQueryClient()
-  const params = useSearchParams()
-  const status = params.get("slack")
-  const slack = useQuery(trpc.integration.slack.queryOptions({ workspaceId }))
-  const refresh = () => queryClient.invalidateQueries(trpc.integration.slack.queryFilter())
-  const setDigest = useMutation(trpc.integration.setDigest.mutationOptions({ onSuccess: refresh }))
-  const test = useMutation(trpc.integration.sendTestDigest.mutationOptions())
-  const disconnect = useMutation(trpc.integration.disconnectSlack.mutationOptions({ onSuccess: refresh }))
-  const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone
-  const error = setDigest.error ?? test.error ?? disconnect.error
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const params = useSearchParams();
+  const status = params.get("slack");
+  const slack = useQuery(trpc.integration.slack.queryOptions({ workspaceId }));
+  const refresh = () =>
+    queryClient.invalidateQueries(trpc.integration.slack.queryFilter());
+  const setDigest = useMutation(
+    trpc.integration.setDigest.mutationOptions({ onSuccess: refresh }),
+  );
+  const test = useMutation(trpc.integration.sendTestDigest.mutationOptions());
+  const disconnect = useMutation(
+    trpc.integration.disconnectSlack.mutationOptions({ onSuccess: refresh }),
+  );
+  const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const error = setDigest.error ?? test.error ?? disconnect.error;
 
-  if (slack.isPending) return <Skeleton className="h-32 w-full max-w-lg" />
-  if (slack.error) return <p className="text-destructive text-sm">{slack.error.message}</p>
-  const { connection, connectUrl, canManage } = slack.data
+  if (slack.isPending) return <Skeleton className="h-32 w-full max-w-lg" />;
+  if (slack.error)
+    return <p className="text-destructive text-sm">{slack.error.message}</p>;
+  const { connection, connectUrl, canManage } = slack.data;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Slack</CardTitle>
-        <CardDescription>A daily message listing PRs waiting more than 24h, and who they&apos;re waiting on.</CardDescription>
+        <CardDescription>
+          A daily message listing PRs waiting more than 24h, and who
+          they&apos;re waiting on.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {status && SLACK_STATUS[status] && (
-          <p className={status === "connected" ? "text-sm" : "text-destructive text-sm"}>{SLACK_STATUS[status]}</p>
+          <p
+            className={
+              status === "connected" ? "text-sm" : "text-destructive text-sm"
+            }
+          >
+            {SLACK_STATUS[status]}
+          </p>
         )}
         {connection ? (
           <>
             <p className="text-sm">
-              Posting to <span className="font-medium">#{connection.channelName}</span> in {connection.teamName}
+              Posting to{" "}
+              <span className="font-medium">#{connection.channelName}</span> in{" "}
+              {connection.teamName}
             </p>
             {canManage && (
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <label htmlFor="digest-hour">Send at</label>
-                <select
+                <ShadcnSelect
                   id="digest-hour"
                   className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-lg border px-2"
                   value={connection.digestHour}
                   onChange={(e) =>
-                    setDigest.mutate({ workspaceId, hour: Number(e.target.value), timezone: connection.timezone })
+                    setDigest.mutate({
+                      workspaceId,
+                      hour: Number(e.target.value),
+                      timezone: connection.timezone,
+                    })
                   }
                 >
                   {HOURS.map((h) => (
@@ -242,13 +298,21 @@ function SlackCard({ workspaceId }: { workspaceId: string }) {
                       {formatHour(h)}
                     </option>
                   ))}
-                </select>
-                <span className="text-muted-foreground">{connection.timezone}</span>
+                </ShadcnSelect>
+                <span className="text-muted-foreground">
+                  {connection.timezone}
+                </span>
                 {connection.timezone !== browserTz && (
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => setDigest.mutate({ workspaceId, hour: connection.digestHour, timezone: browserTz })}
+                    onClick={() =>
+                      setDigest.mutate({
+                        workspaceId,
+                        hour: connection.digestHour,
+                        timezone: browserTz,
+                      })
+                    }
                   >
                     Use {browserTz}
                   </Button>
@@ -257,14 +321,22 @@ function SlackCard({ workspaceId }: { workspaceId: string }) {
             )}
             {canManage && (
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" disabled={test.isPending} onClick={() => test.mutate({ workspaceId })}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={test.isPending}
+                  onClick={() => test.mutate({ workspaceId })}
+                >
                   Send a test message
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
                   disabled={disconnect.isPending}
-                  onClick={() => confirm("Stop the Slack digest?") && disconnect.mutate({ workspaceId })}
+                  onClick={() =>
+                    confirm("Stop the Slack digest?") &&
+                    disconnect.mutate({ workspaceId })
+                  }
                 >
                   Disconnect
                 </Button>
@@ -278,38 +350,68 @@ function SlackCard({ workspaceId }: { workspaceId: string }) {
               <a href={connectUrl}>Add to Slack</a>
             </Button>
           ) : (
-            <p className="text-muted-foreground text-sm">Slack isn&apos;t configured on the server yet.</p>
+            <p className="text-muted-foreground text-sm">
+              Slack isn&apos;t configured on the server yet.
+            </p>
           )
         ) : (
-          <p className="text-muted-foreground text-sm">Ask a workspace owner to connect Slack.</p>
+          <p className="text-muted-foreground text-sm">
+            Ask a workspace owner to connect Slack.
+          </p>
         )}
         {error && <p className="text-destructive text-sm">{error.message}</p>}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function LinearCard({ workspaceId }: { workspaceId: string }) {
-  const trpc = useTRPC()
-  const queryClient = useQueryClient()
-  const [key, setKey] = useState("")
-  const linear = useQuery(trpc.integration.linear.queryOptions({ workspaceId }))
-  const refresh = () => queryClient.invalidateQueries(trpc.integration.linear.queryFilter())
-  const connect = useMutation(trpc.integration.connectLinear.mutationOptions({ meta: { toast: "Linear connected" }, onSuccess: () => { setKey(""); void refresh() } }))
-  const disconnect = useMutation(trpc.integration.disconnectLinear.mutationOptions({ meta: { toast: "Linear disconnected" }, onSuccess: refresh }))
-  const teams = useQuery({ ...trpc.integration.linearTeams.queryOptions({ workspaceId }), enabled: Boolean(linear.data?.orgName && linear.data.canManage) })
-  const setTeam = useMutation(trpc.integration.setLinearTeam.mutationOptions({ meta: { toast: "Saved" }, onSuccess: refresh }))
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const [key, setKey] = useState("");
+  const linear = useQuery(
+    trpc.integration.linear.queryOptions({ workspaceId }),
+  );
+  const refresh = () =>
+    queryClient.invalidateQueries(trpc.integration.linear.queryFilter());
+  const connect = useMutation(
+    trpc.integration.connectLinear.mutationOptions({
+      meta: { toast: "Linear connected" },
+      onSuccess: () => {
+        setKey("");
+        void refresh();
+      },
+    }),
+  );
+  const disconnect = useMutation(
+    trpc.integration.disconnectLinear.mutationOptions({
+      meta: { toast: "Linear disconnected" },
+      onSuccess: refresh,
+    }),
+  );
+  const teams = useQuery({
+    ...trpc.integration.linearTeams.queryOptions({ workspaceId }),
+    enabled: Boolean(linear.data?.orgName && linear.data.canManage),
+  });
+  const setTeam = useMutation(
+    trpc.integration.setLinearTeam.mutationOptions({
+      meta: { toast: "Saved" },
+      onSuccess: refresh,
+    }),
+  );
 
-  if (linear.isPending) return <Skeleton className="h-32 w-full max-w-lg" />
-  if (linear.error) return <p className="text-destructive text-sm">{linear.error.message}</p>
-  const { orgName, canManage } = linear.data
+  if (linear.isPending) return <Skeleton className="h-32 w-full max-w-lg" />;
+  if (linear.error)
+    return <p className="text-destructive text-sm">{linear.error.message}</p>;
+  const { orgName, canManage } = linear.data;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Linear</CardTitle>
         <CardDescription>
-          Show the Linear issue a pull request belongs to (matched from IDs like ENG-123 in the title, branch or description) while you review.
+          Show the Linear issue a pull request belongs to (matched from IDs like
+          ENG-123 in the title, branch or description) while you review.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -323,7 +425,10 @@ function LinearCard({ workspaceId }: { workspaceId: string }) {
                 size="sm"
                 variant="ghost"
                 pending={disconnect.isPending}
-                onClick={() => confirm("Stop showing Linear issues?") && disconnect.mutate({ workspaceId })}
+                onClick={() =>
+                  confirm("Stop showing Linear issues?") &&
+                  disconnect.mutate({ workspaceId })
+                }
               >
                 Disconnect
               </Button>
@@ -333,8 +438,8 @@ function LinearCard({ workspaceId }: { workspaceId: string }) {
           <form
             className="flex flex-wrap items-center gap-2"
             onSubmit={(e) => {
-              e.preventDefault()
-              connect.mutate({ workspaceId, apiKey: key })
+              e.preventDefault();
+              connect.mutate({ workspaceId, apiKey: key });
             }}
           >
             <Input
@@ -346,25 +451,35 @@ function LinearCard({ workspaceId }: { workspaceId: string }) {
               value={key}
               onChange={(e) => setKey(e.target.value)}
             />
-            <Button type="submit" pending={connect.isPending} disabled={key.trim().length < 10}>
+            <Button
+              type="submit"
+              pending={connect.isPending}
+              disabled={key.trim().length < 10}
+            >
               Connect
             </Button>
             <p className="text-muted-foreground w-full text-xs">
-              Create a personal API key in Linear under Settings → Security &amp; access. It&apos;s stored encrypted and only used to read issues.
+              Create a personal API key in Linear under Settings → Security
+              &amp; access. It&apos;s stored encrypted and only used to read
+              issues.
             </p>
           </form>
         ) : (
-          <p className="text-muted-foreground text-sm">Ask a workspace owner to connect Linear.</p>
+          <p className="text-muted-foreground text-sm">
+            Ask a workspace owner to connect Linear.
+          </p>
         )}
         {orgName && canManage && (
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <label htmlFor="linear-team">File new issues in</label>
-            <select
+            <ShadcnSelect
               id="linear-team"
               className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-lg border px-2"
               value={linear.data.teamId ?? ""}
               disabled={setTeam.isPending}
-              onChange={(e) => setTeam.mutate({ workspaceId, teamId: e.target.value || null })}
+              onChange={(e) =>
+                setTeam.mutate({ workspaceId, teamId: e.target.value || null })
+              }
             >
               <option value="">Don&apos;t file in Linear</option>
               {(teams.data ?? []).map((t) => (
@@ -372,44 +487,59 @@ function LinearCard({ workspaceId }: { workspaceId: string }) {
                   {t.name}
                 </option>
               ))}
-            </select>
-            <span className="text-muted-foreground text-xs">Adds an &ldquo;Also create in Linear&rdquo; option to New issue.</span>
+            </ShadcnSelect>
+            <span className="text-muted-foreground text-xs">
+              Adds an &ldquo;Also create in Linear&rdquo; option to New issue.
+            </span>
           </div>
         )}
         {(connect.error ?? disconnect.error ?? setTeam.error) && (
-          <p role="alert" className="text-destructive text-sm">{(connect.error ?? disconnect.error ?? setTeam.error)!.message}</p>
+          <p role="alert" className="text-destructive text-sm">
+            {(connect.error ?? disconnect.error ?? setTeam.error)!.message}
+          </p>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
-/** Daily sync health per repository for the last 90 days (ObsidianUI Status Bars), read from the job queue. */
+/** Daily sync health per repository for the last 90 days (shadcn sync history), read from the job queue. */
 function SyncHealthCard({ workspaceId }: { workspaceId: string }) {
-  const trpc = useTRPC()
-  const health = useQuery({ ...trpc.integration.syncHealth.queryOptions({ workspaceId }), retry: false })
-  if (health.isPending) return <Skeleton className="h-32 w-full" />
-  if (health.error || !health.data?.length) return null
-  const repos = health.data
+  const trpc = useTRPC();
+  const health = useQuery({
+    ...trpc.integration.syncHealth.queryOptions({ workspaceId }),
+    retry: false,
+  });
+  if (health.isPending) return <Skeleton className="h-32 w-full" />;
+  if (health.error || !health.data?.length) return null;
+  const repos = health.data;
   return (
     <Card>
       <CardHeader>
         <CardTitle>Sync health</CardTitle>
-        <CardDescription>How reliably pull requests sync from GitHub, day by day over the last 90 days.</CardDescription>
+        <CardDescription>
+          How reliably pull requests sync from GitHub, day by day over the last
+          90 days.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {repos.slice(0, 8).map((r) => (
-          <StatusBars key={r.repo} label={r.repo} days={r.days} compact={repos.length > 3} />
+          <StatusBars
+            key={r.repo}
+            label={r.repo}
+            days={r.days}
+            compact={repos.length > 3}
+          />
         ))}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function Integrations() {
-  const { workspace, isPending } = useWorkspace()
-  if (isPending) return null
-  if (!workspace) return <CreateWorkspace />
+  const { workspace, isPending } = useWorkspace();
+  if (isPending) return null;
+  if (!workspace) return <CreateWorkspace />;
   return (
     <Suspense>
       <div className="flex flex-col gap-4">
@@ -420,13 +550,16 @@ function Integrations() {
         <LinearCard workspaceId={workspace.id} />
       </div>
     </Suspense>
-  )
+  );
 }
 
 export default function Page() {
   return (
-    <AppShell title="Integrations" description="Connect GitHub to sync pull requests, Slack for the daily digest and Linear for issue context.">
+    <AppShell
+      title="Integrations"
+      description="Connect GitHub to sync pull requests, Slack for the daily digest and Linear for issue context."
+    >
       <Integrations />
     </AppShell>
-  )
+  );
 }

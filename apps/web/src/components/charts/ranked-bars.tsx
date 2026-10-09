@@ -1,47 +1,72 @@
-"use client"
-
-import { barX, defineChart } from "@tanstack/charts"
-import { Chart } from "@tanstack/charts/react"
-import { scaleBand } from "@tanstack/charts/scales/band"
-import { scaleLinear } from "@tanstack/charts/scales/linear"
-import { tooltip } from "@tanstack/charts/tooltip"
-import { useMemo } from "react"
-
-export type RankedRow = { name: string; value: number; note?: string }
-
-/** Horizontal bars, largest first (slowest repos, per-person wait, weekly reviewers). */
+"use client";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+export type RankedRow = { name: string; value: number; note?: string };
 export function RankedBars({
   rows,
   label,
   ariaLabel,
   format = (v) => String(v),
-  color = "#2D6E9E",
 }: {
-  rows: RankedRow[]
-  label: string
-  ariaLabel: string
-  format?: (v: number) => string
-  color?: string
+  rows: RankedRow[];
+  label: string;
+  ariaLabel: string;
+  format?: (v: number) => string;
+  color?: string;
 }) {
-  const ranked = useMemo(() => [...rows].sort((a, b) => b.value - a.value), [rows])
-  const definition = useMemo(
-    () =>
-      defineChart({
-        marks: [barX(ranked, { x: "value", y: "name", fill: color, inset: 2 })],
-        scales: {
-          y: { scale: () => scaleBand<string>().domain(ranked.map((r) => r.name)).padding(0.25) },
-          x: { scale: scaleLinear, nice: true, grid: true, axis: { label, ticks: { count: 4, format } } },
-        },
-        tooltip: {
-          use: tooltip,
-          format: (point) => `${point.datum.name}: ${format(point.datum.value)}${point.datum.note ? ` (${point.datum.note})` : ""}`,
-        },
-      }),
-    [ranked, label, format, color]
-  )
+  if (!rows.length)
+    return (
+      <p className="py-10 text-center text-sm text-muted-foreground">
+        No data yet
+      </p>
+    );
+  const ranked = [...rows].sort((a, b) => b.value - a.value);
   return (
-    <div className="anim-reveal">
-      <Chart definition={definition} height={Math.max(120, 44 + ranked.length * 30)} ariaLabel={ariaLabel} />
+    <div aria-label={ariaLabel}>
+      <ChartContainer
+        config={{ value: { label, color: "var(--chart-1)" } }}
+        className="w-full"
+        style={{ height: Math.max(160, rows.length * 40) }}
+      >
+        <BarChart accessibilityLayer layout="vertical" data={ranked}>
+          <CartesianGrid horizontal={false} />
+          <XAxis
+            type="number"
+            tickFormatter={format}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            type="category"
+            dataKey="name"
+            width={110}
+            axisLine={false}
+            tickLine={false}
+          />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                formatter={(value, name, item) => (
+                  <span>
+                    {format(Number(value))}
+                    {item.payload.note ? ` · ${item.payload.note}` : ""}
+                  </span>
+                )}
+              />
+            }
+          />
+          <Bar
+            dataKey="value"
+            fill="var(--color-value)"
+            radius={4}
+            isAnimationActive={false}
+          />
+        </BarChart>
+      </ChartContainer>
     </div>
-  )
+  );
 }
