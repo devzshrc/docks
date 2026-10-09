@@ -52,7 +52,7 @@ export function DisplayHeading({
   return (
     <div className={cn(align === "center" && "text-center", className)}>
       {eyebrow && (
-        <p className="mb-4 text-[15px] font-medium tracking-[-0.01em] text-[#166534]">
+        <p className="mb-4 text-[15px] font-medium tracking-[-0.01em] text-[#0369a1]">
           {eyebrow}
         </p>
       )}

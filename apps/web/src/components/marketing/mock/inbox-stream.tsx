@@ -26,20 +26,20 @@ export function InboxStream() {
   const visible = ITEMS.slice(0, shown).reverse();
 
   return (
-    <div ref={ref} role="img" aria-label="Docks inbox: review requests, failed checks, mentions, deadlines and merges in one list" className="w-full overflow-hidden rounded-[18px] bg-[#161616] text-[#f9fbff] shadow-[0_0_0_1px_rgb(0_0_0/0.9)]">
-      <div className="flex items-center justify-between border-b border-[#232323] px-4 py-3">
+    <div ref={ref} role="img" aria-label="Docks inbox: review requests, failed checks, mentions, deadlines and merges in one list" className="w-full overflow-hidden rounded-[18px] bg-(--mk-bg) text-(--mk-fg) shadow-[0_0_0_1px_var(--mk-line),0_24px_48px_-24px_rgb(0_0_0/0.18)]">
+      <div className="flex items-center justify-between border-b border-(--mk-border) px-4 py-3">
         <span className="flex items-center gap-2 text-[13.5px] font-medium">
           Inbox
           <motion.span
             key={allRead ? "read" : shown}
             initial={{ y: 6, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="inline-flex h-4 min-w-6 items-center justify-center rounded-full border-[0.5px] border-[#414141] bg-[#2a2a2a] px-1 text-[10.5px] text-[#cfcfcf]"
+            className="inline-flex h-4 min-w-6 items-center justify-center rounded-full border-[0.5px] border-(--mk-tagb) bg-(--mk-raise) px-1 text-[10.5px] text-(--mk-chip)"
           >
             {allRead ? 0 : shown}
           </motion.span>
         </span>
-        <span className={cn("flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] leading-none transition-colors duration-300", CONTROL, allRead ? "bg-[#1f3a2d] text-[#b1ebc5]" : "bg-[#1e1e1e] text-[#cfcfcf]")}>
+        <span className={cn("flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] leading-none transition-colors duration-300", CONTROL, allRead ? "bg-(--tag-green-bg) text-(--tag-green-text)" : "bg-(--mk-ctrl) text-(--mk-chip)")}>
           <RiCheckDoubleLine className="size-3" />
           {allRead ? "All caught up" : "Mark all read"}
         </span>
@@ -54,27 +54,27 @@ export function InboxStream() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.55, ease: EASE }}
-              className={cn("flex items-start gap-3 rounded-xl bg-[#1b1c1e] p-3", CARD)}
+              className={cn("flex items-start gap-3 rounded-xl bg-(--mk-card) p-3", CARD)}
             >
               <span className="relative mt-0.5">
-                {it.who ? <Face who={it.who} className="size-6 text-[8.5px]" /> : <span className="flex size-6 items-center justify-center rounded-full bg-[#2a2a2a]"><it.icon className={cn("size-3.5", it.tint)} /></span>}
+                {it.who ? <Face who={it.who} className="size-6 text-[8.5px]" /> : <span className="flex size-6 items-center justify-center rounded-full bg-(--mk-raise)"><it.icon className={cn("size-3.5", it.tint)} /></span>}
                 {it.who && (
-                  <span className="absolute -right-1 -bottom-1 flex size-3.5 items-center justify-center rounded-full bg-[#161616]">
+                  <span className="absolute -right-1 -bottom-1 flex size-3.5 items-center justify-center rounded-full bg-(--mk-bg)">
                     <it.icon className={cn("size-2.5", it.tint)} />
                   </span>
                 )}
               </span>
               <span className="grid min-w-0 flex-1 gap-1">
-                <span className="text-[12.5px] leading-snug text-[#d4d4d8] [&_b]:text-[#f9fbff]">{it.title}</span>
-                <span className="truncate text-[11px] text-[#676767]">{it.meta}</span>
-                {it.quote && <span className="mt-1 rounded-md border-l-2 border-[#393939] bg-[#232323] px-2 py-1.5 text-[11.5px] text-[#a4a4a4]">{it.quote}</span>}
+                <span className="text-[12.5px] leading-snug text-(--mk-text2) [&_b]:text-(--mk-fg)">{it.title}</span>
+                <span className="truncate text-[11px] text-(--mk-subtle)">{it.meta}</span>
+                {it.quote && <span className="mt-1 rounded-md border-l-2 border-(--mk-line) bg-(--mk-border) px-2 py-1.5 text-[11.5px] text-(--mk-soft)">{it.quote}</span>}
               </span>
               <span className={cn("mt-1.5 size-1.5 shrink-0 rounded-full bg-[#6d5bff] transition-opacity duration-500", allRead && "opacity-0")} />
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
-      <div className="flex items-center gap-2 border-t border-[#232323] px-4 py-2.5 text-[11px] text-[#676767]">
+      <div className="flex items-center gap-2 border-t border-(--mk-border) px-4 py-2.5 text-[11px] text-(--mk-subtle)">
         <Tag>j</Tag><Tag>k</Tag> move <Tag className="ml-2">e</Tag> done
       </div>
     </div>

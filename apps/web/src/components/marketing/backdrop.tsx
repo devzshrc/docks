@@ -25,10 +25,10 @@ export function HeroLight({ className }: { className?: string }) {
         className="absolute inset-0"
         style={{
           background: [
-            "radial-gradient(38% 34% at 14% 10%, rgb(214 232 214 / 0.55), transparent 72%)",
-            "radial-gradient(42% 40% at 86% 6%, rgb(200 218 200 / 0.55), transparent 70%)",
-            "radial-gradient(46% 42% at 50% 0%, rgb(22 101 52 / 0.32), transparent 72%)",
-            "radial-gradient(30% 26% at 62% 30%, rgb(134 190 140 / 0.28), transparent 72%)",
+            "radial-gradient(38% 34% at 14% 10%, rgb(214 234 245 / 0.55), transparent 72%)",
+            "radial-gradient(42% 40% at 86% 6%, rgb(200 225 240 / 0.55), transparent 70%)",
+            "radial-gradient(46% 42% at 50% 0%, rgb(3 105 161 / 0.32), transparent 72%)",
+            "radial-gradient(30% 26% at 62% 30%, rgb(125 200 235 / 0.28), transparent 72%)",
           ].join(","),
         }}
       />
@@ -56,10 +56,10 @@ export function NightLight({ className }: { className?: string }) {
         className="absolute inset-0"
         style={{
           background: [
-            "radial-gradient(60% 70% at 50% 125%, rgb(22 101 52 / 0.85), transparent 70%)",
-            "radial-gradient(40% 50% at 12% 115%, rgb(190 220 160 / 0.35), transparent 70%)",
-            "radial-gradient(38% 50% at 90% 110%, rgb(74 160 110 / 0.4), transparent 70%)",
-            "linear-gradient(180deg, #0a0f0c 0%, #0f1712 100%)",
+            "radial-gradient(60% 70% at 50% 125%, rgb(3 105 161 / 0.85), transparent 70%)",
+            "radial-gradient(40% 50% at 12% 115%, rgb(170 225 240 / 0.35), transparent 70%)",
+            "radial-gradient(38% 50% at 90% 110%, rgb(56 160 210 / 0.4), transparent 70%)",
+            "linear-gradient(180deg, #070d14 0%, #0b1620 100%)",
           ].join(","),
         }}
       />

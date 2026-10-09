@@ -16,10 +16,8 @@ import {
 } from "@remixicon/react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { useRouter } from "next/navigation";
-import { Instrument_Serif } from "next/font/google";
 import { useEffect, useRef } from "react";
 
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: "italic" });
 
 import { BrandIcon } from "@/components/brand-icons";
 import { useGithubStart } from "@/components/landing/use-github-start";
@@ -100,7 +98,7 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
           href="#order"
           className="mx-auto inline-flex items-center gap-2 rounded-full bg-white/70 py-1 pr-3 pl-1 text-[13px] text-[#55555b] shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_2px_rgb(0_0_0/0.04)] backdrop-blur transition-colors hover:text-[#111113]"
         >
-          <span className="rounded-full bg-[#166534] px-2 py-0.5 text-[11.5px] font-medium text-white">New</span>
+          <span className="rounded-full bg-[#0369a1] px-2 py-0.5 text-[11.5px] font-medium text-white">New</span>
           Guided review order for every pull request
           <RiArrowRightLine className="size-3.5" />
         </motion.a>
@@ -109,7 +107,7 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
           className="mx-auto mt-8 max-w-[15ch] text-[clamp(3.4rem,9.5vw,8rem)] leading-[0.92] font-semibold tracking-[-0.055em] text-balance"
         >
           <span className="block">Code review,</span>
-          <span className={`${serif.className} block pr-[0.06em] font-normal tracking-[-0.03em] text-[#166534] italic`}>without the wait.</span>
+          <span className="block text-[#0369a1]">without the wait.</span>
         </motion.h1>
         <motion.p {...intro(2)} className="mx-auto mt-8 max-w-[36rem] text-[17px] leading-relaxed text-[#55555b] md:text-[19px]">
           One queue for every pull request: who is waiting, what blocks the merge, and the order to read the change.
@@ -127,13 +125,13 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
       </div>
 
       <div ref={stage} className="relative mx-auto mt-16 max-w-[1280px] px-3 [perspective:1600px] md:mt-20 md:px-8">
-        <div aria-hidden className="pointer-events-none absolute inset-x-[8%] top-[12%] -z-10 h-[70%] rounded-[50%] bg-[radial-gradient(closest-side,rgb(22_101_52/0.45),rgb(134_190_140/0.2)_55%,transparent)] blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-[8%] top-[12%] -z-10 h-[70%] rounded-[50%] bg-[radial-gradient(closest-side,rgb(3_105_161/0.45),rgb(125_200_235/0.2)_55%,transparent)] blur-3xl" />
         <motion.div
           style={{ rotateX, scale, y }}
           initial={reduce ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.2, delay: 0.5, ease: EASE }}
-          className="origin-top rounded-[22px] bg-gradient-to-b from-white/70 to-white/30 p-1.5 shadow-[0_0_0_1px_rgb(255_255_255/0.6),0_0_0_2px_rgb(22_101_52/0.08),0_60px_120px_-30px_rgb(10_40_20/0.55),0_30px_60px_-30px_rgb(0_0_0/0.45)] backdrop-blur md:rounded-[30px] md:p-2.5"
+          className="origin-top rounded-[22px] bg-gradient-to-b from-white/70 to-white/30 p-1.5 shadow-[0_0_0_1px_rgb(255_255_255/0.6),0_0_0_2px_rgb(3_105_161/0.08),0_60px_120px_-30px_rgb(5_35_60/0.55),0_30px_60px_-30px_rgb(0_0_0/0.45)] backdrop-blur md:rounded-[30px] md:p-2.5"
         >
           <AppWindow className="md:rounded-[22px]" />
         </motion.div>
@@ -166,7 +164,7 @@ function Stage({ children, className }: { children: React.ReactNode; className?:
         className="absolute inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(60% 60% at 85% 0%, rgb(22 101 52 / 0.16), transparent 70%), radial-gradient(50% 60% at 8% 100%, rgb(190 220 160 / 0.1), transparent 70%), radial-gradient(70% 70% at 50% 50%, rgb(134 190 140 / 0.06), transparent 70%)",
+            "radial-gradient(60% 60% at 85% 0%, rgb(3 105 161 / 0.16), transparent 70%), radial-gradient(50% 60% at 8% 100%, rgb(170 225 240 / 0.1), transparent 70%), radial-gradient(70% 70% at 50% 50%, rgb(125 200 235 / 0.06), transparent 70%)",
         }}
       />
       <Grain opacity={0.05} className="-z-10" />
@@ -193,7 +191,7 @@ function InboxSection() {
           <ul className="mt-8 grid gap-4">
             {points.map((p) => (
               <li key={p} className="flex items-start gap-3 text-[15.5px] text-[#3f3f46]">
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#166534] text-white">
+                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#0369a1] text-white">
                   <RiCheckLine className="size-3" />
                 </span>
                 {p}
@@ -237,7 +235,7 @@ function OrderSection() {
         <div className="mt-16 grid gap-10 md:grid-cols-3 md:gap-8">
           {features.map((f, i) => (
             <Reveal key={f.title} delay={i * 0.08} className="border-t border-black/[0.08] pt-6">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-[#166534]/[0.08] text-[#166534] ring-1 ring-[#166534]/15 ring-inset"><f.icon className="size-[18px]" /></span>
+              <span className="flex size-9 items-center justify-center rounded-xl bg-[#0369a1]/[0.08] text-[#0369a1] ring-1 ring-[#0369a1]/15 ring-inset"><f.icon className="size-[18px]" /></span>
               <h3 className="mt-4 text-[17px] font-semibold tracking-[-0.02em]">{f.title}</h3>
               <p className="mt-2 text-[15px] leading-relaxed text-[#6b6b70]">{f.body}</p>
             </Reveal>
@@ -268,7 +266,7 @@ function WorkflowSection() {
       <div className="mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
         {features.map((f, i) => (
           <Reveal key={f.title} delay={i * 0.06} className="border-t border-black/[0.08] pt-6">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-[#166534]/[0.08] text-[#166534] ring-1 ring-[#166534]/15 ring-inset"><f.icon className="size-[18px]" /></span>
+            <span className="flex size-9 items-center justify-center rounded-xl bg-[#0369a1]/[0.08] text-[#0369a1] ring-1 ring-[#0369a1]/15 ring-inset"><f.icon className="size-[18px]" /></span>
             <h3 className="mt-4 text-[17px] font-semibold tracking-[-0.02em]">{f.title}</h3>
             <p className="mt-2 text-[15px] leading-relaxed text-[#6b6b70]">{f.body}</p>
           </Reveal>
