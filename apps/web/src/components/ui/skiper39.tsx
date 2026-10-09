@@ -15,6 +15,8 @@ export type CrowdCastMember = {
   call?: boolean;
   /** Optional individual portrait in place of the shared sprite cell. */
   imageSrc?: string;
+  /** Always included, with extra chances to speak. */
+  featured?: boolean;
 };
 
 interface CrowdCanvasProps {
@@ -37,6 +39,7 @@ type Peep = {
   anchorY: number;
   scaleX: number;
   speed: number;
+  sway: number;
   walk: gsap.core.Timeline | null;
   cast?: CrowdCastMember;
   speech?: { start: number; end: number };
@@ -152,7 +155,8 @@ export function CrowdCanvas({
             (other) => Math.abs(centerX(other) - centerX(peep)) > 320,
           ),
       );
-      const next = candidates[Math.floor(Math.random() * candidates.length)];
+      const weighted = candidates.flatMap((peep) => peep.cast?.featured ? [peep, peep, peep] : [peep]);
+      const next = weighted[Math.floor(Math.random() * weighted.length)];
       if (next) startSpeech(next, time, SPEECH_SECONDS);
     };
 
@@ -281,13 +285,19 @@ export function CrowdCanvas({
       ctx.save();
       ctx.scale(pixelRatio, pixelRatio);
       // Named people stand in front, so each tag sits on its own character.
-      crowd.sort((a, b) => Number(!!a.cast) - Number(!!b.cast) || a.anchorY - b.anchorY);
+      crowd.sort((a, b) =>
+        Number(!!a.cast?.featured) - Number(!!b.cast?.featured) ||
+        Number(!!a.cast) - Number(!!b.cast) || a.anchorY - b.anchorY,
+      );
       for (const peep of crowd) {
         const portrait = peep.cast && portraits.get(peep.cast.cell);
         const customPortrait = portrait?.complete && portrait.naturalWidth ? portrait : null;
         ctx.save();
         ctx.translate(peep.x, peep.y);
         ctx.scale(peep.scaleX, 1);
+        ctx.translate(width / 2, height);
+        ctx.rotate(peep.sway);
+        ctx.translate(-width / 2, -height);
         ctx.drawImage(
           customPortrait ?? img,
           customPortrait ? 0 : peep.sourceX,
@@ -381,7 +391,10 @@ export function CrowdCanvas({
       if (event.pointerType === "mouse") setHovered(pick(event));
     };
     const onPointerDown = (event: PointerEvent) => {
-      if (event.pointerType !== "mouse") setHovered(pick(event));
+      if (event.pointerType !== "mouse") {
+        const peep = pick(event);
+        setHovered(peep === hovered ? null : peep);
+      }
     };
     const onPointerLeave = (event: PointerEvent) => {
       if (event.pointerType === "mouse") setHovered(null);
@@ -392,7 +405,7 @@ export function CrowdCanvas({
       stop();
       stage.width = canvas.clientWidth;
       stage.height = canvas.clientHeight;
-      pixelRatio = window.devicePixelRatio || 1;
+      pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(stage.width * pixelRatio);
       canvas.height = Math.round(stage.height * pixelRatio);
       fontFamily = getComputedStyle(canvas).fontFamily || fontFamily;
@@ -407,15 +420,23 @@ export function CrowdCanvas({
       // A relaxed, consistent screen-space pace at every viewport width.
       const duration = (stage.width + width) / (32 * scale);
 
-      const count = Math.max(14, Math.round(stage.width / 20));
+      const count = stage.width < 640
+        ? Math.max(6, Math.round(stage.width / 48))
+        : Math.max(14, Math.round(stage.width / 20));
       // Keep name tags to about half the crowd on narrow screens.
       const castCells = [...castByCell.keys()]
         .filter((cell) => cell < rows * cols && !skipped.has(cell))
         .sort(() => Math.random() - 0.5)
+        .sort((a, b) => Number(!!castByCell.get(b)?.featured) - Number(!!castByCell.get(a)?.featured))
         .slice(0, Math.ceil(count * 0.45));
       const extras = Array.from({ length: rows * cols }, (_, cell) => cell)
         .filter((cell) => !skipped.has(cell) && !castCells.includes(cell))
         .sort(() => Math.random() - 0.5);
+      const featuredIndex = castCells.findIndex((cell) => castByCell.get(cell)?.featured);
+      if (featuredIndex >= 0) {
+        const [featured] = castCells.splice(featuredIndex, 1);
+        castCells.splice(Math.floor(castCells.length / 2), 0, featured);
+      }
       const cells = [...castCells, ...extras].slice(0, count);
 
       const startWalk = (peep: Peep) => {
@@ -430,7 +451,7 @@ export function CrowdCanvas({
         peep.scaleX = direction;
         peep.speech = undefined;
 
-        const bobHeight = randomRange(1, 3) * scale;
+        const bobHeight = (peep.cast?.featured ? 3.5 : randomRange(1, 3)) * scale;
         const stepLength = randomRange(17, 21) * scale;
         const stepPhase = randomRange(0, Math.PI * 2);
         const walk = gsap.timeline({
@@ -439,6 +460,7 @@ export function CrowdCanvas({
             // Tie the gait to distance so slowing or pausing also slows the bob.
             const phase = Math.abs(peep.x - startX) / stepLength * Math.PI * 2 + stepPhase;
             peep.y = startY - (motionPreference.matches ? 0 : bobHeight * (1 - Math.cos(phase)) / 2);
+            peep.sway = motionPreference.matches ? 0 : Math.sin(phase / 2) * (peep.cast?.featured ? 0.018 : 0.007);
           },
         });
         walk.timeScale(peep.speed);
@@ -462,6 +484,7 @@ export function CrowdCanvas({
           anchorY: 0,
           scaleX: 1,
           speed: randomRange(0.85, 1.15),
+          sway: 0,
           walk: null,
           cast: castCells.includes(cell) ? castByCell.get(cell) : undefined,
         };
@@ -562,14 +585,14 @@ export function Skiper39({
   return (
     <div
       className={cx(
-        "relative isolate min-h-[calc(100svh-4rem)] overflow-hidden bg-black text-white",
+        "relative isolate md:min-h-[calc(100svh-4rem)] overflow-hidden bg-black text-white",
         className,
       )}
     >
       {backdrop}
       <div
         className={cx(
-          "relative z-10 mx-auto flex max-w-4xl flex-col items-center gap-6 px-5 pt-16 pb-16 text-center md:px-8 md:pt-20",
+          "relative z-10 mx-auto flex max-w-4xl flex-col items-center gap-5 px-5 pt-8 pb-12 text-center sm:gap-6 sm:pt-16 md:px-8 md:pt-20",
           crowd && "pb-4 md:pb-6",
         )}
       >

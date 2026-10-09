@@ -123,9 +123,10 @@ function SiteNav({ dark }: { dark: boolean }) {
         </div>
         <button
           type="button"
-          className={cn("ml-auto flex size-10 items-center justify-center rounded-full md:hidden", dark && "text-white")}
+          className={cn("ms-auto flex size-11 items-center justify-center rounded-full md:hidden", dark && "text-white")}
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
+          aria-controls="mobile-navigation"
           onClick={() => setOpen((o) => !o)}
         >
           {open ? <RiCloseLine className="size-5" /> : <RiMenuLine className="size-5" />}
@@ -134,6 +135,7 @@ function SiteNav({ dark }: { dark: boolean }) {
       <AnimatePresence>
         {open && (
           <motion.nav
+            id="mobile-navigation"
             aria-label="Mobile"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
@@ -195,8 +197,8 @@ const FOOTER = [
 function SiteFooter({ dark }: { dark: boolean }) {
   return (
     <footer className={cn("relative border-t", dark ? "border-white/10" : "border-black/[0.06]")}>
-      <div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-16 md:grid-cols-[1.4fr_repeat(3,1fr)] md:px-8">
-        <div className="flex flex-col gap-4">
+      <div className="mx-auto grid max-w-[1200px] grid-cols-2 gap-8 px-5 py-12 md:gap-12 md:py-16 md:grid-cols-[1.4fr_repeat(3,1fr)] md:px-8">
+        <div className="col-span-2 flex flex-col gap-4 md:col-span-1">
           <Link href="/" className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.03em]">
             <AppIcon className="size-7" />
             Docks
