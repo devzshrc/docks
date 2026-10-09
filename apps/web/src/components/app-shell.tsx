@@ -127,6 +127,12 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
   const trpc = useTRPC()
   const { workspace } = useWorkspace()
   const settings = useWorkspaceSettings(workspace?.id)
+  const billing = useQuery({
+    ...trpc.billing.status.queryOptions({ workspaceId: workspace?.id ?? "" }),
+    enabled: Boolean(workspace),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  })
   const inSettings = pathname.startsWith("/settings")
   const slots = useShellSlotsState()
 
@@ -241,6 +247,7 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
             <SidebarTrigger className="-ml-1.5" />
             <h1 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">{inSettings ? "Settings" : titleFor(pathname, title)}</h1>
             <div className="flex items-center gap-2">
+              {billing.data && <Link href="/settings/billing" aria-label={`Current plan: ${billing.data.plan === "team" ? "Team" : "Free"}. View billing`} className="rounded-full border bg-muted/40 px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted">{billing.data.plan === "team" ? "Team" : "Free"} plan</Link>}
               {actions}
               <Button
                 variant="outline"
