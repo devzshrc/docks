@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "tsx --test src/lib/*.test.ts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "deploy": "NEXT_PUBLIC_SERVER_URL=https://api.devzshrc.in opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "clean": "rm -rf .next .open-next"
   },
   "dependencies": {
