@@ -1,6 +1,5 @@
 "use client"
 
-import { AppIcon } from "@/components/app-icon"
 
 import Link from "next/link"
 import * as React from "react"
@@ -72,8 +71,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     return (
       <Card {...props}>
         <CardHeader>
-          <AppIcon className="mb-3 size-10" />
-          <CardTitle>Check your email</CardTitle>
+          <CardTitle className="text-xl font-semibold tracking-[-0.03em]">Check your email</CardTitle>
           <CardDescription>
             We sent a confirmation link to {sentTo}. Open it to finish creating your account.
           </CardDescription>
@@ -85,7 +83,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   return (
     <Card {...props}>
       <CardHeader>
-        <CardTitle>Create an account</CardTitle>
+        <CardTitle className="text-xl font-semibold tracking-[-0.03em]">Create an account</CardTitle>
         <CardDescription>
           Enter your information below to create your account
         </CardDescription>
@@ -142,7 +140,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
               />
             </Field>
             <Field>
-              <Button type="submit" disabled={pending}>
+              <Button type="submit" size="lg" disabled={pending}>
                 {pending ? "Creating…" : "Create Account"}
               </Button>
               {error && <FieldError>{error}</FieldError>}

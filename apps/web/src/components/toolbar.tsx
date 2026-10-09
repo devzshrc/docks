@@ -3,7 +3,13 @@
 import { Search01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-import { Select, SelectItem } from "@/components/ui-compat/controls";
+import {
+  Select as CoreSelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +46,7 @@ export function ToolbarSearch({
       />
       <Input
         type="search"
-        className="h-8 rounded-full pl-8 text-xs"
+        className="h-[30px] rounded-full border-0 pl-8 text-xs shadow-control"
         {...props}
       />
     </div>
@@ -49,7 +55,7 @@ export function ToolbarSearch({
 
 const ALL = "__all__";
 
-/** "Label | Value ▾" filter pill on ReUI's dropdown menu. An empty string value ("any") is mapped to a sentinel because radio items need a value. */
+/** "Label | Value ▾" filter pill, as in the CRM reference. An empty string value ("any") maps to a sentinel because select items need a value. */
 export function FilterSelect({
   label,
   value,
@@ -64,29 +70,33 @@ export function FilterSelect({
   className?: string;
 }) {
   return (
-    <Select
-      aria-label={label}
-      size="sm"
-      selectedKey={value || ALL}
-      onSelectionChange={(key) => onChange(key === ALL ? "" : String(key))}
-      className={className}
-      renderValue={({ selectedText }) => (
-        <span className="flex items-center gap-2">
-          <span className="text-text-secondary">{label}</span>
-          <span className="text-text-primary">{selectedText}</span>
-        </span>
-      )}
+    <CoreSelect
+      value={value || ALL}
+      onValueChange={(key) => onChange(key === ALL ? "" : key)}
     >
-      {options.map((option) => (
-        <SelectItem
-          key={option.value || ALL}
-          id={option.value || ALL}
-          textValue={option.label}
-        >
-          {option.label}
-        </SelectItem>
-      ))}
-    </Select>
+      <SelectTrigger
+        size="sm"
+        aria-label={label}
+        className={cn(
+          "h-[30px] gap-0 py-0 pr-2.5 pl-0 text-xs data-[size=sm]:h-[30px]",
+          className,
+        )}
+      >
+        <span className="text-subtle border-line-strong flex h-full items-center border-r pr-2 pl-3">
+          {label}
+        </span>
+        <span className="flex items-center pr-1.5 pl-2 font-medium">
+          <SelectValue />
+        </span>
+      </SelectTrigger>
+      <SelectContent position="popper" align="start" className="min-w-40">
+        {options.map((option) => (
+          <SelectItem key={option.value || ALL} value={option.value || ALL}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </CoreSelect>
   );
 }
 
@@ -104,14 +114,13 @@ export function ToggleChip({
 }) {
   return (
     <Button
-      variant={on ? "ghost" : "outline"}
+      variant={on ? "secondary" : "outline"}
       size="sm"
       aria-pressed={on}
       onClick={() => onChange(!on)}
       className={cn(
-        "h-8 rounded-full px-3 font-medium",
-        on &&
-          "bg-primary/15 text-primary-text hover:bg-primary/20 hover:text-primary-text",
+        "font-medium",
+        !on && "text-muted-foreground font-normal",
       )}
     >
       {label}
@@ -119,7 +128,7 @@ export function ToggleChip({
         <span
           className={cn(
             "tabular-nums",
-            on ? "text-primary-text/80" : "text-text-3",
+            on ? "text-soft" : "text-subtle",
           )}
         >
           {count}

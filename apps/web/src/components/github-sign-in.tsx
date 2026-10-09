@@ -43,6 +43,8 @@ export function GitHubSignIn({ label = "Continue with GitHub" }: { label?: strin
   return (
     <div className="space-y-3">
       <Button
+        variant="outline"
+        size="lg"
         type="button"
         className="h-10 w-full"
         pending={pending}

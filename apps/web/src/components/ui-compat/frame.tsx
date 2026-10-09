@@ -7,6 +7,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 export function Frame({
   spacing,
   stacked,
@@ -19,7 +20,12 @@ export function Frame({
 }) {
   return <Card {...props} />;
 }
-export const FrameHeader = CardHeader;
+export function FrameHeader({
+  className,
+  ...props
+}: ComponentProps<typeof CardHeader>) {
+  return <CardHeader className={cn("flex flex-col", className)} {...props} />;
+}
 export const FrameTitle = CardTitle;
 export const FrameDescription = CardDescription;
 export const FramePanel = CardContent;

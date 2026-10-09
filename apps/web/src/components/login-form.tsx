@@ -1,7 +1,6 @@
 "use client";
 import { Button as ShadcnButton } from "@/components/ui/button";
 
-import { AppIcon } from "@/components/app-icon";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -71,10 +70,9 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
+      <Card className="py-7 [&>[data-slot=card-content]]:px-7 [&>[data-slot=card-header]]:px-7">
         <CardHeader>
-          <AppIcon className="mb-3 size-10" />
-          <CardTitle>Welcome back</CardTitle>
+          <CardTitle className="text-xl font-semibold tracking-[-0.03em]">Welcome back</CardTitle>
           <CardDescription>Sign in to keep reviewing.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -111,7 +109,7 @@ export function LoginForm({
                 />
               </Field>
               <Field>
-                <Button type="submit" disabled={pending}>
+                <Button type="submit" size="lg" disabled={pending}>
                   {pending ? "Logging in…" : "Login"}
                 </Button>
                 {error && <FieldError>{error}</FieldError>}

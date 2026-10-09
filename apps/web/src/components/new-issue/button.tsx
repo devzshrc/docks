@@ -11,10 +11,10 @@ export function NewIssueButton() {
   const { open, canCreate } = useNewIssue()
   if (!canCreate) return null
   return (
-    <Button variant="default" onClick={() => open({ source: "board" })} className="gap-1.5">
+    <Button variant="default" size="sm" onClick={() => open({ source: "board" })}>
       <HugeiconsIcon icon={PlusSignIcon} size={12} aria-hidden />
       New issue
-      <kbd className="hidden rounded bg-white/20 px-1 text-[10px] sm:inline">C</kbd>
+      <kbd className="hidden rounded-[4px] bg-white/15 px-1 py-0.5 text-[10px] leading-none sm:inline">C</kbd>
     </Button>
   )
 }

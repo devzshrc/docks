@@ -1,4 +1,4 @@
-import { AppIcon } from "@/components/app-icon"
+import { AuthStage } from "@/components/auth-stage"
 import {
   Card,
   CardContent,
@@ -18,15 +18,15 @@ export function AuthCard({
   children?: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <Card data-auth className="w-full max-w-[380px]">
+    <AuthStage>
+      <Card data-auth className="w-full py-7 [&>[data-slot=card-content]]:px-7 [&>[data-slot=card-header]]:px-7">
         <CardHeader>
-          <AppIcon className="mb-3 size-10" />
-          <CardTitle>{title}</CardTitle>
+          
+          <CardTitle className="text-xl font-semibold tracking-[-0.03em]">{title}</CardTitle>
           {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>
         {children && <CardContent>{children}</CardContent>}
       </Card>
-    </div>
+    </AuthStage>
   )
 }
