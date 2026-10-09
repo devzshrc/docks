@@ -56,10 +56,10 @@ export function NightLight({ className }: { className?: string }) {
         className="absolute inset-0"
         style={{
           background: [
-            "radial-gradient(60% 70% at 50% 125%, rgb(3 105 161 / 0.85), transparent 70%)",
-            "radial-gradient(40% 50% at 12% 115%, rgb(170 225 240 / 0.35), transparent 70%)",
-            "radial-gradient(38% 50% at 90% 110%, rgb(56 160 210 / 0.4), transparent 70%)",
-            "linear-gradient(180deg, #070d14 0%, #0b1620 100%)",
+            "radial-gradient(60% 70% at 50% 125%, rgb(3 105 161 / 0.45), transparent 70%)",
+            "radial-gradient(40% 50% at 12% 115%, rgb(170 225 240 / 0.14), transparent 70%)",
+            "radial-gradient(38% 50% at 90% 110%, rgb(56 160 210 / 0.16), transparent 70%)",
+            "linear-gradient(180deg, #000000 0%, #030507 100%)",
           ].join(","),
         }}
       />

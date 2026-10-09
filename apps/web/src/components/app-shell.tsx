@@ -53,7 +53,6 @@ import {
   ShellSlotsContext,
   useShellSlotsState,
 } from "@/components/shell-slots";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace";
 import { cn } from "@/lib/utils";
@@ -439,9 +438,6 @@ function ShellFrame({
                     )}
                   </Link>
                 </Button>
-                <div className="hidden sm:contents">
-                  <ThemeToggle />
-                </div>
                 <NewIssueButton />
                 <UserMenu />
               </div>

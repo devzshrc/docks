@@ -14,14 +14,14 @@ type Node = { x: number; y: number; side: "left" | "right"; icon: React.ReactNod
 
 const NODES: Node[] = [
   { x: 4, y: 30, side: "left", icon: <span className="flex size-8 items-center justify-center rounded-[10px] bg-[#111113] text-white"><RiGithubFill className="size-[18px]" /></span>, title: "Pull request opened", sub: "api #418 · +158 −6" },
-  { x: 4, y: 70, side: "left", icon: <span className="flex size-8 items-center justify-center rounded-[10px] bg-[#e8f8ee] text-[#16a34a]"><RiCheckboxCircleFill className="size-[18px]" /></span>, title: "Checks passed", sub: "4 of 4 green" },
+  { x: 4, y: 70, side: "left", icon: <span className="flex size-8 items-center justify-center rounded-[10px] bg-[#173323] text-[#86efac]"><RiCheckboxCircleFill className="size-[18px]" /></span>, title: "Checks passed", sub: "4 of 4 green" },
   { x: 78, y: 22, side: "right", icon: <Face who="mei" className="size-8 text-[10px]" />, title: "Mei Chen", sub: "Code owner for auth" },
   { x: 78, y: 50, side: "right", icon: <span className="flex size-8 items-center justify-center rounded-[10px] bg-[#4a154b] text-white"><RiSlackFill className="size-[18px]" /></span>, title: "#reviews", sub: "Due in 4 work hours" },
   { x: 78, y: 78, side: "right", icon: <span className="flex size-8 items-center justify-center rounded-[10px] bg-[#5e6ad2] text-white"><RiTaskLine className="size-[18px]" /></span>, title: "Linear ENG-212", sub: "Linked to the PR" },
 ];
 
 const PATHS = [
-  { d: "M240,126 C345,126 345,210 450,210", color: "#111113", delay: 0 },
+  { d: "M240,126 C345,126 345,210 450,210", color: "#e4e4e7", delay: 0 },
   { d: "M240,294 C345,294 345,210 450,210", color: "#16a34a", delay: 1.1 },
   { d: "M550,210 C665,210 665,92 780,92", color: "#0369a1", delay: 0.5 },
   { d: "M550,210 L780,210", color: "#e01e5a", delay: 1.4 },
@@ -30,11 +30,11 @@ const PATHS = [
 
 function NodeCard({ node, className }: { node: Node; className?: string }) {
   return (
-    <div className={cn("flex w-[200px] items-center gap-3 rounded-2xl bg-white p-2.5 pr-3 shadow-[0_1px_2px_rgb(0_0_0/0.06),0_10px_30px_-12px_rgb(0_0_0/0.18),0_0_0_1px_rgb(0_0_0/0.05)]", className)}>
+    <div className={cn("flex w-[200px] items-center gap-3 rounded-2xl border border-white/10 bg-[#151515] p-2.5 pr-3 text-white shadow-[0_10px_30px_-12px_rgb(0_0_0/0.55)]", className)}>
       {node.icon}
       <span className="grid min-w-0 gap-0.5">
         <span className="truncate text-[13.5px] leading-tight font-medium tracking-[-0.01em]">{node.title}</span>
-        <span className="flex items-center gap-1 truncate text-[11.5px] text-[#6b6b70]">
+        <span className="flex items-center gap-1 truncate text-[11.5px] text-white/50">
           <span className="size-1.5 shrink-0 rounded-full bg-[#22c55e]" />
           {node.sub}
         </span>
@@ -65,7 +65,7 @@ export function FlowDiagram() {
             <g key={i}>
               <motion.path
                 d={p.d}
-                stroke="#cfe3ef"
+                stroke="rgb(255 255 255 / 0.16)"
                 strokeWidth="1.5"
                 initial={reduce ? false : { pathLength: 0 }}
                 whileInView={{ pathLength: 1 }}
@@ -104,7 +104,7 @@ export function FlowDiagram() {
                 transition={{ duration: 2.6, delay: i * 1.3, repeat: Infinity, ease: "easeOut" }}
               />
             ))}
-            <span className="absolute inset-0 rounded-[32px] bg-white shadow-[0_0_0_1px_rgb(3_105_161/0.12),0_24px_50px_-12px_rgb(3_105_161/0.55)]" />
+            <span className="absolute inset-0 rounded-[32px] bg-[#101010] shadow-[0_0_0_1px_rgb(255_255_255/0.1),0_24px_50px_-12px_rgb(3_105_161/0.3)]" />
             <AppIcon className="relative size-[76px]" />
           </span>
           <span className="flex items-center gap-2 rounded-full bg-[#0369a1] px-3 py-1.5 text-[11.5px] font-medium tracking-[0.02em] text-white">
