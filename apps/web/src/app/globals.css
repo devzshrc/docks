@@ -328,19 +328,6 @@
   --ease-smooth-in-out: cubic-bezier(0.7, 0, 0, 1);
 }
 @layer base {
-  /* Product surfaces stay square; buttons retain their own corner styles, including linked buttons. */
-  *:not(:where(button, [role="button"], [data-slot="button"], input[type="button"], input[type="submit"], input[type="reset"])),
-  *::before,
-  *::after,
-  ::file-selector-button {
-    border-radius: 0 !important;
-  }
-  input::-webkit-slider-thumb {
-    border-radius: 0 !important;
-  }
-  input::-moz-range-thumb {
-    border-radius: 0 !important;
-  }
   * {
     @apply border-border outline-ring/50;
   }

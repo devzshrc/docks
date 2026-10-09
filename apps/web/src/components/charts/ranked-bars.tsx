@@ -67,7 +67,7 @@ export function RankedBars({
           <Bar
             dataKey="value"
             fill="var(--color-value)"
-            radius={0}
+            radius={4}
             isAnimationActive={false}
           />
         </BarChart>
