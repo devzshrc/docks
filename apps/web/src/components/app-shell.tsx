@@ -197,7 +197,7 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
               <BrandMark />
               <span className="grid leading-tight">
                 <span className="text-sm font-medium">Docks</span>
-                <span className="text-muted-foreground truncate text-xs">{workspace?.name ?? "Code review"}</span>
+                <span className="text-muted-foreground truncate text-xs">Code review</span>
               </span>
             </Link>
           </SidebarHeader>
