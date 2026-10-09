@@ -26,13 +26,14 @@ export function BentoCard({
     <div
       className={cn(
         "group/bento relative flex flex-col overflow-hidden rounded-[28px] p-7 md:p-8",
-        tone === "light" ? "bg-[#f4f4f5]" : tone === "brand" ? "bg-[radial-gradient(120%_90%_at_100%_0%,#7a5cff_0%,#4124fb_45%,#2a14b8_100%)] text-white" : "bg-[#111113] text-white",
+        tone === "light" ? "bg-[#f4f4f5]" : tone === "brand" ? "bg-[#141210] text-white" : "bg-[#111113] text-white",
         className,
       )}
     >
-      <h3 className="text-[19px] leading-tight font-semibold tracking-[-0.025em] text-balance">{title}</h3>
-      <p className={cn("mt-2 max-w-[22rem] text-[15px] leading-relaxed", tone === "light" ? "text-[#6b6b70]" : "text-white/65")}>{body}</p>
-      {children && <div className="mt-8 flex flex-1 items-end">{children}</div>}
+      {tone === "brand" && <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(90% 70% at 100% 0%, rgb(232 89 12 / 0.4), transparent 60%)" }} />}
+      <h3 className="relative text-[19px] leading-tight font-semibold tracking-[-0.025em] text-balance">{title}</h3>
+      <p className={cn("relative mt-2 max-w-[22rem] text-[15px] leading-relaxed", tone === "light" ? "text-[#6b6b70]" : "text-white/65")}>{body}</p>
+      {children && <div className="relative mt-8 flex flex-1 items-end">{children}</div>}
     </div>
   );
 }
@@ -64,7 +65,7 @@ export function DeadlineBoard() {
                 </motion.span>
               </div>
               <span className="h-1.5 overflow-hidden rounded-full bg-[#ececee]">
-                <motion.span className={cn("block h-full rounded-full", risky ? "bg-[#f59e0b]" : "bg-[#4124fb]")} animate={{ width: `${pct}%` }} transition={{ duration: 1, ease: EASE }} />
+                <motion.span className={cn("block h-full rounded-full", risky ? "bg-[#f59e0b]" : "bg-[#e8590c]")} animate={{ width: `${pct}%` }} transition={{ duration: 1, ease: EASE }} />
               </span>
             </div>
             <AnimatePresence>
@@ -102,7 +103,7 @@ export function ReleaseRing() {
       <span className="relative size-[88px] shrink-0">
         <svg viewBox="0 0 80 80" className="size-full -rotate-90">
           <circle cx="40" cy="40" r={r} stroke="#e4e4e7" strokeWidth="6" fill="none" />
-          <motion.circle cx="40" cy="40" r={r} stroke={pct === 1 ? "#16a34a" : "#4124fb"} strokeWidth="6" strokeLinecap="round" fill="none" strokeDasharray={c} animate={{ strokeDashoffset: c * (1 - pct) }} transition={{ duration: 0.8, ease: EASE }} />
+          <motion.circle cx="40" cy="40" r={r} stroke={pct === 1 ? "#16a34a" : "#e8590c"} strokeWidth="6" strokeLinecap="round" fill="none" strokeDasharray={c} animate={{ strokeDashoffset: c * (1 - pct) }} transition={{ duration: 0.8, ease: EASE }} />
         </svg>
         <span className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-[19px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{ready}/4</span>
@@ -173,7 +174,7 @@ export function InsightBars() {
         {BARS.map((h, i) => (
           <motion.span
             key={i}
-            className={cn("flex-1 rounded-t-[6px]", i === BARS.length - 1 ? "bg-[#4124fb]" : "bg-[#4124fb]/20")}
+            className={cn("flex-1 rounded-t-[6px]", i === BARS.length - 1 ? "bg-[#e8590c]" : "bg-[#e8590c]/20")}
             initial={{ height: 0 }}
             whileInView={{ height: `${h + 30}%` }}
             viewport={{ once: true }}

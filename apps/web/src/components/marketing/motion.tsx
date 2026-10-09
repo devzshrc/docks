@@ -52,14 +52,14 @@ export function DisplayHeading({
   return (
     <div className={cn(align === "center" && "text-center", className)}>
       {eyebrow && (
-        <p className="mb-4 text-[15px] font-medium tracking-[-0.01em] text-[#4124fb]">
+        <p className="mb-4 text-[15px] font-medium tracking-[-0.01em] text-[#e8590c]">
           {eyebrow}
         </p>
       )}
       <Tag className="text-[clamp(2.4rem,5.4vw,4.25rem)] leading-[1.02] font-semibold tracking-[-0.045em] text-balance">
         <span className="block">{title}</span>
         {muted && (
-          <span className="block bg-gradient-to-r from-[#7d6ff0] via-[#9d8cf5] to-[#c3a6f2] bg-clip-text pb-[0.06em] text-transparent">
+          <span className="block bg-gradient-to-r from-[#a8a29e] via-[#b8b2ad] to-[#d6d3d1] bg-clip-text pb-[0.06em] text-transparent">
             {muted}
           </span>
         )}
