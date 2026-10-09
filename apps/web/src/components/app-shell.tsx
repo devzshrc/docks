@@ -48,6 +48,7 @@ import {
   TabsTrigger as Tab,
 } from "@/components/ui/tabs";
 import { AppIcon } from "@/components/app-icon";
+import { HueIcon, type Hue } from "@/components/ui/empty-preview";
 import {
   ShellSlotsContext,
   useShellSlotsState,
@@ -63,6 +64,17 @@ const WIDTH = {
   default: "max-w-[1200px]", // every dashboard and settings page shares one left edge
   wide: "max-w-[1360px]", // board and code review
 } as const;
+
+const SECTION: Record<string, { icon: typeof RiInboxLine; hue: Hue }> = {
+  inbox: { icon: RiInboxLine, hue: "blue" },
+  reviews: { icon: RiGitPullRequestLine, hue: "indigo" },
+  issues: { icon: RiBugLine, hue: "green" },
+  deadlines: { icon: RiCalendarScheduleLine, hue: "amber" },
+  releases: { icon: RiRocketLine, hue: "pink" },
+  insights: { icon: RiBarChartBoxLine, hue: "teal" },
+  team: { icon: RiTeamLine, hue: "orange" },
+  settings: { icon: RiSettings3Line, hue: "purple" },
+};
 
 const SETTINGS_TABS = [
   { value: "/settings/workspace", label: "Workspace" },
@@ -210,31 +222,33 @@ function ShellFrame({
       icon: typeof RiInboxLine;
       href: string;
       count: number;
+      tint: string;
     }[];
   }[] = [
     {
       items: [
-        { id: "inbox", label: "Inbox", icon: RiInboxLine, href: "/inbox", count: inbox.data ?? 0 },
-        { id: "reviews", label: "Reviews", icon: RiGitPullRequestLine, href: "/review", count: waitingCount },
-        { id: "issues", label: "Issues", icon: RiBugLine, href: "/issues", count: triageCount },
+        { id: "inbox", label: "Inbox", icon: RiInboxLine, href: "/inbox", count: inbox.data ?? 0, tint: "text-hue-blue!" },
+        { id: "reviews", label: "Reviews", icon: RiGitPullRequestLine, href: "/review", count: waitingCount, tint: "text-hue-indigo!" },
+        { id: "issues", label: "Issues", icon: RiBugLine, href: "/issues", count: triageCount, tint: "text-hue-green!" },
       ],
     },
     {
       title: "Planning",
       items: [
-        { id: "deadlines", label: "Deadlines", icon: RiCalendarScheduleLine, href: "/deadlines", count: 0 },
-        { id: "releases", label: "Releases", icon: RiRocketLine, href: "/releases", count: 0 },
+        { id: "deadlines", label: "Deadlines", icon: RiCalendarScheduleLine, href: "/deadlines", count: 0, tint: "text-hue-amber!" },
+        { id: "releases", label: "Releases", icon: RiRocketLine, href: "/releases", count: 0, tint: "text-hue-pink!" },
       ],
     },
     {
       title: "Team",
       items: [
-        { id: "insights", label: "Insights", icon: RiBarChartBoxLine, href: "/insights", count: 0 },
-        { id: "team", label: "People", icon: RiTeamLine, href: "/team", count: 0 },
+        { id: "insights", label: "Insights", icon: RiBarChartBoxLine, href: "/insights", count: 0, tint: "text-hue-teal!" },
+        { id: "team", label: "People", icon: RiTeamLine, href: "/team", count: 0, tint: "text-hue-orange!" },
       ],
     },
   ];
   const activeId = activeIdFor(pathname);
+  const section = activeId ? SECTION[activeId] : undefined;
 
   const canAudit = settings.data ? settings.data.can["audit.read"] : true;
   const tabs = SETTINGS_TABS.filter(
@@ -316,7 +330,7 @@ function ShellFrame({
                       >
                         <SidebarMenuButton asChild isActive={activeId === n.id}>
                           <Link href={n.href}>
-                            <n.icon />
+                            <n.icon className={n.tint} />
                             <span>{n.label}</span>
                           </Link>
                         </SidebarMenuButton>
@@ -376,7 +390,8 @@ function ShellFrame({
           <header className="bg-background/85 sticky top-0 z-20 shrink-0 backdrop-blur-md">
             <div className="flex h-[58px] items-center gap-2 px-4 md:px-5">
               <SidebarTrigger className="text-muted-foreground -ml-1 rounded-full" />
-              <div className="flex min-w-0 flex-1 items-center gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                {section && <HueIcon icon={section.icon} hue={section.hue} className="hidden size-6 rounded-md sm:inline-flex [&_svg]:size-3" />}
                 <h1 className="min-w-0 truncate text-base leading-none font-medium tracking-[-0.01em]">
                   {inSettings ? "Settings" : titleFor(pathname, title)}
                 </h1>

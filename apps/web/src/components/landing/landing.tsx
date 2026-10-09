@@ -50,7 +50,7 @@ export function Landing() {
     if (data?.user) router.replace("/review");
   }, [data, router]);
 
-  const startButton = (tone: "dark" | "white" = "dark", size: "md" | "lg" = "lg") => (
+  const startButton = (tone: "brand" | "white" = "brand", size: "md" | "lg" = "lg") => (
     <PillButton tone={tone} size={size} onClick={() => void start()} disabled={pending}>
       <RiGithubFill />
       {pending ? "Connecting…" : "Start with GitHub"}
@@ -97,7 +97,7 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
           href="#order"
           className="mx-auto inline-flex items-center gap-2 rounded-full bg-white/70 py-1 pr-3 pl-1 text-[13px] text-[#55555b] shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_2px_rgb(0_0_0/0.04)] backdrop-blur transition-colors hover:text-[#111113]"
         >
-          <span className="rounded-full bg-[#111113] px-2 py-0.5 text-[11.5px] font-medium text-white">New</span>
+          <span className="rounded-full bg-[#4124fb] px-2 py-0.5 text-[11.5px] font-medium text-white">New</span>
           Guided review order for every pull request
           <RiArrowRightLine className="size-3.5" />
         </motion.a>
@@ -106,7 +106,7 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
           className="mx-auto mt-8 max-w-[15ch] text-[clamp(3.1rem,9vw,7.25rem)] leading-[0.92] font-semibold tracking-[-0.055em] text-balance"
         >
           <span className="block">Review what matters.</span>
-          <span className="block bg-gradient-to-b from-[#8e8e95] to-[#c8c8cd] bg-clip-text text-transparent">Ship what&rsquo;s ready.</span>
+          <span className="block bg-gradient-to-r from-[#4124fb] via-[#7a5cff] to-[#c04df5] bg-clip-text pb-[0.08em] text-transparent">Ship what&rsquo;s ready.</span>
         </motion.h1>
         <motion.p {...intro(2)} className="mx-auto mt-8 max-w-[36rem] text-[17px] leading-relaxed text-[#55555b] md:text-[19px]">
           Docks turns your GitHub pull requests into one calm queue. Who is waiting, what blocks the merge, and the order to read
@@ -124,13 +124,14 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
         </motion.p>
       </div>
 
-      <div ref={stage} className="mx-auto mt-16 max-w-[1280px] px-3 [perspective:1600px] md:mt-20 md:px-8">
+      <div ref={stage} className="relative mx-auto mt-16 max-w-[1280px] px-3 [perspective:1600px] md:mt-20 md:px-8">
+        <div aria-hidden className="pointer-events-none absolute inset-x-[8%] top-[12%] -z-10 h-[70%] rounded-[50%] bg-[radial-gradient(closest-side,rgb(65_36_251/0.45),rgb(160_100_255/0.2)_55%,transparent)] blur-3xl" />
         <motion.div
           style={{ rotateX, scale, y }}
           initial={reduce ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.2, delay: 0.5, ease: EASE }}
-          className="origin-top rounded-[22px] bg-gradient-to-b from-white/80 to-white/40 p-1.5 shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_50px_100px_-30px_rgb(30_20_80/0.35),0_30px_60px_-30px_rgb(0_0_0/0.4)] backdrop-blur md:rounded-[30px] md:p-2.5"
+          className="origin-top rounded-[22px] bg-gradient-to-b from-white/70 to-white/30 p-1.5 shadow-[0_0_0_1px_rgb(255_255_255/0.6),0_0_0_2px_rgb(65_36_251/0.08),0_60px_120px_-30px_rgb(40_20_140/0.55),0_30px_60px_-30px_rgb(0_0_0/0.45)] backdrop-blur md:rounded-[30px] md:p-2.5"
         >
           <AppWindow className="md:rounded-[22px]" />
         </motion.div>
@@ -163,7 +164,7 @@ function Stage({ children, className }: { children: React.ReactNode; className?:
         className="absolute inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(60% 60% at 80% 0%, rgb(214 222 255 / 0.7), transparent 70%), radial-gradient(50% 60% at 10% 100%, rgb(255 226 206 / 0.6), transparent 70%)",
+            "radial-gradient(60% 60% at 85% 0%, rgb(65 36 251 / 0.16), transparent 70%), radial-gradient(50% 60% at 8% 100%, rgb(236 72 153 / 0.1), transparent 70%), radial-gradient(70% 70% at 50% 50%, rgb(124 107 255 / 0.06), transparent 70%)",
         }}
       />
       <Grain opacity={0.05} className="-z-10" />
@@ -190,7 +191,7 @@ function InboxSection() {
           <ul className="mt-8 grid gap-4">
             {points.map((p) => (
               <li key={p} className="flex items-start gap-3 text-[15.5px] text-[#3f3f46]">
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#111113] text-white">
+                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#4124fb] text-white">
                   <RiCheckLine className="size-3" />
                 </span>
                 {p}
@@ -234,7 +235,7 @@ function OrderSection() {
         <div className="mt-16 grid gap-10 md:grid-cols-3 md:gap-8">
           {features.map((f, i) => (
             <Reveal key={f.title} delay={i * 0.08} className="border-t border-black/[0.08] pt-6">
-              <f.icon className="size-5" />
+              <span className="flex size-9 items-center justify-center rounded-xl bg-[#4124fb]/[0.08] text-[#4124fb] ring-1 ring-[#4124fb]/15 ring-inset"><f.icon className="size-[18px]" /></span>
               <h3 className="mt-4 text-[17px] font-semibold tracking-[-0.02em]">{f.title}</h3>
               <p className="mt-2 text-[15px] leading-relaxed text-[#6b6b70]">{f.body}</p>
             </Reveal>
@@ -265,7 +266,7 @@ function WorkflowSection() {
       <div className="mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
         {features.map((f, i) => (
           <Reveal key={f.title} delay={i * 0.06} className="border-t border-black/[0.08] pt-6">
-            <f.icon className="size-5" />
+            <span className="flex size-9 items-center justify-center rounded-xl bg-[#4124fb]/[0.08] text-[#4124fb] ring-1 ring-[#4124fb]/15 ring-inset"><f.icon className="size-[18px]" /></span>
             <h3 className="mt-4 text-[17px] font-semibold tracking-[-0.02em]">{f.title}</h3>
             <p className="mt-2 text-[15px] leading-relaxed text-[#6b6b70]">{f.body}</p>
           </Reveal>
@@ -294,7 +295,7 @@ function BentoSection() {
             </BentoCard>
           </Reveal>
           <Reveal className="md:col-span-2" delay={0.04}>
-            <BentoCard tone="dark" className="h-full" title="Everything is ⌘K away." body="Pull requests, releases, people and settings, from any page.">
+            <BentoCard tone="brand" className="h-full" title="Everything is ⌘K away." body="Pull requests, releases, people and settings, from any page.">
               <CommandK />
             </BentoCard>
           </Reveal>

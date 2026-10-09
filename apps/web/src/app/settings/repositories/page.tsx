@@ -1,4 +1,7 @@
 "use client";
+import { RiGitRepositoryLine } from "@remixicon/react";
+import { Button as CoreButton } from "@/components/ui/button";
+import { EmptyPreview } from "@/components/ui/empty-preview";
 import { NativeCheckbox as ShadcnCheckbox } from "@/components/ui-compat/native-checkbox";
 import { Input as ShadcnInput } from "@/components/ui/input";
 import { Textarea as ShadcnTextarea } from "@/components/ui/textarea";
@@ -53,13 +56,19 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
     );
   if (!repos.data.length) {
     return (
-      <p className="text-muted-foreground text-sm">
-        No repositories yet.{" "}
-        <Link href="/settings/integrations" className="underline">
-          Install the GitHub App
-        </Link>{" "}
-        to add some.
-      </p>
+      <div className="bg-card shadow-card rounded-xl">
+        <EmptyPreview
+          icon={RiGitRepositoryLine}
+          hue="purple"
+          title="No repositories yet"
+          description="Install the GitHub App, then choose which repositories Docks watches. Pull requests appear on the board within a minute."
+          action={
+            <CoreButton asChild size="sm">
+              <Link href="/settings/integrations">Install the GitHub App</Link>
+            </CoreButton>
+          }
+        />
+      </div>
     );
   }
 

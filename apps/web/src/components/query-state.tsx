@@ -1,4 +1,6 @@
 "use client";
+import { RiInboxLine } from "@remixicon/react";
+import { EmptyPreview } from "@/components/ui/empty-preview";
 import { Button as ShadcnButton } from "@/components/ui/button";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,9 +60,7 @@ export function QueryState({
     return (
       <>
         {empty ?? (
-          <p className="text-muted-foreground rounded-lg bg-muted/50 px-3 py-8 text-center text-sm">
-            Nothing here yet.
-          </p>
+          <EmptyPreview icon={RiInboxLine} hue="indigo" title="Nothing here yet" className="bg-card shadow-card" />
         )}
       </>
     );

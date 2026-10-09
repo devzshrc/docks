@@ -61,9 +61,10 @@ export function IssueBoard({
                   <Skeleton key={n} className="h-24 w-full rounded-xl" />
                 ))}
               {!loading && items.length === 0 && (
-                <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-6 text-center text-xs">
-                  Nothing here
-                </p>
+                <div aria-hidden className="space-y-2 rounded-lg border border-dashed p-3 opacity-70">
+                  <span className="block h-2 w-4/5 rounded-full bg-foreground/[0.08]" />
+                  <span className="block h-1.5 w-1/3 rounded-full bg-foreground/[0.06]" />
+                </div>
               )}
               {items.map((i) => {
                 const pr =

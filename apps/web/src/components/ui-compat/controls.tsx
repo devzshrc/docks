@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/utils";
 import {
   useId,
   type ReactNode,
@@ -122,21 +123,28 @@ export function Checkbox({
 }) {
   const generatedId = useId();
   const id = provided ?? generatedId;
+  const box = (
+    <CoreCheckbox
+      id={id}
+      className={cn(children && className ? "mt-[3px] self-start" : className)}
+      checked={isSelected}
+      onCheckedChange={(value) => onChange?.(value === true)}
+      disabled={isDisabled}
+    />
+  );
+  if (!children) return box;
   return (
-    <div className="flex items-center gap-2">
-      <CoreCheckbox
-        id={id}
-        className={className}
-        checked={isSelected}
-        onCheckedChange={(value) => onChange?.(value === true)}
-        disabled={isDisabled}
-      />
-      {children && (
-        <label htmlFor={id} className="text-sm">
-          {children}
-        </label>
+    <label
+      htmlFor={id}
+      className={cn(
+        "flex cursor-pointer items-center gap-2 text-sm select-none",
+        isDisabled && "cursor-not-allowed opacity-60",
+        className,
       )}
-    </div>
+    >
+      {box}
+      {children}
+    </label>
   );
 }
 export function Select({
@@ -197,6 +205,21 @@ export function SelectItem({
 }) {
   return <CoreItem {...props} value={String(id)} />;
 }
+const CHIP_TONE: Record<string, ComponentProps<typeof Badge>["variant"]> = {
+  purple: "purple",
+  lime: "green",
+  green: "green",
+  emerald: "green",
+  cyan: "blue",
+  blue: "blue",
+  rose: "red",
+  red: "red",
+  yellow: "amber",
+  amber: "amber",
+  orange: "orange",
+  teal: "teal",
+  neutral: "secondary",
+};
 export function Chip({
   color,
   variant,
@@ -207,7 +230,7 @@ export function Chip({
   size?: string;
   variant?: string;
 }) {
-  return <Badge {...props} variant="secondary" />;
+  return <Badge {...props} variant={CHIP_TONE[color ?? ""] ?? "secondary"} />;
 }
 export function Avatar({
   src,

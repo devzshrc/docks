@@ -20,18 +20,18 @@ export function BentoCard({
   body: string;
   children?: React.ReactNode;
   className?: string;
-  tone?: "light" | "dark";
+  tone?: "light" | "dark" | "brand";
 }) {
   return (
     <div
       className={cn(
         "group/bento relative flex flex-col overflow-hidden rounded-[28px] p-7 md:p-8",
-        tone === "light" ? "bg-[#f4f4f5]" : "bg-[#111113] text-white",
+        tone === "light" ? "bg-[#f4f4f5]" : tone === "brand" ? "bg-[radial-gradient(120%_90%_at_100%_0%,#7a5cff_0%,#4124fb_45%,#2a14b8_100%)] text-white" : "bg-[#111113] text-white",
         className,
       )}
     >
       <h3 className="text-[19px] leading-tight font-semibold tracking-[-0.025em] text-balance">{title}</h3>
-      <p className={cn("mt-2 max-w-[22rem] text-[15px] leading-relaxed", tone === "light" ? "text-[#6b6b70]" : "text-white/55")}>{body}</p>
+      <p className={cn("mt-2 max-w-[22rem] text-[15px] leading-relaxed", tone === "light" ? "text-[#6b6b70]" : "text-white/65")}>{body}</p>
       {children && <div className="mt-8 flex flex-1 items-end">{children}</div>}
     </div>
   );
@@ -64,7 +64,7 @@ export function DeadlineBoard() {
                 </motion.span>
               </div>
               <span className="h-1.5 overflow-hidden rounded-full bg-[#ececee]">
-                <motion.span className={cn("block h-full rounded-full", risky ? "bg-[#f59e0b]" : "bg-[#111113]")} animate={{ width: `${pct}%` }} transition={{ duration: 1, ease: EASE }} />
+                <motion.span className={cn("block h-full rounded-full", risky ? "bg-[#f59e0b]" : "bg-[#4124fb]")} animate={{ width: `${pct}%` }} transition={{ duration: 1, ease: EASE }} />
               </span>
             </div>
             <AnimatePresence>
@@ -102,7 +102,7 @@ export function ReleaseRing() {
       <span className="relative size-[88px] shrink-0">
         <svg viewBox="0 0 80 80" className="size-full -rotate-90">
           <circle cx="40" cy="40" r={r} stroke="#e4e4e7" strokeWidth="6" fill="none" />
-          <motion.circle cx="40" cy="40" r={r} stroke={pct === 1 ? "#16a34a" : "#111113"} strokeWidth="6" strokeLinecap="round" fill="none" strokeDasharray={c} animate={{ strokeDashoffset: c * (1 - pct) }} transition={{ duration: 0.8, ease: EASE }} />
+          <motion.circle cx="40" cy="40" r={r} stroke={pct === 1 ? "#16a34a" : "#4124fb"} strokeWidth="6" strokeLinecap="round" fill="none" strokeDasharray={c} animate={{ strokeDashoffset: c * (1 - pct) }} transition={{ duration: 0.8, ease: EASE }} />
         </svg>
         <span className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-[19px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{ready}/4</span>
@@ -135,7 +135,7 @@ export function CommandK() {
   const q = QUERIES[step % QUERIES.length]!;
   return (
     <div ref={ref} aria-hidden className="w-full">
-      <div className="overflow-hidden rounded-2xl bg-white/[0.06] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]">
+      <div className="overflow-hidden rounded-2xl bg-white/[0.1] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.14),0_20px_40px_-20px_rgb(0_0_0/0.5)] backdrop-blur">
         <div className="flex items-center gap-2 border-b border-white/[0.08] px-3.5 py-3 text-[13px]">
           <RiSearchLine className="size-3.5 text-white/40" />
           <AnimatePresence mode="wait">
@@ -151,7 +151,7 @@ export function CommandK() {
         </div>
         <AnimatePresence mode="wait">
           <motion.div key={q.hit} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: 0.12 * q.q.length + 0.1, duration: 0.4, ease: EASE }} className="flex items-center gap-2 px-2 py-2">
-            <span className="flex w-full items-center gap-2 rounded-lg bg-white/[0.08] px-2.5 py-2 text-[12.5px]">
+            <span className="flex w-full items-center gap-2 rounded-lg bg-white/[0.14] px-2.5 py-2 text-[12.5px]">
               <q.icon className="size-3.5 text-white/50" />
               <span className="truncate">{q.hit}</span>
               <RiArrowRightSLine className="ml-auto size-3.5 text-white/40" />
@@ -173,7 +173,7 @@ export function InsightBars() {
         {BARS.map((h, i) => (
           <motion.span
             key={i}
-            className={cn("flex-1 rounded-t-[6px]", i === BARS.length - 1 ? "bg-[#111113]" : "bg-[#d4d4d8]")}
+            className={cn("flex-1 rounded-t-[6px]", i === BARS.length - 1 ? "bg-[#4124fb]" : "bg-[#4124fb]/20")}
             initial={{ height: 0 }}
             whileInView={{ height: `${h + 30}%` }}
             viewport={{ once: true }}

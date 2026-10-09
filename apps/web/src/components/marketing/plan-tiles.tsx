@@ -32,7 +32,7 @@ export function PlanTile({
     >
       {dark && (
         <>
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-56" style={{ background: "radial-gradient(70% 100% at 50% 0%, rgb(124 107 255 / 0.28), transparent 70%)" }} />
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-56" style={{ background: "radial-gradient(80% 100% at 50% 0%, rgb(65 36 251 / 0.55), rgb(122 92 255 / 0.15) 45%, transparent 75%)" }} />
           <div aria-hidden className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
         </>
       )}
@@ -60,7 +60,7 @@ export function PlanTile({
       <ul className="relative mt-8 grid gap-3.5 text-[14.5px]">
         {p.features.map((f) => (
           <li key={f} className="flex items-start gap-3">
-            <span className={cn("mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-full", dark ? "bg-white/12 text-white" : "bg-[#111113]/[0.07] text-[#111113]")}>
+            <span className={cn("mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-full", dark ? "bg-[#4124fb] text-white" : "bg-[#4124fb]/10 text-[#4124fb]")}>
               <RiCheckLine className="size-3" />
             </span>
             <span className={dark ? "text-white/85" : "text-[#3f3f46]"}>{f}</span>

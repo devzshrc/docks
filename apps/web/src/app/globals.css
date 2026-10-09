@@ -65,6 +65,15 @@
   --tag-amber-bg: #fff8eb; --tag-amber-border: #f8e2b5; --tag-amber-text: #b45309;
   --tag-teal-bg: #ebfaf6; --tag-teal-border: #c8eee3; --tag-teal-text: #0f766e;
   --tag-neutral-bg: #f4f4f5; --tag-neutral-border: #e4e4e7; --tag-neutral-text: #3f3f46;
+  --hue-indigo: #4124fb;
+  --hue-blue: #2563eb;
+  --hue-green: #16a34a;
+  --hue-amber: #d97706;
+  --hue-pink: #db2777;
+  --hue-teal: #0d9488;
+  --hue-orange: #ea580c;
+  --hue-purple: #7c3aed;
+  --hue-red: #dc2626;
   --raised: var(--card);
   --hover: var(--accent);
   --field: var(--secondary);
@@ -78,6 +87,15 @@
 /* Dark tokens follow the Sales CRM reference: near-black neutrals, layered inset highlights. */
 .dark {
   color-scheme: dark;
+  --hue-indigo: #8b7dff;
+  --hue-blue: #60a5fa;
+  --hue-green: #4ade80;
+  --hue-amber: #fbbf24;
+  --hue-pink: #f472b6;
+  --hue-teal: #2dd4bf;
+  --hue-orange: #fb923c;
+  --hue-purple: #c084fc;
+  --hue-red: #f87171;
   --background: #161616;
   --foreground: #f9fbff;
   --card: #1b1c1e;
@@ -176,6 +194,15 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-line-strong: var(--line-strong);
+  --color-hue-indigo: var(--hue-indigo);
+  --color-hue-blue: var(--hue-blue);
+  --color-hue-green: var(--hue-green);
+  --color-hue-amber: var(--hue-amber);
+  --color-hue-pink: var(--hue-pink);
+  --color-hue-teal: var(--hue-teal);
+  --color-hue-orange: var(--hue-orange);
+  --color-hue-purple: var(--hue-purple);
+  --color-hue-red: var(--hue-red);
   --color-subtle: var(--subtle);
   --color-faint: var(--faint);
   --color-soft: var(--soft);
@@ -200,8 +227,8 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --color-background-full: var(--background);
-  --color-background-primary-default: var(--muted);
-  --color-background-secondary-default: var(--muted);
+  --color-background-primary-default: var(--card);
+  --color-background-secondary-default: color-mix(in oklab, var(--muted) 55%, transparent);
   --color-background-secondary-hover: var(--muted);
   --color-background-tertiary-default: var(--muted);
   --color-border-button-default: var(--border);

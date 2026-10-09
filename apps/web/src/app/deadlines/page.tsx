@@ -3,7 +3,17 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import {
+  RiAlarmWarningLine,
+  RiCheckboxCircleLine,
+  RiFlashlightLine,
+  RiGitRepositoryLine,
+  RiShieldCheckLine,
+  RiTimerLine,
+} from "@remixicon/react";
 import { AppShell } from "@/components/app-shell";
+import { Button as CoreButton } from "@/components/ui/button";
+import { EmptyPreview, GhostRow, HueIcon, UpgradeCallout, type Hue } from "@/components/ui/empty-preview";
 import { Button } from "@/components/ui-compat/controls";
 import { Input } from "@/components/ui-compat/controls";
 import { Select, SelectItem } from "@/components/ui-compat/controls";
@@ -26,8 +36,8 @@ type Rules = {
   leadUserId: string;
 };
 const panel =
-  "rounded-3xl border border-border-button-default bg-background-primary-default";
-const caption = "text-body-2-regular text-text-secondary";
+  "overflow-hidden rounded-xl bg-card shadow-card";
+const caption = "text-[13px] text-muted-foreground";
 
 function Policy({
   repo,
@@ -68,7 +78,7 @@ function Policy({
     Boolean(rules.leadUserId);
   return (
     <details className={panel}>
-      <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-3xl p-5 outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+      <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-xl p-5 outline-none transition-colors hover:bg-foreground/[0.02] focus-visible:ring-2 focus-visible:ring-border-focus-ring">
         <div className="min-w-0 space-y-1">
           <h3 className="break-words text-body-medium text-text-primary">
             {repo}
@@ -232,6 +242,48 @@ function Policy({
     </details>
   );
 }
+type Cycles = { cycle: { dueAt: Date; pausedAt: Date | null } }[];
+
+/** Four numbers across the top: what is running, what is late, what is close, and how much is covered. */
+function DeadlineStats({
+  cycles,
+  policies,
+}: {
+  cycles?: Cycles;
+  policies?: { repos: unknown[]; policies: { enabled: boolean }[] };
+}) {
+  const now = Date.now();
+  const live = (cycles ?? []).filter((c) => !c.cycle.pausedAt);
+  const overdue = live.filter((c) => c.cycle.dueAt.getTime() <= now).length;
+  const soon = live.filter((c) => {
+    const left = c.cycle.dueAt.getTime() - now;
+    return left > 0 && left < 4 * 3600_000;
+  }).length;
+  const on = policies?.policies.filter((p) => p.enabled).length ?? 0;
+  const stats: { label: string; value: string; hint: string; icon: typeof RiTimerLine; hue: Hue }[] = [
+    { label: "Active", value: cycles ? String(cycles.length) : "–", hint: "reviews on the clock", icon: RiTimerLine, hue: "amber" },
+    { label: "Overdue", value: cycles ? String(overdue) : "–", hint: overdue ? "need a nudge" : "all on track", icon: RiAlarmWarningLine, hue: "red" },
+    { label: "Due soon", value: cycles ? String(soon) : "–", hint: "within 4 work hours", icon: RiFlashlightLine, hue: "blue" },
+    { label: "Covered", value: policies ? `${on}/${policies.repos.length}` : "–", hint: "repositories with a policy", icon: RiShieldCheckLine, hue: "green" },
+  ];
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {stats.map((s) => (
+        <div key={s.label} className="bg-card shadow-card flex flex-col gap-3 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-[13px]">{s.label}</span>
+            <HueIcon icon={s.icon} hue={s.hue} className="size-6 rounded-md [&_svg]:size-3" />
+          </div>
+          <div className="grid gap-1">
+            <span className="text-2xl font-semibold tracking-[-0.03em] tabular-nums">{s.value}</span>
+            <span className="text-subtle text-xs">{s.hint}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Deadlines({ workspaceId }: { workspaceId: string }) {
   const trpc = useTRPC();
   const [overdueOnly, setOverdueOnly] = useState(false);
@@ -245,22 +297,24 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="space-y-6">
       {policies.data?.plan === "free" && (
-        <div className="rounded-xl bg-background-secondary-default p-4 text-body-2-regular text-text-secondary">
-          Automate deadlines and request backup reviewers with the{" "}
-          <Link
-            className="text-text-primary underline underline-offset-4"
-            href="/settings/billing"
-          >
-            Team plan
-          </Link>
-          . You can still view existing deadlines.
-        </div>
+        <UpgradeCallout
+          icon={RiFlashlightLine}
+          action={
+            <CoreButton asChild size="sm">
+              <Link href="/settings/billing">Upgrade</Link>
+            </CoreButton>
+          }
+        >
+          Automate deadlines and request backup reviewers with the Team plan.
+          You can still view existing deadlines.
+        </UpgradeCallout>
       )}
       {policies.error && <QueryError error={policies.error} />}
+      <DeadlineStats cycles={cycles.data} policies={policies.data} />
       <section aria-label="Active review deadlines" className={panel}>
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-separator-border p-5">
           <div className="space-y-1">
-            <h2 className="text-headline-medium text-text-primary">
+            <h2 className="text-[15px] font-medium tracking-[-0.01em]">
               Active reviews
             </h2>
             <p className={caption}>
@@ -288,16 +342,23 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
           </div>
         )}
         {cycles.data?.length === 0 && (
-          <div className="space-y-2 p-8 text-center">
-            <h3 className="text-body-medium text-text-primary">
-              {overdueOnly ? "No overdue reviews" : "No active deadlines"}
-            </h3>
-            <p className={caption}>
-              {overdueOnly
+          <EmptyPreview
+            icon={overdueOnly ? RiCheckboxCircleLine : RiTimerLine}
+            hue={overdueOnly ? "green" : "amber"}
+            title={overdueOnly ? "No overdue reviews" : "No active deadlines yet"}
+            description={
+              overdueOnly
                 ? "Your current reviews are on track. Switch off the filter to see all deadlines."
-                : "Enable a repository policy below. Deadlines appear after the next pull request sync."}
-            </p>
-          </div>
+                : "Each open pull request gets a clock that counts work hours only. When one is about to slip, Docks reminds the reviewer and can ask a backup. Turn on a repository policy below to start."
+            }
+            preview={
+              <>
+                <GhostRow hue="amber" accent="bar" wide={70} />
+                <GhostRow hue="red" accent="bar" wide={88} />
+                <GhostRow hue="green" accent="bar" wide={40} />
+              </>
+            }
+          />
         )}
         <div className="divide-y divide-separator-border">
           {cycles.data?.map(({ cycle, repo, title }) => {
@@ -371,7 +432,7 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
       {policies.data?.canManage && (
         <section aria-label="Repository policies" className="space-y-3">
           <div className="space-y-1">
-            <h2 className="text-headline-medium text-text-primary">
+            <h2 className="text-[15px] font-medium tracking-[-0.01em]">
               Repository policies
             </h2>
             <p className={caption}>
@@ -379,9 +440,19 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
             </p>
           </div>
           {policies.data.repos.length === 0 && (
-            <p className="p-5 text-body-regular text-text-secondary">
-              Connect a repository in Settings to configure deadlines.
-            </p>
+            <div className={panel}>
+              <EmptyPreview
+                icon={RiGitRepositoryLine}
+                hue="amber"
+                title="No repositories connected"
+                description="Connect a repository, then set its review deadline, work hours and escalation lead here."
+                action={
+                  <CoreButton asChild size="sm">
+                    <Link href="/settings/repositories">Connect a repository</Link>
+                  </CoreButton>
+                }
+              />
+            </div>
           )}
           {policies.data.repos.map((repo) => {
             const policy = policies.data.policies.find(

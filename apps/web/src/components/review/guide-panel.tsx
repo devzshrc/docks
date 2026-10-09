@@ -64,7 +64,7 @@ export function GuidePanel({
   const ai = guide.source === "ai";
 
   return (
-    <section className="space-y-3 bg-card rounded-lg border shadow-xs p-4">
+    <section className="bg-card shadow-card space-y-4 rounded-xl p-5">
       <div className="flex items-start gap-2">
         <p className="flex-1 text-sm">
           {ai && (
@@ -93,16 +93,17 @@ export function GuidePanel({
         <ol className="grid auto-rows-fr gap-2 sm:grid-cols-2">
           <li className="h-full">
             <ShadcnButton
-              variant="ghost"
+              variant="row"
+            size="none"
               type="button"
               onClick={() => onStepChange(null)}
               className={cn(
-                "bg-muted/60 hover:bg-hover flex h-full w-full flex-col justify-center rounded-lg px-3 py-2.5 text-left text-sm transition-colors active:scale-[0.99]",
-                activeStep === null && "bg-primary/15 hover:bg-primary/20",
+                "bg-muted/40 hover:bg-muted/70 flex h-full w-full flex-col items-start justify-start gap-1 rounded-lg px-3.5 py-3 text-left text-sm transition-colors dark:hover:bg-muted/70",
+                activeStep === null && "bg-primary/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_50%,transparent)] hover:bg-primary/15 dark:hover:bg-primary/15",
               )}
             >
               <span className="font-medium">All files</span>
-              <span className="text-muted-foreground mt-0.5 block text-xs">
+              <span className="text-muted-foreground block text-xs">
                 Show the full diff.
               </span>
             </ShadcnButton>
@@ -110,23 +111,27 @@ export function GuidePanel({
           {guide.steps.map((step, i) => (
             <li key={i} className="h-full">
               <ShadcnButton
-                variant="ghost"
+                variant="row"
+            size="none"
                 type="button"
                 onClick={() => onStepChange(activeStep === i ? null : i)}
                 aria-pressed={activeStep === i}
                 className={cn(
-                  "bg-muted/60 hover:bg-hover flex h-full w-full flex-col justify-center rounded-lg px-3 py-2.5 text-left text-sm transition-colors active:scale-[0.99]",
-                  activeStep === i && "bg-primary/15 hover:bg-primary/20",
+                  "bg-muted/40 hover:bg-muted/70 flex h-full w-full flex-col items-start justify-start gap-1 rounded-lg px-3.5 py-3 text-left text-sm transition-colors dark:hover:bg-muted/70",
+                  activeStep === i && "bg-primary/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_50%,transparent)] hover:bg-primary/15 dark:hover:bg-primary/15",
                 )}
               >
-                <span className="font-medium">
-                  {i + 1}. {step.title}
-                </span>
-                <span className="text-muted-foreground ml-1 text-xs">
-                  {step.files.length} file{step.files.length === 1 ? "" : "s"}
+                <span className="flex w-full items-baseline justify-between gap-3">
+                  <span className="font-medium">
+                    <span className="text-primary-text mr-1.5 tabular-nums">{i + 1}</span>
+                    {step.title}
+                  </span>
+                  <span className="text-subtle shrink-0 text-xs tabular-nums">
+                    {step.files.length} file{step.files.length === 1 ? "" : "s"}
+                  </span>
                 </span>
                 {step.why && (
-                  <span className="text-muted-foreground mt-0.5 block text-xs">
+                  <span className="text-muted-foreground block text-xs leading-relaxed">
                     {step.why}
                   </span>
                 )}

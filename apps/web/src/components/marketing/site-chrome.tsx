@@ -32,7 +32,7 @@ export function PillButton({
   children,
   href,
   onClick,
-  tone = "dark",
+  tone = "brand",
   size = "md",
   className,
   disabled,
@@ -40,7 +40,7 @@ export function PillButton({
   children: ReactNode;
   href?: string;
   onClick?: () => void;
-  tone?: "dark" | "light" | "white";
+  tone?: "brand" | "dark" | "light" | "white";
   size?: "sm" | "md" | "lg";
   className?: string;
   disabled?: boolean;
@@ -50,6 +50,8 @@ export function PillButton({
     size === "sm" && "h-9 px-4 text-sm",
     size === "md" && "h-11 px-5 text-[15px]",
     size === "lg" && "h-[52px] px-7 text-base",
+    tone === "brand" &&
+      "bg-[#4124fb] text-white shadow-[0_1px_2px_rgb(33_14_160/0.35),0_10px_28px_-8px_rgb(65_36_251/0.6),0_0_0_1px_#2f15d6,inset_0_1px_0_rgb(255_255_255/0.25),inset_0_-6px_12px_rgb(0_0_0/0.12)] hover:bg-[#4b30ff] hover:shadow-[0_1px_2px_rgb(33_14_160/0.35),0_14px_34px_-8px_rgb(65_36_251/0.7),0_0_0_1px_#2f15d6,inset_0_1px_0_rgb(255_255_255/0.25),inset_0_-6px_12px_rgb(0_0_0/0.12)]",
     tone === "dark" &&
       "bg-[#111113] text-white shadow-[0_1px_2px_rgb(0_0_0/0.2),0_8px_24px_-8px_rgb(0_0_0/0.35),inset_0_1px_0_rgb(255_255_255/0.12)] hover:bg-[#2a2a2e]",
     tone === "light" &&

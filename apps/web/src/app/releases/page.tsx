@@ -8,15 +8,17 @@ import { Button } from "@/components/ui-compat/controls";
 import { Input } from "@/components/ui-compat/controls";
 import { Select, SelectItem } from "@/components/ui-compat/controls";
 import { Chip } from "@/components/ui-compat/controls";
-import { RiAddLine, RiRefreshLine } from "@remixicon/react";
+import { RiAddLine, RiGitPullRequestLine, RiRefreshLine, RiRocketLine } from "@remixicon/react";
+import { Button as CoreButton } from "@/components/ui/button";
+import { EmptyPreview, GhostRow, UpgradeCallout } from "@/components/ui/empty-preview";
 import { cx } from "@/utils/cx";
 import { QueryError } from "@/components/query-state";
 import { EvidenceExport } from "@/components/review/evidence-export";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useTRPC } from "@/trpc/react";
 const panel =
-  "rounded-3xl border border-border-button-default bg-background-primary-default";
-const caption = "text-body-2-regular text-text-secondary";
+  "overflow-hidden rounded-xl bg-card shadow-card";
+const caption = "text-[13px] text-muted-foreground";
 
 function Detail({
   id,
@@ -129,15 +131,17 @@ function Detail({
       )}
       {error && <QueryError error={error} />}
       {items.length === 0 && (
-        <div className="rounded-xl bg-background-secondary-default p-6 text-center">
-          <p className="text-body-medium text-text-primary">
-            No pull requests yet
-          </p>
-          <p className={caption}>
-            {manage && paid
-              ? "Choose a pull request below to start tracking this release."
-              : "Pull requests added to this release will appear here."}
-          </p>
+        <div className="rounded-xl bg-muted/30">
+          <EmptyPreview
+            icon={RiGitPullRequestLine}
+            hue="pink"
+            title="No pull requests yet"
+            description={
+              manage && paid
+                ? "Choose a pull request below to start tracking this release."
+                : "Pull requests added to this release will appear here."
+            }
+          />
         </div>
       )}
       <div className="space-y-3">
@@ -150,7 +154,7 @@ function Detail({
         {items.map((item) => (
           <article
             key={`${item.pr.repoId}:${item.pr.number}`}
-            className="space-y-3 rounded-xl border border-border-button-default p-4"
+            className="bg-card shadow-card space-y-3 rounded-xl p-4"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <Link
@@ -373,16 +377,17 @@ function Releases({
   return (
     <div className="space-y-6">
       {policy.data?.plan === "free" && (
-        <div className="rounded-xl bg-background-secondary-default p-4 text-body-2-regular text-text-secondary">
-          Manage releases, refresh requirements, and export evidence with the{" "}
-          <Link
-            className="text-text-primary underline underline-offset-4"
-            href="/settings/billing"
-          >
-            Team plan
-          </Link>
-          . You can still view existing reports.
-        </div>
+        <UpgradeCallout
+          icon={RiRocketLine}
+          action={
+            <CoreButton asChild size="sm">
+              <Link href="/settings/billing">Upgrade</Link>
+            </CoreButton>
+          }
+        >
+          Manage releases, refresh requirements and export evidence with the
+          Team plan. You can still view existing reports.
+        </UpgradeCallout>
       )}
       {(list.error || policy.error || create.error) && (
         <QueryError error={(list.error ?? policy.error ?? create.error)!} />
@@ -392,7 +397,7 @@ function Releases({
           className={panel}
           open={!list.isPending && list.data?.length === 0 ? true : undefined}
         >
-          <summary className="cursor-pointer rounded-3xl p-5 text-body-medium text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+          <summary className="cursor-pointer rounded-xl p-5 text-body-medium text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
             Create a release
           </summary>
           <form
@@ -442,15 +447,24 @@ function Releases({
         </p>
       )}
       {list.data?.length === 0 && (
-        <div className={cx(panel, "space-y-2 p-8 text-center")}>
-          <h2 className="text-headline-medium text-text-primary">
-            Your next release starts here
-          </h2>
-          <p className={caption}>
-            {manage && paid
-              ? "Create a release, add pull requests, and see what still needs attention."
-              : "Releases will appear here when your team creates them."}
-          </p>
+        <div className={panel}>
+          <EmptyPreview
+            icon={RiRocketLine}
+            hue="pink"
+            title="Your next release starts here"
+            description={
+              manage && paid
+                ? "Create a release, add its pull requests, and watch readiness fill up as each one is approved and passes its checks."
+                : "Releases group pull requests that ship together. Each shows what is ready and what still blocks it."
+            }
+            preview={
+              <>
+                <GhostRow hue="pink" accent="ring" wide={56} />
+                <GhostRow hue="green" accent="ring" wide={70} />
+                <GhostRow hue="amber" accent="ring" wide={44} />
+              </>
+            }
+          />
         </div>
       )}
       {Boolean(list.data?.length) && (
@@ -464,16 +478,17 @@ function Releases({
             </h2>
             {list.data?.map((release) => (
               <ShadcnButton
-                variant="ghost"
+                variant="row"
+                size="none"
                 key={release.id}
                 type="button"
                 aria-pressed={selectedId === release.id}
                 onClick={() => setSelected(release.id)}
                 className={cx(
-                  "w-full space-y-2 rounded-xl p-3 text-start outline-none transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring",
+                  "flex w-full flex-col items-start gap-2 rounded-lg p-3 text-start outline-none transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring",
                   selectedId === release.id
-                    ? "bg-background-tertiary-default"
-                    : "hover:bg-background-secondary-hover",
+                    ? "bg-primary/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_40%,transparent)] hover:bg-primary/10"
+                    : "",
                 )}
               >
                 <span className="block break-words text-body-medium text-text-primary">

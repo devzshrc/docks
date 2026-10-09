@@ -411,7 +411,8 @@ function ThreadView({
     >
       <div className="flex items-center gap-2 pr-1.5">
         <ShadcnButton
-          variant="ghost"
+          variant="row"
+            size="none"
           type="button"
           className="text-muted-foreground flex flex-1 items-center gap-2 px-3 py-1.5 text-left text-xs"
           onClick={() => setOpen((o) => !o)}
@@ -734,9 +735,10 @@ export function FileDiff({
       >
         {n !== undefined && canAct && !extra ? (
           <ShadcnButton
-            variant="ghost"
+            variant="row"
+            size="none"
             type="button"
-            className="group relative h-auto w-full p-0 text-right hover:text-foreground has-[>svg]:px-0"
+            className="group relative h-auto w-full justify-end p-0 text-right hover:text-foreground has-[>svg]:px-0"
             aria-label={`Comment on ${side === "LEFT" ? "old" : "new"} line ${n}`}
             onClick={(e) => pick(e, n, side)}
             data-text={text}
@@ -1164,10 +1166,11 @@ export function FileDiff({
     >
       <header className="bg-card/95 border-hairline sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-t-lg border-b px-3 py-2 text-sm backdrop-blur max-sm:gap-1.5 max-sm:py-1.5">
         <ShadcnButton
-          variant="ghost"
+          variant="row"
+            size="none"
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="flex min-w-[12rem] flex-1 items-center gap-2 text-left"
+          className="flex min-w-[12rem] flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-left"
           aria-expanded={open}
         >
           {open ? (

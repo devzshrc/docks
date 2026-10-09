@@ -87,7 +87,7 @@ function Insights({ workspaceId }: { workspaceId: string }) {
                 rows={data.data.trend.map((w) => ({ label: w.week.slice(5), value: w.medianHoursToFirstReview }))}
                 label="Median hours"
                 format={(v) => fmt(v)}
-                color="#1f567d"
+                color="var(--hue-teal)"
                 ariaLabel="Line chart of median hours to first review per week over the last 12 weeks"
               />
             </Panel>
@@ -119,6 +119,7 @@ function Insights({ workspaceId }: { workspaceId: string }) {
               <RankedBars
                 rows={data.data.repos.map((r) => ({ name: r.repo, value: r.medianHoursToFirstReview ?? 0, note: `${r.prs} PRs` }))}
                 label="Median hours to first review"
+                color="var(--hue-amber)"
                 format={(v) => fmt(v)}
                 ariaLabel="Bar chart of repositories ranked by median hours to first review"
               />
@@ -131,7 +132,7 @@ function Insights({ workspaceId }: { workspaceId: string }) {
                 rows={data.data.reviewers.map((r) => ({ name: r.login, value: r.medianHoursToReview ?? 0, note: `${r.reviews} reviews` }))}
                 label="Median hours to their first review"
                 format={(v) => fmt(v)}
-                color="#7c3aed"
+                color="var(--hue-purple)"
                 ariaLabel="Bar chart of reviewers ranked by median hours from PR opened to their first review"
               />
             </Panel>
