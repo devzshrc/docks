@@ -1,6 +1,7 @@
 "use client"
 
-import { Analytics01Icon, CheckListIcon, GitPullRequestIcon, Search01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons"
+import { Search01Icon } from "@hugeicons/core-free-icons"
+import { RiCalendarScheduleLine, RiRocketLine, RiInboxLine, RiGitPullRequestLine, RiBugLine, RiBarChartBoxLine, RiTeamLine, RiSettings3Line } from "@remixicon/react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useQuery } from "@tanstack/react-query"
 import { usePathname, useRouter } from "next/navigation"
@@ -45,17 +46,6 @@ const WIDTH = {
   default: "max-w-[1200px]", // every dashboard and settings page shares one left edge
   wide: "max-w-[1360px]", // board and code review
 } as const
-
-/** Hugeicons as shell nav icons (the shell passes `className` to its icon component). */
-const icon = (i: typeof GitPullRequestIcon) =>
-  function NavIcon({ className }: { className?: string }) {
-    return <HugeiconsIcon icon={i} size={16} className={className} />
-  }
-const ReviewsIcon = icon(GitPullRequestIcon)
-const IssuesIcon = icon(CheckListIcon)
-const InsightsIcon = icon(Analytics01Icon)
-const TeamIcon = icon(UserGroupIcon)
-const SettingsIcon = icon(Settings02Icon)
 
 const SETTINGS_TABS = [
   { value: "/settings/workspace", label: "Workspace" },
@@ -167,19 +157,19 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
   const triageCount = triage.data?.triage ?? 0
 
   const nav = [
-    { id: "deadlines", label: "Deadlines", icon: ReviewsIcon, href: "/deadlines", count: 0 },
-    { id: "releases", label: "Releases", icon: IssuesIcon, href: "/releases", count: 0 },
+    { id: "deadlines", label: "Deadlines", icon: RiCalendarScheduleLine, href: "/deadlines", count: 0 },
+    { id: "releases", label: "Releases", icon: RiRocketLine, href: "/releases", count: 0 },
     {
       id: "inbox",
       label: "Inbox",
-      icon: IssuesIcon,
+      icon: RiInboxLine,
       href: "/inbox",
       count: inbox.data ?? 0,
     },
-    { id: "reviews", label: "Reviews", icon: ReviewsIcon, href: "/review", count: waitingCount },
-    { id: "issues", label: "Issues", icon: IssuesIcon, href: "/issues", count: triageCount },
-    { id: "insights", label: "Insights", icon: InsightsIcon, href: "/insights", count: 0 },
-    { id: "team", label: "Team", icon: TeamIcon, href: "/team", count: 0 },
+    { id: "reviews", label: "Reviews", icon: RiGitPullRequestLine, href: "/review", count: waitingCount },
+    { id: "issues", label: "Issues", icon: RiBugLine, href: "/issues", count: triageCount },
+    { id: "insights", label: "Insights", icon: RiBarChartBoxLine, href: "/insights", count: 0 },
+    { id: "team", label: "Team", icon: RiTeamLine, href: "/team", count: 0 },
   ]
   const activeId = activeIdFor(pathname)
 
@@ -236,7 +226,7 @@ function ShellFrame({ title, description, actions, width, children }: { title?: 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={activeId === "settings"}>
                   <Link href="/settings/workspace">
-                    <SettingsIcon />
+                    <RiSettings3Line />
                     <span>Settings</span>
                   </Link>
                 </SidebarMenuButton>
