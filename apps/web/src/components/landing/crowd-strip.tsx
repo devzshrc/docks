@@ -24,7 +24,7 @@ const CAST: CrowdCastMember[] = [
   { cell: 22, name: "Harsh", call: true, line: "Haan boss, backup reviewer ban gaya. Docks ne khud poocha, no Slack chasing." },
   { cell: 24, name: "Ankit", line: "Friday 6pm? Deadline paused till Monday. Weekend bach gaya." },
   { cell: 26, name: "Keval", call: true, line: "Hello? Haan, release readiness green hai. Aaj raat ship kar rahe hain." },
-  { cell: 68, name: "Arzu", imageSrc: "/landing/arzu.png", call: true, line: "Haan, bas merge hone wala hai. Docks ne bola, sab checks green hain." },
+  { cell: 68, name: "Arzu", featured: true, imageSrc: "/landing/arzu-v2.png", call: true, line: "Haan, bas merge hone wala hai. Docks ne bola, sab checks green hain." },
   { cell: 40, name: "Sai", line: "Review order follow kiya, aur bina confusion ke approve. Mast hai." },
   { cell: 64, name: "Harshwardhan", call: true, line: "Sab kuch ek queue mein hai. Ab kisi ko ping nahi karna padta, bas ship karna hai." },
   { cell: 69, name: "Sneha", call: true, line: "Got a nudge before my review went late, not after." },
@@ -35,7 +35,7 @@ const LEFT_OUT = [17, 72, 92, 100];
 
 export function CrowdStrip({ className }: { className?: string }) {
   return (
-    <div className={cx("relative h-[300px] sm:h-[360px] lg:h-[400px]", className)}>
+    <div className={cx("relative h-64 sm:h-[360px] lg:h-[400px]", className)}>
       <p className="pointer-events-none absolute inset-x-0 top-2 flex flex-col items-center gap-2 text-center text-caption-1-medium text-white/40 after:h-10 after:w-px after:bg-gradient-to-b after:from-white/30 after:to-transparent after:content-['']">
         <span className="tracking-[0.18em] uppercase">Meanwhile, on teams using Docks</span>
         <span className="text-white/30">

@@ -217,6 +217,7 @@ export function AppWindow({ className }: { className?: string }) {
                   className={cn(
                     "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:grid-cols-[minmax(0,2.3fr)_minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.1fr)] border-b border-(--mk-border) px-4 py-[9px] text-[12.5px] transition-colors duration-300 md:grid-cols-[minmax(0,2.3fr)_minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.9fr)]",
                     isPicked && "bg-(--mk-card)",
+                    i >= 5 && "max-sm:hidden",
                   )}
                 >
                   <span className="flex min-w-0 items-center gap-3">

@@ -32,7 +32,7 @@ export function useHeroPointer() {
   const y = useSpring(0, { stiffness: 50, damping: 18 });
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     const move = (event: PointerEvent) => {
       const rect = el.getBoundingClientRect();
       const px = event.clientX - rect.left;

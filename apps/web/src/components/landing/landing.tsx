@@ -118,7 +118,8 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
             />
             <span className="rounded-full bg-sky-400/15 px-2 py-0.5 text-[10.5px] font-semibold tracking-wide text-sky-300 uppercase">New</span>
             <RiGitBranchLine aria-hidden="true" className="size-4 shrink-0 text-hue-blue" />
-            Guided review order for every pull request
+            <span className="sm:hidden">Guided code review</span>
+            <span className="hidden sm:inline">Guided review order for every pull request</span>
             <RiArrowRightLine aria-hidden="true" className="size-3.5 shrink-0 transition-transform duration-300 group-hover/badge:translate-x-0.5" />
           </a>
         </Rise>
@@ -186,7 +187,7 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
             </span>
           </p>
         </Rise>
-        <Rise delay={0.3} className="flex flex-wrap items-center justify-center gap-3">
+        <Rise delay={0.3} className="flex w-full flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row sm:items-center">
           {startButton}
           <Button asChild variant="outline" size="none" className="group/how h-13 gap-2 border-white/20 bg-white/[0.04] px-7 text-headline-medium text-white hover:bg-white/10">
             <a href="#product">
@@ -201,7 +202,7 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
               {notice}
             </p>
           ) : (
-            <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-body-2-regular text-white/45">
+            <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-caption-1-medium sm:gap-x-5 sm:text-body-2-regular text-white/45">
               {["Free for up to 5 people", "3 repositories", "No card needed"].map((item) => (
                 <li key={item} className="flex items-center gap-1.5">
                   <RiCheckLine aria-hidden="true" className="size-3.5 text-sky-300/80" />
@@ -231,7 +232,7 @@ function Hero({ startButton, notice }: { startButton: React.ReactNode; notice: s
 
 function WorksWith() {
   return (
-    <section aria-label="Works with" className="mx-auto max-w-[1200px] px-5 pt-20 pb-8 md:px-8">
+    <section aria-label="Works with" className="mx-auto max-w-[1200px] px-5 pt-12 pb-8 md:pt-20 md:px-8">
       <p className="text-center text-[13.5px] text-white/45">Works with the tools your team already uses</p>
       <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-10 gap-y-5 text-white/45">
         {WORKS_WITH.map((w) => (
@@ -270,7 +271,7 @@ function InboxSection() {
   ];
   return (
     <section id="product" className="mx-auto max-w-[1200px] scroll-mt-24 px-5 py-24 md:px-8 md:py-36">
-      <div className="grid items-center gap-14 lg:grid-cols-[1fr_1.05fr] lg:gap-20">
+      <div className="grid min-w-0 items-center gap-8 md:gap-14 lg:grid-cols-[1fr_1.05fr] lg:gap-20">
         <Reveal>
           <DisplayHeading dark align="left" eyebrow="Inbox" title="Your morning," muted="already sorted." />
           <p className="mt-7 max-w-[30rem] text-[17px] leading-relaxed text-white/60">
@@ -305,7 +306,7 @@ function OrderSection() {
     { icon: RiGitBranchLine, title: "A checklist per repo", body: "The questions your team always asks, ready on every pull request." },
   ];
   return (
-    <section id="order" className="scroll-mt-24 bg-[#030303] py-24 md:py-36">
+    <section id="order" className="scroll-mt-24 bg-[#030303] py-16 md:py-36">
       <div className="mx-auto max-w-[1200px] px-5 md:px-8">
         <Reveal>
           <DisplayHeading dark eyebrow="Guided review" title="Read every change" muted="in the order it makes sense." />
@@ -321,7 +322,7 @@ function OrderSection() {
             </div>
           </Stage>
         </Reveal>
-        <div className="mt-16 grid gap-10 md:grid-cols-3 md:gap-8">
+        <div className="mt-10 grid md:mt-16 gap-10 md:grid-cols-3 md:gap-8">
           {features.map((f, i) => (
             <Reveal key={f.title} delay={i * 0.08} className="border-t border-white/[0.12] pt-6 text-white">
               <span className="flex size-9 items-center justify-center rounded-xl bg-sky-400/10 text-sky-300 ring-1 ring-sky-300/15 ring-inset"><f.icon className="size-[18px]" /></span>
@@ -352,7 +353,7 @@ function WorkflowSection() {
           <FlowDiagram />
         </Stage>
       </Reveal>
-      <div className="mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+      <div className="mt-10 grid md:mt-16 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
         {features.map((f, i) => (
           <Reveal key={f.title} delay={i * 0.06} className="border-t border-white/[0.12] pt-6 text-white">
             <span className="flex size-9 items-center justify-center rounded-xl bg-sky-400/10 text-sky-300 ring-1 ring-sky-300/15 ring-inset"><f.icon className="size-[18px]" /></span>
@@ -367,12 +368,12 @@ function WorkflowSection() {
 
 function BentoSection() {
   return (
-    <section className="bg-[#030303] py-24 md:py-36">
+    <section className="bg-[#030303] py-16 md:py-36">
       <div className="mx-auto max-w-[1200px] px-5 md:px-8">
         <Reveal>
           <DisplayHeading dark eyebrow="Everything else" title="A whole review desk." muted="One tab." />
         </Reveal>
-        <div className="mt-16 grid gap-3 md:grid-cols-6">
+        <div className="mt-10 grid md:mt-16 gap-3 md:grid-cols-6">
           <Reveal className="md:col-span-4">
             <BentoCard tone="dark" className="h-full" title="Nothing waits overnight." body="Deadlines count work hours. When one is about to slip, a backup reviewer is asked before anyone notices.">
               <DeadlineBoard />
@@ -410,7 +411,7 @@ function PricingTeaser({ startButton }: { startButton: React.ReactNode }) {
       <Reveal>
         <DisplayHeading dark eyebrow="Pricing" title="Free to start." muted="Simple when you grow." />
       </Reveal>
-      <div className="mx-auto mt-16 grid max-w-[920px] gap-3 md:grid-cols-2">
+      <div className="mx-auto mt-10 grid md:mt-16 max-w-[920px] gap-3 md:grid-cols-2">
         <Reveal>
           <PlanTile plan="free" className="h-full" action={<PillButton href="/signup" className="w-full">Start free</PillButton>} />
         </Reveal>
