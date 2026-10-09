@@ -30,7 +30,7 @@ export function BentoCard({
         className,
       )}
     >
-      {tone === "brand" && <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(90% 70% at 100% 0%, rgb(22 101 52 / 0.4), transparent 60%)" }} />}
+      {tone === "brand" && <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(90% 70% at 100% 0%, rgb(3 105 161 / 0.4), transparent 60%)" }} />}
       <h3 className="relative text-[19px] leading-tight font-semibold tracking-[-0.025em] text-balance">{title}</h3>
       <p className={cn("relative mt-2 max-w-[22rem] text-[15px] leading-relaxed", tone === "light" ? "text-[#6b6b70]" : "text-white/65")}>{body}</p>
       {children && <div className="relative mt-8 flex flex-1 items-end">{children}</div>}
@@ -65,7 +65,7 @@ export function DeadlineBoard() {
                 </motion.span>
               </div>
               <span className="h-1.5 overflow-hidden rounded-full bg-[#ececee]">
-                <motion.span className={cn("block h-full rounded-full", risky ? "bg-[#f59e0b]" : "bg-[#166534]")} animate={{ width: `${pct}%` }} transition={{ duration: 1, ease: EASE }} />
+                <motion.span className={cn("block h-full rounded-full", risky ? "bg-[#f59e0b]" : "bg-[#0369a1]")} animate={{ width: `${pct}%` }} transition={{ duration: 1, ease: EASE }} />
               </span>
             </div>
             <AnimatePresence>
@@ -103,7 +103,7 @@ export function ReleaseRing() {
       <span className="relative size-[88px] shrink-0">
         <svg viewBox="0 0 80 80" className="size-full -rotate-90">
           <circle cx="40" cy="40" r={r} stroke="#e4e4e7" strokeWidth="6" fill="none" />
-          <motion.circle cx="40" cy="40" r={r} stroke={pct === 1 ? "#16a34a" : "#166534"} strokeWidth="6" strokeLinecap="round" fill="none" strokeDasharray={c} animate={{ strokeDashoffset: c * (1 - pct) }} transition={{ duration: 0.8, ease: EASE }} />
+          <motion.circle cx="40" cy="40" r={r} stroke={pct === 1 ? "#16a34a" : "#0369a1"} strokeWidth="6" strokeLinecap="round" fill="none" strokeDasharray={c} animate={{ strokeDashoffset: c * (1 - pct) }} transition={{ duration: 0.8, ease: EASE }} />
         </svg>
         <span className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-[19px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{ready}/4</span>
@@ -174,7 +174,7 @@ export function InsightBars() {
         {BARS.map((h, i) => (
           <motion.span
             key={i}
-            className={cn("flex-1 rounded-t-[6px]", i === BARS.length - 1 ? "bg-[#166534]" : "bg-[#166534]/20")}
+            className={cn("flex-1 rounded-t-[6px]", i === BARS.length - 1 ? "bg-[#0369a1]" : "bg-[#0369a1]/20")}
             initial={{ height: 0 }}
             whileInView={{ height: `${h + 30}%` }}
             viewport={{ once: true }}
