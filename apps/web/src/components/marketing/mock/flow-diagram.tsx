@@ -23,7 +23,7 @@ const NODES: Node[] = [
 const PATHS = [
   { d: "M240,126 C345,126 345,210 450,210", color: "#111113", delay: 0 },
   { d: "M240,294 C345,294 345,210 450,210", color: "#16a34a", delay: 1.1 },
-  { d: "M550,210 C665,210 665,92 780,92", color: "#e8590c", delay: 0.5 },
+  { d: "M550,210 C665,210 665,92 780,92", color: "#166534", delay: 0.5 },
   { d: "M550,210 L780,210", color: "#e01e5a", delay: 1.4 },
   { d: "M550,210 C665,210 665,328 780,328", color: "#5e6ad2", delay: 2 },
 ];
@@ -65,7 +65,7 @@ export function FlowDiagram() {
             <g key={i}>
               <motion.path
                 d={p.d}
-                stroke="#e7d8cc"
+                stroke="#cfe0d3"
                 strokeWidth="1.5"
                 initial={reduce ? false : { pathLength: 0 }}
                 whileInView={{ pathLength: 1 }}
@@ -99,15 +99,15 @@ export function FlowDiagram() {
             {!reduce && [0, 1].map((i) => (
               <motion.span
                 key={i}
-                className="absolute inset-0 rounded-[32px] border border-[#e8590c]/25"
+                className="absolute inset-0 rounded-[32px] border border-[#166534]/25"
                 animate={{ scale: [1, 1.35], opacity: [0.7, 0] }}
                 transition={{ duration: 2.6, delay: i * 1.3, repeat: Infinity, ease: "easeOut" }}
               />
             ))}
-            <span className="absolute inset-0 rounded-[32px] bg-white shadow-[0_0_0_1px_rgb(232_89_12/0.12),0_24px_50px_-12px_rgb(232_89_12/0.55)]" />
+            <span className="absolute inset-0 rounded-[32px] bg-white shadow-[0_0_0_1px_rgb(22_101_52/0.12),0_24px_50px_-12px_rgb(22_101_52/0.55)]" />
             <AppIcon className="relative size-[76px]" />
           </span>
-          <span className="flex items-center gap-2 rounded-full bg-[#e8590c] px-3 py-1.5 text-[11.5px] font-medium tracking-[0.02em] text-white">
+          <span className="flex items-center gap-2 rounded-full bg-[#166534] px-3 py-1.5 text-[11.5px] font-medium tracking-[0.02em] text-white">
             <span className="size-1.5 animate-pulse rounded-full bg-[#22c55e]" />
             ROUTING
             <span className="font-mono text-white/60 tabular-nums"><Clock /></span>
