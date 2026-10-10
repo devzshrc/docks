@@ -44,7 +44,7 @@ function ResetForm() {
           const { error } = await authClient.resetPassword({ newPassword: password, token })
           setPending(false)
           if (error) setError(error.message ?? "Couldn't reset the password. Request a new link.")
-          else router.push("/login")
+          else router.push(params.get("next") === "/settings/account" ? "/login?next=%2Fsettings%2Faccount" : "/login")
         }}
       >
         <div className="space-y-2">

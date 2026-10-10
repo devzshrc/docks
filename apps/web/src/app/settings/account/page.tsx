@@ -1,6 +1,7 @@
 "use client";
 
 import QRCode from "qrcode";
+import Link from "next/link";
 import {
   ActiveSessions,
   type ActiveSession,
@@ -68,70 +69,127 @@ function ProfileCard() {
   );
 }
 
-function PasswordCard() {
+function PasswordCard({
+  hasPassword,
+  accountsError,
+}: {
+  hasPassword: boolean | null;
+  accountsError?: string;
+}) {
+  const { data: session } = useSession();
+  const [pending, setPending] = useState(false);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [msg, setMsg] = useState<{ error?: string; ok?: string }>({});
 
   return (
-    <Card>
+    <Card id="password">
       <CardHeader>
         <CardTitle>Password</CardTitle>
         <CardDescription>
-          Changing it signs you out everywhere else.
+          {hasPassword === false
+            ? "You signed in with GitHub. Create a Docks password using a link sent to your account email, then set up two-factor authentication."
+            : "Changing it signs you out everywhere else."}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form
-          className="max-w-md space-y-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const { error } = await authClient.changePassword({
-              currentPassword: current,
-              newPassword: next,
-              revokeOtherSessions: true,
-            });
-            setMsg(
-              error ? { error: error.message } : { ok: "Password changed" },
-            );
-            if (!error) {
-              setCurrent("");
-              setNext("");
-            }
-          }}
-        >
-          <div className="space-y-1">
-            <Label htmlFor="current">Current password</Label>
-            <Input
-              id="current"
-              type="password"
-              required
-              value={current}
-              onChange={(e) => setCurrent(e.target.value)}
-            />
+        {hasPassword === null ? (
+          <p className="text-muted-foreground text-sm">
+            {accountsError ?? "Checking your sign-in methods…"}
+          </p>
+        ) : !hasPassword ? (
+          <div className="max-w-md space-y-3">
+            <p className="text-muted-foreground text-sm">
+              We’ll send the setup link to {session?.user.email}.
+            </p>
+            <Button
+              disabled={pending || !session?.user.email}
+              onClick={async () => {
+                if (!session?.user.email) return;
+                setPending(true);
+                setMsg({});
+                try {
+                  const { error } = await authClient.requestPasswordReset({
+                    email: session.user.email,
+                    redirectTo: `${window.location.origin}/reset-password?next=%2Fsettings%2Faccount`,
+                  });
+                  setMsg(
+                    error
+                      ? {
+                          error:
+                            error.message ??
+                            "Couldn't send the setup link. Try again.",
+                        }
+                      : {
+                          ok: `Password setup link sent to ${session.user.email}. Check your email, then return here to set up two-factor authentication.`,
+                        },
+                  );
+                } catch {
+                  setMsg({
+                    error:
+                      "Couldn't send the setup link. Check your connection and try again.",
+                  });
+                } finally {
+                  setPending(false);
+                }
+              }}
+            >
+              {pending ? "Sending…" : "Send password setup link"}
+            </Button>
+            <Status {...msg} />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="new">New password</Label>
-            <Input
-              id="new"
-              type="password"
-              minLength={8}
-              required
-              value={next}
-              onChange={(e) => setNext(e.target.value)}
-            />
-          </div>
-          <Button type="submit" variant="outline">
-            Change password
-          </Button>
-          <Status {...msg} />
-        </form>
+        ) : (
+          <form
+            className="max-w-md space-y-3"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const { error } = await authClient.changePassword({
+                currentPassword: current,
+                newPassword: next,
+                revokeOtherSessions: true,
+              });
+              setMsg(
+                error ? { error: error.message } : { ok: "Password changed" },
+              );
+              if (!error) {
+                setCurrent("");
+                setNext("");
+              }
+            }}
+          >
+            <div className="space-y-1">
+              <Label htmlFor="current">Current password</Label>
+              <Input
+                id="current"
+                type="password"
+                required
+                value={current}
+                onChange={(e) => setCurrent(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="new">New password</Label>
+              <Input
+                id="new"
+                type="password"
+                minLength={8}
+                required
+                value={next}
+                onChange={(e) => setNext(e.target.value)}
+              />
+            </div>
+            <Button type="submit" variant="outline">
+              Change password
+            </Button>
+            <Status {...msg} />
+          </form>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-function TwoFactorCard() {
+function TwoFactorCard({ hasPassword }: { hasPassword: boolean | null }) {
   const { data: session, refetch } = useSession();
   const enabled = Boolean(
     (session?.user as { twoFactorEnabled?: boolean } | undefined)
@@ -197,7 +255,20 @@ function TwoFactorCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {setup && !enabled ? (
+        {hasPassword === null ? (
+          <p className="text-muted-foreground text-sm">
+            Checking your sign-in methods…
+          </p>
+        ) : !hasPassword ? (
+          <div className="space-y-2 text-sm">
+            <p>
+              Create a Docks password first to set up two-factor authentication.
+            </p>
+            <Link href="#password" className="underline underline-offset-4">
+              Create your password above
+            </Link>
+          </div>
+        ) : setup && !enabled ? (
           <form className="max-w-md space-y-3" onSubmit={confirm}>
             <p className="text-sm">
               Scan this with your authenticator app, then enter the code it
@@ -360,6 +431,36 @@ function DeleteAccountCard() {
 }
 
 export default function Page() {
+  const { data: session } = useSession();
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [accountsError, setAccountsError] = useState<string>();
+  useEffect(() => {
+    if (!session?.user.id) return;
+    let active = true;
+    setHasPassword(null);
+    void authClient
+      .listAccounts()
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error || !data)
+          setAccountsError(
+            "Couldn't check your sign-in methods. Reload this page to try again.",
+          );
+        else
+          setHasPassword(
+            data.some((account) => account.providerId === "credential"),
+          );
+      })
+      .catch(() => {
+        if (active)
+          setAccountsError(
+            "Couldn't check your sign-in methods. Reload this page to try again.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, [session?.user.id]);
   return (
     <AppShell
       title="Account"
@@ -367,8 +468,8 @@ export default function Page() {
     >
       <div className="flex flex-col gap-6">
         <ProfileCard />
-        <PasswordCard />
-        <TwoFactorCard />
+        <PasswordCard hasPassword={hasPassword} accountsError={accountsError} />
+        <TwoFactorCard hasPassword={hasPassword} />
         <SessionsCard />
         <DeleteAccountCard />
       </div>
