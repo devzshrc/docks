@@ -9,7 +9,7 @@ and never throws — same contract as `audit` (`access.ts`) and `track`
 
 | Phase | Table | Columns | Keep time |
 |---|---|---|---|
-| 1 | `server_error` | id, at, request_id, route, message, stack, meta (jsonb) | 90 days |
+| 1 | `server_error` | hash (PK, sha256 of normalized message), message, stack (admin-only), total, first_at, last_at; route/job context as message prefix | 90 days |
 | 2 | `webhook_delivery` | id, at, source, event, delivery_id, status, attempts, latency_ms, meta (jsonb) | 90 days |
 | 3 | `ai_call` | id, at, workspace_id, repo_id, model, input_tokens, output_tokens, latency_ms, cached, meta (jsonb) | 1 year |
 | 4 | `api_call` | id, at, route, status, duration_ms, user_id, workspace_id | 30 days |

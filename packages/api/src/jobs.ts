@@ -1,5 +1,6 @@
 import { db, schema } from "@docks/db";
 import { and, eq, sql } from "drizzle-orm";
+import { recordServerError } from "./observe.js";
 
 /** plan.md §7 — row-level job queue. The worker loop lives in apps/server. */
 
@@ -64,6 +65,8 @@ export async function failJob(job: Job, error: unknown) {
     return;
   }
   const giveUp = job.attempts >= MAX_ATTEMPTS || error instanceof PermanentJobError;
+  // Best-effort grouping for the admin errors view; never breaks the job update.
+  await recordServerError(error, `[job ${job.type}#${job.id}] `);
   await db
     .update(schema.jobs)
     .set({

@@ -1,4 +1,4 @@
-import { appRouter, auth, completeAuthorization, connectSlack, handleBillingWebhook, handleGithubEvent, linkInstallation, verifyGithubSignature } from "@docks/api";
+import { appRouter, auth, completeAuthorization, connectSlack, handleBillingWebhook, handleGithubEvent, linkInstallation, verifyGithubSignature, recordServerError } from "@docks/api";
 import type { Context as TrpcContext } from "@docks/api";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { Hono } from "hono";
@@ -162,6 +162,8 @@ export function createApp(opts: { afterWebhook?: () => void } = {}) {
       createContext: ({ req }) => createContext(req),
       onError({ error, path }) {
         console.error(`[trpc] ${path} :: ${error.code}: ${error.message}`);
+        // Best-effort grouping for the admin errors view; never breaks the response.
+        void recordServerError(error, `[trpc ${path ?? "unknown"} ${error.code}] `);
       },
     }),
   );

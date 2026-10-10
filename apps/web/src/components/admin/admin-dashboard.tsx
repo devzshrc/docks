@@ -8,7 +8,7 @@ import {
   RiComputerLine,
 } from "@remixicon/react";
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useTRPC, useTRPCClient } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -348,12 +348,15 @@ export function AdminDashboard({
     [search, setSearch] = useState(""),
     [debounced, setDebounced] = useState(""),
     [offset, setOffset] = useState(0),
+    [errorsOffset, setErrorsOffset] = useState(0),
+    [openError, setOpenError] = useState<string | null>(null),
     [days, setDays] = useState(30),
     [status, setStatus] = useState<"all" | "active" | "suspended">("all");
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebounced(search);
       setOffset(0);
+      setErrorsOffset(0);
     }, 250);
     return () => clearTimeout(timer);
   }, [search]);
@@ -397,6 +400,12 @@ export function AdminDashboard({
   );
   const health = useQuery(
     trpc.admin.health.queryOptions(page, { enabled: section === "health" }),
+  );
+  const errors = useQuery(
+    trpc.admin.errors.queryOptions(
+      { search: debounced, offset: errorsOffset, limit: 25 },
+      { enabled: section === "health" },
+    ),
   );
   const write = !!access.data && access.data.role !== "viewer",
     owner = access.data?.role === "owner";
@@ -612,18 +621,24 @@ export function AdminDashboard({
         ["users", "workspaces", "activity", "health"].includes(section) && (
           <>
             <div className="flex flex-wrap gap-3">
-              {section !== "health" && (
-                <div className="relative w-full max-w-sm">
-                  <RiSearchLine className="pointer-events-none absolute start-3 top-3 size-4 text-foreground-icon-tertiary" />
-                  <Input
-                    aria-label={`Search ${section}`}
-                    placeholder={`Search ${section}…`}
-                    className="h-10 ps-9"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
-              )}
+              <div className="relative w-full max-w-sm">
+                <RiSearchLine className="pointer-events-none absolute start-3 top-3 size-4 text-foreground-icon-tertiary" />
+                <Input
+                  aria-label={
+                    section === "health"
+                      ? "Search errors"
+                      : `Search ${section}`
+                  }
+                  placeholder={
+                    section === "health"
+                      ? "Search errors…"
+                      : `Search ${section}…`
+                  }
+                  className="h-10 ps-9"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
               {section === "users" && (
                 <Select
                   value={status}
@@ -831,6 +846,81 @@ export function AdminDashboard({
                 />
               )}
             </Panel>
+            {section === "health" && (
+              <Panel
+                title={`${errors.data?.total ?? "…"} grouped errors`}
+                description="Repeat instances of the same bug share one row. Full stacks stay in this admin view."
+              >
+                <State
+                  pending={errors.isPending}
+                  error={errors.error}
+                  empty={errors.data?.total === 0}
+                />
+                {errors.data && errors.data.rows.length > 0 && (
+                  <DataTable
+                    headers={[
+                      "Error",
+                      "Occurrences",
+                      "First seen",
+                      "Last seen",
+                      "",
+                    ]}
+                  >
+                    {errors.data.rows.map((e) => (
+                      <Fragment key={e.hash}>
+                        <TableRow>
+                          <TableCell className="max-w-64">
+                            <span
+                              className="block font-mono text-caption-1-medium text-text-tertiary"
+                              title={e.hash}
+                            >
+                              {e.hash.slice(0, 12)}
+                            </span>
+                            <span className="mt-1 block break-all whitespace-normal">
+                              {e.message}
+                            </span>
+                          </TableCell>
+                          <TableCell className="tabular-nums">
+                            {e.total}
+                          </TableCell>
+                          <TableCell>{date(e.firstAt)}</TableCell>
+                          <TableCell>{date(e.lastAt)}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              onClick={() =>
+                                setOpenError(openError === e.hash ? null : e.hash)
+                              }
+                            >
+                              {openError === e.hash ? "Hide" : "Stack"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                        {openError === e.hash && (
+                          <TableRow key={`${e.hash}-stack`}>
+                            <TableCell colSpan={5}>
+                              <pre
+                                dir="ltr"
+                                className="max-h-64 overflow-auto rounded-xl border border-separator-border bg-background-secondary-default p-4 font-mono text-caption-1-medium text-text-secondary whitespace-pre-wrap break-all"
+                              >
+                                {e.stack ?? "No stack recorded."}
+                              </pre>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </Fragment>
+                    ))}
+                  </DataTable>
+                )}
+                {errors.data && (
+                  <Pager
+                    total={errors.data.total}
+                    offset={errorsOffset}
+                    setOffset={setErrorsOffset}
+                  />
+                )}
+              </Panel>
+            )}
           </>
         )}
       {section === "users" && id && (
