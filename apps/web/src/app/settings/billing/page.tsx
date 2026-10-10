@@ -71,6 +71,7 @@ function Billing({ workspaceId }: { workspaceId: string }) {
         <p className="text-sm leading-relaxed text-muted-foreground">Start small. Add deadlines, release visibility, and review evidence as your team grows.</p>
       </div>
       {checkout && CHECKOUT_STATUS[checkout] && <p role="status" className="rounded-lg border bg-muted/40 p-4 text-sm">{CHECKOUT_STATUS[checkout]}</p>}
+      {s.complimentary && <p role="status" className="rounded-3xl border border-border-button-default bg-background-primary-default p-4 text-body-2-regular text-text-secondary">Your workspace has complimentary Team access. No subscription charge is created for this access.</p>}
       <PlanCards current={s.plan} actions={{
         free: <Button variant="outline" className="w-full" disabled>{team ? "Included in Team" : "Your current plan"}</Button>,
         team: team ? <Button className="w-full" disabled>You're on Team</Button> : <Button className="w-full" onClick={() => upgrade.mutate({ workspaceId })} disabled={!s.canManage || upgrade.isPending}>{upgrade.isPending ? "Opening checkout…" : "Upgrade to Team"}</Button>,
@@ -81,7 +82,7 @@ function Billing({ workspaceId }: { workspaceId: string }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">Workspace usage {s.status && s.status !== "active" && <Badge variant="destructive">{s.status.replace("_", " ")}</Badge>}</CardTitle>
-          <CardDescription>{team ? `Team plan${s.currentPeriodEnd ? ` · Renews ${new Date(s.currentPeriodEnd).toLocaleDateString()}` : ""}` : "Free plan · 5 people and 3 repositories"}</CardDescription>
+          <CardDescription>{s.complimentary ? "Complimentary Team access" : team ? `Team plan${s.currentPeriodEnd ? ` · Renews ${new Date(s.currentPeriodEnd).toLocaleDateString()}` : ""}` : "Free plan · 5 people and 3 repositories"}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid gap-6 sm:grid-cols-2"><Usage label="Members" used={s.usage.members} limit={s.limits.members} /><Usage label="Enabled repositories" used={s.usage.repos} limit={s.limits.repos} /></div>

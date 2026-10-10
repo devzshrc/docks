@@ -1,21 +1,13 @@
 import { db, schema } from "@docks/db";
-import { TRPCError } from "@trpc/server";
-import { and, count, eq, gte, inArray } from "drizzle-orm";
+import { and, count, gte, inArray } from "drizzle-orm";
 import { computeMetrics } from "../analytics.js";
-import { protectedProcedure, router } from "../trpc.js";
+import { router } from "../trpc.js";
 
-/** Internal product metrics (plan M8). ADMIN_EMAILS is a comma-separated allowlist. */
-function assertAdmin(email: string) {
-  const admins = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  if (!admins.includes(email.toLowerCase())) throw new TRPCError({ code: "NOT_FOUND", message: "Not found" });
-}
+import { adminProcedure, managementProcedures } from "./admin-management.js";
 
 export const adminRouter = router({
-  metrics: protectedProcedure.query(async ({ ctx }) => {
-    assertAdmin(ctx.user.email);
+  ...managementProcedures,
+  metrics: adminProcedure.query(async () => {
     const since = new Date(Date.now() - 60 * 24 * 3_600_000);
     const events = await db
       .select({ userId: schema.event.userId, name: schema.event.name, at: schema.event.at })
@@ -30,8 +22,7 @@ export const adminRouter = router({
    * - monthlyRevenue: seats × TEAM_SEAT_PRICE_USD on Team, 0 on Free
    * - retention: share of members active (opened the board/PR or reviewed) in the last 28 days
    */
-  accounts: protectedProcedure.query(async ({ ctx }): Promise<Account[]> => {
-    assertAdmin(ctx.user.email);
+  accounts: adminProcedure.query(async ({ ctx }): Promise<Account[]> => {
     const price = Number(process.env.TEAM_SEAT_PRICE_USD ?? 12);
     const since = new Date(Date.now() - 28 * 24 * 3_600_000);
     const [workspaces, seats, active] = await Promise.all([

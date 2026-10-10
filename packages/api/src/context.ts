@@ -16,6 +16,8 @@ export interface Context {
   user: User | null;
   /** Request id for tracing / logging. */
   requestId: string;
+  sessionCreatedAt?: Date;
+  sessionId?: string;
 }
 
 /** Helper for standalone (non-HTTP) callers — tests, scripts. */

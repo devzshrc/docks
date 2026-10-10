@@ -1,5 +1,7 @@
 import { db, schema } from "@docks/db";
 import { track } from "./analytics.js";
+import { APIError, createAuthMiddleware } from "better-auth/api";
+import { isSuspended } from "./account-status.js";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { twoFactor } from "better-auth/plugins";
@@ -47,9 +49,16 @@ async function scrubGithubTokens(account: {
     await db
       .update(schema.account)
       .set({ accessToken: null, refreshToken: null, idToken: null })
-      .where(and(eq(schema.account.id, account.id), eq(schema.account.providerId, "github")));
+      .where(
+        and(
+          eq(schema.account.id, account.id),
+          eq(schema.account.providerId, "github"),
+        ),
+      );
   } catch (err) {
-    console.error(`[auth] couldn't link GitHub after sign-in: ${(err as Error).message}`);
+    console.error(
+      `[auth] couldn't link GitHub after sign-in: ${(err as Error).message}`,
+    );
   }
 }
 
@@ -69,7 +78,8 @@ export const auth = betterAuth({
         to: user.email,
         subject: "Reset your Docks password",
         ...actionEmail({
-          intro: "Someone asked to reset the password for your Docks account. The link works for one hour.",
+          intro:
+            "Someone asked to reset the password for your Docks account. The link works for one hour.",
           action: "Reset password",
           url,
         }),
@@ -83,7 +93,11 @@ export const auth = betterAuth({
       await sendEmail({
         to: user.email,
         subject: "Confirm your email for Docks",
-        ...actionEmail({ intro: "Confirm your email address to finish setting up Docks.", action: "Confirm email", url }),
+        ...actionEmail({
+          intro: "Confirm your email address to finish setting up Docks.",
+          action: "Confirm email",
+          url,
+        }),
       });
     },
   },
@@ -93,24 +107,91 @@ export const auth = betterAuth({
   user: {
     deleteUser: { enabled: true },
   },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      if (
+        ctx.path === "/sign-in/email" &&
+        ctx.context.returned instanceof APIError
+      ) {
+        await db
+          .insert(schema.authEvent)
+          .values({ kind: "login_failed" })
+          .catch(() => {});
+      }
+    }),
+  },
   databaseHooks: {
-    user: { create: { after: async (user) => void (await track(user.id, null, "signed_up")) } },
+    session: {
+      create: {
+        before: async (session) => {
+          if (await isSuspended(session.userId))
+            throw new APIError("FORBIDDEN", {
+              message: "Account suspended. Contact support.",
+            });
+          return { data: session };
+        },
+      },
+    },
+    user: {
+      create: {
+        after: async (user) => void (await track(user.id, null, "signed_up")),
+      },
+    },
     // After GitHub sign-in: connect the account for acting as the person (encrypted), then drop Better Auth's
     // plaintext copy of the tokens. A failure here must never block the login itself.
-    account: { create: { after: scrubGithubTokens }, update: { after: scrubGithubTokens } },
+    account: {
+      create: { after: scrubGithubTokens },
+      update: { after: scrubGithubTokens },
+    },
   },
   // Built-in limiter on /api/auth/* (sign-in, sign-up, reset).
   rateLimit: { enabled: true, window: 60, max: 30 },
-  plugins: [twoFactor({ issuer: "Docks" })],
+  plugins: [
+    twoFactor({ issuer: "Docks" }),
+    {
+      id: "admin-login-observability",
+      hooks: {
+        after: [
+          {
+            matcher: () => true,
+            handler: createAuthMiddleware(async (ctx) => {
+              // Run after the 2FA plugin: a password-only challenge clears newSession.
+              const session = ctx.context.newSession;
+              const loginPath =
+                ctx.path.startsWith("/sign-in/") ||
+                ctx.path.startsWith("/callback/") ||
+                ctx.path === "/verify-email" ||
+                /^\/two-factor\/verify-(totp|otp|backup-code)$/.test(ctx.path);
+              if (
+                session &&
+                loginPath &&
+                !(ctx.context.returned instanceof APIError)
+              ) {
+                await db
+                  .insert(schema.authEvent)
+                  .values({ userId: session.user.id, kind: "login" })
+                  .catch(() => {});
+              }
+            }),
+          },
+        ],
+      },
+    },
+  ],
   // Web and API live on sibling subdomains in production (app.<domain> / api.<domain>):
   // set COOKIE_DOMAIN=.<domain> so the session cookie is shared between them.
-  // Sessions ride in a signed cookie for 5 minutes, so most requests skip the database lookup.
-  // (Revoking a session elsewhere can take up to 5 minutes to reach this device.)
-  session: { cookieCache: { enabled: true, maxAge: 5 * 60 } },
+  // Read sessions from the database so administrative revocation applies immediately.
+  session: { cookieCache: { enabled: false } },
   advanced: {
     ipAddress: { ipAddressHeaders: ["cf-connecting-ip", "x-forwarded-for"] },
     ...(process.env.COOKIE_DOMAIN
-      ? { useSecureCookies: true, crossSubDomainCookies: { enabled: true, domain: process.env.COOKIE_DOMAIN } }
+      ? {
+          useSecureCookies: true,
+          crossSubDomainCookies: {
+            enabled: true,
+            domain: process.env.COOKIE_DOMAIN,
+          },
+        }
       : {}),
   },
   trustedOrigins: [
