@@ -1,12 +1,13 @@
-import type { Metadata } from "next"
+import type { Metadata } from "next";
 
-import { Landing } from "@/components/landing/landing"
+import { Landing } from "@/components/landing/landing";
 
 export const metadata: Metadata = {
   title: "Docks — Guided code review for GitHub teams",
-  description: "One board of what's waiting, a clear order for every change, and the context to decide with confidence.",
-}
+  description:
+    "See your GitHub pull requests in one place, understand the code changes, and leave comments or approvals.",
+};
 
 export default function Home() {
-  return <Landing />
+  return <Landing />;
 }
