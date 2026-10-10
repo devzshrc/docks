@@ -1,6 +1,8 @@
 # Product analytics
 
-Docks initializes PostHog once in `apps/web/src/instrumentation-client.ts`.
+Docks initializes PostHog after React mounts, using `apps/web/src/lib/posthog.ts`.
+Initialization runs from the root analytics provider to avoid SDK scripts mutating
+the page before hydration.
 The React provider identifies authenticated users by Better Auth user ID and
 resets identity when the session ends. Email and name are person properties.
 

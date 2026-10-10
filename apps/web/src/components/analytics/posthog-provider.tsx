@@ -2,7 +2,8 @@
 
 import { PostHogProvider as PHProvider } from "posthog-js/react";
 import posthog from "posthog-js";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { initializePostHog } from "@/lib/posthog";
 import { useSession } from "@/lib/auth-client";
 
 function PostHogIdentity() {
@@ -25,9 +26,17 @@ function PostHogIdentity() {
 }
 
 export function PostHogProvider({ children }: { children: ReactNode }) {
+  const [ready, setReady] = useState(false);
+  const initialized = useRef(false);
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_POSTHOG_KEY || initialized.current) return;
+    initializePostHog();
+    initialized.current = true;
+    setReady(true);
+  }, []);
   return (
     <PHProvider client={posthog}>
-      <PostHogIdentity />
+      {ready && <PostHogIdentity />}
       {children}
     </PHProvider>
   );
