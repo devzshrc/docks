@@ -54,7 +54,7 @@ export function LoginForm({
     setError(null);
     setPending(true);
     setUnverified(false);
-    const { error } = await authClient.signIn.email({ email, password });
+    const { data, error } = await authClient.signIn.email({ email, password });
     setPending(false);
     if (error) {
       if (error.status === 403) {
@@ -64,6 +64,7 @@ export function LoginForm({
       setError(error.message ?? "Sign-in failed");
       return;
     }
+    if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) return;
     router.push(nextPath());
     router.refresh();
   }
