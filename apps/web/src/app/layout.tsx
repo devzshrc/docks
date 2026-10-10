@@ -1,3 +1,4 @@
+import { DirectionProvider } from "@/components/foundations/direction/direction";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,14 +35,16 @@ export default function RootLayout({
       className={cn("dark", geist.variable, geistMono.variable)}
     >
       <body className="font-sans antialiased">
-        <ThemeProvider>
-          <PostHogProvider>
-            <TRPCReactProvider>
-              <TooltipProvider>{children}</TooltipProvider>
-              <Toaster />
-            </TRPCReactProvider>
-          </PostHogProvider>
-        </ThemeProvider>
+        <DirectionProvider locale="en-US">
+          <ThemeProvider>
+            <PostHogProvider>
+              <TRPCReactProvider>
+                <TooltipProvider>{children}</TooltipProvider>
+                <Toaster />
+              </TRPCReactProvider>
+            </PostHogProvider>
+          </ThemeProvider>
+        </DirectionProvider>
       </body>
     </html>
   );

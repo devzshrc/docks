@@ -1,3 +1,5 @@
+import { reviewInboxRouter } from "./review-inbox.js";
+import { knowledgeRouter } from "./knowledge.js";
 import { deliveryRouter } from "./delivery.js";
 import { releasesRouter } from "./releases.js";
 import { router } from "../trpc.js";
@@ -15,6 +17,8 @@ import { userRouter } from "./user.js";
 import { workspaceRouter } from "./workspace.js";
 
 export const appRouter = router({
+  knowledge: knowledgeRouter,
+  reviewInbox: reviewInboxRouter,
   releases: releasesRouter,
   delivery: deliveryRouter,
   health: healthRouter,

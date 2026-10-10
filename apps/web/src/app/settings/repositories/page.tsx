@@ -96,6 +96,12 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">
                       {r.fullName}
+                      <Link
+                        className="ms-2 underline"
+                        href={`/settings/repositories/knowledge?repo=${encodeURIComponent(r.fullName)}`}
+                      >
+                        Knowledge
+                      </Link>
                       {r.suspended && (
                         <Badge variant="destructive" className="ml-2">
                           suspended

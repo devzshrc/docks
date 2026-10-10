@@ -144,19 +144,50 @@ export function ReviewerPicker({
             size="sm"
             variant="ghost"
             className="h-7"
-            disabled={busy}
+            disabled={
+              busy ||
+              Boolean(
+                claimedBy && !claimedBy.isMe && !options.data?.canReassign,
+              )
+            }
             onClick={() => {
               setError(undefined);
-              claim.mutate({ repo, number, claim: !claimedBy?.isMe });
+              claim.mutate({
+                repo,
+                number,
+                claim: !claimedBy?.isMe,
+                expectedOwner: claimedBy?.userId,
+              });
             }}
           >
             {claimedBy?.isMe
               ? "Release"
               : claimedBy
                 ? "Take over"
-                : "I'm on it"}
+                : "Accept review"}
           </Button>
         )}
+        {canAct &&
+          options.data?.myLogin &&
+          requested.some(
+            (r) =>
+              r.login.toLowerCase() === options.data!.myLogin!.toLowerCase(),
+          ) &&
+          !claimedBy?.isMe && (
+            <Button
+              variant="ghost"
+              disabled={busy}
+              onClick={() =>
+                setReviewers.mutate({
+                  repo,
+                  number,
+                  remove: [options.data!.myLogin!],
+                })
+              }
+            >
+              Decline review
+            </Button>
+          )}
       </div>
       {open && (
         <ul
