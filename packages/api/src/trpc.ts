@@ -1,6 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { isSuspended } from "./account-status.js";
 import type { Context } from "./context.js";
 
 /**
@@ -29,10 +30,11 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 
 /** Auth guard — reads ctx.user set in createContext(). */
-const isAuthed = t.middleware(({ ctx, next }) => {
+const isAuthed = t.middleware(async ({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
   }
+  if (await isSuspended(ctx.user.id)) throw new TRPCError({ code: "FORBIDDEN", message: "Your account is suspended. Contact support." });
   return next({ ctx: { ...ctx, user: ctx.user } });
 });
 

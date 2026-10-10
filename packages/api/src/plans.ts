@@ -1,5 +1,6 @@
 import { db, schema } from "@docks/db";
 import { TRPCError } from "@trpc/server";
+import { effectivePlan } from "./admin-policy.js";
 import { and, count, eq } from "drizzle-orm";
 
 /** plan.md §11 — free tier limits. Team is unlimited and billed per seat. */
@@ -16,7 +17,8 @@ export async function workspacePlan(workspaceId: string): Promise<Plan> {
     .from(schema.workspace)
     .where(eq(schema.workspace.id, workspaceId))
     .limit(1);
-  return row?.plan ?? "free";
+  const grants = await db.select().from(schema.premiumGrant).where(eq(schema.premiumGrant.workspaceId, workspaceId));
+  return effectivePlan(row?.plan ?? "free", grants);
 }
 
 export async function memberCount(workspaceId: string): Promise<number> {

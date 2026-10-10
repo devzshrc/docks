@@ -21,7 +21,7 @@ async function createContext(req: Request): Promise<TrpcContext> {
     const session = await auth.api.getSession({ headers: req.headers });
     if (session?.user) {
       const { id, name, email, emailVerified, image } = session.user;
-      return { requestId, user: { id, name, email, emailVerified, image } };
+      return { requestId, user: { id, name, email, emailVerified, image }, sessionId: session.session.id, sessionCreatedAt: new Date(session.session.createdAt) };
     }
   } catch (err) {
     console.error(`[auth] getSession failed: ${(err as Error).message}`);

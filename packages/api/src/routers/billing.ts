@@ -3,7 +3,7 @@ import { assertCan, assertMember, audit, can } from "../access.js";
 import { checkoutUrl, portalUrl } from "../billing.js";
 import { db, schema } from "@docks/db";
 import { eq } from "drizzle-orm";
-import { enabledRepoCount, memberCount, PLAN_LIMITS } from "../plans.js";
+import { enabledRepoCount, memberCount, PLAN_LIMITS, workspacePlan } from "../plans.js";
 import { protectedProcedure, router } from "../trpc.js";
 
 const workspaceInput = z.object({ workspaceId: z.string() });
@@ -23,9 +23,11 @@ export const billingRouter = router({
       .from(schema.workspace)
       .where(eq(schema.workspace.id, input.workspaceId))
       .limit(1);
-    const plan = ws?.plan ?? "free";
+    const plan = await workspacePlan(input.workspaceId);
     return {
       plan,
+      paidPlan: ws?.plan ?? "free",
+      complimentary: plan === "team" && ws?.plan !== "team",
       status: ws?.status ?? null,
       currentPeriodEnd: ws?.currentPeriodEnd ?? null,
       hasBillingAccount: Boolean(ws?.hasCustomer),
