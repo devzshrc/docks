@@ -17,6 +17,7 @@ import {
   sql,
 } from "drizzle-orm";
 import { z } from "zod";
+import { operationalHealth } from "../operational-health.js";
 import { protectedProcedure } from "../trpc.js";
 import {
   assertAdminAccess,
@@ -481,7 +482,7 @@ export const managementProcedures = {
   }),
   health: adminProcedure.input(page).query(async ({ input }) => {
     const where = eq(schema.jobs.status, "failed");
-    const [rows, totals, statuses] = await Promise.all([
+    const [rows, totals, statuses, operational] = await Promise.all([
       db
         .select({
           id: schema.jobs.id,
@@ -500,6 +501,7 @@ export const managementProcedures = {
         .select({ status: schema.jobs.status, n: count() })
         .from(schema.jobs)
         .groupBy(schema.jobs.status),
+      operationalHealth(),
     ]);
     // Payloads and raw error strings can contain credentials; never return them.
     return {
@@ -509,6 +511,7 @@ export const managementProcedures = {
       })),
       total: totals[0]!.n,
       statuses,
+      ...operational,
     };
   }),
   errors: adminProcedure.input(page).query(async ({ input }) => {
@@ -532,6 +535,79 @@ export const managementProcedures = {
     ]);
     return { rows, total: totals[0]!.n };
   }),
+  webhooks: adminProcedure
+    .input(
+      page.extend({
+        installationId: z
+          .number()
+          .int()
+          .positive()
+          .max(Number.MAX_SAFE_INTEGER)
+          .optional(),
+        result: z.enum(["all", ...schema.WEBHOOK_RESULTS]).default("all"),
+      }),
+    )
+    .query(async ({ input }) => {
+      // Numeric search also matches the installation id; text matches the
+      // event name, the GitHub delivery id, and the failure reason.
+      // Delivery ids, reasons, and events never hold payloads, so all are
+      // safe to return and search.
+      const numericSearch = /^\d+$/.test(input.search.trim())
+        ? Number(input.search.trim())
+        : null;
+      const where = and(
+        input.search
+          ? or(
+              ilike(schema.webhookDelivery.event, `%${input.search}%`),
+              ilike(schema.webhookDelivery.deliveryId, `%${input.search}%`),
+              ilike(schema.webhookDelivery.reason, `%${input.search}%`),
+              numericSearch !== null && Number.isSafeInteger(numericSearch)
+                ? eq(schema.webhookDelivery.installationId, numericSearch)
+                : undefined,
+            )
+          : undefined,
+        input.installationId !== undefined
+          ? eq(schema.webhookDelivery.installationId, input.installationId)
+          : undefined,
+        input.result !== "all"
+          ? eq(schema.webhookDelivery.result, input.result)
+          : undefined,
+      );
+      const since24h = new Date(Date.now() - 24 * 3600000);
+      const [rows, totals, recent] = await Promise.all([
+        db
+          .select()
+          .from(schema.webhookDelivery)
+          .where(where)
+          .orderBy(
+            desc(schema.webhookDelivery.receivedAt),
+            schema.webhookDelivery.id,
+          )
+          .limit(input.limit)
+          .offset(input.offset),
+        db.select({ n: count() }).from(schema.webhookDelivery).where(where),
+        db
+          .select({ result: schema.webhookDelivery.result, n: count() })
+          .from(schema.webhookDelivery)
+          .where(gte(schema.webhookDelivery.receivedAt, since24h))
+          .groupBy(schema.webhookDelivery.result),
+      ]);
+      // Anything that is not `ok` (handler failures and signature rejects)
+      // counts as failed for the Health panel rate.
+      const total24h = recent.reduce((sum, r) => sum + r.n, 0);
+      const failed24h = recent
+        .filter((r) => r.result !== "ok")
+        .reduce((sum, r) => sum + r.n, 0);
+      return {
+        rows,
+        total: totals[0]!.n,
+        last24h: {
+          total: total24h,
+          failed: failed24h,
+          rate: total24h ? failed24h / total24h : 0,
+        },
+      };
+    }),
   setAccountStatus: adminProcedure
     .input(z.object({ userId: z.string(), suspended: z.boolean(), reason }))
     .mutation(({ ctx, input }) => setAccountStatus(ctx, input)),

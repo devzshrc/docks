@@ -1,3 +1,4 @@
+import { logError } from "../logger.js";
 import { TRPCError } from "@trpc/server";
 import { GitHubError } from "./github.js";
 
@@ -47,6 +48,6 @@ export function githubFailure(err: unknown): never {
   // Our own errors (permissions, reconnect prompts) are already user-facing.
   if (err instanceof TRPCError) throw err;
   // Anything else is config or network trouble: log the detail, show a plain message.
-  console.error(`[github] ${(err as Error).message}`);
+  logError("github.failed", err);
   throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Couldn't reach GitHub. Try again in a moment." });
 }

@@ -75,6 +75,8 @@ jobs:
       - name: Build production Cloudflare web artifact
         run: pnpm --filter @docks/web run build:cloudflare
         env:
+          DOCKS_SOURCE_MAPS: "1"
+          NEXT_PUBLIC_RELEASE_SHA: ${{ github.sha }}
           NEXT_PUBLIC_SERVER_URL: https://api.devzshrc.in
           NEXT_PUBLIC_POSTHOG_KEY: ${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
           NEXT_PUBLIC_POSTHOG_HOST: ${{ vars.NEXT_PUBLIC_POSTHOG_HOST }}
@@ -137,9 +139,24 @@ jobs:
       - run: pnpm --filter @docks/db build && pnpm --filter @docks/api build
       - name: Migrate production database before deploying API
         run: pnpm --filter @docks/db db:migrate
+      - name: Upload browser source maps to PostHog
+        if: vars.POSTHOG_SOURCE_MAPS_ENABLED == 'true'
+        uses: PostHog/upload-source-maps@bbfc8eae6d9ecc63109d0616514e2d4227282558
+        with:
+          directory: apps/web/.open-next/assets
+          api-key: ${{ secrets.POSTHOG_CLI_API_KEY }}
+          project-id: ${{ vars.POSTHOG_PROJECT_ID }}
+          release-name: docks-web
+          release-version: ${{ github.sha }}
+          cli-version: "0.18.10"
+          delete-after-upload: true
+      - name: Remove browser source maps from public assets
+        run: node scripts/remove-public-source-maps.mjs
       - name: Deploy API Worker
-        run: pnpm --filter @docks/server exec wrangler deploy
+        run: pnpm --filter @docks/server exec wrangler deploy --var RELEASE_SHA:${{ github.sha }}
       - name: Deploy tested web Worker artifact
         run: pnpm --filter @docks/web exec opennextjs-cloudflare deploy
       - name: Verify production routes and authentication guard
         run: node scripts/smoke-deploy.mjs
+      - name: Record successful production release
+        run: pnpm --filter @docks/server exec node scripts/record-deploy.mjs

@@ -1,3 +1,4 @@
+import { logError } from "./logger.js";
 import { db, schema, type Role } from "@docks/db";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
@@ -127,7 +128,7 @@ export async function audit(
   try {
     await db.insert(schema.auditLog).values({ workspaceId, actorId, action, target: target ?? null, meta: meta ?? null });
   } catch (err) {
-    console.error(`[audit] ${action} not recorded: ${(err as Error).message}`);
+    logError("audit.failed", err);
   }
 }
 

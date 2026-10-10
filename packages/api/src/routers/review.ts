@@ -1,3 +1,4 @@
+import { logError } from "../logger.js";
 import { workspacePlan } from "../plans.js";
 import { randomUUID } from "node:crypto";
 import { track, trackDaily } from "../analytics.js";
@@ -828,9 +829,9 @@ export const reviewRouter = router({
         .from(schema.prFile)
         .where(and(eq(schema.prFile.repoId, repoRow.id), eq(schema.prFile.prNumber, input.number), eq(schema.prFile.headSha, headSha)));
       try {
-        return { answer: await askPr({ title, body, files, question: input.question, history: input.history }) };
+        return { answer: await askPr({ title, body, files, question: input.question, history: input.history }, { workspaceId: repoRow.workspaceId, repoId: repoRow.id }) };
       } catch (err) {
-        console.error(`[ask] failed: ${(err as Error).message}`);
+        logError("ask.failed", err);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Couldn't get an answer right now. Try again." });
       }
     }),
