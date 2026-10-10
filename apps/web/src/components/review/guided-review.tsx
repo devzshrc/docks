@@ -23,6 +23,7 @@ import { Count, DrawTick, flash, useJustBecame } from "@/components/motion";
 import { DeadlinePanel } from "@/components/review/deadline-panel";
 import { Checklist } from "@/components/review/checklist";
 import { FileRail } from "@/components/review/file-rail";
+import { FollowUps } from "@/components/review/follow-ups";
 import { LinkedIssues } from "@/components/review/linked-issues";
 import { AskPanel } from "@/components/review/ask-panel";
 import { FixWithAgent, OpenInPx0 } from "@/components/review/agent-handoff";
@@ -516,7 +517,7 @@ function GuidedReviewContent({
           <div>
             <ShadcnButton
               variant="row"
-            size="none"
+              size="none"
               type="button"
               aria-expanded={filesOpen}
               onClick={() => setFilesOpen((o) => !o)}
@@ -554,6 +555,7 @@ function GuidedReviewContent({
             <FileRail files={visible} />
           </div>
           <LinkedIssues repo={repo} number={number} />
+          <FollowUps repo={repo} number={number} />
           <div className="hidden lg:block">
             <Checklist
               items={checklistItems}
@@ -700,7 +702,8 @@ function GuidedReviewContent({
         <div
           className={cn(
             "bg-popover/90 shadow-overlay animate-in fade-in slide-in-from-top-3 fixed top-[70px] right-4 z-30 flex items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4 text-[13px] backdrop-blur-md transition-colors duration-300 sm:right-6",
-            allViewed && "shadow-[0_16px_40px_rgb(0_0_0/0.4),0_0_0_1px_color-mix(in_oklab,var(--success)_45%,transparent)]",
+            allViewed &&
+              "shadow-[0_16px_40px_rgb(0_0_0/0.4),0_0_0_1px_color-mix(in_oklab,var(--success)_45%,transparent)]",
           )}
         >
           {viewed < files.length ? (
