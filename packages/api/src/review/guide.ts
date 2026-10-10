@@ -1,4 +1,6 @@
+import { inSpan } from "../logger.js";
 import OpenAI from "openai";
+import { recordAiCall, type AiContext, type AiOutcome } from "../telemetry.js";
 import { zodTextFormat } from "openai/helpers/zod";
 import { db, schema } from "@docks/db";
 import { and, eq } from "drizzle-orm";
@@ -26,7 +28,11 @@ const GuideOutput = z.object({
     .array(
       z.object({
         title: z.string().describe("Short name, e.g. 'Schema change'"),
-        why: z.string().describe("One sentence: what the reviewer should look for in this step"),
+        why: z
+          .string()
+          .describe(
+            "One sentence: what the reviewer should look for in this step",
+          ),
         files: z.array(z.string()).describe("Exact file paths from the diff"),
       }),
     )
@@ -34,8 +40,12 @@ const GuideOutput = z.object({
   checklist: z
     .array(
       z.object({
-        question: z.string().describe("A specific question only a human reviewer can answer"),
-        files: z.array(z.string()).describe("Exact file paths the question is about"),
+        question: z
+          .string()
+          .describe("A specific question only a human reviewer can answer"),
+        files: z
+          .array(z.string())
+          .describe("Exact file paths the question is about"),
       }),
     )
     .describe("3-7 concrete things to verify"),
@@ -67,6 +77,7 @@ export interface GeneratedGuide {
 }
 
 export interface GuideOptions {
+  telemetry?: AiContext;
   model?: string;
   effort?: "minimal" | "low" | "medium" | "high";
 }
@@ -79,7 +90,8 @@ export function renderDiff(files: GuideFile[]) {
     .slice(0, MAX_GUIDE_FILES)
     .map((f) => {
       const head = `### ${f.filename} (${f.tier}, +${f.additions} -${f.deletions})`;
-      if (f.tier === "noise") return `${head}\n(generated or lockfile, patch omitted)`;
+      if (f.tier === "noise")
+        return `${head}\n(generated or lockfile, patch omitted)`;
       const patch = f.patch ?? "(binary or too large for GitHub to inline)";
       return patch.length > MAX_PATCH_CHARS
         ? `${head}\n${patch.slice(0, MAX_PATCH_CHARS)}\n[patch truncated at ${MAX_PATCH_CHARS} characters]`
@@ -89,14 +101,23 @@ export function renderDiff(files: GuideFile[]) {
 }
 
 /** Drop any path the model invented, and steps or questions left empty by that. */
-export function validateGuide(raw: z.infer<typeof GuideOutput>, files: GuideFile[]): Guide {
+export function validateGuide(
+  raw: z.infer<typeof GuideOutput>,
+  files: GuideFile[],
+): Guide {
   const known = new Set(files.map((f) => f.filename));
-  const keep = (paths: string[]) => [...new Set(paths.filter((p) => known.has(p)))];
+  const keep = (paths: string[]) => [
+    ...new Set(paths.filter((p) => known.has(p))),
+  ];
   return {
     source: "ai",
     summary: raw.summary.trim(),
     steps: raw.steps
-      .map((s) => ({ title: s.title.trim(), why: s.why.trim(), files: keep(s.files) }))
+      .map((s) => ({
+        title: s.title.trim(),
+        why: s.why.trim(),
+        files: keep(s.files),
+      }))
       .filter((s) => s.files.length > 0),
     checklist: raw.checklist
       .map((c) => ({ question: c.question.trim(), files: keep(c.files) }))
@@ -113,52 +134,85 @@ export async function buildGuide(
   },
   options: GuideOptions = {},
 ): Promise<GeneratedGuide> {
-  client ??= new OpenAI(); // OPENAI_API_KEY
-  const omitted = input.files.length - MAX_GUIDE_FILES;
-  const res = await client.responses.parse({
-    model: options.model ?? GUIDE_MODEL,
-    reasoning: { effort: options.effort ?? "low" },
-    max_output_tokens: 16000,
-    input: [
-      { role: "system", content: SYSTEM },
-      {
-        role: "user",
-        content: [
-          `Pull request: ${input.title}`,
-          input.body?.trim() ? `Description:\n${input.body.trim()}` : "No description.",
-          omitted > 0
-            ? `Only the first ${MAX_GUIDE_FILES} of ${input.files.length} files are included.`
-            : "",
-          `Diff:\n\n${renderDiff(input.files)}`,
-        ]
-          .filter(Boolean)
-          .join("\n\n"),
-      },
-    ],
-    text: { format: zodTextFormat(GuideOutput, "review_guide") },
-  });
+  const started = performance.now();
+  let outcome: AiOutcome = "failed";
+  let usage: { input_tokens: number; output_tokens: number } | undefined;
+  let model = options.model ?? GUIDE_MODEL;
+  try {
+    client ??= new OpenAI(); // OPENAI_API_KEY
+    const omitted = input.files.length - MAX_GUIDE_FILES;
+    const provider = client;
+    const res = await inSpan("ai.guide", () =>
+      provider.responses.parse({
+        model: options.model ?? GUIDE_MODEL,
+        reasoning: { effort: options.effort ?? "low" },
+        max_output_tokens: 16000,
+        input: [
+          { role: "system", content: SYSTEM },
+          {
+            role: "user",
+            content: [
+              `Pull request: ${input.title}`,
+              input.body?.trim()
+                ? `Description:\n${input.body.trim()}`
+                : "No description.",
+              omitted > 0
+                ? `Only the first ${MAX_GUIDE_FILES} of ${input.files.length} files are included.`
+                : "",
+              `Diff:\n\n${renderDiff(input.files)}`,
+            ]
+              .filter(Boolean)
+              .join("\n\n"),
+          },
+        ],
+        text: { format: zodTextFormat(GuideOutput, "review_guide") },
+      }),
+    );
 
-  const refusal = res.output
-    .flatMap((o) => (o.type === "message" ? o.content : []))
-    .find((c) => c.type === "refusal");
-  if (refusal) throw new Error("Guide request was declined");
-  if (res.status === "incomplete") {
-    throw new Error(`Guide output was cut off (${res.incomplete_details?.reason ?? "incomplete"})`);
+    usage = res.usage;
+    model = res.model;
+    const refusal = res.output
+      .flatMap((o) => (o.type === "message" ? o.content : []))
+      .find((c) => c.type === "refusal");
+    if (refusal) {
+      outcome = "refused";
+      throw new Error("Guide request was declined");
+    }
+    if (res.status === "incomplete") {
+      outcome = "incomplete";
+      throw new Error(
+        `Guide output was cut off (${res.incomplete_details?.reason ?? "incomplete"})`,
+      );
+    }
+    if (!res.output_parsed) {
+      outcome = "unparseable";
+      throw new Error("Guide output did not match the schema");
+    }
+    outcome = "ok";
+
+    const known = new Set(input.files.map((f) => f.filename));
+    const referenced = [
+      ...res.output_parsed.steps.flatMap((st) => st.files),
+      ...res.output_parsed.checklist.flatMap((c) => c.files),
+    ];
+    return {
+      invalidPaths: [...new Set(referenced.filter((p) => !known.has(p)))],
+      guide: validateGuide(res.output_parsed, input.files),
+      model: res.model,
+      inputTokens: res.usage?.input_tokens ?? 0,
+      outputTokens: res.usage?.output_tokens ?? 0,
+    };
+  } finally {
+    await recordAiCall({
+      ...options.telemetry,
+      operation: "guide",
+      model,
+      outcome,
+      inputTokens: usage?.input_tokens,
+      outputTokens: usage?.output_tokens,
+      latencyMs: performance.now() - started,
+    });
   }
-  if (!res.output_parsed) throw new Error("Guide output did not match the schema");
-
-  const known = new Set(input.files.map((f) => f.filename));
-  const referenced = [
-    ...res.output_parsed.steps.flatMap((st) => st.files),
-    ...res.output_parsed.checklist.flatMap((c) => c.files),
-  ];
-  return {
-    invalidPaths: [...new Set(referenced.filter((p) => !known.has(p)))],
-    guide: validateGuide(res.output_parsed, input.files),
-    model: res.model,
-    inputTokens: res.usage?.input_tokens ?? 0,
-    outputTokens: res.usage?.output_tokens ?? 0,
-  };
 }
 
 /** No-AI guide: one step per top-level folder, riskiest first, no checklist. */
@@ -167,30 +221,60 @@ export function fallbackGuide(files: GuideFile[], reason: string): Guide {
   for (const f of files) {
     if (f.tier === "noise") continue;
     const parts = f.filename.split("/");
-    const key = parts.length > 2 ? parts.slice(0, 2).join("/") : parts.length === 2 ? parts[0]! : "root";
+    const key =
+      parts.length > 2
+        ? parts.slice(0, 2).join("/")
+        : parts.length === 2
+          ? parts[0]!
+          : "root";
     groups.set(key, [...(groups.get(key) ?? []), f.filename]);
   }
   return {
     source: "fallback",
     summary: reason,
-    steps: [...groups].map(([dir, paths]) => ({ title: dir, why: "", files: paths })),
+    steps: [...groups].map(([dir, paths]) => ({
+      title: dir,
+      why: "",
+      files: paths,
+    })),
     checklist: [],
   };
 }
 
 /** Generate and cache the guide for one PR head commit (job handler body). */
-export async function generateGuideFor(repoId: number, number: number, headSha: string) {
+export async function generateGuideFor(
+  repoId: number,
+  number: number,
+  headSha: string,
+) {
   const [repo] = await db
-    .select({ fullName: schema.repository.fullName, aiEnabled: schema.repository.aiEnabled })
+    .select({
+      fullName: schema.repository.fullName,
+      workspaceId: schema.githubInstallation.workspaceId,
+      aiEnabled: schema.repository.aiEnabled,
+    })
     .from(schema.repository)
+    .innerJoin(
+      schema.githubInstallation,
+      eq(schema.repository.installationId, schema.githubInstallation.id),
+    )
     .where(eq(schema.repository.id, repoId))
     .limit(1);
   if (!repo?.aiEnabled) return;
 
   const [pull] = await db
-    .select({ title: schema.pullRequest.title, body: schema.pullRequest.body, headSha: schema.pullRequest.headSha })
+    .select({
+      title: schema.pullRequest.title,
+      body: schema.pullRequest.body,
+      headSha: schema.pullRequest.headSha,
+    })
     .from(schema.pullRequest)
-    .where(and(eq(schema.pullRequest.repoId, repoId), eq(schema.pullRequest.number, number)))
+    .where(
+      and(
+        eq(schema.pullRequest.repoId, repoId),
+        eq(schema.pullRequest.number, number),
+      ),
+    )
     .limit(1);
   // A newer push already superseded this commit; its own job will run.
   if (!pull || pull.headSha !== headSha) return;
@@ -200,7 +284,19 @@ export async function generateGuideFor(repoId: number, number: number, headSha: 
     .from(schema.reviewGuide)
     .where(guideKey(repo.fullName, number, headSha))
     .limit(1);
-  if (existing) return;
+  if (existing) {
+    await recordAiCall({
+      workspaceId: repo.workspaceId,
+      repoId,
+      operation: "guide",
+      model: GUIDE_MODEL,
+      outcome: "cached",
+      inputTokens: 0,
+      outputTokens: 0,
+      latencyMs: 0,
+    });
+    return;
+  }
 
   const files = await db
     .select({
@@ -225,8 +321,13 @@ export async function generateGuideFor(repoId: number, number: number, headSha: 
   const parts: GeneratedGuide[] = [];
   for (const chunk of chunks) {
     parts.push(
-      await buildGuide({ title: pull.title, body: pull.body, files: chunk }).catch((err: unknown) => {
-        throw retryable(err) ? err : new PermanentJobError((err as Error).message);
+      await buildGuide(
+        { title: pull.title, body: pull.body, files: chunk },
+        { telemetry: { workspaceId: repo.workspaceId, repoId } },
+      ).catch((err: unknown) => {
+        throw retryable(err)
+          ? err
+          : new PermanentJobError((err as Error).message);
       }),
     );
   }
@@ -249,7 +350,10 @@ export async function generateGuideFor(repoId: number, number: number, headSha: 
  * Split files into chunks of at most MAX_GUIDE_FILES, keeping each top-level
  * folder together where it fits. Lockfiles/generated go wherever there's room.
  */
-export function chunkFiles<T extends { filename: string }>(files: T[], max = MAX_GUIDE_FILES): T[][] {
+export function chunkFiles<T extends { filename: string }>(
+  files: T[],
+  max = MAX_GUIDE_FILES,
+): T[][] {
   if (files.length <= max) return [files];
   const groups = new Map<string, T[]>();
   for (const f of files) {
@@ -258,7 +362,9 @@ export function chunkFiles<T extends { filename: string }>(files: T[], max = MAX
   }
   const chunks: T[][] = [];
   let current: T[] = [];
-  for (const group of [...groups.values()].sort((a, b) => b.length - a.length)) {
+  for (const group of [...groups.values()].sort(
+    (a, b) => b.length - a.length,
+  )) {
     for (let i = 0; i < group.length; i += max) {
       const slice = group.slice(i, i + max);
       if (current.length + slice.length > max) {
@@ -276,7 +382,10 @@ export function chunkFiles<T extends { filename: string }>(files: T[], max = MAX
  * Combine per-chunk guides. ponytail: summary is the first chunk's plus a note,
  * not a separate model call; add one if merged summaries read poorly in the eval.
  */
-export function mergeGuides(parts: GeneratedGuide[], totalFiles: number): GeneratedGuide {
+export function mergeGuides(
+  parts: GeneratedGuide[],
+  totalFiles: number,
+): GeneratedGuide {
   if (parts.length === 1) return parts[0]!;
   return {
     guide: {
@@ -296,7 +405,12 @@ export function mergeGuides(parts: GeneratedGuide[], totalFiles: number): Genera
 function retryable(err: unknown): boolean {
   if (err instanceof OpenAI.APIConnectionError) return true;
   if (err instanceof OpenAI.APIError) {
-    return err.status === 408 || err.status === 409 || err.status === 429 || (err.status ?? 0) >= 500;
+    return (
+      err.status === 408 ||
+      err.status === 409 ||
+      err.status === 429 ||
+      (err.status ?? 0) >= 500
+    );
   }
   // Missing credentials, refusals, schema mismatch: same input, same result.
   return false;

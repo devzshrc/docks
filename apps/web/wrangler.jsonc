@@ -1,11 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
+  "upload_source_maps": true,
   "name": "docks-web",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
-  "routes": [{ "pattern": "docks.devzshrc.in", "custom_domain": true }, { "pattern": "app.devzshrc.in", "custom_domain": true }],
+  "routes": [
+    { "pattern": "docks.devzshrc.in", "custom_domain": true },
+    { "pattern": "app.devzshrc.in", "custom_domain": true },
+  ],
   "keep_names": false,
-  "observability": { "enabled": true }
+  "observability": {
+    "enabled": true,
+    "redact_query_string": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.1 },
+  },
 }

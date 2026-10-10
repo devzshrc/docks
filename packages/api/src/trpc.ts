@@ -1,4 +1,5 @@
 import { initTRPC, TRPCError } from "@trpc/server";
+import { logEvent, inSpan } from "./logger.js";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import { isSuspended } from "./account-status.js";
@@ -27,15 +28,38 @@ const t = initTRPC.context<Context>().create({
 });
 
 export const router = t.router;
-export const publicProcedure = t.procedure;
+const observed = t.procedure.use(async ({ ctx, path, type, next }) => {
+  const started = performance.now();
+  const result = await inSpan(`rpc.${path}`, () => next());
+  const code = result.ok ? "OK" : result.error.code;
+  logEvent(
+    result.ok ? "info" : code === "INTERNAL_SERVER_ERROR" ? "error" : "warn",
+    "rpc.completed",
+    {
+      requestId: ctx.requestId,
+      operation: path,
+      type,
+      code,
+      outcome: result.ok ? "ok" : "failed",
+      durationMs: Math.round(performance.now() - started),
+      source: "rpc",
+    },
+  );
+  return result;
+});
+export const publicProcedure = observed;
 
 /** Auth guard — reads ctx.user set in createContext(). */
 const isAuthed = t.middleware(async ({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
   }
-  if (await isSuspended(ctx.user.id)) throw new TRPCError({ code: "FORBIDDEN", message: "Your account is suspended. Contact support." });
+  if (await isSuspended(ctx.user.id))
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Your account is suspended. Contact support.",
+    });
   return next({ ctx: { ...ctx, user: ctx.user } });
 });
 
-export const protectedProcedure = t.procedure.use(isAuthed);
+export const protectedProcedure = observed.use(isAuthed);

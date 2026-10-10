@@ -13,6 +13,7 @@ export const jobs = pgTable(
     status: text("status", { enum: ["queued", "running", "done", "failed"] })
       .notNull()
       .default("queued"),
+    requestId: text("request_id"),
     attempts: integer("attempts").notNull().default(0),
     runAfter: timestamptz("run_after").defaultNow().notNull(),
     lastError: text("last_error"),

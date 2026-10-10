@@ -1,5 +1,7 @@
 import { db, schema } from "@docks/db";
 import { and, eq, sql } from "drizzle-orm";
+import { currentRequestId } from "./logger.js";
+import { recordServerError } from "./observe.js";
 
 /** plan.md §7 — row-level job queue. The worker loop lives in apps/server. */
 
@@ -12,7 +14,9 @@ export const MAX_ATTEMPTS = 5;
 export class PermanentJobError extends Error {}
 /** Scheduling delays do not consume the external-service retry budget. */
 export class RetryJobAtError extends Error {
-  constructor(public readonly runAfter: Date) { super("Deferred until working hours"); }
+  constructor(public readonly runAfter: Date) {
+    super("Deferred until working hours");
+  }
 }
 
 /** Enqueue unless an identical job is already queued (webhooks fire in bursts). */
@@ -30,7 +34,9 @@ export async function enqueue(type: JobType, payload: Record<string, unknown>) {
     )
     .limit(1);
   if (existing) return;
-  await db.insert(schema.jobs).values({ type, payload });
+  await db
+    .insert(schema.jobs)
+    .values({ type, payload, requestId: currentRequestId() });
 }
 
 /** Claim the next ready job; SKIP LOCKED lets several workers run safely. */
@@ -49,24 +55,42 @@ export async function claimNextJob(): Promise<Job | null> {
   `);
   const id = result.rows[0]?.id;
   if (id === undefined) return null;
-  const [job] = await db.select().from(schema.jobs).where(eq(schema.jobs.id, id));
+  const [job] = await db
+    .select()
+    .from(schema.jobs)
+    .where(eq(schema.jobs.id, id));
   return job ?? null;
 }
 
 export async function completeJob(id: number) {
-  await db.update(schema.jobs).set({ status: "done" }).where(eq(schema.jobs.id, id));
+  await db
+    .update(schema.jobs)
+    .set({ status: "done", updatedAt: new Date() })
+    .where(eq(schema.jobs.id, id));
 }
 
 /** Exponential backoff: 30s, 1m, 2m, 4m, then give up. */
 export async function failJob(job: Job, error: unknown) {
   if (error instanceof RetryJobAtError) {
-    await db.update(schema.jobs).set({ status: "queued", attempts: Math.max(0, job.attempts - 1), runAfter: error.runAfter }).where(eq(schema.jobs.id, job.id));
+    await db
+      .update(schema.jobs)
+      .set({
+        status: "queued",
+        updatedAt: new Date(),
+        attempts: Math.max(0, job.attempts - 1),
+        runAfter: error.runAfter,
+      })
+      .where(eq(schema.jobs.id, job.id));
     return;
   }
-  const giveUp = job.attempts >= MAX_ATTEMPTS || error instanceof PermanentJobError;
+  const giveUp =
+    job.attempts >= MAX_ATTEMPTS || error instanceof PermanentJobError;
+  // Best-effort grouping for the admin errors view; never breaks the job update.
+  await recordServerError(error, `[job ${job.type}#${job.id}] `);
   await db
     .update(schema.jobs)
     .set({
+      updatedAt: new Date(),
       status: giveUp ? "failed" : "queued",
       lastError: error instanceof Error ? error.message : String(error),
       runAfter: new Date(Date.now() + 30_000 * 2 ** (job.attempts - 1)),

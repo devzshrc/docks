@@ -1,3 +1,4 @@
+import { logError } from "./logger.js";
 import { db, schema } from "@docks/db";
 import { and, eq, gte, sql } from "drizzle-orm";
 
@@ -24,7 +25,7 @@ export async function track(
   try {
     await db.insert(schema.event).values({ userId, workspaceId, name, props: props ?? null });
   } catch (err) {
-    console.error(`[analytics] ${name} not recorded: ${(err as Error).message}`);
+    logError("analytics.failed", err);
   }
 }
 
@@ -46,7 +47,7 @@ export async function trackDaily(userId: string, workspaceId: string | null, nam
       .limit(1);
     if (!seen) await track(userId, workspaceId, name, key ? { key } : undefined);
   } catch (err) {
-    console.error(`[analytics] ${name} not recorded: ${(err as Error).message}`);
+    logError("analytics.failed", err);
   }
 }
 

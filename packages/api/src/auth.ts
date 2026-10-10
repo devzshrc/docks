@@ -1,3 +1,4 @@
+import { logError } from "./logger.js";
 import { db, schema } from "@docks/db";
 import { track } from "./analytics.js";
 import { APIError, createAuthMiddleware } from "better-auth/api";
@@ -56,9 +57,7 @@ async function scrubGithubTokens(account: {
         ),
       );
   } catch (err) {
-    console.error(
-      `[auth] couldn't link GitHub after sign-in: ${(err as Error).message}`,
-    );
+    logError("auth.failed", err);
   }
 }
 

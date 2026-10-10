@@ -8,7 +8,7 @@ import {
   RiComputerLine,
 } from "@remixicon/react";
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useTRPC, useTRPCClient } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,10 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AdminTrendChart, AdminActivationChart } from "@/components/admin/admin-charts";
+import {
+  AdminTrendChart,
+  AdminActivationChart,
+} from "@/components/admin/admin-charts";
 const date = (d: Date | string | null | undefined) =>
   d ? new Date(d).toLocaleString() : "Not recorded";
 function Badge({ children }: { children: ReactNode }) {
@@ -348,12 +351,20 @@ export function AdminDashboard({
     [search, setSearch] = useState(""),
     [debounced, setDebounced] = useState(""),
     [offset, setOffset] = useState(0),
+    [errorsOffset, setErrorsOffset] = useState(0),
+    [webhooksOffset, setWebhooksOffset] = useState(0),
+    [webhookResult, setWebhookResult] = useState<
+      "all" | "ok" | "failed" | "signature_rejected"
+    >("all"),
+    [openError, setOpenError] = useState<string | null>(null),
     [days, setDays] = useState(30),
     [status, setStatus] = useState<"all" | "active" | "suspended">("all");
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebounced(search);
       setOffset(0);
+      setErrorsOffset(0);
+      setWebhooksOffset(0);
     }, 250);
     return () => clearTimeout(timer);
   }, [search]);
@@ -396,7 +407,36 @@ export function AdminDashboard({
     trpc.admin.audit.queryOptions(page, { enabled: section === "activity" }),
   );
   const health = useQuery(
-    trpc.admin.health.queryOptions(page, { enabled: section === "health" }),
+    trpc.admin.health.queryOptions(page, {
+      enabled: section === "health",
+      refetchInterval: 15000,
+      refetchIntervalInBackground: false,
+    }),
+  );
+  const errors = useQuery(
+    trpc.admin.errors.queryOptions(
+      { search: debounced, offset: errorsOffset, limit: 25 },
+      {
+        enabled: section === "health",
+        refetchInterval: 30000,
+        refetchIntervalInBackground: false,
+      },
+    ),
+  );
+  const webhooks = useQuery(
+    trpc.admin.webhooks.queryOptions(
+      {
+        search: debounced,
+        offset: webhooksOffset,
+        limit: 25,
+        result: webhookResult,
+      },
+      {
+        enabled: section === "health",
+        refetchInterval: 30000,
+        refetchIntervalInBackground: false,
+      },
+    ),
   );
   const write = !!access.data && access.data.role !== "viewer",
     owner = access.data?.role === "owner";
@@ -599,31 +639,101 @@ export function AdminDashboard({
         </>
       )}
       {section === "health" && health.data && (
-        <Stats
-          items={["queued", "running", "failed", "done"].map((status) => ({
-            label: `${status[0]!.toUpperCase()}${status.slice(1)} jobs`,
-            value:
-              health.data!.statuses.find((row) => row.status === status)?.n ??
-              0,
-          }))}
-        />
+        <>
+          <p className="text-caption-1-medium text-text-secondary">
+            Updated{" "}
+            {health.dataUpdatedAt
+              ? new Date(health.dataUpdatedAt).toLocaleTimeString()
+              : "—"}{" "}
+            · refreshes every 15 seconds
+            {health.isError ? " · Refresh failed; showing previous data" : ""}
+          </p>
+          <Stats
+            items={[
+              {
+                label: "Ready jobs",
+                value: health.data.queue.ready,
+                note: "Excludes future scheduled jobs",
+              },
+              {
+                label: "Oldest ready job",
+                value: health.data.queue.oldestReadyAt
+                  ? `${Math.max(0, Math.floor((Date.now() - new Date(health.data.queue.oldestReadyAt).getTime()) / 60000))} min`
+                  : "None",
+              },
+              {
+                label: "Running over 10 minutes",
+                value: health.data.queue.staleRunning,
+                note: "Investigate before retrying",
+              },
+              {
+                label: "Last job completion",
+                value: health.data.queue.lastCompletedAt
+                  ? new Date(health.data.queue.lastCompletedAt).toLocaleString()
+                  : "No data",
+              },
+            ]}
+          />
+          <Stats
+            items={[
+              {
+                label: "AI failures (5 min)",
+                value: health.data.ai.calls
+                  ? `${health.data.ai.failures} / ${health.data.ai.calls}`
+                  : "No data",
+              },
+              {
+                label: "AI p95 (5 min)",
+                value:
+                  health.data.ai.p95Ms === null
+                    ? "No data"
+                    : `${Math.round(health.data.ai.p95Ms)} ms`,
+              },
+              {
+                label: "Webhook failures (5 min)",
+                value: health.data.webhooks.calls
+                  ? `${health.data.webhooks.failures} / ${health.data.webhooks.calls}`
+                  : "No data",
+              },
+              {
+                label: "Latest deployment",
+                value: health.data.deployments[0]?.sha.slice(0, 7) ?? "No data",
+                note: health.data.deployments[0]?.at.toLocaleString(),
+              },
+            ]}
+          />
+          <Stats
+            items={["queued", "running", "failed", "done"].map((status) => ({
+              label: `${status[0]!.toUpperCase()}${status.slice(1)} jobs`,
+              value:
+                health.data!.statuses.find((row) => row.status === status)?.n ??
+                0,
+            }))}
+          />
+        </>
       )}
       {!id &&
         ["users", "workspaces", "activity", "health"].includes(section) && (
           <>
             <div className="flex flex-wrap gap-3">
-              {section !== "health" && (
-                <div className="relative w-full max-w-sm">
-                  <RiSearchLine className="pointer-events-none absolute start-3 top-3 size-4 text-foreground-icon-tertiary" />
-                  <Input
-                    aria-label={`Search ${section}`}
-                    placeholder={`Search ${section}…`}
-                    className="h-10 ps-9"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
-              )}
+              <div className="relative w-full max-w-sm">
+                <RiSearchLine className="pointer-events-none absolute start-3 top-3 size-4 text-foreground-icon-tertiary" />
+                <Input
+                  aria-label={
+                    section === "health"
+                      ? "Search errors and webhook deliveries"
+                      : `Search ${section}`
+                  }
+                  placeholder={
+                    section === "health"
+                      ? "Search errors and deliveries…"
+                      : `Search ${section}…`
+                  }
+                  className="h-10 ps-9"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
               {section === "users" && (
                 <Select
                   value={status}
@@ -641,6 +751,27 @@ export function AdminDashboard({
                         {s === "all" ? "All accounts" : s}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {section === "health" && (
+                <Select
+                  value={webhookResult}
+                  onValueChange={(v) => {
+                    setWebhookResult(v as typeof webhookResult);
+                    setWebhooksOffset(0);
+                  }}
+                >
+                  <SelectTrigger className="w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All deliveries</SelectItem>
+                    <SelectItem value="ok">Delivered</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="signature_rejected">
+                      Signature rejected
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -831,6 +962,146 @@ export function AdminDashboard({
                 />
               )}
             </Panel>
+            {section === "health" && (
+              <>
+                <Panel
+                  title={`${errors.data?.total ?? "…"} grouped errors`}
+                  description="Repeat instances of the same bug share one row. Full stacks stay in this admin view."
+                >
+                  <State
+                    pending={errors.isPending}
+                    error={errors.error}
+                    empty={errors.data?.total === 0}
+                  />
+                  {errors.data && errors.data.rows.length > 0 && (
+                    <DataTable
+                      headers={[
+                        "Error",
+                        "Occurrences",
+                        "First seen",
+                        "Last seen",
+                        "",
+                      ]}
+                    >
+                      {errors.data.rows.map((e) => (
+                        <Fragment key={e.hash}>
+                          <TableRow>
+                            <TableCell className="max-w-64">
+                              <span
+                                className="block font-mono text-caption-1-medium text-text-tertiary"
+                                title={e.hash}
+                              >
+                                {e.hash.slice(0, 12)}
+                              </span>
+                              <span className="mt-1 block break-all whitespace-normal">
+                                {e.message}
+                              </span>
+                            </TableCell>
+                            <TableCell className="tabular-nums">
+                              {e.total}
+                            </TableCell>
+                            <TableCell>{date(e.firstAt)}</TableCell>
+                            <TableCell>{date(e.lastAt)}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                onClick={() =>
+                                  setOpenError(
+                                    openError === e.hash ? null : e.hash,
+                                  )
+                                }
+                              >
+                                {openError === e.hash ? "Hide" : "Stack"}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                          {openError === e.hash && (
+                            <TableRow key={`${e.hash}-stack`}>
+                              <TableCell colSpan={5}>
+                                <pre
+                                  dir="ltr"
+                                  className="max-h-64 overflow-auto rounded-xl border border-separator-border bg-background-secondary-default p-4 font-mono text-caption-1-medium text-text-secondary whitespace-pre-wrap break-all"
+                                >
+                                  {e.stack ?? "No stack recorded."}
+                                </pre>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </Fragment>
+                      ))}
+                    </DataTable>
+                  )}
+                  {errors.data && (
+                    <Pager
+                      total={errors.data.total}
+                      offset={errorsOffset}
+                      setOffset={setErrorsOffset}
+                    />
+                  )}
+                </Panel>
+                <Panel
+                  title={`${webhooks.data?.total ?? "…"} webhook deliveries`}
+                  description={
+                    webhooks.data
+                      ? `${Math.round(webhooks.data.last24h.rate * 100)}% failed in the last 24 hours (${webhooks.data.last24h.failed} of ${webhooks.data.last24h.total} deliveries). Only delivery metadata is stored; payloads are never kept.`
+                      : "Only delivery metadata is stored; payloads are never kept."
+                  }
+                >
+                  <State
+                    pending={webhooks.isPending}
+                    error={webhooks.error}
+                    empty={webhooks.data?.total === 0}
+                  />
+                  {webhooks.data && webhooks.data.rows.length > 0 && (
+                    <DataTable
+                      headers={[
+                        "Event",
+                        "Installation",
+                        "Result",
+                        "Reason",
+                        "Delivery",
+                        "Duration",
+                        "Received",
+                      ]}
+                    >
+                      {webhooks.data.rows.map((w) => (
+                        <TableRow key={w.id}>
+                          <TableCell>{w.event}</TableCell>
+                          <TableCell className="tabular-nums">
+                            {w.installationId ?? "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge>{w.result.replaceAll("_", " ")}</Badge>
+                          </TableCell>
+                          <TableCell className="max-w-64 whitespace-normal">
+                            {w.reason ?? "—"}
+                          </TableCell>
+                          <TableCell className="max-w-48 break-all">
+                            <span
+                              dir="ltr"
+                              className="font-mono text-caption-1-medium text-text-tertiary"
+                            >
+                              {w.deliveryId ?? "Not recorded"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="tabular-nums">
+                            {w.durationMs} ms
+                          </TableCell>
+                          <TableCell>{date(w.receivedAt)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </DataTable>
+                  )}
+                  {webhooks.data && (
+                    <Pager
+                      total={webhooks.data.total}
+                      offset={webhooksOffset}
+                      setOffset={setWebhooksOffset}
+                    />
+                  )}
+                </Panel>
+              </>
+            )}
           </>
         )}
       {section === "users" && id && (

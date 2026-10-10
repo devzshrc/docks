@@ -1,3 +1,4 @@
+import { sanitizeException } from "./exception-privacy";
 import posthog from "posthog-js";
 
 /** Initialize only after React mounts, before tracking session identity. */
@@ -7,6 +8,11 @@ export function initializePostHog() {
       api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "/ingest",
       ui_host: "https://us.posthog.com",
       defaults: "2025-05-24",
+      loaded: (client) =>
+        client.register({
+          release: process.env.NEXT_PUBLIC_RELEASE_SHA ?? "unknown",
+          service: "docks-web",
+        }),
       capture_pageview: "history_change",
       capture_exceptions: true,
       person_profiles: "identified_only",
@@ -49,6 +55,11 @@ export function initializePostHog() {
               /* Non-URL referrers do not contain URL tokens. */
             }
           }
+        }
+        if (event?.event === "$exception") {
+          event.properties = sanitizeException(
+            event.properties,
+          ) as typeof event.properties;
         }
         return event;
       },

@@ -1,3 +1,4 @@
+import { logError } from "../logger.js";
 import { db, ROLES, schema } from "@docks/db";
 import { track } from "../analytics.js";
 import { TRPCError } from "@trpc/server";
@@ -39,7 +40,7 @@ async function updateSeats(workspaceId: string) {
   try {
     await syncSeats(workspaceId);
   } catch (err) {
-    console.error(`[billing] seat sync for ${workspaceId} failed: ${(err as Error).message}`);
+    logError("billing.failed", err);
   }
 }
 
