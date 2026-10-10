@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/toast";
+import { PostHogProvider } from "@/components/analytics/posthog-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { cn } from "@/lib/utils";
@@ -34,10 +35,12 @@ export default function RootLayout({
     >
       <body className="font-sans antialiased">
         <ThemeProvider>
-          <TRPCReactProvider>
-            <TooltipProvider>{children}</TooltipProvider>
-            <Toaster />
-          </TRPCReactProvider>
+          <PostHogProvider>
+            <TRPCReactProvider>
+              <TooltipProvider>{children}</TooltipProvider>
+              <Toaster />
+            </TRPCReactProvider>
+          </PostHogProvider>
         </ThemeProvider>
       </body>
     </html>

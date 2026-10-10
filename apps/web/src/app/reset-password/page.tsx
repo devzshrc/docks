@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
 
 import { AuthCard } from "@/components/auth-card"
@@ -12,7 +12,6 @@ import { authClient } from "@/lib/auth-client"
 
 function ResetForm() {
   const params = useSearchParams()
-  const router = useRouter()
   const token = params.get("token")
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
@@ -44,7 +43,10 @@ function ResetForm() {
           const { error } = await authClient.resetPassword({ newPassword: password, token })
           setPending(false)
           if (error) setError(error.message ?? "Couldn't reset the password. Request a new link.")
-          else router.push(params.get("next") === "/settings/account" ? "/login?next=%2Fsettings%2Faccount" : "/login")
+          else {
+            // Reload after a credential change so the shared session cache is fresh.
+            window.location.assign(params.get("next") === "/settings/account" ? "/login?next=%2Fsettings%2Faccount" : "/login")
+          }
         }}
       >
         <div className="space-y-2">
