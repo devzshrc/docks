@@ -511,6 +511,27 @@ export const managementProcedures = {
       statuses,
     };
   }),
+  errors: adminProcedure.input(page).query(async ({ input }) => {
+    // The only procedure that returns full stack text; every other
+    // procedure withholds raw errors to protect credentials.
+    const where = input.search
+      ? or(
+          ilike(schema.serverError.message, `%${input.search}%`),
+          ilike(schema.serverError.hash, `%${input.search}%`),
+        )
+      : undefined;
+    const [rows, totals] = await Promise.all([
+      db
+        .select()
+        .from(schema.serverError)
+        .where(where)
+        .orderBy(desc(schema.serverError.lastAt), schema.serverError.hash)
+        .limit(input.limit)
+        .offset(input.offset),
+      db.select({ n: count() }).from(schema.serverError).where(where),
+    ]);
+    return { rows, total: totals[0]!.n };
+  }),
   setAccountStatus: adminProcedure
     .input(z.object({ userId: z.string(), suspended: z.boolean(), reason }))
     .mutation(({ ctx, input }) => setAccountStatus(ctx, input)),

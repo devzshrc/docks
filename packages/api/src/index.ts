@@ -33,6 +33,11 @@ export type { BoardCard, Guide, RankedFile, ReviewColumn } from "./review/types.
 // Shared helpers.
 export { createTestContext } from "./context.js";
 export type { Context, User } from "./context.js";
+export {
+  errorHash,
+  normalizeErrorMessage,
+  recordServerError,
+} from "./observe.js";
 export { protectedProcedure, publicProcedure, router } from "./trpc.js";
 
 // Types the web app needs without importing @docks/db directly.
