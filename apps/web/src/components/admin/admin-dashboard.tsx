@@ -36,7 +36,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendChart } from "@/components/charts/trend-chart";
+import { AdminTrendChart, AdminActivationChart } from "@/components/admin/admin-charts";
 const date = (d: Date | string | null | undefined) =>
   d ? new Date(d).toLocaleString() : "Not recorded";
 function Badge({ children }: { children: ReactNode }) {
@@ -497,7 +497,7 @@ export function AdminDashboard({
                   title="Registration trend"
                   description="Accounts created each day"
                 >
-                  <TrendChart
+                  <AdminTrendChart
                     rows={overview.data.days.map((d) => ({
                       label: d.day.slice(5),
                       value: d.n,
@@ -510,29 +510,7 @@ export function AdminDashboard({
                   title="Activation journey"
                   description="Users registered in the selected period; each step follows the previous step"
                 >
-                  <div className="grid gap-4">
-                    {[
-                      "Registered",
-                      "Created a workspace",
-                      "Connected GitHub",
-                      "Submitted a review",
-                    ].map((label, i) => (
-                      <div key={label}>
-                        <div className="mb-2 flex justify-between text-body-2-medium">
-                          <span>{label}</span>
-                          <span>{overview.data!.funnel[i]}</span>
-                        </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-background-tertiary-default">
-                          <div
-                            className="h-full rounded-full bg-chart-1"
-                            style={{
-                              width: `${overview.data!.funnel[0] ? (overview.data!.funnel[i]! / overview.data!.funnel[0]) * 100 : 0}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <AdminActivationChart values={overview.data.funnel} />
                 </Panel>
               </div>
               <Stats

@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { AccountsScatter } from "@/components/charts/accounts-scatter";
-import { TrendChart } from "@/components/charts/trend-chart";
+import { AdminTrendChart } from "@/components/admin/admin-charts";
 import { Panel, StatStrip } from "@/components/panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTRPC } from "@/trpc/react";
@@ -41,7 +41,7 @@ function Metrics() {
       />
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="Weekly active reviewers" description="Last 8 weeks">
-          <TrendChart
+          <AdminTrendChart
             rows={m.data.weeks.map((w) => ({
               label: w.week.slice(5),
               value: w.activeReviewers,
@@ -54,7 +54,7 @@ function Metrics() {
           title="Reviews done in the app per week"
           description="Last 8 weeks"
         >
-          <TrendChart
+          <AdminTrendChart
             rows={m.data.weeks.map((w) => ({
               label: w.week.slice(5),
               value: w.reviews,
