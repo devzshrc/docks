@@ -62,10 +62,9 @@ test("PostHog sends anonymous pageviews and identifies and resets authenticated 
   ).toBe("http://localhost:3000/");
   const anonymousId = events.find((e) => e.event === "$pageview")!.properties
     .distinct_id;
-  await page
-    .getByRole("link", { name: "Sign in", exact: true })
-    .first()
-    .click();
+  // The hero-only landing page has no sign-in navigation. Open the auth
+  // route directly, then verify a client-side transition within that flow.
+  await page.goto("/login");
   await expect(page).toHaveURL(/\/login/);
   await expect
     .poll(() =>
@@ -73,6 +72,17 @@ test("PostHog sends anonymous pageviews and identifies and resets authenticated 
         (e) =>
           e.event === "$pageview" &&
           String(e.properties.$current_url).includes("/login"),
+      ),
+    )
+    .toBe(true);
+  await page.getByRole("link", { name: "Sign up", exact: true }).click();
+  await expect(page).toHaveURL(/\/signup/);
+  await expect
+    .poll(() =>
+      events.some(
+        (e) =>
+          e.event === "$pageview" &&
+          String(e.properties.$current_url).includes("/signup"),
       ),
     )
     .toBe(true);
