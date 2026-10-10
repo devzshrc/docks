@@ -3,6 +3,7 @@ import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  productionBrowserSourceMaps: process.env.DOCKS_SOURCE_MAPS === "1",
   transpilePackages: ["@docks/api"],
   // Required for the PostHog reverse proxy below to match trailing-slash calls.
   skipTrailingSlashRedirect: true,

@@ -20,3 +20,4 @@ apps/server/.supabase.secrets
 playwright-report/
 test-results/
 e2e/.auth/
+apps/web/e2e/.auth/

@@ -1,4 +1,5 @@
 const checks = [
+  { url: "https://api.devzshrc.in/readyz", status: 200, validate: async (r) => (await r.json()).status === "ok" },
   {
     url: "https://api.devzshrc.in/healthz",
     status: 200,
