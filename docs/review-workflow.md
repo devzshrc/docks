@@ -1,0 +1,25 @@
+# Review workflow
+
+## Product entry points
+
+- `/inbox` is the personal PR queue: requested or accepted reviews, changes since the last review, authored PRs, overdue reviews, and snoozed PRs. Activity notifications remain available separately; reading them does not complete a review. Snoozing a PR is private and expires after the chosen period. Closed PRs leave all active views. The queue is paginated and refreshes every 30 seconds; it shows the mirror's sync timestamp.
+- PR reviewer controls support acceptance, release, decline of an outstanding GitHub request, and administrator takeover. Claims use a conditional database update so competing accepts cannot overwrite each other. GitHub reviewer requests remain authoritative. Existing deadline policies, reconciliation, reminders, and backup reviewer controls are reused; deadline policies retain their existing Team plan requirement.
+- Review threads and saved AI answers open the existing issue composer. The composer lets the user edit content, assignees, labels, and the destination repository. Follow-ups retain the source PR, SHA, optional comment/path/line, and target issue. Cross-workspace destinations are rejected. Creating an issue does not resolve the source thread. The PR displays follow-ups separately from closing issues; issue status comes from the existing mirror and can lag GitHub.
+- Repository settings link to `/settings/repositories/knowledge?repo=owner%2Fname`. Repository readers can search active or archived documents and read revision history. Owners/admins can edit, archive, restore, or reuse a historical revision. Saves check the expected revision and preserve the author of each revision. Knowledge is Markdown reference material, not executable instructions.
+- The PR's Ask panel saves private questions and answers against the head SHA. Users can choose a changed file and a new-side line, select up to three knowledge documents, ask suggested questions, and create a follow-up from a completed answer. Earlier-commit answers remain visible with an outdated warning. New questions use only the current commit's saved conversation; client-supplied conversation history is ignored.
+
+## AI bounds and evidence
+
+AI must be enabled for the repository, and the existing server-side OpenAI configuration must be available. Questions reserve their quota before contacting the provider, under a per-user database lock. The limit is 30 attempts per user per hour, including failed attempts, across repositories. Pending/failed attempts remain private and can be retried as a new question. An interrupted Worker can leave an attempt pending; it still consumes quota until the hour expires.
+
+Context includes the PR description, bounded diff, at most five prior turns from this commit, and up to three selected knowledge documents truncated to 6,000 characters each. The diff is bounded to 60,000 characters. Knowledge revisions used are saved with the answer. No full-repository retrieval or embeddings are introduced. Citations are validated against new-side lines in supplied patches and open immutable GitHub commit permalinks. Deleted-side citation navigation and streamed answers are not included in this release.
+
+## Retry behavior
+
+Follow-ups reuse the issue composer's creation key. A successful replay returns the original issue and repairs a missing relation. A follow-up creation appends an opaque creation marker to its GitHub body. An ambiguous failure retains the key instead of permitting a second POST. After 30 seconds, a retry searches recently updated repository issues for that marker; exactly one match repairs the creation record. If no unambiguous match exists, the request remains blocked rather than risking duplication. Optional Linear-copy retry behavior is unchanged.
+
+## Deployment and validation
+
+Apply additive migrations 0027–0029 through the existing deployment migration gate before deploying the application. They create knowledge/revision, private question, follow-up, and personal snooze state tables and add question status. Existing repository/workspace permission and 2FA checks protect every feature endpoint. No external monitoring or alerting service is added.
+
+Tests cover knowledge permissions and revision conflicts, private AI history and repository-access revocation, current-commit context/citation validation, AI quota enforcement before provider calls, issue replay/link provenance, competing review claims, private snoozing, and closed PR exclusion. Desktop/mobile browser tests cover inbox acceptance and document create/edit/archive/restore. Live OpenAI quality and external GitHub delivery require configured accounts; automated tests use provider fixtures.

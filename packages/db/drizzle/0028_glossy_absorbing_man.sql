@@ -1,0 +1,1 @@
+ALTER TABLE "review_question" ADD COLUMN "status" text DEFAULT 'completed' NOT NULL;

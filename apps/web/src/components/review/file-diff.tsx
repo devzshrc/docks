@@ -317,6 +317,7 @@ function ThreadView({
   canAct: boolean;
   onChanged: () => void;
 }) {
+  const session = useReviewSession();
   const trpc = useTRPC();
   const [open, setOpen] = useState(!thread.isResolved);
   // Resolving folds the thread away; unresolving opens it again.
@@ -393,6 +394,14 @@ function ThreadView({
       repo,
       source: "comment",
       seed: {
+        followUp: {
+          repo,
+          number,
+          headSha: session.headSha,
+          commentId: first.id,
+          path: thread.path,
+          line: thread.line ?? undefined,
+        },
         title: first.body
           .trim()
           .split("\n")[0]!
@@ -412,7 +421,7 @@ function ThreadView({
       <div className="flex items-center gap-2 pr-1.5">
         <ShadcnButton
           variant="row"
-            size="none"
+          size="none"
           type="button"
           className="text-muted-foreground flex flex-1 items-center gap-2 px-3 py-1.5 text-left text-xs"
           onClick={() => setOpen((o) => !o)}
@@ -1167,7 +1176,7 @@ export function FileDiff({
       <header className="bg-card/95 border-hairline sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-t-lg border-b px-3 py-2 text-sm backdrop-blur max-sm:gap-1.5 max-sm:py-1.5">
         <ShadcnButton
           variant="row"
-            size="none"
+          size="none"
           type="button"
           onClick={() => setOpen((o) => !o)}
           className="flex min-w-[12rem] flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-left"

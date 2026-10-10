@@ -301,6 +301,7 @@ export function NewIssuePanel({
       labels: draft.labels,
       assignees: draft.assignees,
       clientKey: clientKey.current,
+      followUp: seed?.followUp,
       alsoLinear: alsoLinear && Boolean(o?.linear),
       source,
       hadTrace: draft.refs.some((r) => r.line > 0),
