@@ -12,6 +12,8 @@ Configure comma-separated emails on the API server:
 
 Roles come from deployment configuration, never workspace membership or a browser parameter. Every administrator must verify their email and enable two-factor authentication in Account settings. Mutations require a session created within the last 30 minutes; sign out and sign in again when prompted. Platform owners cannot be suspended from the dashboard. Support cannot revoke another administrator's sessions.
 
+GitHub-only accounts must create a Docks password before enabling two-factor authentication. Account settings detects the sign-in methods and offers **Send password setup link** instead of asking for a nonexistent current password. Follow the emailed link to choose a password, return to Account settings to enable and verify the authenticator, then sign in with email/password and the authenticator code to access administration.
+
 Changes require a reason and commit atomically with their audit record. The audit trail records successful operations with actor, target, request ID and operation metadata. Failed operations return an error and do not produce a successful change record. There is no dashboard operation to edit or delete audit entries.
 
 ## Controls and data

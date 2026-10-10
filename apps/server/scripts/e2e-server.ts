@@ -50,6 +50,34 @@ async function createUser(email: string, name: string) {
 }
 const ownerId = await createUser(ownerEmail, "E2E owner");
 const memberId = await createUser(memberEmail, "E2E member");
+async function createSocialAccount(project: string) {
+  const socialEmail = `github-${project}-${prefix}@example.test`;
+  const socialId = await createUser(socialEmail, "E2E GitHub member");
+  const socialLogin = await auth.api.signInEmail({
+    body: { email: socialEmail, password },
+    asResponse: true,
+  });
+  const socialCookie = socialLogin.headers.get("set-cookie")!.split(";")[0]!;
+  await db.delete(schema.account).where(eq(schema.account.userId, socialId));
+  await db.insert(schema.account).values({
+    id: randomUUID(),
+    userId: socialId,
+    providerId: "github",
+    accountId: `${project}-${prefix}`,
+  });
+  const socialResetToken = randomUUID();
+  await db.insert(schema.verification).values({
+    id: randomUUID(),
+    identifier: `reset-password:${socialResetToken}`,
+    value: socialId,
+    expiresAt: new Date(Date.now() + 3600000),
+  });
+  return { socialEmail, socialId, socialCookie, socialResetToken };
+}
+const socialAccounts = {
+  desktop: await createSocialAccount("desktop"),
+  mobile: await createSocialAccount("mobile"),
+};
 const login = await auth.api.signInEmail({
   body: { email: ownerEmail, password },
   asResponse: true,
@@ -68,6 +96,15 @@ await db
 await db
   .insert(schema.workspaceMember)
   .values({ workspaceId, userId: memberId, role: "owner" });
+await db
+  .insert(schema.workspaceMember)
+  .values(
+    Object.values(socialAccounts).map(({ socialId }) => ({
+      workspaceId,
+      userId: socialId,
+      role: "member" as const,
+    })),
+  );
 mkdirSync(fixtureDir, { recursive: true });
 writeFileSync(
   `${fixtureDir}/accounts.json`,
@@ -78,6 +115,7 @@ writeFileSync(
     secret,
     memberId,
     workspaceId,
+    socialAccounts,
   }),
   { mode: 0o600 },
 );
@@ -92,6 +130,12 @@ async function shutdown() {
     .where(inArray(schema.adminAudit.actorId, ids));
   await db.delete(schema.workspace).where(eq(schema.workspace.id, workspaceId));
   await db.delete(schema.user).where(inArray(schema.user.id, ids));
+  await db.delete(schema.verification).where(
+    inArray(
+      schema.verification.value,
+      Object.values(socialAccounts).map(({ socialId }) => socialId),
+    ),
+  );
   rmSync(fixtureDir, { recursive: true, force: true });
   await closeDb();
   process.exit(0);
