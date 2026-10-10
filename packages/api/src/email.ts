@@ -7,7 +7,7 @@
 export async function sendEmail(msg: { to: string; subject: string; html: string; text: string }) {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
-    if (process.env.NODE_ENV === "production") throw new Error("RESEND_API_KEY is not set");
+    if (process.env.NODE_ENV === "production" || process.env.OBSERVABILITY_ENVIRONMENT === "production") throw new Error("RESEND_API_KEY is not set");
     console.log(`[email] (not sent, no RESEND_API_KEY) to=${msg.to} subject="${msg.subject}"\n${msg.text}`);
     return;
   }

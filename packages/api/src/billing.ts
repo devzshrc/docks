@@ -2,6 +2,7 @@ import { db, schema } from "@docks/db";
 import { TRPCError } from "@trpc/server";
 import DodoPayments from "dodopayments";
 import { eq, or } from "drizzle-orm";
+import { billingEvent } from "@docks/db";
 import { memberCount } from "./plans.js";
 
 /**
@@ -111,7 +112,8 @@ interface SubscriptionData {
   customer: { customer_id: string };
 }
 
-async function applySubscription(sub: SubscriptionData) {
+type BillingTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+async function applySubscription(sub: SubscriptionData, tx: BillingTransaction) {
   const byMetadata = sub.metadata?.workspaceId;
   const match = byMetadata
     ? eq(schema.workspace.id, byMetadata)
@@ -119,7 +121,7 @@ async function applySubscription(sub: SubscriptionData) {
         eq(schema.workspace.billingCustomerId, sub.customer.customer_id),
         eq(schema.workspace.billingSubscriptionId, sub.subscription_id),
       );
-  await db
+  return tx
     .update(schema.workspace)
     .set({
       plan: PAID.has(sub.status) ? "team" : "free",
@@ -128,7 +130,8 @@ async function applySubscription(sub: SubscriptionData) {
       subscriptionStatus: sub.status,
       currentPeriodEnd: sub.next_billing_date ? new Date(sub.next_billing_date) : null,
     })
-    .where(match!);
+    .where(match!)
+    .returning({ id: schema.workspace.id });
 }
 
 /**
@@ -143,7 +146,21 @@ export async function handleBillingWebhook(rawBody: Buffer, headers: Record<stri
     return false;
   }
   if (event.type.startsWith("subscription.")) {
-    await applySubscription(event.data as unknown as SubscriptionData);
+    const deliveryId = headers["webhook-id"];
+    // Signature verification requires this id. Never deduplicate by unsigned payload fields.
+    if (!deliveryId) return false;
+    await db.transaction(async (tx) => {
+      const sub = event.data as unknown as SubscriptionData;
+      const claimed = await tx.insert(billingEvent).values({
+        deliveryId, kind: event.type, subscriptionId: sub.subscription_id,
+        outcome: "unmatched",
+      }).onConflictDoNothing({ target: billingEvent.deliveryId }).returning({ id: billingEvent.id });
+      if (!claimed.length) return;
+      const changed = await applySubscription(sub, tx);
+      await tx.update(billingEvent).set({
+        workspaceId: changed[0]?.id ?? null, outcome: changed.length ? "applied" : "unmatched",
+      }).where(eq(billingEvent.id, claimed[0]!.id));
+    });
   }
   return true;
 }

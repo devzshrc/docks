@@ -11,11 +11,16 @@ import {
   completeJob,
   failJob,
   purgeOldPatches,
+  purgeDiagnostics,
   processInboxEvent,
   scheduleDigests,
   scheduleUserRepoSync,
   scheduleWeeklyReports,
   type Job,
+  logEvent,
+  logError,
+  withLogContext,
+  inSpan,
 } from "@docks/api";
 import { applyRules } from "./handlers/apply-rules.js";
 import { autoAssign } from "./handlers/auto-assign.js";
@@ -27,9 +32,21 @@ import { syncRepo } from "./handlers/sync-repo.js";
 import { syncUserRepos } from "./handlers/sync-user-repos.js";
 import { weeklyReport } from "./handlers/weekly-report.js";
 
-export const handlers: Record<Job["type"], (payload: unknown) => Promise<void>> = {
-  review_deadline: async (payload) => processReviewDeadline((payload as { deliveryId: string }).deliveryId),
-  release_readiness: async (payload) => refreshReleaseReadiness(payload as { releaseId: string; repoId: number; number: number; userId: string }),
+export const handlers: Record<
+  Job["type"],
+  (payload: unknown) => Promise<void>
+> = {
+  review_deadline: async (payload) =>
+    processReviewDeadline((payload as { deliveryId: string }).deliveryId),
+  release_readiness: async (payload) =>
+    refreshReleaseReadiness(
+      payload as {
+        releaseId: string;
+        repoId: number;
+        number: number;
+        userId: string;
+      },
+    ),
   inbox_event: async (payload) => {
     await processInboxEvent((payload as { eventId: string }).eventId);
   },
@@ -49,7 +66,7 @@ const IDLE_MS = 2_000;
 const SCHEDULE_MS = 60_000;
 
 const logErr = (what: string) => (err: unknown) =>
-  console.error(`[jobs] ${what} failed: ${(err as Error).message}`);
+  logError("scheduler.task_failed", err, { operation: what });
 
 /** Runs one claimed job; returns false when the queue was empty. */
 async function runNext(): Promise<boolean> {
@@ -57,15 +74,41 @@ async function runNext(): Promise<boolean> {
   try {
     job = await claimNextJob();
     if (!job) return false;
-    await handlers[job.type](job.payload);
-    await completeJob(job.id);
+    const claimed = job;
+    await withLogContext(
+      { jobId: claimed.id, requestId: claimed.requestId ?? undefined },
+      async () => {
+        const started = performance.now();
+        try {
+          await inSpan(`job.${claimed.type}`, () =>
+            handlers[claimed.type](claimed.payload),
+          );
+          await completeJob(claimed.id);
+          logEvent("info", "job.completed", {
+            operation: claimed.type,
+            attempts: claimed.attempts,
+            durationMs: Math.round(performance.now() - started),
+          });
+        } catch (error) {
+          logError("job.failed", error, {
+            operation: claimed.type,
+            attempts: claimed.attempts,
+            durationMs: Math.round(performance.now() - started),
+          });
+          throw error;
+        }
+      },
+    );
   } catch (err) {
     if (job) {
-      console.error(`[jobs] ${job.type}#${job.id} failed: ${(err as Error).message}`);
-      await failJob(job, err).catch(() => {});
+      logError("job.retrying", err, { jobId: job.id, operation: job.type });
+      await failJob(job, err).catch((error) => {
+        logError("job.state_update_failed", error, { jobId: job!.id });
+        throw error;
+      });
     } else {
-      console.error(`[jobs] poll failed: ${(err as Error).message}`);
-      return false;
+      logError("jobs.poll_failed", err);
+      throw err;
     }
   }
   return true;
@@ -83,16 +126,34 @@ export async function drainQueue(budgetMs: number): Promise<void> {
  * Time-based schedulers, called once a minute. Hourly and 6-hourly work is keyed off
  * the clock so it is safe to call from a stateless cron.
  */
-export async function runSchedules(now: Date = new Date()): Promise<void> {
-  const tasks: Promise<unknown>[] = [scheduleReviewDeadlines(now).catch(logErr("review deadline scheduling")), scheduleDigests().catch(logErr("digest scheduling"))];
+export async function runSchedules(now: Date = new Date()): Promise<boolean> {
+  let healthy = true;
+  const failed = (operation: string) => (error: unknown) => {
+    healthy = false;
+    logErr(operation)(error);
+  };
+  const tasks: Promise<unknown>[] = [
+    scheduleReviewDeadlines(now).catch(failed("review deadline scheduling")),
+    scheduleDigests().catch(failed("digest scheduling")),
+  ];
   if (now.getUTCMinutes() === 0) {
     // Retention: hourly is plenty for a 30-day rule.
-    tasks.push(purgeOldPatches().catch(logErr("patch retention")));
-    tasks.push(scheduleWeeklyReports().catch(logErr("weekly report scheduling")));
+    tasks.push(purgeDiagnostics().catch(failed("diagnostic retention")));
+    tasks.push(purgeOldPatches().catch(failed("patch retention")));
+    tasks.push(
+      scheduleWeeklyReports().catch(failed("weekly report scheduling")),
+    );
     // GitHub access drifts (people join/leave repos on GitHub): refresh every 6h.
-    if (now.getUTCHours() % 6 === 0) tasks.push(scheduleUserRepoSync().catch(logErr("access sync scheduling")));
+    if (now.getUTCHours() % 6 === 0)
+      tasks.push(
+        scheduleUserRepoSync().catch(failed("access sync scheduling")),
+      );
   }
   await Promise.all(tasks);
+  logEvent(healthy ? "info" : "error", "scheduler.completed", {
+    outcome: healthy ? "ok" : "failed",
+  });
+  return healthy;
 }
 
 /** Node poll loop (local dev / single-instance hosting); returns a stop function. */
@@ -102,7 +163,7 @@ export function startWorker(): () => void {
 
   async function tick() {
     if (stopped) return;
-    const worked = await runNext();
+    const worked = await runNext().catch(() => false);
     // Drain the queue quickly while there is work; back off when idle.
     timer = setTimeout(tick, worked ? 0 : IDLE_MS);
   }

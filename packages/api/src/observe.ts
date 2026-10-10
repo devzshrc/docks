@@ -7,6 +7,14 @@ import {
   type Table,
 } from "drizzle-orm";
 
+import { redactDiagnostic } from "./diagnostics.js";
+export { redactDiagnostic } from "./diagnostics.js";
+
+function logFailure(table: string): void {
+  // Database errors may embed rejected values, SQL parameters, or credentials.
+  console.error(`[observe] ${table} not recorded`);
+}
+
 /**
  * Best-effort observability writer (observability Phase 0).
  * Same contract as `audit` in access.ts and `track` in analytics.ts:
@@ -19,7 +27,7 @@ export async function write_event<T extends Table>(
   try {
     await db.insert(table).values(values);
   } catch (err) {
-    console.error(`[observe] ${getTableName(table)} not recorded: ${(err as Error).message}`);
+    logFailure(getTableName(table));
   }
 }
 
@@ -54,7 +62,7 @@ export function errorHash(message: string): string {
 }
 
 function errorMessageOf(error: unknown): string {
-  const raw = error instanceof Error ? error.message : String(error);
+  const raw = redactDiagnostic(error instanceof Error ? error.message : String(error));
   const trimmed = raw.trim();
   return (trimmed || "Unknown error").slice(0, MAX_ERROR_MESSAGE_LENGTH);
 }
@@ -62,7 +70,7 @@ function errorMessageOf(error: unknown): string {
 function errorStackOf(error: unknown): string | null {
   const stack =
     error instanceof Error && error.stack ? error.stack : String(error);
-  const trimmed = stack.trim();
+  const trimmed = redactDiagnostic(stack).trim();
   return (trimmed || null)?.slice(0, MAX_ERROR_STACK_LENGTH) ?? null;
 }
 
@@ -79,7 +87,7 @@ export async function recordServerError(
   prefix = "",
 ): Promise<void> {
   try {
-    const message = `${prefix}${errorMessageOf(error)}`.slice(
+    const message = redactDiagnostic(`${prefix}${errorMessageOf(error)}`).slice(
       0,
       MAX_ERROR_MESSAGE_LENGTH,
     );
@@ -105,6 +113,70 @@ export async function recordServerError(
         },
       });
   } catch (err) {
-    console.error(`[observe] server_error not recorded: ${(err as Error).message}`);
+    logFailure("server_error");
+  }
+}
+
+/** Stored webhook event-name cap; GitHub event names are short. */
+export const MAX_WEBHOOK_EVENT_LENGTH = 100;
+/** Stored webhook reason cap so a pathological error cannot bloat the row. */
+export const MAX_WEBHOOK_REASON_LENGTH = 1000;
+/** Stored delivery-id cap; GitHub sends a UUID. */
+export const MAX_WEBHOOK_DELIVERY_ID_LENGTH = 200;
+
+export type WebhookDeliveryResult = (typeof schema.WEBHOOK_RESULTS)[number];
+
+function webhookText(value: string | null | undefined, max: number): string | null {
+  const trimmed = redactDiagnostic(value ?? "").trim();
+  return (trimmed || null)?.slice(0, max) ?? null;
+}
+
+/**
+ * Webhook-delivery recorder (observability Phase 2).
+ * Inserts one `webhook_delivery` metadata row per received webhook:
+ * event name, GitHub delivery id, installation id when known, outcome,
+ * and handling time. Full payloads are never stored — callers pass only
+ * the delivery id and the installation id extracted from the payload.
+ * Best-effort: logs failures, never throws, never blocks the caller.
+ */
+export async function recordWebhookDelivery(input: {
+  deliveryId?: string | null;
+  installationId?: number | null;
+  event: string;
+  result: WebhookDeliveryResult;
+  reason?: unknown;
+  durationMs?: number;
+  receivedAt?: Date;
+}): Promise<void> {
+  try {
+    const reasonRaw =
+      input.reason instanceof Error
+        ? input.reason.message
+        : typeof input.reason === "string"
+          ? input.reason
+          : input.reason == null
+            ? null
+            : String(input.reason);
+    await write_event(schema.webhookDelivery, {
+      deliveryId: webhookText(input.deliveryId, MAX_WEBHOOK_DELIVERY_ID_LENGTH),
+      installationId:
+        typeof input.installationId === "number" &&
+        Number.isSafeInteger(input.installationId) && input.installationId > 0
+          ? input.installationId
+          : null,
+      event:
+        webhookText(input.event, MAX_WEBHOOK_EVENT_LENGTH) ?? "unknown",
+      result: input.result,
+      reason: reasonRaw
+        ? redactDiagnostic(reasonRaw).trim().slice(0, MAX_WEBHOOK_REASON_LENGTH) || null
+        : null,
+      durationMs: Number.isFinite(input.durationMs)
+        ? Math.min(2147483647, Math.max(0, Math.floor(input.durationMs!)))
+        : 0,
+      receivedAt: input.receivedAt instanceof Date && Number.isFinite(input.receivedAt.getTime())
+        ? input.receivedAt : new Date(),
+    });
+  } catch (err) {
+    logFailure("webhook_delivery");
   }
 }

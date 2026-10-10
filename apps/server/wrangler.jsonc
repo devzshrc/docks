@@ -1,14 +1,25 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
+  "upload_source_maps": true,
   "name": "docks-api",
   "main": "src/worker.ts",
   "compatibility_date": "2026-09-01",
-  "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
+  "compatibility_flags": [
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env",
+  ],
   "routes": [{ "pattern": "api.devzshrc.in", "custom_domain": true }],
-  "observability": { "enabled": true },
+  "observability": {
+    "enabled": true,
+    "redact_query_string": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.1 },
+  },
   // Run next to the Mumbai database: each request makes several queries, so distance to the DB is the cost.
   "placement": { "mode": "smart" },
-  "kv_namespaces": [{ "binding": "CACHE", "id": "c3dadd4cc77d45779c3c850682978b81" }],
+  "kv_namespaces": [
+    { "binding": "CACHE", "id": "c3dadd4cc77d45779c3c850682978b81" },
+  ],
   "triggers": { "crons": ["* * * * *"] },
   // Fill in after `wrangler hyperdrive create docks --connection-string=<supabase direct url>`.
   // For `wrangler dev`, localConnectionString points Hyperdrive at the local Docker Postgres.
@@ -16,16 +27,21 @@
     {
       "binding": "HYPERDRIVE",
       "id": "c2c31221eaf84d1c99e9793f2f72be91",
-      "localConnectionString": "postgresql://docks:docks@localhost:5433/docks"
-    }
+      "localConnectionString": "postgresql://docks:docks@localhost:5433/docks",
+    },
   ],
   "ratelimits": [
-    { "name": "TRPC_LIMITER", "namespace_id": "1001", "simple": { "limit": 300, "period": 60 } }
+    {
+      "name": "TRPC_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 300, "period": 60 },
+    },
   ],
   // Non-secret config. Secrets: `wrangler secret put <NAME>` (see docs/DEPLOY.md).
   "vars": {
+    "OBSERVABILITY_ENVIRONMENT": "production",
     "CLIENT_URL": "https://docks.devzshrc.in",
     "BETTER_AUTH_URL": "https://api.devzshrc.in",
-    "COOKIE_DOMAIN": ".devzshrc.in"
-  }
+    "COOKIE_DOMAIN": ".devzshrc.in",
+  },
 }

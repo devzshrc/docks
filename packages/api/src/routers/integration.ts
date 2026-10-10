@@ -1,3 +1,4 @@
+import { logError } from "../logger.js";
 import { db, schema } from "@docks/db";
 import { TRPCError } from "@trpc/server";
 import { eq, sql } from "drizzle-orm";
@@ -69,7 +70,7 @@ export const integrationRouter = router({
     try {
       connectUrl = authorizeUrl(ctx.user.id);
     } catch (err) {
-      console.error(`[github] user authorization not configured: ${(err as Error).message}`);
+      logError("github.failed", err);
     }
     return { login: (await githubIdentity(ctx.user.id))?.login ?? null, connectUrl };
   }),
@@ -93,7 +94,7 @@ export const integrationRouter = router({
         try {
           connectUrl = slackConnectUrl(ctx.user.id, input.workspaceId);
         } catch (err) {
-          console.error(`[slack] not configured: ${(err as Error).message}`);
+          logError("slack.failed", err);
         }
       }
       return { connection: row ?? null, connectUrl, canManage: can(member.role, "integrations.manage") };

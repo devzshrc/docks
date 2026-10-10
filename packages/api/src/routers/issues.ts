@@ -1,3 +1,4 @@
+import { logError } from "../logger.js";
 import { db, schema } from "@docks/db";
 import { TRPCError } from "@trpc/server";
 import { and, desc, asc, eq, gte, inArray, or, sql, type SQL } from "drizzle-orm";
@@ -300,7 +301,7 @@ export const issuesRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "That issue doesn't exist (or was deleted)." });
       }
       // GitHub is down, rate limited, or not configured: show what we have mirrored.
-      console.error(`[issues] live fetch of ${repo.fullName}#${input.number} failed: ${(err as Error).message}`);
+      logError("issues.failed", err);
       const [row] = await db.select().from(schema.issue).where(and(eq(schema.issue.repoId, repo.id), eq(schema.issue.number, input.number)));
       if (!row) return githubFailure(err);
       return {

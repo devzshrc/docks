@@ -37,7 +37,9 @@ export {
   errorHash,
   normalizeErrorMessage,
   recordServerError,
+  recordWebhookDelivery,
 } from "./observe.js";
+export type { WebhookDeliveryResult } from "./observe.js";
 export { protectedProcedure, publicProcedure, router } from "./trpc.js";
 
 // Types the web app needs without importing @docks/db directly.
@@ -51,3 +53,8 @@ export type { ReviewSessionData } from "@docks/db";
 export { scheduleReviewDeadlines, processReviewDeadline } from "./delivery/deadlines.js";
 
 export { refreshReleaseReadiness } from "./delivery/releases.js";
+
+export { logEvent, logError, withLogContext, correlationId, currentRequestId } from "./logger.js";
+export { purgeDiagnostics } from "./observability-maintenance.js";
+export { inSpan, withTraceRunner } from "./logger.js";
+export { operationalHealth } from "./operational-health.js";

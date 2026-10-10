@@ -1,3 +1,4 @@
+import { logError } from "./logger.js";
 import { db, schema } from "@docks/db";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { decrypt } from "./crypto.js";
@@ -72,7 +73,7 @@ export async function sendWeeklyReport(workspaceId: string, date: string) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
-    }).catch((err) => console.error(`[report] slack failed: ${(err as Error).message}`));
+    }).catch((err) => logError("report.failed", err));
   }
 
   const admins = await db
@@ -85,7 +86,7 @@ export async function sendWeeklyReport(workspaceId: string, date: string) {
     .replace(/</g, "&lt;")}</pre>`;
   for (const a of admins) {
     await sendEmail({ to: a.email, subject: `Weekly review report: ${ws.name}`, text, html }).catch((err) =>
-      console.error(`[report] email to admin failed: ${(err as Error).message}`),
+      logError("report.failed", err),
     );
   }
 }
