@@ -25,6 +25,12 @@
       "skillPath": "landing-page-conversion-audit/SKILL.md",
       "computedHash": "9f7689539e9e0e7a9fabdfff306749ac4fbdae8bb156ab46b19261944c9d3bd5"
     },
+    "landing-page-design": {
+      "source": "101-skills/superpowers",
+      "sourceType": "github",
+      "skillPath": "guides/design/landing-page-design/SKILL.md",
+      "computedHash": "435af3919183e91ded83197f9238740593cac886f45067dc729d8a7095fbfb5a"
+    },
     "trpc": {
       "source": "mindrally/skills",
       "sourceType": "github",

@@ -4,7 +4,7 @@
 @import "../styles/typography.css";
 @custom-variant dark (&:where(.dark, .dark *):not(:where(.light, .light *)));
 
-/* Light tokens remain available for isolated light content. The website uses forced dark mode. */
+/* Light tokens remain available for isolated light content. All pages use light mode. */
 :root,
 .light {
   color-scheme: light;
