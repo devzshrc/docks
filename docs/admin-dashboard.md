@@ -33,7 +33,7 @@ Job retry is limited to failed sync jobs (`sync_repo`, `sync_pr`, `sync_user_rep
 3. Verify an owner with a verified email and configured 2FA can open `/admin`, while an ordinary workspace owner cannot.
 4. Confirm a complimentary grant on a test workspace, its audit entry and revocation; confirm device sign-out using a second real session.
 
-The GitHub workflow now gates deployment on real PostgreSQL integration tests, type checks and the web production build. Production migration still requires the repository's `DATABASE_URL_DIRECT` secret; Cloudflare deployment requires its existing credentials. A missing production secret is a rollout blocker, not a reason to skip migrations.
+The GitHub workflow now gates deployment on real PostgreSQL integration tests, server/web unit tests, type checks, desktop/mobile Playwright tests, and Cloudflare production builds. See [CI-CD.md](CI-CD.md) for exact login and CI setup instructions. Production migration still requires the repository's `DATABASE_URL_DIRECT` secret; Cloudflare deployment requires its existing credentials. A missing production secret is a rollout blocker, not a reason to skip migrations.
 
 For rollback, revert the application revision first. Keep the additive tables and audit history; old code ignores them. Expired or revoked grants do not change billing records. Do not drop administration tables while this application version is serving requests.
 

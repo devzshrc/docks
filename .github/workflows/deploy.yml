@@ -1,15 +1,24 @@
-name: Deploy to Cloudflare
+name: CI and production deployment
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
 
-concurrency: deploy
+permissions:
+  contents: read
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
+    name: Tests and release build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:16
@@ -25,6 +34,8 @@ jobs:
       DATABASE_URL: postgresql://docks:docks@localhost:5432/docks_test
       DOCKS_TEST_DATABASE_URL: postgresql://docks:docks@localhost:5432/docks_test
       BETTER_AUTH_SECRET: ci-test-only-secret-at-least-32-characters
+      NEXT_PUBLIC_SERVER_URL: http://localhost:4000
+      NEXT_TELEMETRY_DISABLED: 1
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -33,40 +44,98 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @docks/db build
-      - run: pnpm --filter @docks/db db:migrate
-      - run: pnpm --filter @docks/api typecheck
-      - run: pnpm --filter @docks/api test
-      - run: pnpm --filter @docks/api build
-      - run: pnpm --filter @docks/server typecheck
-      - run: pnpm --filter @docks/web test
-      - run: pnpm --filter @docks/web build
+      - name: Build database package
+        run: pnpm --filter @docks/db build
+      - name: Apply and repeat migrations on disposable database
+        run: |
+          pnpm --filter @docks/db db:migrate
+          pnpm --filter @docks/db db:migrate
+      - name: API types and unit/integration tests
+        run: |
+          pnpm --filter @docks/api typecheck
+          pnpm --filter @docks/api test
+          pnpm --filter @docks/api build
+      - name: Server and browser test types
+        run: |
+          pnpm --filter @docks/server typecheck
+          pnpm --filter @docks/server test
+          pnpm --filter @docks/web typecheck:e2e
+      - name: Web unit tests and production Next.js build
+        run: |
+          pnpm --filter @docks/web test
+          pnpm --filter @docks/web build
+      - name: Install browser
+        run: pnpm --filter @docks/web exec playwright install --with-deps chromium
+      - name: Desktop and mobile authenticated end-to-end tests
+        run: pnpm --filter @docks/web test:e2e
+      - name: Validate API Worker bundle
+        run: pnpm --filter @docks/server exec wrangler deploy --dry-run --outdir .wrangler/release
+      - name: Build production Cloudflare web artifact
+        run: pnpm --filter @docks/web run build:cloudflare
+        env:
+          NEXT_PUBLIC_SERVER_URL: https://api.devzshrc.in
+      - name: Save tested web release artifact
+        run: tar -czf /tmp/docks-web-release.tgz -C apps/web .open-next
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-release-${{ github.sha }}
+          path: /tmp/docks-web-release.tgz
+          retention-days: 7
+      - name: Upload browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-results-${{ github.sha }}
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
   deploy:
+    name: Deploy production
     needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://docks.devzshrc.in/admin
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
+      NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/scripts/certs/supabase-root-2021.crt
     steps:
       - uses: actions/checkout@v4
+      - name: Validate deployment credentials before making changes
+        run: |
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID DATABASE_URL; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing deployment secret: $name (DATABASE_URL uses DATABASE_URL_DIRECT)"
+              missing=1
+            fi
+          done
+          exit "$missing"
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @docks/db build && pnpm --filter @docks/api build
-      - name: Migrate database (Supabase direct connection)
-        run: pnpm --filter @docks/db exec drizzle-kit migrate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
-      - name: Deploy API Worker
-        uses: cloudflare/wrangler-action@v3
+      - uses: actions/download-artifact@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: apps/server
-          command: deploy
-      - name: Deploy web Worker
-        run: pnpm --filter @docks/web run deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          NEXT_PUBLIC_SERVER_URL: ${{ vars.NEXT_PUBLIC_SERVER_URL }}
+          name: web-release-${{ github.sha }}
+          path: /tmp/web-release
+      - name: Restore tested Cloudflare artifact
+        run: tar -xzf /tmp/web-release/docks-web-release.tgz -C apps/web
+      - run: pnpm --filter @docks/db build && pnpm --filter @docks/api build
+      - name: Migrate production database before deploying API
+        run: pnpm --filter @docks/db db:migrate
+      - name: Deploy API Worker
+        run: pnpm --filter @docks/server exec wrangler deploy
+      - name: Deploy tested web Worker artifact
+        run: pnpm --filter @docks/web exec opennextjs-cloudflare deploy
+      - name: Verify production routes and authentication guard
+        run: node scripts/smoke-deploy.mjs

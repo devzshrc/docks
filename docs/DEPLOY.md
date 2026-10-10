@@ -4,6 +4,7 @@ Two Workers: `docks-web` (Next.js via OpenNext, `app.<domain>`) and `docks-api` 
 Postgres is Supabase, reached from the API Worker through Hyperdrive. Background jobs run on a per-minute Cron Trigger.
 
 ## One-time setup
+
 1. `pnpm exec wrangler login` (or set `CLOUDFLARE_API_TOKEN`).
 2. Supabase: copy the **direct** connection string. Run migrations with it: `DATABASE_URL=<direct> pnpm --filter @docks/db exec drizzle-kit migrate`.
 3. `pnpm exec wrangler hyperdrive create docks --connection-string="<supabase direct or pooler url>"`, then put the id in `apps/server/wrangler.jsonc`.
@@ -12,11 +13,13 @@ Postgres is Supabase, reached from the API Worker through Hyperdrive. Background
 6. Point third parties at the API origin: GitHub App callback URLs (`/api/auth/callback/github`, `/integrations/github/oauth/callback`), Setup URL (`/integrations/github/callback`), Webhook URL (`/webhooks/github`); Slack redirect (`/integrations/slack/callback`); Dodo webhook (`/webhooks/dodo-payments`).
 
 ## Deploy
+
 - API: `pnpm --filter @docks/server cf:deploy`
-- Web: `NEXT_PUBLIC_SERVER_URL=https://api.<domain> pnpm --filter @docks/web deploy`
-- CI: `.github/workflows/deploy.yml` (needs repo secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `DATABASE_URL_DIRECT`, and variable `NEXT_PUBLIC_SERVER_URL`).
+- Web: `NEXT_PUBLIC_SERVER_URL=https://api.<domain> pnpm --filter @docks/web run deploy`
+- CI: `.github/workflows/deploy.yml` checks pull requests and gates production releases on tests and Cloudflare builds. Needs secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `DATABASE_URL_DIRECT`. Full setup and login instructions: [CI-CD.md](CI-CD.md).
 
 ## Local
+
 - Node: `pnpm --filter @docks/server dev` (Express-free Hono server plus the poll loop).
 - Worker: copy secrets into `apps/server/.dev.vars`, then `pnpm --filter @docks/server cf:dev` (Hyperdrive uses the local Docker Postgres).
 - Web on Workers runtime: `pnpm --filter @docks/web preview`.

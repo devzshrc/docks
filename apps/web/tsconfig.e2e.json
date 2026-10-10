@@ -1,0 +1,15 @@
+{
+  "extends": "@docks/typescript-config/node.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "rootDir": "../..",
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": [
+    "playwright.config.ts",
+    "e2e/**/*.ts",
+    "../server/scripts/e2e-server.ts"
+  ]
+}

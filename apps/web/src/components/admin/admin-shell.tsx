@@ -51,7 +51,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <Link href="/settings/account">Account settings</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href="/login">Sign in</Link>
+            <Link href="/login?next=%2Fadmin">Sign in</Link>
           </Button>
         </div>
       </main>
