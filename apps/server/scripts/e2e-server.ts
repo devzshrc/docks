@@ -96,15 +96,58 @@ await db
 await db
   .insert(schema.workspaceMember)
   .values({ workspaceId, userId: memberId, role: "owner" });
+await db.insert(schema.workspaceMember).values(
+  Object.values(socialAccounts).map(({ socialId }) => ({
+    workspaceId,
+    userId: socialId,
+    role: "member" as const,
+  })),
+);
+const reviewRepoId = Date.now();
+const reviewRepo = `e2e/review-${prefix}`;
 await db
-  .insert(schema.workspaceMember)
-  .values(
-    Object.values(socialAccounts).map(({ socialId }) => ({
-      workspaceId,
-      userId: socialId,
-      role: "member" as const,
-    })),
-  );
+  .insert(schema.githubInstallation)
+  .values({
+    id: reviewRepoId,
+    workspaceId,
+    accountLogin: "e2e",
+    accountType: "Organization",
+  });
+await db
+  .insert(schema.repository)
+  .values({
+    id: reviewRepoId,
+    installationId: reviewRepoId,
+    fullName: reviewRepo,
+    defaultBranch: "main",
+    aiEnabled: false,
+  });
+await db
+  .insert(schema.githubRepoAccess)
+  .values({ userId: memberId, repoId: reviewRepoId });
+await db
+  .insert(schema.githubIdentity)
+  .values({
+    userId: memberId,
+    githubLogin: "reviewer",
+    githubUserId: reviewRepoId,
+    accessTokenEncrypted: "fixture-not-used",
+  });
+await db
+  .insert(schema.pullRequest)
+  .values({
+    repoId: reviewRepoId,
+    number: 1,
+    title: "Review workflow fixture",
+    authorLogin: "author",
+    state: "open",
+    headRef: "feature",
+    headSha: "a".repeat(40),
+    baseRef: "main",
+    requestedReviewers: ["reviewer"],
+    reviewColumn: "waiting",
+    lastActivityAt: new Date(),
+  });
 mkdirSync(fixtureDir, { recursive: true });
 writeFileSync(
   `${fixtureDir}/accounts.json`,
@@ -115,6 +158,7 @@ writeFileSync(
     secret,
     memberId,
     workspaceId,
+    reviewRepo,
     socialAccounts,
   }),
   { mode: 0o600 },
@@ -125,6 +169,9 @@ async function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
   server.close();
+  await db
+    .delete(schema.pullRequest)
+    .where(eq(schema.pullRequest.repoId, reviewRepoId));
   await db
     .delete(schema.adminAudit)
     .where(inArray(schema.adminAudit.actorId, ids));
