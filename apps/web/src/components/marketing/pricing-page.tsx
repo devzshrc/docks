@@ -1,88 +1,95 @@
 "use client";
 
-import {
-  RiAddLine,
-  RiCheckLine,
-  RiGithubFill,
-  RiSubtractLine,
-} from "@remixicon/react";
-import { useState } from "react";
-import { Button } from "@/components/base/buttons/button";
-import { Faq9 } from "@/components/landing/blocks/faq9";
-import { Footer2 } from "@/components/landing/blocks/footer2";
-import { Navbar1 } from "@/components/landing/blocks/navbar1";
-import { Pricing2 } from "@/components/landing/blocks/pricing2";
-import { PLAN_OPTIONS } from "@/components/landing/plan-options";
+import { RiAddLine, RiCheckLine, RiGithubFill, RiSubtractLine } from "@remixicon/react";
+import { Fragment, useState } from "react";
+import { LandingNav } from "@/components/landing/nav";
+import { container, Faq, FinalCta, LandingFooter, PlanCards } from "@/components/landing/sections";
 import { useGithubStart } from "@/components/landing/use-github-start";
 import { COMPARE, TEAM_PRICE } from "@/components/marketing/plans";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { cx } from "@/utils/cx";
 
 function Cell({ value }: { value: boolean | string }) {
-  if (typeof value === "string")
-    return <span className="text-body-regular">{value}</span>;
+  if (typeof value === "string") return <span className="text-[14px] text-[var(--l-ink)]">{value}</span>;
   return value ? (
-    <RiCheckLine
-      className="mx-auto size-5 text-foreground-icon-primary"
-      aria-label="Included"
-    />
+    <RiCheckLine className="mx-auto size-[18px] text-[var(--l-blue)]" aria-label="Included" />
   ) : (
-    <span aria-label="Not included">—</span>
+    <span className="text-[var(--l-ink-3)]" aria-label="Not included">—</span>
   );
 }
+
+const stepper =
+  "grid size-9 place-items-center rounded-full bg-white text-[var(--l-ink)] shadow-[0_0_0_1px_rgb(0_0_0/0.08)] transition-colors hover:bg-[#f5f5f4] outline-none focus-visible:ring-2 focus-visible:ring-[var(--l-blue)] disabled:opacity-40";
 
 function SeatEstimator() {
   const [seats, setSeats] = useState(12);
   return (
-    <section
-      aria-labelledby="estimate-heading"
-      className="mx-auto max-w-5xl px-5 pb-16 md:px-8"
-    >
-      <div className="flex flex-col gap-6 rounded-3xl border border-border-button-default bg-background-secondary-default p-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-2">
-          <h2 id="estimate-heading" className="text-title-2-semibold">
-            Estimate your Team plan cost
+    <section aria-labelledby="estimate-heading" className={cx(container, "pb-20 md:pb-32")}>
+      <div className="mx-auto flex max-w-[800px] flex-col gap-6 rounded-2xl bg-[#fafafa] p-6 ring-1 ring-[var(--l-line)] sm:flex-row sm:items-center sm:justify-between md:p-8">
+        <div>
+          <h2 id="estimate-heading" className="font-display text-[18px] leading-6 font-semibold tracking-[-0.015em]">
+            Estimate your Team plan
           </h2>
-          <p className="text-body-regular text-text-secondary">
+          <p className="mt-1 text-[14px] leading-5 text-[var(--l-ink-2)]">
             ${TEAM_PRICE} USD per member per month, plus applicable taxes.
           </p>
         </div>
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <Button
-              variant="secondary"
-              iconOnly
-              leadingIcon={RiSubtractLine}
-              aria-label="Remove one member"
-              className="size-11 shadow-none"
-              disabled={seats === 1}
-              onClick={() => setSeats(seats - 1)}
-            />
-            <span className="text-body-medium">
+        <div className="flex items-center justify-between gap-6 sm:justify-end">
+          <div className="flex items-center gap-3">
+            <button type="button" className={stepper} aria-label="Remove one member" disabled={seats === 1} onClick={() => setSeats(seats - 1)}>
+              <RiSubtractLine className="size-4" />
+            </button>
+            <span className="w-[86px] text-center text-[14px] font-medium tabular-nums">
               {seats} {seats === 1 ? "member" : "members"}
             </span>
-            <Button
-              variant="secondary"
-              iconOnly
-              leadingIcon={RiAddLine}
-              aria-label="Add one member"
-              className="size-11 shadow-none"
-              disabled={seats === 100}
-              onClick={() => setSeats(seats + 1)}
-            />
+            <button type="button" className={stepper} aria-label="Add one member" disabled={seats === 100} onClick={() => setSeats(seats + 1)}>
+              <RiAddLine className="size-4" />
+            </button>
           </div>
-          <output
-            aria-live="polite"
-            className="text-center text-title-2-medium"
-          >
-            ${seats * TEAM_PRICE} USD / month
+          <output aria-live="polite" className="font-display min-w-[110px] text-right text-[24px] leading-none font-medium tracking-[-0.02em] tabular-nums">
+            ${seats * TEAM_PRICE}
+            <span className="ml-1 font-sans text-[13px] font-normal tracking-normal text-[var(--l-ink-3)]">/mo</span>
           </output>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CompareTable() {
+  return (
+    <section aria-labelledby="compare-heading" className="scroll-mt-16 border-t border-[var(--l-line)] py-20 md:py-32">
+      <div className={container}>
+        <h2 id="compare-heading" className="font-display mb-10 text-center text-[30px] leading-[36px] font-medium tracking-[-0.03em] md:mb-14 md:text-[40px] md:leading-[44px]">
+          Compare plans
+        </h2>
+        <div className="mx-auto max-w-[800px]">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-[var(--l-line)]">
+                <th scope="col" className="py-3 pr-4 text-[13px] font-medium text-[var(--l-ink-3)]">Feature</th>
+                <th scope="col" className="w-[22%] py-3 sm:w-[28%] text-center text-[14px] font-semibold">Free</th>
+                <th scope="col" className="w-[22%] py-3 sm:w-[28%] text-center text-[14px] font-semibold">Team</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARE.map((group) => (
+                <Fragment key={group.group}>
+                  <tr>
+                    <th scope="colgroup" colSpan={3} className="pt-8 pb-2 text-[12px] font-medium tracking-[0.04em] text-[var(--l-ink-3)] uppercase">
+                      {group.group}
+                    </th>
+                  </tr>
+                  {group.rows.map(([label, free, team]) => (
+                    <tr key={label} className="border-b border-[var(--l-line)]">
+                      <th scope="row" className="py-3.5 pr-4 text-[14px] leading-5 font-normal text-[var(--l-ink-2)]">{label}</th>
+                      <td className="py-3.5 text-center"><Cell value={free} /></td>
+                      <td className="py-3.5 text-center"><Cell value={team} /></td>
+                    </tr>
+                  ))}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -91,82 +98,37 @@ function SeatEstimator() {
 
 export function PricingPage() {
   const { start, pending, notice } = useGithubStart();
+  const onStart = () => void start();
   const startButton = (
-    <Button
-      leadingIcon={RiGithubFill}
-      onClick={() => void start()}
-      disabled={pending}
-      aria-busy={pending}
-      className="min-h-12 w-full px-6 shadow-none sm:w-auto"
-    >
+    <button type="button" onClick={onStart} disabled={pending} aria-busy={pending} className="l-btn l-btn-primary h-12 w-full px-6 disabled:opacity-70 sm:w-auto">
+      <RiGithubFill className="size-[18px]" />
       {pending ? "Connecting…" : "Start free with GitHub"}
-    </Button>
+    </button>
   );
   return (
-    <div className="min-h-svh bg-background-primary-default text-text-primary">
-      <Navbar1 action={startButton} />
+    <div className="landing min-h-svh">
+      <LandingNav onStart={onStart} />
       <main>
-        <Pricing2
-          headingAs="h1"
-          heading="Choose a plan"
-          description={`Start free. Team is $${TEAM_PRICE} USD per member per month, plus applicable taxes.`}
-          plans={PLAN_OPTIONS.map((plan) => ({ ...plan, action: startButton }))}
-        />
-        {notice && (
-          <p
-            role="status"
-            className="mx-auto max-w-6xl px-5 pb-6 text-body-regular text-text-secondary"
-          >
-            {notice}
-          </p>
-        )}
-        <SeatEstimator />
-        <section className="mx-auto max-w-5xl px-5 py-16 md:px-8">
-          <h2 className="mb-8 text-center text-display-4-semibold">
-            Compare plans
-          </h2>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-body-medium">Feature</TableHead>
-                <TableHead className="text-center text-body-medium">
-                  Free · $0
-                </TableHead>
-                <TableHead className="text-center text-body-medium">
-                  Team · ${TEAM_PRICE} / member
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {COMPARE.flatMap((group) => [
-                <TableRow
-                  key={group.group}
-                  className="bg-background-secondary-default"
-                >
-                  <TableCell colSpan={3} className="text-body-semibold">
-                    {group.group}
-                  </TableCell>
-                </TableRow>,
-                ...group.rows.map(([label, free, team]) => (
-                  <TableRow key={label}>
-                    <TableCell className="whitespace-normal text-body-regular">
-                      {label}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Cell value={free} />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Cell value={team} />
-                    </TableCell>
-                  </TableRow>
-                )),
-              ])}
-            </TableBody>
-          </Table>
+        <section className="landing-sky px-4 pt-32 pb-20 sm:px-6 md:pt-40 md:pb-28">
+          <div className="l-fade-up mx-auto mb-12 max-w-[640px] text-center md:mb-16">
+            <h1 className="font-display text-[36px] leading-[40px] font-medium tracking-[-0.035em] text-balance sm:text-[48px] sm:leading-[52px] md:text-[56px] md:leading-[60px]">
+              Simple pricing for every review queue.
+            </h1>
+            <p className="mt-5 text-[17px] leading-[26px] text-pretty text-[var(--l-ink-2)] md:text-[18px] md:leading-[28px]">
+              Start free. Team is ${TEAM_PRICE} USD per member per month, plus applicable taxes.
+            </p>
+            <p role="status" className="mt-3 min-h-5 text-[13px] text-[var(--l-ink-2)]">{notice}</p>
+          </div>
+          <div className="l-fade-up" style={{ animationDelay: "120ms" }}>
+            <PlanCards onStart={onStart} />
+          </div>
         </section>
-        <Faq9 />
+        <SeatEstimator />
+        <CompareTable />
+        <Faq />
+        <FinalCta action={startButton} />
       </main>
-      <Footer2 />
+      <LandingFooter />
     </div>
   );
 }

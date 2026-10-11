@@ -21,7 +21,7 @@ type Icon = ComponentType<{ className?: string; "aria-hidden"?: boolean | "true"
 /** Icon on a soft tinted tile. */
 export function HueIcon({ icon: Icon, hue, className }: { icon: Icon; hue: Hue; className?: string }) {
   return (
-    <span className={cn("inline-flex size-7 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset", HUE[hue].soft, HUE[hue].text, HUE[hue].ring, className)}>
+    <span className={cn("tile-bevel inline-flex size-7 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset", HUE[hue].soft, HUE[hue].text, HUE[hue].ring, className)}>
       <Icon aria-hidden className="size-3.5" />
     </span>
   );

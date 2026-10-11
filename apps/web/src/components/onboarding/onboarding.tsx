@@ -9,7 +9,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace";
 import { useSession } from "@/lib/auth-client";
 import { optimistic } from "@/lib/optimistic";
@@ -228,18 +227,24 @@ function Onboarding({
         </p>
       </header>
 
-      <ol className="flex flex-wrap gap-3" aria-label="Workspace setup">
-        {STEPS.map((s, i) => (
-          <li key={s.id} className="flex items-center gap-2 text-sm">
-            <Badge variant={complete || done[s.id] ? "default" : "outline"}>
-              {complete || done[s.id] ? "✓" : i + 1}
-            </Badge>
-            {s.label}
-          </li>
-        ))}
-      </ol>
+      {(() => {
+        const count = complete ? STEPS.length : STEPS.filter((s) => done[s.id]).length;
+        return (
+          <div className="mt-5 flex items-center gap-3" aria-label={`${count} of ${STEPS.length} steps done`}>
+            <div className="bg-muted h-1 flex-1 overflow-hidden rounded-full">
+              <div
+                className="bg-primary h-full rounded-full transition-[width] duration-500 ease-power3-out"
+                style={{ width: `${(count / STEPS.length) * 100}%` }}
+              />
+            </div>
+            <span className="text-subtle text-xs tabular-nums">
+              {count}/{STEPS.length}
+            </span>
+          </div>
+        );
+      })()}
 
-      <ol className="mt-7 space-y-1">
+      <ol className="mt-5 space-y-1" aria-label="Workspace setup">
         {STEPS.map((s) => {
           const isDone = complete || done[s.id];
           const active = s.id === current;

@@ -323,10 +323,7 @@ function ShellFrame({
                 <SidebarGroupContent>
                   <SidebarMenu className="gap-0">
                     {group.items.map((n) => (
-                      <SidebarMenuItem
-                        key={n.id}
-                        className={cn(activeId === n.id && "my-px")}
-                      >
+                      <SidebarMenuItem key={n.id}>
                         <SidebarMenuButton asChild isActive={activeId === n.id}>
                           <Link href={n.href}>
                             <n.icon className={n.tint} />
@@ -481,7 +478,7 @@ function ShellFrame({
           )}
           <div
             className={cn(
-              "animate-in fade-in slide-in-from-bottom-1 ease-power3-out flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-300 md:px-5 md:py-7",
+              "animate-in fade-in slide-in-from-bottom-[3px] ease-power3-out flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-200 md:px-5 md:py-7",
               WIDTH[width],
             )}
           >

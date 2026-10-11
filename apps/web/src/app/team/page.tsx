@@ -1,20 +1,26 @@
 "use client";
 
+import { RiAddLine, RiSearchLine, RiTimeLine, RiUserAddLine } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
-import { PersonAvatar } from "@/components/person-avatar";
-import { Panel } from "@/components/panel";
-import { QueryError } from "@/components/query-state";
 import { AppShell } from "@/components/app-shell";
-import { Badge } from "@/components/ui/badge";
+import { Face, type Presence } from "@/components/people/face";
+import { InviteDialog } from "@/components/people/invite-dialog";
+import { QueryError } from "@/components/query-state";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspace } from "@/hooks/use-workspace";
+import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 
 type Person = {
   userId: string;
   name: string;
+  image: string | null;
+  role: string;
   githubLogin: string | null;
   away: boolean;
   awayUntil: string | null;
@@ -31,56 +37,157 @@ function waited(d: Date | string | null) {
   return h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`;
 }
 
-function LoadRow({ p, max }: { p: Person; max: number }) {
-  const width = max ? (p.openReviews / max) * 100 : 0;
+const shortDate = (d: string) =>
+  new Date(`${d.slice(0, 10)}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+const presenceOf = (p: Person): Presence => (p.away ? "away" : p.overLimit ? "busy" : "available");
+const PRESENCE_LABEL: Record<Presence, string> = { available: "Available", busy: "At review limit", away: "Away" };
+
+/** Circular load meter: open reviews against their limit (or the busiest person when there's no limit). */
+function LoadRing({ value, max, warn }: { value: number; max: number; warn: boolean }) {
+  const r = 15;
+  const c = 2 * Math.PI * r;
+  const share = max ? Math.min(1, value / max) : 0;
   return (
-    <li className="row-hover grid min-h-14 grid-cols-[minmax(0,12rem)_minmax(0,1fr)_6rem_7rem] items-center gap-4 rounded-lg px-4 py-2 text-sm">
+    <span className="relative grid size-10 shrink-0 place-items-center">
+      <svg viewBox="0 0 36 36" className="absolute inset-0 -rotate-90" aria-hidden>
+        <circle cx="18" cy="18" r={r} fill="none" strokeWidth="3" className="stroke-muted" />
+        <circle
+          cx="18"
+          cy="18"
+          r={r}
+          fill="none"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - share)}
+          className={cn("ring-fill transition-[stroke-dashoffset] duration-700 ease-power3-out", warn ? "stroke-warning" : "stroke-primary")}
+          style={{ ["--ring-empty" as string]: `${c}px` }}
+        />
+      </svg>
+      <span className="text-[13px] font-semibold tabular-nums">{value}</span>
+    </span>
+  );
+}
+
+function PersonCard({ p, scale }: { p: Person; scale: number }) {
+  const presence = presenceOf(p);
+  const limit = p.maxOpenReviews ?? scale;
+  return (
+    <li>
       <Link
         href={`/people/${p.userId}`}
-        className="flex min-w-0 items-center gap-2.5 font-medium hover:underline"
+        className="group flex h-full flex-col gap-4 rounded-xl bg-card p-4 surface-raised transition-[box-shadow,transform] duration-200 ease-power3-out hover:-translate-y-px hover:shadow-card-hover focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none active:translate-y-0"
       >
-        <PersonAvatar
-          seed={p.userId}
-          name={p.name}
-          githubLogin={p.githubLogin}
-        />
-        <span className="truncate">{p.name}</span>
+        <div className="flex items-start gap-3">
+          <Face seed={p.userId} name={p.name} src={p.image} githubLogin={p.githubLogin} presence={presence} />
+          <div className="min-w-0 flex-1 pt-0.5">
+            <p className="truncate text-sm font-medium">{p.name}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {p.githubLogin ? `@${p.githubLogin}` : "GitHub not linked"}
+            </p>
+          </div>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground capitalize">{p.role}</span>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-lg bg-muted/60 p-2.5">
+          <LoadRing value={p.openReviews} max={limit} warn={p.overLimit} />
+          <div className="min-w-0 text-xs leading-[1.35]">
+            <p className="font-medium text-foreground">
+              {p.openReviews === 0 ? "No open reviews" : `${p.openReviews} open ${p.openReviews === 1 ? "review" : "reviews"}`}
+              {p.maxOpenReviews ? <span className="font-normal text-subtle"> · limit {p.maxOpenReviews}</span> : null}
+            </p>
+            <p className={cn("flex items-center gap-1", presence === "busy" ? "text-warning" : "text-muted-foreground")}>
+              {p.away ? (
+                p.awayUntil ? `Away until ${shortDate(p.awayUntil)}` : "Away"
+              ) : p.oldestWaitingSince && p.openReviews > 0 ? (
+                <>
+                  <RiTimeLine className="size-3" aria-hidden />
+                  Oldest waiting {waited(p.oldestWaitingSince)}
+                </>
+              ) : (
+                PRESENCE_LABEL[presence]
+              )}
+            </p>
+          </div>
+        </div>
+
+        {p.teams.length > 0 && (
+          <div className="mt-auto flex flex-wrap gap-1">
+            {p.teams.map((t) => (
+              <span key={t.id} className="rounded-md bg-secondary px-1.5 py-0.5 text-[11px] text-muted-foreground shadow-[inset_0_0_0_1px_rgb(15_23_42/0.07)]">
+                {t.name}
+              </span>
+            ))}
+          </div>
+        )}
       </Link>
-      <div className="bg-muted h-1.5 overflow-hidden rounded-full" aria-hidden>
-        <div
-          className={
-            p.overLimit
-              ? "bg-warning h-1.5 rounded-full transition-[width] duration-500"
-              : "bg-primary h-1.5 rounded-full transition-[width] duration-500"
-          }
-          style={{ width: `${width}%` }}
-        />
-      </div>
-      <span className="text-right tabular-nums">
-        {p.openReviews}
-        {p.maxOpenReviews ? (
-          <span className="text-text-3"> / {p.maxOpenReviews}</span>
-        ) : (
-          ""
-        )}
-        <span className="text-muted-foreground"> open</span>
-      </span>
-      <span className="text-muted-foreground flex justify-end gap-1 text-xs">
-        {p.away && (
-          <Badge variant="secondary" className="">
-            away until {p.awayUntil}
-          </Badge>
-        )}
-        {!p.githubLogin && (
-          <Badge variant="secondary" className="">
-            no GitHub
-          </Badge>
-        )}
-        {p.oldestWaitingSince &&
-          p.openReviews > 0 &&
-          `oldest ${waited(p.oldestWaitingSince)}`}
-      </span>
     </li>
+  );
+}
+
+function InviteTile({ onClick }: { onClick: () => void }) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="group grid h-full min-h-[172px] w-full place-items-center rounded-xl border border-dashed border-line-strong text-sm text-muted-foreground transition-[background-color,border-color,color] duration-200 hover:border-primary/40 hover:bg-primary/[0.03] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none"
+      >
+        <span className="flex flex-col items-center gap-2">
+          <span className="grid size-9 place-items-center rounded-full bg-card shadow-control transition-transform duration-200 ease-power3-out group-hover:scale-110 group-hover:rotate-90">
+            <RiAddLine className="size-4" />
+          </span>
+          Invite a teammate
+        </span>
+      </button>
+    </li>
+  );
+}
+
+function Summary({ people, onInvite }: { people: Person[]; onInvite: () => void }) {
+  const open = people.reduce((n, p) => n + p.openReviews, 0);
+  const busiest = [...people].sort((a, b) => b.openReviews - a.openReviews)[0];
+  const atLimit = people.filter((p) => p.overLimit).length;
+  const away = people.filter((p) => p.away).length;
+  const stack = people.slice(0, 5);
+  return (
+    <section className="flex flex-col gap-5 rounded-xl bg-card p-5 surface-raised sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-4">
+        <div className="group/stack flex shrink-0 -space-x-2.5">
+          {stack.map((p, i) => (
+            <span
+              key={p.userId}
+              className="transition-transform duration-200 ease-power3-out group-hover/stack:translate-x-[calc(var(--i)*4px)]"
+              style={{ ["--i" as string]: i, zIndex: stack.length - i }}
+            >
+              <Face seed={p.userId} name={p.name} src={p.image} githubLogin={p.githubLogin} className="size-9 rounded-full ring-2 ring-card" />
+            </span>
+          ))}
+          {people.length > stack.length && (
+            <span className="z-0 grid size-9 place-items-center rounded-full bg-muted text-xs font-medium text-muted-foreground ring-2 ring-card">
+              +{people.length - stack.length}
+            </span>
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium">
+            {people.length} {people.length === 1 ? "person" : "people"} · {open} open {open === 1 ? "review" : "reviews"}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {open === 0
+              ? "Nobody is waiting on a review right now."
+              : `${busiest!.name.split(" ")[0]} has the most (${busiest!.openReviews}).`}
+            {atLimit > 0 && <span className="text-warning"> {atLimit} at their limit.</span>}
+            {away > 0 && ` ${away} away.`}
+          </p>
+        </div>
+      </div>
+      <Button onClick={onInvite} size="lg" className="shrink-0">
+        <RiUserAddLine />
+        Invite people
+      </Button>
+    </section>
   );
 }
 
@@ -88,41 +195,80 @@ function Load({ workspaceId }: { workspaceId: string }) {
   const trpc = useTRPC();
   const people = useQuery(trpc.people.list.queryOptions({ workspaceId }));
   const teams = useQuery(trpc.people.teams.queryOptions({ workspaceId }));
-  if (people.isPending || teams.isPending)
-    return <Skeleton className="h-48 w-full max-w-3xl" />;
-  if (people.error)
-    return (
-      <QueryError error={people.error} onRetry={() => void people.refetch()} />
-    );
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [inviting, setInviting] = useState(false);
 
-  const all = people.data.filter((p) => p.role !== "viewer") as Person[];
-  const max = Math.max(1, ...all.map((p) => p.openReviews));
-  const groups = [
-    ...(teams.data ?? []).map((t) => ({
-      name: t.name,
-      people: all.filter((p) => t.userIds.includes(p.userId)),
-    })),
-    { name: "Not on a team", people: all.filter((p) => p.teams.length === 0) },
-  ].filter((g) => g.people.length);
+  const all = useMemo(() => (people.data ?? []).filter((p) => p.role !== "viewer") as Person[], [people.data]);
+  const scale = Math.max(1, ...all.map((p) => p.openReviews));
+  const visible = all
+    .filter((p) =>
+      filter === "all" ? true : filter === "away" ? p.away : filter === "busy" ? p.overLimit : p.teams.some((t) => t.id === filter),
+    )
+    .filter((p) => `${p.name} ${p.githubLogin ?? ""}`.toLowerCase().includes(search.trim().toLowerCase()))
+    .sort((a, b) => b.openReviews - a.openReviews || a.name.localeCompare(b.name));
+
+  if (people.isPending || teams.isPending)
+    return (
+      <div className="grid gap-5">
+        <Skeleton className="h-[84px] rounded-xl" />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-[172px] rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  if (people.error) return <QueryError error={people.error} onRetry={() => void people.refetch()} />;
+
+  const filters = [
+    { value: "all", label: "Everyone", count: all.length },
+    ...(teams.data ?? []).map((t) => ({ value: t.id, label: t.name, count: all.filter((p) => p.teams.some((x) => x.id === t.id)).length })),
+    ...(all.some((p) => p.overLimit) ? [{ value: "busy", label: "At limit", count: all.filter((p) => p.overLimit).length }] : []),
+    ...(all.some((p) => p.away) ? [{ value: "away", label: "Away", count: all.filter((p) => p.away).length }] : []),
+  ];
 
   return (
-    <div className="space-y-6">
-      {groups.map((g) => (
-        <Panel
-          key={g.name}
-          title={g.name}
-          description={`${g.people.length} ${g.people.length === 1 ? "person" : "people"}`}
-          bodyClassName="p-2"
-        >
-          <ul className="stagger">
-            {[...g.people]
-              .sort((a, b) => b.openReviews - a.openReviews)
-              .map((p) => (
-                <LoadRow key={p.userId} p={p} max={max} />
+    <div className="grid gap-5">
+      <Summary people={all} onInvite={() => setInviting(true)} />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Tabs value={filter} onValueChange={setFilter}>
+          <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TabsList aria-label="Filter people">
+              {filters.map((f) => (
+                <TabsTrigger key={f.value} value={f.value} className="px-3">
+                  {f.label}
+                  <span className="text-[11px] text-subtle tabular-nums">{f.count}</span>
+                </TabsTrigger>
               ))}
-          </ul>
-        </Panel>
-      ))}
+            </TabsList>
+          </div>
+        </Tabs>
+        <label className="relative w-full sm:w-56">
+          <span className="sr-only">Search people</span>
+          <RiSearchLine className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-subtle" aria-hidden />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or login"
+            className="h-9 w-full rounded-full bg-secondary pr-3 pl-8 text-sm shadow-control transition-shadow outline-none placeholder:text-subtle focus:shadow-[0_0_0_1px_var(--primary),0_0_0_4px_color-mix(in_oklab,var(--primary)_15%,transparent)]"
+          />
+        </label>
+      </div>
+
+      {visible.length === 0 && filter !== "all" ? (
+        <p className="rounded-xl bg-card px-6 py-10 text-center text-sm text-muted-foreground surface-raised">Nobody matches this filter.</p>
+      ) : (
+        <ul key={filter} className="stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {visible.map((p) => (
+            <PersonCard key={p.userId} p={p} scale={scale} />
+          ))}
+          {filter === "all" && !search && <InviteTile onClick={() => setInviting(true)} />}
+        </ul>
+      )}
+
+      <InviteDialog workspaceId={workspaceId} open={inviting} onOpenChange={setInviting} />
     </div>
   );
 }
@@ -130,21 +276,13 @@ function Load({ workspaceId }: { workspaceId: string }) {
 function Content() {
   const { workspace, isPending } = useWorkspace();
   if (isPending) return null;
-  if (!workspace)
-    return (
-      <p className="text-muted-foreground text-sm">
-        You aren&apos;t in a workspace yet.
-      </p>
-    );
+  if (!workspace) return <p className="text-muted-foreground text-sm">You aren&apos;t in a workspace yet.</p>;
   return <Load workspaceId={workspace.id} />;
 }
 
 export default function Page() {
   return (
-    <AppShell
-      title="Team"
-      description="Open review requests per person. Amber means someone has reached their limit."
-    >
+    <AppShell title="People" description="Who is reviewing what, and who has room for more.">
       <Content />
     </AppShell>
   );
