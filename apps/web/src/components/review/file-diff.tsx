@@ -42,7 +42,7 @@ import {
   type CommentLabel,
   type DiffLine,
 } from "@/lib/diff";
-import { cn } from "@/lib/utils";
+import { cx as cn } from "@/utils/cx";
 import { useTRPC } from "@/trpc/react";
 
 export type Side = "LEFT" | "RIGHT";
@@ -1169,11 +1169,11 @@ export function FileDiff({
       id={`file-${file.filename}`}
       data-viewed={file.viewed || undefined}
       className={cn(
-        "bg-card scroll-mt-16 rounded-lg border shadow-xs",
+        "bg-background-primary-default scroll-mt-20 rounded-xl border border-separator-border",
         !near && "[contain-intrinsic-size:auto_3rem] [content-visibility:auto]",
       )}
     >
-      <header className="bg-card/95 border-hairline sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-t-lg border-b px-3 py-2 text-sm backdrop-blur max-sm:gap-1.5 max-sm:py-1.5">
+      <header className="bg-background-primary-default border-separator-border sticky top-16 z-10 flex flex-wrap items-center gap-2 rounded-t-lg border-b px-3 py-2 text-body-2-regular max-sm:gap-1.5 max-sm:py-1.5">
         <ShadcnButton
           variant="row"
           size="none"

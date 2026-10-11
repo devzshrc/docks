@@ -64,7 +64,7 @@ export function GuidePanel({
   const ai = guide.source === "ai";
 
   return (
-    <section className="bg-card shadow-card space-y-4 rounded-xl p-5">
+    <section className="space-y-4 text-body-2-regular">
       <div className="flex items-start gap-2">
         <p className="flex-1 text-sm">
           {ai && (
@@ -90,16 +90,17 @@ export function GuidePanel({
       {error && <p className="text-destructive text-sm">{error}</p>}
 
       {guide.steps.length > 0 && (
-        <ol className="grid auto-rows-fr gap-2 sm:grid-cols-2">
+        <ol className="grid auto-rows-fr gap-2">
           <li className="h-full">
             <ShadcnButton
               variant="row"
-            size="none"
+              size="none"
               type="button"
               onClick={() => onStepChange(null)}
               className={cn(
                 "bg-muted/40 hover:bg-muted/70 flex h-full w-full flex-col items-start justify-start gap-1 rounded-lg px-3.5 py-3 text-left text-sm transition-colors dark:hover:bg-muted/70",
-                activeStep === null && "bg-primary/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_50%,transparent)] hover:bg-primary/15 dark:hover:bg-primary/15",
+                activeStep === null &&
+                  "bg-primary/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_50%,transparent)] hover:bg-primary/15 dark:hover:bg-primary/15",
               )}
             >
               <span className="font-medium">All files</span>
@@ -112,18 +113,21 @@ export function GuidePanel({
             <li key={i} className="h-full">
               <ShadcnButton
                 variant="row"
-            size="none"
+                size="none"
                 type="button"
                 onClick={() => onStepChange(activeStep === i ? null : i)}
                 aria-pressed={activeStep === i}
                 className={cn(
                   "bg-muted/40 hover:bg-muted/70 flex h-full w-full flex-col items-start justify-start gap-1 rounded-lg px-3.5 py-3 text-left text-sm transition-colors dark:hover:bg-muted/70",
-                  activeStep === i && "bg-primary/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_50%,transparent)] hover:bg-primary/15 dark:hover:bg-primary/15",
+                  activeStep === i &&
+                    "bg-primary/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_50%,transparent)] hover:bg-primary/15 dark:hover:bg-primary/15",
                 )}
               >
                 <span className="flex w-full items-baseline justify-between gap-3">
                   <span className="font-medium">
-                    <span className="text-primary-text mr-1.5 tabular-nums">{i + 1}</span>
+                    <span className="text-primary-text mr-1.5 tabular-nums">
+                      {i + 1}
+                    </span>
                     {step.title}
                   </span>
                   <span className="text-subtle shrink-0 text-xs tabular-nums">

@@ -13,7 +13,13 @@ import {
 } from "@remixicon/react";
 import { AppShell } from "@/components/app-shell";
 import { Button as CoreButton } from "@/components/ui/button";
-import { EmptyPreview, GhostRow, HueIcon, UpgradeCallout, type Hue } from "@/components/ui/empty-preview";
+import {
+  EmptyPreview,
+  GhostRow,
+  HueIcon,
+  UpgradeCallout,
+  type Hue,
+} from "@/components/ui/empty-preview";
 import { Button } from "@/components/ui-compat/controls";
 import { Input } from "@/components/ui-compat/controls";
 import { Select, SelectItem } from "@/components/ui-compat/controls";
@@ -36,7 +42,7 @@ type Rules = {
   leadUserId: string;
 };
 const panel =
-  "overflow-hidden rounded-xl bg-card shadow-card";
+  "overflow-hidden rounded-2xl border border-separator-border bg-background-primary-default";
 const caption = "text-[13px] text-muted-foreground";
 
 function Policy({
@@ -260,22 +266,61 @@ function DeadlineStats({
     return left > 0 && left < 4 * 3600_000;
   }).length;
   const on = policies?.policies.filter((p) => p.enabled).length ?? 0;
-  const stats: { label: string; value: string; hint: string; icon: typeof RiTimerLine; hue: Hue }[] = [
-    { label: "Active", value: cycles ? String(cycles.length) : "–", hint: "reviews on the clock", icon: RiTimerLine, hue: "amber" },
-    { label: "Overdue", value: cycles ? String(overdue) : "–", hint: overdue ? "need a nudge" : "all on track", icon: RiAlarmWarningLine, hue: "red" },
-    { label: "Due soon", value: cycles ? String(soon) : "–", hint: "within 4 work hours", icon: RiFlashlightLine, hue: "blue" },
-    { label: "Covered", value: policies ? `${on}/${policies.repos.length}` : "–", hint: "repositories with a policy", icon: RiShieldCheckLine, hue: "green" },
+  const stats: {
+    label: string;
+    value: string;
+    hint: string;
+    icon: typeof RiTimerLine;
+    hue: Hue;
+  }[] = [
+    {
+      label: "Active",
+      value: cycles ? String(cycles.length) : "–",
+      hint: "reviews on the clock",
+      icon: RiTimerLine,
+      hue: "amber",
+    },
+    {
+      label: "Overdue",
+      value: cycles ? String(overdue) : "–",
+      hint: overdue ? "need a nudge" : "all on track",
+      icon: RiAlarmWarningLine,
+      hue: "red",
+    },
+    {
+      label: "Due soon",
+      value: cycles ? String(soon) : "–",
+      hint: "within 4 work hours",
+      icon: RiFlashlightLine,
+      hue: "blue",
+    },
+    {
+      label: "Covered",
+      value: policies ? `${on}/${policies.repos.length}` : "–",
+      hint: "repositories with a policy",
+      icon: RiShieldCheckLine,
+      hue: "green",
+    },
   ];
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {stats.map((s) => (
-        <div key={s.label} className="bg-card shadow-card flex flex-col gap-3 rounded-xl p-4">
+        <div
+          key={s.label}
+          className="bg-card shadow-card flex flex-col gap-3 rounded-xl p-4"
+        >
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground text-[13px]">{s.label}</span>
-            <HueIcon icon={s.icon} hue={s.hue} className="size-6 rounded-md [&_svg]:size-3" />
+            <HueIcon
+              icon={s.icon}
+              hue={s.hue}
+              className="size-6 rounded-md [&_svg]:size-3"
+            />
           </div>
           <div className="grid gap-1">
-            <span className="text-2xl font-semibold tracking-[-0.03em] tabular-nums">{s.value}</span>
+            <span className="text-2xl font-semibold tracking-[-0.03em] tabular-nums">
+              {s.value}
+            </span>
             <span className="text-subtle text-xs">{s.hint}</span>
           </div>
         </div>
@@ -345,7 +390,9 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
           <EmptyPreview
             icon={overdueOnly ? RiCheckboxCircleLine : RiTimerLine}
             hue={overdueOnly ? "green" : "amber"}
-            title={overdueOnly ? "No overdue reviews" : "No active deadlines yet"}
+            title={
+              overdueOnly ? "No overdue reviews" : "No active deadlines yet"
+            }
             description={
               overdueOnly
                 ? "Your current reviews are on track. Switch off the filter to see all deadlines."
@@ -448,7 +495,9 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
                 description="Connect a repository, then set its review deadline, work hours and escalation lead here."
                 action={
                   <CoreButton asChild size="sm">
-                    <Link href="/settings/repositories">Connect a repository</Link>
+                    <Link href="/settings/repositories">
+                      Connect a repository
+                    </Link>
                   </CoreButton>
                 }
               />
