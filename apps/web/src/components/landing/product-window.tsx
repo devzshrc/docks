@@ -13,6 +13,7 @@ import {
 } from "@remixicon/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { AppIcon } from "@/components/app-icon";
+import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { cx } from "@/utils/cx";
 
 /* The landing demo: one app window (16:10, like a laptop screen) that plays through what Docks does.
@@ -437,39 +438,6 @@ function InsightsScene({ t }: { t: number }) {
 
 /* ---------- frame ---------- */
 
-/** Tilt the window back on load and level it as it scrolls into view (0 = tilted, 1 = flat). */
-function useTilt(ref: React.RefObject<HTMLDivElement | null>) {
-  const [p, setP] = useState(0);
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setP(1);
-      return;
-    }
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const el = ref.current;
-      if (!el) return;
-      const top = el.getBoundingClientRect().top;
-      const vh = window.innerHeight;
-      // Flat once the window's top has risen to ~22% of the viewport.
-      setP(Math.min(1, Math.max(0, (vh * 0.92 - top) / (vh * 0.7))));
-    };
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, [ref]);
-  return p;
-}
-
 const PATHS: Record<string, string> = { queue: "inbox", guide: "review/acme/api/482", post: "review/acme/api/482", deadline: "deadlines", insights: "insights" };
 
 /** Minimal Chrome: one tab in the strip, then back/forward/reload and a left-aligned address bar. */
@@ -514,11 +482,10 @@ function Chrome({ path }: { path: string }) {
   );
 }
 
-export function ProductWindow() {
+/** Hero product demo: the headline scrolls up while the app screen levels out beneath it (ContainerScroll). */
+export function ProductWindow({ title }: { title: ReactNode }) {
   const { scene, t, jump, still, pause } = useScenes();
   const { ref, scale } = useFit();
-  const frameRef = useRef<HTMLDivElement>(null);
-  const flat = useTilt(frameRef);
   // Only play while the demo is on screen.
   useEffect(() => {
     const el = ref.current;
@@ -535,45 +502,8 @@ export function ProductWindow() {
     deadline: <DeadlineScene t={t} />,
     insights: <InsightsScene t={t} />,
   };
-  const ease = 1 - Math.pow(1 - flat, 3);
-  return (
-    <div className="mx-auto w-full max-w-[1040px]">
-      <div ref={frameRef} className="[perspective:1600px]">
-        <div
-          className="relative will-change-transform"
-          style={{
-            transform: `rotateX(${(1 - ease) * 22}deg) scale(${0.94 + ease * 0.06}) translateY(${(1 - ease) * -8}px)`,
-            transformOrigin: "50% 100%",
-          }}
-        >
-          {/* Soft floor shadow that tightens as the window levels out. */}
-          <div
-            aria-hidden
-            className="absolute inset-x-[6%] -bottom-6 h-16 rounded-[50%] bg-[rgb(30_60_110/0.35)] blur-2xl"
-            style={{ opacity: 0.35 + ease * 0.35, transform: `scaleX(${1.08 - ease * 0.08})` }}
-          />
-          <div className="relative overflow-hidden rounded-[14px] bg-white shadow-[0_0_0_1px_rgb(15_23_42/0.08),0_2px_4px_rgb(15_23_42/0.04),0_24px_48px_-16px_rgb(30_60_110/0.28),0_60px_120px_-40px_rgb(30_60_110/0.35)]">
-            <div ref={ref} className="relative aspect-[16/10]" aria-hidden>
-              <div className="absolute top-0 left-0 flex flex-col bg-[#fbfbfa]" style={{ width: W, height: H, transform: `scale(${scale})`, transformOrigin: "0 0" }}>
-                <Chrome path={PATHS[active.id]!} />
-                <div className="flex min-h-0 flex-1">
-                  <Sidebar active={active.id} />
-                  <div className="relative min-w-0 flex-1 p-7">
-                    <div key={active.id} className="h-full animate-[demo-in_450ms_cubic-bezier(0.25,1,0.5,1)]">
-                      {view[active.id]}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Glass sheen across the top edge. */}
-            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/40 to-transparent" style={{ opacity: 1 - ease }} />
-          </div>
-        </div>
-      </div>
-
-      {/* Scene picker: one segmented row; the active segment fills as its scene plays. */}
-      <div className="mt-10 flex flex-col items-center gap-4">
+  const picker = (
+    <div className="flex flex-col items-center gap-4">
         <div className="max-w-full overflow-x-auto px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div role="tablist" aria-label="Product tour" className="flex w-max gap-1 rounded-full bg-white/70 p-1 shadow-[0_0_0_1px_rgb(15_23_42/0.06),0_1px_2px_rgb(15_23_42/0.05),inset_0_1px_0_white] backdrop-blur">
             {SCENES.map((s, i) => {
@@ -603,7 +533,23 @@ export function ProductWindow() {
         <p key={active.id} className="max-w-[460px] animate-[demo-in_400ms_ease-out] text-center text-[15px] leading-[22px] text-pretty text-[var(--l-ink-2)]" aria-live="polite">
           <span className="font-medium text-[var(--l-ink)]">{active.title}.</span> {active.body}
         </p>
-      </div>
     </div>
+  );
+  return (
+    <ContainerScroll titleComponent={title} footer={picker}>
+      <div ref={ref} className="relative aspect-[16/10]" aria-hidden>
+        <div className="absolute top-0 left-0 flex flex-col bg-[#fbfbfa]" style={{ width: W, height: H, transform: `scale(${scale})`, transformOrigin: "0 0" }}>
+          <Chrome path={PATHS[active.id]!} />
+          <div className="flex min-h-0 flex-1">
+            <Sidebar active={active.id} />
+            <div className="relative min-w-0 flex-1 p-7">
+              <div key={active.id} className="h-full animate-[demo-in_450ms_cubic-bezier(0.25,1,0.5,1)]">
+                {view[active.id]}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ContainerScroll>
   );
 }
