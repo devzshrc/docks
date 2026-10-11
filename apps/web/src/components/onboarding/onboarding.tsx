@@ -9,7 +9,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace";
 import { useSession } from "@/lib/auth-client";
 import { optimistic } from "@/lib/optimistic";
@@ -17,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-const FINALE_MS = 400;
+const FINALE_MS = 1400;
 
 type Repo = {
   id: number;
@@ -82,9 +81,13 @@ export function OnboardingGate({
       {showApp ? (
         <motion.div
           key="app"
-          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.18, ease: EASE }}
+          initial={
+            reduceMotion
+              ? { opacity: 0 }
+              : { opacity: 0, y: 10, filter: "blur(6px)" }
+          }
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 0.55, ease: EASE }}
           className="flex min-w-0 flex-col gap-8"
         >
           {children(workspace!.id)}
@@ -182,20 +185,23 @@ function Onboarding({
     <motion.section
       data-onboarding
       aria-labelledby="onboarding-title"
-      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={
+        reduceMotion ? false : { opacity: 0, y: 10, filter: "blur(6px)" }
+      }
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       exit={
         reduceMotion
           ? { opacity: 0 }
           : {
               opacity: 0,
               y: -8,
-
-              transition: { duration: 0.18, ease: EASE },
+              scale: 0.97,
+              filter: "blur(8px)",
+              transition: { duration: 0.45, ease: EASE },
             }
       }
-      transition={{ duration: 0.18, ease: EASE }}
-      className="mx-auto mt-6 w-full max-w-xl rounded-2xl border border-separator-border bg-background-primary-default p-6 sm:p-8"
+      transition={{ duration: 0.5, ease: EASE }}
+      className="bg-card border-hairline mx-auto mt-[6vh] w-full max-w-lg rounded-2xl border p-6 shadow-[0_12px_32px_-16px_rgb(15_23_42/0.25)] sm:p-8"
     >
       <header className="space-y-1.5">
         <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -209,7 +215,7 @@ function Onboarding({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.25, ease: EASE }}
-            className="text-title-1-medium text-text-primary"
+            className="text-xl font-medium tracking-tight"
           >
             {complete ? "You're all set" : "Get your review board running"}
           </motion.h2>
@@ -221,18 +227,24 @@ function Onboarding({
         </p>
       </header>
 
-      <ol className="flex flex-wrap gap-3" aria-label="Workspace setup">
-        {STEPS.map((s, i) => (
-          <li key={s.id} className="flex items-center gap-2 text-sm">
-            <Badge variant={complete || done[s.id] ? "default" : "outline"}>
-              {complete || done[s.id] ? "✓" : i + 1}
-            </Badge>
-            {s.label}
-          </li>
-        ))}
-      </ol>
+      {(() => {
+        const count = complete ? STEPS.length : STEPS.filter((s) => done[s.id]).length;
+        return (
+          <div className="mt-5 flex items-center gap-3" aria-label={`${count} of ${STEPS.length} steps done`}>
+            <div className="bg-muted h-1 flex-1 overflow-hidden rounded-full">
+              <div
+                className="bg-primary h-full rounded-full transition-[width] duration-500 ease-power3-out"
+                style={{ width: `${(count / STEPS.length) * 100}%` }}
+              />
+            </div>
+            <span className="text-subtle text-xs tabular-nums">
+              {count}/{STEPS.length}
+            </span>
+          </div>
+        );
+      })()}
 
-      <ol className="mt-7 space-y-1">
+      <ol className="mt-5 space-y-1" aria-label="Workspace setup">
         {STEPS.map((s) => {
           const isDone = complete || done[s.id];
           const active = s.id === current;

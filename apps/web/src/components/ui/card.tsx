@@ -1,12 +1,12 @@
 import * as React from "react";
-import { cx as cn } from "@/utils/cx";
+import { cn } from "cn";
 
 function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
       className={cn(
-        "flex flex-col gap-5 rounded-2xl border border-separator-border bg-background-primary-default py-5 text-text-primary shadow-none",
+        "flex flex-col gap-5 rounded-xl bg-card surface-raised py-5 text-card-foreground dark:bg-none",
         className,
       )}
       {...props}
@@ -31,7 +31,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      className={cn("text-body-medium", className)}
+      className={cn("text-sm leading-none font-medium tracking-[-0.01em]", className)}
       {...props}
     />
   );
@@ -41,7 +41,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("text-body-2-regular text-text-secondary", className)}
+      className={cn("text-[13px] leading-snug text-muted-foreground", className)}
       {...props}
     />
   );

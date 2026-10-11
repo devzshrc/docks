@@ -1,4 +1,5 @@
 "use client";
+import { RiArrowDownSLine } from "@remixicon/react";
 import { PersonalReviewInbox } from "@/components/review/personal-inbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import {
@@ -156,7 +157,7 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
           ))}
         </div>
       ) : !q.data.items.length ? (
-        <div className="border border-separator-border bg-background-primary-default shadow-none rounded-xl">
+        <div className="bg-card shadow-card rounded-xl">
           <EmptyPreview
             icon={view === "snoozed" ? RiAlarmLine : RiInboxLine}
             hue="blue"
@@ -182,7 +183,7 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
           />
         </div>
       ) : (
-        <ul className="border border-separator-border bg-background-primary-default shadow-none divide-y overflow-hidden rounded-xl">
+        <ul className="bg-card shadow-card divide-y overflow-hidden rounded-xl">
           {q.data.items.map((item) => {
             const meta = KIND_META[item.kind];
             const isUnread = unread(item);
@@ -321,11 +322,14 @@ export default function Page() {
       {workspace ? (
         <div className="flex flex-col gap-8">
           <PersonalReviewInbox key={workspace.id} workspaceId={workspace.id} />
-          <details>
-            <summary className="text-body-medium">
+          <details className="group rounded-xl bg-card shadow-card">
+            <summary className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none">
               Activity notifications
+              <RiArrowDownSLine aria-hidden className="size-4 text-subtle transition-transform duration-200 ease-power3-out group-open:rotate-180" />
             </summary>
-            <Inbox key={workspace.id} workspaceId={workspace.id} />
+            <div className="animate-in fade-in slide-in-from-top-1 px-4 pt-1 pb-4 duration-200">
+              <Inbox key={workspace.id} workspaceId={workspace.id} />
+            </div>
           </details>
         </div>
       ) : (

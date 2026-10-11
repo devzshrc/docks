@@ -1,6 +1,7 @@
 "use client";
 
-import { RiSearchLine } from "@remixicon/react";
+import { Search01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 import {
   Select as CoreSelect,
@@ -12,9 +13,9 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cx as cn } from "@/utils/cx";
+import { cn } from "@/lib/utils";
 
-/** One row of controls (search, filters, chips, then actions). Wraps on small screens; controls share a 36px height. */
+/** One row of controls (search, filters, chips, then actions). Wraps on small screens; every control is 32px. */
 export function Toolbar({
   className,
   children,
@@ -37,13 +38,15 @@ export function ToolbarSearch({
     <div
       className={cn("relative min-w-0 flex-1 md:w-60 md:flex-none", className)}
     >
-      <RiSearchLine
-        className="text-text-tertiary pointer-events-none absolute top-1/2 start-3 z-10 size-4 -translate-y-1/2"
+      <HugeiconsIcon
+        icon={Search01Icon}
+        size={14}
+        className="text-text-3 pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
         aria-hidden
       />
       <Input
         type="search"
-        className="h-9 ps-6 text-body-2-regular"
+        className="h-[30px] rounded-full border-0 pl-8 text-xs shadow-control"
         {...props}
       />
     </div>
@@ -52,7 +55,7 @@ export function ToolbarSearch({
 
 const ALL = "__all__";
 
-/** "Label | Value ▾" filter control. An empty string value ("any") maps to a sentinel because select items need a value. */
+/** "Label | Value ▾" filter pill, as in the CRM reference. An empty string value ("any") maps to a sentinel because select items need a value. */
 export function FilterSelect({
   label,
   value,
@@ -75,14 +78,14 @@ export function FilterSelect({
         size="sm"
         aria-label={label}
         className={cn(
-          "h-9 gap-1 py-0 pe-3 ps-3 text-body-2-regular data-[size=sm]:h-9",
+          "h-[30px] gap-0 py-0 pr-2.5 pl-0 text-xs data-[size=sm]:h-[30px]",
           className,
         )}
       >
-        <span className="text-text-secondary flex h-full items-center pe-1">
+        <span className="text-subtle border-line-strong flex h-full items-center border-r pr-2 pl-3">
           {label}
         </span>
-        <span className="flex min-w-0 items-center text-text-primary">
+        <span className="flex items-center pr-1.5 pl-2 font-medium">
           <SelectValue />
         </span>
       </SelectTrigger>
@@ -116,15 +119,18 @@ export function ToggleChip({
       aria-pressed={on}
       onClick={() => onChange(!on)}
       className={cn(
-        "h-9 text-body-2-medium",
-        on &&
-          "bg-primary-alpha-10 text-primary-base ring-1 ring-inset ring-primary/15",
+        "font-medium",
         !on && "text-muted-foreground font-normal",
       )}
     >
       {label}
       {count !== undefined && (
-        <span className={cn("tabular-nums", on ? "text-soft" : "text-subtle")}>
+        <span
+          className={cn(
+            "tabular-nums",
+            on ? "text-soft" : "text-subtle",
+          )}
+        >
           {count}
         </span>
       )}

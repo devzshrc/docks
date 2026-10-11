@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { RankedBars } from "@/components/charts/ranked-bars"
-import { TrendChart } from "@/components/charts/trend-chart"
+import { TrendChart, weekLabel } from "@/components/charts/trend-chart"
 import { QueryError } from "@/components/query-state"
 import { Panel, StatStrip } from "@/components/panel"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -35,10 +35,10 @@ export function IssueInsights({ workspaceId }: { workspaceId: string }) {
       />
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="Opened per week" description="Last 12 weeks">
-          <TrendChart rows={d.weeks.map((w) => ({ label: w.week.slice(5), value: w.opened }))} label="Issues opened" ariaLabel="Issues opened per week" />
+          <TrendChart rows={d.weeks.map((w) => ({ label: weekLabel(w.week), value: w.opened }))} label="Issues opened" ariaLabel="Issues opened per week" polarity="neutral" />
         </Panel>
         <Panel title="Closed per week" description="Last 12 weeks">
-          <TrendChart rows={d.weeks.map((w) => ({ label: w.week.slice(5), value: w.closed }))} label="Issues closed" ariaLabel="Issues closed per week" color="#7c3aed" />
+          <TrendChart rows={d.weeks.map((w) => ({ label: weekLabel(w.week), value: w.closed }))} label="Issues closed" ariaLabel="Issues closed per week" color="#7c3aed" />
         </Panel>
         <Panel title="How old are the open issues" description="Since they were opened">
           <RankedBars rows={aging} label="Open issues" ariaLabel="Open issues by age" />

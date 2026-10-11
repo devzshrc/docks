@@ -14,9 +14,9 @@ import {
   FramePanel,
   FrameTitle,
 } from "@/components/ui-compat/frame";
-import { cx as cn } from "@/utils/cx";
+import { cn } from "@/lib/utils";
 
-/** Shared section container with a clear heading, optional actions, and a bordered body. */
+/** A ReUI frame: header bar (title, optional meta and actions) above an inset content panel. The one container for dashboard sections. */
 export function Panel({
   title,
   description,
@@ -35,15 +35,15 @@ export function Panel({
   return (
     <Frame className={cn("min-w-0", className)}>
       {(title || actions) && (
-        <FrameHeader className="min-h-12 flex-row flex-wrap items-start justify-between gap-3 border-b border-separator-border pb-4">
+        <FrameHeader className="min-h-11 flex-row items-center justify-between gap-3">
           <div className="min-w-0">
             {title && (
-              <FrameTitle className="text-body-medium text-text-primary">
+              <FrameTitle className="font-medium tracking-tight">
                 {title}
               </FrameTitle>
             )}
             {description && (
-              <FrameDescription className="mt-1 text-body-2-regular">
+              <FrameDescription className="text-xs">
                 {description}
               </FrameDescription>
             )}
