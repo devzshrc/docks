@@ -32,3 +32,8 @@ test("otherwise compares with the window average", () => {
   assert.equal(weekInsight([2, 2, 2, 2], 1).headline, "In line with the 4-week average");
   assert.equal(weekInsight([2, null, 2], 1).headline, "No data for this week");
 });
+
+test("daily series say days, not weeks", () => {
+  assert.equal(weekInsight([1, 1, 6, 1], 2, { unit: "day" }).headline, "Highest in 4 days");
+  assert.equal(weekInsight([2, 4, 4, 2, 4], 3, { unit: "day" }).headline, "Down 50% from the day before");
+});

@@ -31,9 +31,9 @@ export function Landing() {
     <div className="landing min-h-svh">
       <LandingNav onStart={onStart} />
       <main>
-        <section className="landing-sky px-4 pt-32 sm:px-6 md:pt-40">
+        <section className="landing-sky px-4 pt-32 pb-20 sm:px-6 md:pt-40 md:pb-28">
           <div className="l-fade-up mx-auto flex max-w-[760px] flex-col items-center text-center">
-            <h1 className="font-display text-[36px] leading-[40px] font-medium tracking-[-0.035em] text-balance sm:text-[48px] sm:leading-[52px] md:text-[60px] md:leading-[64px]">
+            <h1 className="font-display text-[36px] leading-[40px] font-medium text-balance sm:text-[48px] sm:leading-[52px] md:text-[60px] md:leading-[64px]">
               Every pull request, reviewed in the right order.
             </h1>
             <p className="mt-5 max-w-[560px] text-[17px] leading-[26px] text-pretty text-[var(--l-ink-2)] md:text-[18px] md:leading-[28px]">

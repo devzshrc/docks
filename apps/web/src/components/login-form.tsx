@@ -73,7 +73,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="py-7 [&>[data-slot=card-content]]:px-7 [&>[data-slot=card-header]]:px-7">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold tracking-[-0.03em]">Welcome back</CardTitle>
+          <CardTitle className="text-xl font-semibold">Welcome back</CardTitle>
           <CardDescription>Sign in to keep reviewing.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">

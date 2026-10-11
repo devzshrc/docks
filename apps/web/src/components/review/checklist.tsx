@@ -81,13 +81,12 @@ export function Checklist({
         <div className="flex items-baseline justify-between gap-2">
           <h3
             id="checklist-heading"
-            className="text-sm font-semibold tracking-tight"
+            className="text-sm font-semibold"
           >
             Before you approve
           </h3>
           <span
-            className={cn(
-              "text-xs tabular-nums",
+            className={cn("text-xs tabular-nums",
               complete
                 ? "font-medium text-emerald-600 dark:text-emerald-400"
                 : "text-muted-foreground",
@@ -106,8 +105,7 @@ export function Checklist({
         </div>
         <div className="bg-muted h-1 overflow-hidden rounded-full" aria-hidden>
           <div
-            className={cn(
-              "h-full rounded-full transition-[width,background-color] duration-300",
+            className={cn("h-full rounded-full transition-[width,background-color] duration-300",
               complete ? "bg-emerald-500" : "bg-primary",
               justDone && "anim-pulse-once",
             )}
@@ -130,8 +128,7 @@ export function Checklist({
               >
                 <span className="min-w-0 flex-1 space-y-1.5">
                   <span
-                    className={cn(
-                      "block text-[13.5px] leading-relaxed transition-colors",
+                    className={cn("block text-[13.5px] leading-relaxed transition-colors",
                       checked ? "text-muted-foreground" : "text-foreground",
                     )}
                   >

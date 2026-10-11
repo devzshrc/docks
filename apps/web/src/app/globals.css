@@ -110,7 +110,8 @@
   --border-control: var(--input);
   --text-3: var(--muted-foreground);
   --destructive-foreground: white;
-  --font-code: var(--font-geist-mono-face), ui-monospace, monospace;
+  /* Code is set in Menlo (macOS), falling back to the closest system monospace elsewhere. */
+  --font-code: Menlo, ui-monospace, "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
 }
 /* Dark tokens follow the Sales CRM reference: near-black neutrals, layered inset highlights. */
 .dark {
@@ -235,7 +236,7 @@
 @theme inline {
   --shadow-card-hover: var(--shadow-card-hover);
   --font-sans: var(--font-geist-face), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono-face), ui-monospace, monospace;
+  --font-mono: var(--font-code);
   --font-code: var(--font-code);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -467,7 +468,7 @@ kbd {
   .prose-docks h1 {
     font-size: 1.6em;
     font-weight: 600;
-    letter-spacing: -0.01em;
+    letter-spacing: var(--tracking-auto);
     padding-bottom: 0.1em;
   }
   .prose-docks h2 {
@@ -662,3 +663,53 @@ kbd {
 @keyframes trend-fill { from { opacity: 0; } }
 .ring-fill { animation: ring-fill 900ms cubic-bezier(0.25, 1, 0.5, 1) 120ms backwards; }
 @keyframes ring-fill { from { stroke-dashoffset: var(--ring-empty); } }
+
+/* Landing product demo */
+@keyframes demo-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes demo-drop { from { opacity: 0; transform: translateY(-10px) scale(0.98); } }
+
+/* How it works loops: 4s cycle, paused until the section is on screen (.is-live). */
+.hiw :is(.hiw-pop, .hiw-travel, .hiw-chip, .hiw-row, .hiw-first, .hiw-press, .hiw-fly, .hiw-ping, .hiw-badge, .hiw-line) {
+  animation-duration: 4s;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+  animation-fill-mode: both;
+  animation-play-state: paused;
+}
+.hiw.is-live :is(.hiw-pop, .hiw-travel, .hiw-chip, .hiw-row, .hiw-first, .hiw-press, .hiw-fly, .hiw-ping, .hiw-badge, .hiw-line) { animation-play-state: running; }
+.hiw-line { animation-name: hiw-line; animation-iteration-count: 1 !important; animation-duration: 1.4s !important; }
+.hiw-pop { animation-name: hiw-pop; }
+.hiw-travel { animation-name: hiw-travel; animation-timing-function: ease-in-out !important; }
+.hiw-chip { animation-name: hiw-chip; }
+.hiw-row { animation-name: hiw-row; }
+.hiw-first { animation-name: hiw-row, hiw-first; }
+.hiw-press { animation-name: hiw-press; }
+.hiw-fly { animation-name: hiw-fly; }
+.hiw-ping { animation-name: hiw-ping; }
+.hiw-badge { animation-name: hiw-badge; }
+@keyframes hiw-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes hiw-pop { 0% { opacity: 0; transform: scale(0.85); } 12%, 100% { opacity: 1; transform: none; } }
+@keyframes hiw-travel { 0%, 15% { left: 0; opacity: 0; } 20% { opacity: 1; } 45% { left: calc(100% - 7px); opacity: 1; } 50%, 100% { left: calc(100% - 7px); opacity: 0; } }
+@keyframes hiw-chip { 0%, 20% { opacity: 0; transform: translateY(4px); } 30%, 88% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes hiw-row { 0% { opacity: 0; transform: translateY(-6px); } 12%, 88% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes hiw-first { 0%, 30% { box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06); } 40%, 85% { box-shadow: 0 0 0 1px rgb(245 158 11 / 0.5), 0 0 0 4px rgb(245 158 11 / 0.12); } }
+@keyframes hiw-press { 0%, 22% { transform: none; } 27% { transform: scale(0.93); } 34%, 100% { transform: none; } }
+@keyframes hiw-fly { 0%, 30% { opacity: 0; transform: translate(0, 0) scale(0.6); } 34% { opacity: 1; transform: translate(0, 0) scale(1); } 55% { opacity: 1; transform: translate(116px, -14px) scale(0.9); } 60%, 100% { opacity: 0; transform: translate(124px, -14px) scale(0.6); } }
+@keyframes hiw-ping { 0%, 56% { opacity: 0; transform: scale(1); } 60% { opacity: 0.8; } 78%, 100% { opacity: 0; transform: scale(1.35); } }
+@keyframes hiw-badge { 0%, 57% { opacity: 0; transform: scale(0.4); } 64%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .hiw :is(.hiw-pop, .hiw-travel, .hiw-chip, .hiw-row, .hiw-first, .hiw-press, .hiw-fly, .hiw-ping, .hiw-badge, .hiw-line) { animation: none !important; }
+  .hiw-fly, .hiw-travel { display: none; }
+}
+
+/* Letter-spacing follows size: 0 for body text (16px and below), tightening as text grows
+ * (about −3% at 36px, −4.5% at 100px) and never past −5.4%, where letters start to touch.
+ * One formula for every element, so headings stay consistent without per-class tracking. */
+:root {
+  --tracking-auto: min(0px, calc((16px - 1em) * 0.054));
+}
+@layer base {
+  * {
+    letter-spacing: var(--tracking-auto);
+  }
+}

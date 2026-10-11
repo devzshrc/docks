@@ -91,7 +91,7 @@ export function EmptyPreview({
       </div>
       <div className="relative -mt-6 flex flex-col items-center gap-2">
         <HueIcon icon={icon} hue={hue} className="size-9 rounded-xl [&_svg]:size-4.5" />
-        <h3 className="mt-1 text-[15px] font-medium tracking-[-0.01em]">{title}</h3>
+        <h3 className="mt-1 text-[15px] font-medium">{title}</h3>
         {description && <p className="text-muted-foreground max-w-sm text-[13px] leading-relaxed text-balance">{description}</p>}
         {action && <div className="mt-2 flex flex-wrap justify-center gap-2">{action}</div>}
       </div>

@@ -37,14 +37,18 @@ export function BackupReviewer({
     }),
   );
   if (assigned)
-    return <span className="text-xs">Backup requested: {assigned}</span>;
+    return (
+      <span className="text-xs text-muted-foreground">
+        Backup requested from <span className="font-medium text-foreground">@{assigned}</span>
+      </span>
+    );
   return (
     <div className="space-y-2">
-      <Button size="sm" variant="outline" onClick={() => setOpen(!open)}>
-        Choose backup reviewer
+      <Button size="xs" variant="outline" onClick={() => setOpen(!open)} className="w-fit">
+        {open ? "Cancel" : "Choose a backup reviewer"}
       </Button>
       {open && (
-        <div className="space-y-2 rounded border p-3">
+        <div className="animate-in fade-in slide-in-from-top-1 space-y-2 rounded-lg bg-card p-3 text-sm shadow-control duration-150">
           <p className="text-xs text-muted-foreground">
             Keep the original reviewer requested. Suggestions do not guarantee
             required code-owner approval. GitHub team ownership is not

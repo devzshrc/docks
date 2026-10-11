@@ -53,11 +53,8 @@
                "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
                "Noto Color Emoji";
 
-  /* Monospace ramp for code blocks. Loaded via next/font in app/layout.tsx
-   * (--font-mono-source → JetBrains Mono). Figma's spec uses IBM Plex Mono;
-   * JetBrains Mono is the closest already-bundled face. */
-  --font-mono: var(--font-mono-source), ui-monospace, "SFMono-Regular", Menlo,
-               Consolas, "Liberation Mono", monospace;
+  /* Monospace for code: Menlo, with system fallbacks. */
+  --font-mono: Menlo, ui-monospace, "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
 
   /* ----- Radii ---------------------------------------------------------------
    * Extra step between lg (8) and xl (12). Used by medium-size buttons.

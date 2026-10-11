@@ -1,1 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#7136d1"/><path d="M18 16h12c14 0 22 7 22 16s-8 16-22 16H18V16Z" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/><path d="m28 32 6 6 16-17" fill="none" stroke="#d7f36b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="tile" x1="32" y1="0" x2="32" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5a9bfc"/>
+      <stop offset="0.55" stop-color="#2f7bf5"/>
+      <stop offset="1" stop-color="#1c5fd0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(20 6) rotate(55) scale(46 40)">
+      <stop stop-color="#fff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="card" x1="32" y1="29" x2="32" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff"/>
+      <stop offset="1" stop-color="#eaf2ff"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="32" y1="0" x2="32" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#0b2a66" stop-opacity="0.25"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="7" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0"/>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="lift" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="1.6" stdDeviation="1.6" flood-color="#0b2a66" flood-opacity="0.35"/>
+    </filter>
+    <clipPath id="clip"><rect width="64" height="64" rx="15"/></clipPath>
+  </defs>
+  <g clip-path="url(#clip)">
+    <rect width="64" height="64" fill="url(#tile)"/>
+    <rect width="64" height="64" fill="url(#glow)"/>
+    <rect width="64" height="64" filter="url(#grain)" opacity="0.1"/>
+    <!-- queue: two cards waiting behind, the front one reviewed -->
+    <rect x="20" y="15.5" width="24" height="8" rx="3" fill="#9dc3fc"/>
+    <rect x="16" y="21" width="32" height="10" rx="3.5" fill="#c9defe"/>
+    <g filter="url(#lift)">
+      <rect x="12" y="27.5" width="40" height="21" rx="5.5" fill="url(#card)"/>
+    </g>
+    <path d="M20.5 38.2l3.6 3.6 7.2-7.4" stroke="#2f7bf5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="35" y="36.4" width="10" height="3.6" rx="1.8" fill="#2f7bf5" fill-opacity="0.28"/>
+    <rect x="0.5" y="0.5" width="63" height="63" rx="14.5" stroke="url(#edge)"/>
+  </g>
+</svg>

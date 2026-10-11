@@ -64,7 +64,7 @@ export function PlanCards({
           </CardHeader>
           <CardContent className="flex-1">
             <div className="mt-2">
-              <span className="text-5xl font-medium tracking-tight">
+              <span className="text-5xl font-medium">
                 ${plan.price}
               </span>
               <p className="mt-2 text-xs text-muted-foreground">{plan.unit}</p>

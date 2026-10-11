@@ -12,7 +12,7 @@ export function Faq({ items = FAQ, dark = false }: { items?: readonly { q: strin
       {items.map((item) => (
         <AccordionPrimitive.Item key={item.q} value={item.q} className={dark ? "border-b border-white/10" : "border-b border-black/[0.08]"}>
           <AccordionPrimitive.Header>
-            <AccordionPrimitive.Trigger className="group flex w-full cursor-pointer items-center justify-between gap-6 py-6 text-left text-[18px] tracking-[-0.02em] outline-none focus-visible:underline md:text-[19px]">
+            <AccordionPrimitive.Trigger className="group flex w-full cursor-pointer items-center justify-between gap-6 py-6 text-left text-[18px] outline-none focus-visible:underline md:text-[19px]">
               {item.q}
               <span className="relative flex size-5 shrink-0 items-center justify-center text-[#8b8b92]">
                 <RiAddLine className="size-5 transition-transform duration-300 ease-power3-out group-data-[state=open]:rotate-45" />

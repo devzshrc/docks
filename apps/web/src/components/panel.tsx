@@ -38,7 +38,7 @@ export function Panel({
         <FrameHeader className="min-h-11 flex-row items-center justify-between gap-3">
           <div className="min-w-0">
             {title && (
-              <FrameTitle className="font-medium tracking-tight">
+              <FrameTitle className="font-medium">
                 {title}
               </FrameTitle>
             )}

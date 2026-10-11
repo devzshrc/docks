@@ -261,7 +261,7 @@ function ShellFrame({
     ? (title || description) && (
         <div className="space-y-1">
           {title && (
-            <h2 className="text-base font-medium tracking-tight">{title}</h2>
+            <h2 className="text-base font-medium">{title}</h2>
           )}
           {description && (
             <p className="text-muted-foreground max-w-2xl text-sm">
@@ -299,7 +299,7 @@ function ShellFrame({
             >
               <AppIcon className="size-8 shrink-0" />
               <span className="grid min-w-0 gap-1 leading-none">
-                <span className="truncate text-sm font-medium tracking-[-0.01em]">
+                <span className="truncate text-sm font-medium">
                   {workspace?.name ?? "Docks"}
                 </span>
                 <span className="text-subtle truncate text-xs">
@@ -312,8 +312,7 @@ function ShellFrame({
             {navGroups.map((group, i) => (
               <SidebarGroup
                 key={group.title ?? i}
-                className={cn(
-                  "gap-1 p-3",
+                className={cn("gap-1 p-3",
                   i < navGroups.length - 1 && "border-sidebar-border border-b",
                 )}
               >
@@ -362,7 +361,7 @@ function ShellFrame({
             {billing.data && (
               <div className="border-sidebar-border bg-sidebar-accent flex items-center justify-between gap-2 border-t p-4">
                 <div className="grid min-w-0 gap-1.5 leading-none">
-                  <span className="truncate text-sm font-medium tracking-[-0.01em]">
+                  <span className="truncate text-sm font-medium">
                     {billing.data.plan === "team" ? "Team plan" : "Free plan"}
                   </span>
                   <span className="text-subtle truncate text-xs">
@@ -388,7 +387,7 @@ function ShellFrame({
               <SidebarTrigger className="text-muted-foreground -ml-1 rounded-full" />
               <div className="flex min-w-0 flex-1 items-center gap-2.5">
                 {section && <HueIcon icon={section.icon} hue={section.hue} className="hidden size-6 rounded-md sm:inline-flex [&_svg]:size-3" />}
-                <h1 className="min-w-0 truncate text-base leading-none font-medium tracking-[-0.01em]">
+                <h1 className="min-w-0 truncate text-base leading-none font-medium">
                   {inSettings ? "Settings" : titleFor(pathname, title)}
                 </h1>
                 {billing.data && !inSettings && (
@@ -477,8 +476,7 @@ function ShellFrame({
             </div>
           )}
           <div
-            className={cn(
-              "animate-in fade-in slide-in-from-bottom-[3px] ease-power3-out flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-200 md:px-5 md:py-7",
+            className={cn("animate-in fade-in slide-in-from-bottom-[3px] ease-power3-out flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-200 md:px-5 md:py-7",
               WIDTH[width],
             )}
           >

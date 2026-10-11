@@ -25,8 +25,7 @@ export function LandingNav({ onStart }: { onStart: () => void }) {
 
   return (
     <header
-      className={cx(
-        "fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-200",
+      className={cx("fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-200",
         scrolled
           ? "bg-white/75 shadow-[0_1px_0_var(--l-line)] backdrop-blur-xl"
           : "bg-transparent",
@@ -36,7 +35,7 @@ export function LandingNav({ onStart }: { onStart: () => void }) {
         aria-label="Main"
         className="mx-auto grid h-16 max-w-[1120px] grid-cols-[1fr_auto] items-center px-4 sm:px-6 md:grid-cols-[1fr_auto_1fr]"
       >
-        <a href="/" className={cx(link, "font-display flex items-center gap-2 text-[17px] font-semibold tracking-[-0.01em] text-[var(--l-ink)]")}>
+        <a href="/" className={cx(link, "font-display flex items-center gap-2 text-[17px] font-semibold  text-[var(--l-ink)]")}>
           <AppIcon className="size-6" />
           Docks
         </a>

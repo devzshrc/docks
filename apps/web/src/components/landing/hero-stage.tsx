@@ -242,7 +242,7 @@ function DeadlineCard() {
       </CardLabel>
       <p className="mt-2 text-[13px] font-medium text-white/90">Rate-limit login attempts</p>
       <div className="mt-3 flex items-end justify-between">
-        <span className="text-[22px] leading-none font-semibold tracking-[-0.03em] whitespace-nowrap text-white tabular-nums">
+        <span className="text-[22px] leading-none font-semibold whitespace-nowrap text-white tabular-nums">
           2h <Tick value={minutes} />m
         </span>
         <AnimatePresence mode="wait" initial={false}>
@@ -353,8 +353,7 @@ function OrderCard() {
           return (
             <li key={item} className="flex items-center gap-2 text-[12px]">
               <span
-                className={cx(
-                  "flex size-4 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold ring-1 transition-colors duration-300",
+                className={cx("flex size-4 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold ring-1 transition-colors duration-300",
                   done ? "bg-sky-400 text-black ring-sky-400" : "text-white/50 ring-white/20",
                 )}
               >

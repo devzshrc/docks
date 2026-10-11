@@ -31,6 +31,7 @@ function InsightTooltip({
   metric,
   polarity,
   format,
+  unit,
 }: {
   rows: TrendRow[];
   active?: boolean;
@@ -38,6 +39,7 @@ function InsightTooltip({
   metric: string;
   polarity: Polarity;
   format: (v: number) => string;
+  unit: "week" | "day";
 }) {
   const index = rows.findIndex((r) => r.label === label);
   if (!active || index < 0) return null;
@@ -45,14 +47,14 @@ function InsightTooltip({
   const insight = weekInsight(
     rows.map((r) => r.value),
     index,
-    { polarity, format },
+    { polarity, format, unit },
   );
   const DeltaIcon = (insight.delta ?? 0) >= 0 ? RiArrowUpLine : RiArrowDownLine;
   const share = row.value !== null && insight.average > 0 ? Math.min(1, row.value / (insight.average * 2)) : 0;
   return (
     <div className="animate-in fade-in zoom-in-[0.97] w-56 rounded-xl bg-popover p-3 text-xs shadow-overlay duration-150">
       <div className="flex items-center justify-between gap-2 text-muted-foreground">
-        <span>Week of {row.label}</span>
+        <span>{unit === "week" ? `Week of ${row.label}` : row.label}</span>
         {insight.delta !== null && insight.delta !== 0 && (
           <span className={cn("inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-medium tabular-nums", TONE_CHIP[insight.deltaTone])}>
             <DeltaIcon className="size-3" aria-hidden />
@@ -61,7 +63,7 @@ function InsightTooltip({
         )}
       </div>
       <p className="mt-1.5 flex items-baseline gap-1.5">
-        <span className="text-xl font-semibold tracking-[-0.02em] text-foreground tabular-nums">
+        <span className="text-xl font-semibold text-foreground tabular-nums">
           {row.value === null ? "—" : format(row.value)}
         </span>
         <span className="text-muted-foreground">{metric.toLowerCase()}</span>
@@ -88,6 +90,7 @@ export function TrendChart({
   color,
   height = 200,
   polarity = "higher",
+  unit = "week",
 }: {
   rows: TrendRow[];
   label: string;
@@ -97,6 +100,8 @@ export function TrendChart({
   height?: number;
   /** Which direction is good news; colours the hover takeaway. */
   polarity?: Polarity;
+  /** What one point represents; shapes the hover wording. */
+  unit?: "week" | "day";
 }) {
   const fillId = `trend-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   if (!rows.some((row) => row.value !== null))
@@ -116,8 +121,9 @@ export function TrendChart({
   const step = max <= 4 ? 1 : Math.ceil(max / 4);
   const top = Math.max(step * 2, Math.ceil((max * 1.15) / step) * step);
   const yTicks = Array.from({ length: Math.round(top / step) + 1 }, (_, i) => i * step);
-  // Every other week, counted back from the latest so the newest label always shows.
-  const xTicks = rows.filter((_, i) => (rows.length - 1 - i) % 2 === 0).map((r) => r.label);
+  // At most ~7 labels, counted back from the latest so the newest one always shows.
+  const stride = Math.max(1, Math.ceil(rows.length / 7));
+  const xTicks = rows.filter((_, i) => (rows.length - 1 - i) % stride === 0).map((r) => r.label);
   return (
     <div role="img" aria-label={ariaLabel} className="trend-reveal">
       <ChartContainer
@@ -162,7 +168,7 @@ export function TrendChart({
           <ChartTooltip
             cursor={{ stroke: "var(--color-value)", strokeOpacity: 0.35, strokeWidth: 1 }}
             wrapperStyle={{ transition: "transform 160ms cubic-bezier(0.25, 1, 0.5, 1)", outline: "none" }}
-            content={<InsightTooltip rows={rows} metric={label} polarity={polarity} format={format} />}
+            content={<InsightTooltip rows={rows} metric={label} polarity={polarity} format={format} unit={unit} />}
           />
           <Area
             dataKey="value"

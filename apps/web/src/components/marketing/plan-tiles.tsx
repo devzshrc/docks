@@ -37,14 +37,14 @@ export function PlanTile({
           />
         )}
         <div className="relative flex items-center justify-between gap-3">
-          <h3 className="text-[15px] font-medium tracking-[-0.01em] text-white/90">{p.name}</h3>
+          <h3 className="text-[15px] font-medium text-white/90">{p.name}</h3>
           {team && (
             <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-2.5 py-1 text-[11px] font-medium text-sky-200">For growing teams</span>
           )}
         </div>
         <div className="relative mt-7 flex items-baseline gap-2">
           {price ?? (
-            <span className="text-[52px] leading-none font-light tracking-[-0.045em] text-white tabular-nums">
+            <span className="text-[52px] leading-none font-light text-white tabular-nums">
               <span className="me-0.5 align-top text-[22px] tracking-normal text-white/50">$</span>
               {team ? TEAM_PRICE : 0}
             </span>

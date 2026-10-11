@@ -17,7 +17,7 @@ export function ClosingCta({
       <div className="relative isolate mx-auto max-w-[1360px] overflow-hidden rounded-[32px] px-6 py-24 text-center text-white md:rounded-[40px] md:py-36">
         <NightLight className="-z-10" />
         <Reveal>
-          <h2 className="mx-auto max-w-[16ch] text-[clamp(2.6rem,6.4vw,5.25rem)] leading-[0.98] font-semibold tracking-[-0.05em] text-balance">
+          <h2 className="mx-auto max-w-[16ch] text-[clamp(2.6rem,6.4vw,5.25rem)] leading-[0.98] font-semibold text-balance">
             Your team&rsquo;s reviews, <span className="bg-gradient-to-r from-[#bae6fd] to-[#7dd3fc] bg-clip-text text-transparent">finally in order.</span>
           </h2>
           <p className="mx-auto mt-7 max-w-[30rem] text-[17px] leading-relaxed text-white/60">

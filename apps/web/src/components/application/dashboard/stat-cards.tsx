@@ -40,7 +40,7 @@ export function StatCards({
             <HueIcon icon={Icon} hue={stat.tone ? TONE_HUE[stat.tone] : CYCLE[i % CYCLE.length]!} className="size-6 rounded-md [&_svg]:size-3" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold tracking-[-0.03em] tabular-nums">{stat.value}</p>
+            <p className="text-2xl font-semibold tabular-nums">{stat.value}</p>
             <div className="mt-2 flex items-center gap-2">
               {stat.delta && <Badge variant={stat.deltaColor === "lime" ? "green" : stat.deltaColor === "rose" ? "red" : "secondary"}>{stat.delta}</Badge>}
               <p className="text-xs text-muted-foreground">

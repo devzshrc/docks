@@ -33,7 +33,7 @@ function NodeCard({ node, className }: { node: Node; className?: string }) {
     <div className={cn("flex w-[200px] items-center gap-3 rounded-2xl border border-white/10 bg-[#151515] p-2.5 pr-3 text-white shadow-[0_10px_30px_-12px_rgb(0_0_0/0.55)]", className)}>
       {node.icon}
       <span className="grid min-w-0 gap-0.5">
-        <span className="truncate text-[13.5px] leading-tight font-medium tracking-[-0.01em]">{node.title}</span>
+        <span className="truncate text-[13.5px] leading-tight font-medium">{node.title}</span>
         <span className="flex items-center gap-1 truncate text-[11.5px] text-white/50">
           <span className="size-1.5 shrink-0 rounded-full bg-[#22c55e]" />
           {node.sub}

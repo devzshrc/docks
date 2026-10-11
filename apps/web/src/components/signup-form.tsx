@@ -71,7 +71,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     return (
       <Card {...props}>
         <CardHeader>
-          <CardTitle className="text-xl font-semibold tracking-[-0.03em]">Check your email</CardTitle>
+          <CardTitle className="text-xl font-semibold">Check your email</CardTitle>
           <CardDescription>
             We sent a confirmation link to {sentTo}. Open it to finish creating your account.
           </CardDescription>
@@ -83,7 +83,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   return (
     <Card {...props}>
       <CardHeader>
-        <CardTitle className="text-xl font-semibold tracking-[-0.03em]">Create an account</CardTitle>
+        <CardTitle className="text-xl font-semibold">Create an account</CardTitle>
         <CardDescription>
           Enter your information below to create your account
         </CardDescription>

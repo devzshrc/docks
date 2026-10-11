@@ -215,7 +215,7 @@ function Onboarding({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.25, ease: EASE }}
-            className="text-xl font-medium tracking-tight"
+            className="text-xl font-medium"
           >
             {complete ? "You're all set" : "Get your review board running"}
           </motion.h2>
@@ -252,8 +252,7 @@ function Onboarding({
             <li
               key={s.id}
               aria-current={active ? "step" : undefined}
-              className={cn(
-                "rounded-xl transition-colors duration-300",
+              className={cn("rounded-xl transition-colors duration-300",
                 active && "bg-muted/60",
               )}
             >
@@ -289,8 +288,7 @@ function Onboarding({
                       className="flex"
                     >
                       <CircleIcon
-                        className={cn(
-                          "size-[18px]",
+                        className={cn("size-[18px]",
                           active ? "text-primary-text" : "text-text-3",
                         )}
                         aria-hidden
@@ -666,14 +664,12 @@ function Switch({
         e.preventDefault();
         onChange(!checked);
       }}
-      className={cn(
-        "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring/50",
+      className={cn("relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring/50",
         checked ? "bg-primary" : "bg-border-control",
       )}
     >
       <span
-        className={cn(
-          "bg-card size-4 rounded-full shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        className={cn("bg-card size-4 rounded-full shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
           checked ? "translate-x-[18px]" : "translate-x-0.5",
         )}
       />

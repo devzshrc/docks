@@ -23,7 +23,11 @@ const toneFor = (change: number, polarity: Polarity): Tone =>
 export function weekInsight(
   values: (number | null)[],
   index: number,
-  { polarity = "higher", format = String }: { polarity?: Polarity; format?: (v: number) => string } = {},
+  {
+    polarity = "higher",
+    format = String,
+    unit = "week",
+  }: { polarity?: Polarity; format?: (v: number) => string; unit?: "week" | "day" } = {},
 ): WeekInsight {
   const known = values.filter((v): v is number => v !== null);
   const average = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 0;
@@ -36,22 +40,22 @@ export function weekInsight(
   if (value === null) return result("No data for this week", "neutral");
   const max = Math.max(...known);
   const min = Math.min(...known);
-  const weeks = values.length;
+  const span = `${values.length} ${unit}s`;
   if (max !== min) {
     const onlyOne = (target: number) => known.filter((v) => v === target).length === 1;
-    if (value === max && onlyOne(max)) return result(`Highest in ${weeks} weeks`, toneFor(1, polarity));
-    if (value === min && onlyOne(min)) return result(`Lowest in ${weeks} weeks`, toneFor(-1, polarity));
+    if (value === max && onlyOne(max)) return result(`Highest in ${span}`, toneFor(1, polarity));
+    if (value === min && onlyOne(min)) return result(`Lowest in ${span}`, toneFor(-1, polarity));
   }
   if (prev === 0 && value > 0 && values.slice(0, index).every((v) => !v)) return result("First activity in this window", "neutral");
   if (delta !== null && prev) {
     const ratio = value / prev;
-    if (ratio >= 2) return result(`${Number.isInteger(ratio) ? ratio : ratio.toFixed(1)}× the week before`, deltaTone);
-    if (ratio <= 0.5) return result(`Down ${Math.round((1 - ratio) * 100)}% from the week before`, deltaTone);
+    if (ratio >= 2) return result(`${Number.isInteger(ratio) ? ratio : ratio.toFixed(1)}× the ${unit} before`, deltaTone);
+    if (ratio <= 0.5) return result(`Down ${Math.round((1 - ratio) * 100)}% from the ${unit} before`, deltaTone);
   }
   const gap = value - average;
-  if (Math.abs(gap) < Math.max(average * 0.1, 0.05)) return result(`In line with the ${weeks}-week average`, "neutral");
+  if (Math.abs(gap) < Math.max(average * 0.1, 0.05)) return result(`In line with the ${values.length}-${unit} average`, "neutral");
   return result(
-    `${gap > 0 ? "Above" : "Below"} the ${weeks}-week average of ${format(Math.round(average * 10) / 10)}`,
+    `${gap > 0 ? "Above" : "Below"} the ${values.length}-${unit} average of ${format(Math.round(average * 10) / 10)}`,
     toneFor(gap, polarity),
   );
 }

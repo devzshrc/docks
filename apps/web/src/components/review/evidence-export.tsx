@@ -26,25 +26,26 @@ export function EvidenceExport({
     }),
   );
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
-        {(["json", "csv"] as const).map((format) => (
-          <Button
-            key={format}
-            size="sm"
-            variant="outline"
-            disabled={!prs.length || exportReport.isPending}
-            onClick={() => exportReport.mutate({ workspaceId, prs, format })}
-          >
-            Export evidence ({format.toUpperCase()})
-          </Button>
-        ))}
+    <div className="grid gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs leading-relaxed text-muted-foreground">Review and merge records for audits.</p>
+        <div className="flex shrink-0 rounded-full bg-muted/70 p-0.5">
+          {(["json", "csv"] as const).map((format) => (
+            <Button
+              key={format}
+              size="xs"
+              variant="ghost"
+              title={`Download evidence as ${format.toUpperCase()}`}
+              disabled={!prs.length || exportReport.isPending}
+              onClick={() => exportReport.mutate({ workspaceId, prs, format })}
+              className="h-6 rounded-full px-2.5 text-[11px] hover:bg-card hover:shadow-control"
+            >
+              {format.toUpperCase()}
+            </Button>
+          ))}
+        </div>
       </div>
       {exportReport.error && <QueryError error={exportReport.error} />}
-      <p className="text-xs text-muted-foreground">
-        Collected review and merge records. Reports identify missing evidence
-        and collection limits.
-      </p>
     </div>
   );
 }
