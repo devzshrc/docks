@@ -1,7 +1,7 @@
 "use client";
 import { RiArrowDownLine, RiArrowUpLine } from "@remixicon/react";
-import { useId } from "react";
-import { Area, AreaChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from "recharts";
+import { useId, useState } from "react";
+import { Area, AreaChart, CartesianGrid, ReferenceDot, ReferenceLine, XAxis, YAxis } from "recharts";
 import { ChartGhost } from "@/components/ui/empty-preview";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,7 @@ function InsightTooltip({
   const DeltaIcon = (insight.delta ?? 0) >= 0 ? RiArrowUpLine : RiArrowDownLine;
   const share = row.value !== null && insight.average > 0 ? Math.min(1, row.value / (insight.average * 2)) : 0;
   return (
-    <div className="animate-in fade-in zoom-in-[0.97] w-56 rounded-xl bg-popover p-3 text-xs shadow-overlay duration-150">
+    <div className="trend-tooltip animate-in fade-in zoom-in-[0.97] w-56 rounded-xl bg-popover p-3 text-xs shadow-overlay duration-150">
       <div className="flex items-center justify-between gap-2 text-muted-foreground">
         <span>{unit === "week" ? `Week of ${row.label}` : row.label}</span>
         {insight.delta !== null && insight.delta !== 0 && (
@@ -104,6 +104,8 @@ export function TrendChart({
   unit?: "week" | "day";
 }) {
   const fillId = `trend-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  // Keyboard exploration: arrows move between points, Home/End jump, Escape clears.
+  const [kb, setKb] = useState<number | null>(null);
   if (!rows.some((row) => row.value !== null))
     return (
       <div className="relative py-4" role="img" aria-label={`${ariaLabel}: no data yet`}>
@@ -125,13 +127,38 @@ export function TrendChart({
   const stride = Math.max(1, Math.ceil(rows.length / 7));
   const xTicks = rows.filter((_, i) => (rows.length - 1 - i) % stride === 0).map((r) => r.label);
   return (
-    <div role="img" aria-label={ariaLabel} className="trend-reveal">
+    <div
+      role="img"
+      aria-roledescription="chart"
+      aria-label={ariaLabel}
+      tabIndex={0}
+      onBlur={() => setKb(null)}
+      onKeyDown={(e) => {
+        const last = rows.length - 1;
+        const next =
+          e.key === "ArrowRight" ? Math.min(last, (kb ?? -1) + 1)
+          : e.key === "ArrowLeft" ? Math.max(0, (kb ?? last + 1) - 1)
+          : e.key === "Home" ? 0
+          : e.key === "End" ? last
+          : e.key === "Escape" ? null
+          : undefined;
+        if (next === undefined) return;
+        e.preventDefault();
+        setKb(next);
+      }}
+      className="trend-reveal relative rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+    >
+      {kb !== null && (
+        <div className="pointer-events-none absolute top-0 right-0 z-10" aria-live="polite">
+          <InsightTooltip rows={rows} active label={rows[kb]!.label} metric={label} polarity={polarity} format={format} unit={unit} />
+        </div>
+      )}
       <ChartContainer
         config={{ value: { label, color: color ?? "var(--chart-1)" } }}
         className="w-full"
         style={{ height }}
       >
-        <AreaChart accessibilityLayer data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+        <AreaChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--color-value)" stopOpacity={0.18} />
@@ -165,6 +192,14 @@ export function TrendChart({
             ifOverflow="extendDomain"
             label={{ value: "avg", position: "insideTopRight", fontSize: 10, fill: "var(--subtle)", dy: -2 }}
           />
+          {kb !== null && (
+            <>
+              <ReferenceLine x={rows[kb]!.label} stroke="var(--color-value)" strokeOpacity={0.35} />
+              {rows[kb]!.value !== null && (
+                <ReferenceDot x={rows[kb]!.label} y={rows[kb]!.value!} r={4.5} fill="var(--color-value)" stroke="var(--card)" strokeWidth={2.5} />
+              )}
+            </>
+          )}
           <ChartTooltip
             cursor={{ stroke: "var(--color-value)", strokeOpacity: 0.35, strokeWidth: 1 }}
             wrapperStyle={{ transition: "transform 160ms cubic-bezier(0.25, 1, 0.5, 1)", outline: "none" }}

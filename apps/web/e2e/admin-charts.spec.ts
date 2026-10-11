@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { totp } from "./totp";
 
-test("admin TanStack charts render, support keyboard exploration, and fit the viewport", async ({
+test("admin charts render, support keyboard exploration, and fit the viewport", async ({
   page,
   context,
 }) => {
@@ -27,17 +27,14 @@ test("admin TanStack charts render, support keyboard exploration, and fit the vi
   await expect(trend).toHaveAttribute("aria-roledescription", "chart");
   await expect(trend.locator("path").first()).toBeAttached();
   await expect(
-    page.getByRole("img", { name: "Activation journey", exact: true }),
+    page.getByRole("list", { name: "Activation journey", exact: true }),
   ).toBeVisible();
   await trend.focus();
   await trend.press("ArrowRight");
   await expect(trend).toBeFocused();
-  await expect(
-    page.locator(".ts-chart-tooltip").filter({ visible: true }),
-  ).toBeVisible();
-  await expect(
-    page.locator(".ts-chart-tooltip").filter({ visible: true }),
-  ).toContainText("Registrations");
+  const tooltip = trend.locator(".trend-tooltip");
+  await expect(tooltip).toBeVisible();
+  await expect(tooltip).toContainText(/registrations/i);
   await page.screenshot({
     path: test.info().outputPath("overview.png"),
     fullPage: true,

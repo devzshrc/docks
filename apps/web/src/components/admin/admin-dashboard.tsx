@@ -392,7 +392,7 @@ const STEPS = ["Registered", "Created a workspace", "Connected GitHub", "Submitt
 function Funnel({ values }: { values: number[] }) {
   const top = Math.max(1, values[0] ?? 0);
   return (
-    <ol className="stagger grid gap-3">
+    <ol aria-label="Activation journey" className="stagger grid gap-3">
       {STEPS.map((label, i) => {
         const n = values[i] ?? 0;
         const prev = i ? (values[i - 1] ?? 0) : n;
@@ -923,7 +923,9 @@ export function AdminDashboard({
                           href={`/admin/users/${u.id}`}
                           className="flex items-center gap-3 after:absolute after:inset-0"
                         >
-                          <PersonAvatar seed={u.id} name={u.name} className="size-8" />
+                          <span aria-hidden>
+                            <PersonAvatar seed={u.id} name={u.name} className="size-8" />
+                          </span>
                           <span className="grid min-w-0 leading-tight">
                             <span className="truncate font-medium">{u.name}</span>
                             <span className="truncate text-xs text-muted-foreground">{u.email}</span>

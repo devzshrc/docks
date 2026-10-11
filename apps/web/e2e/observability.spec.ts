@@ -18,7 +18,7 @@ test("authorized health summaries refresh and fit desktop/mobile", async ({
   await page.getByLabel("Code", { exact: true }).fill(totp(account.secret));
   await page.getByRole("button", { name: "Verify", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Your platform, at a glance" }),
+    page.getByRole("heading", { name: "Overview", exact: true }),
   ).toBeVisible();
   await page.goto("/admin/health");
   await expect(page.getByText("Ready jobs", { exact: true })).toBeVisible();

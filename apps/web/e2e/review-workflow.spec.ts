@@ -23,8 +23,8 @@ test("personal review inbox and knowledge revision lifecycle", async ({
   await expect(
     page.getByRole("button", { name: "Accept review", exact: true }),
   ).toHaveCount(0);
-  await page.getByRole("button", { name: "My PRs", exact: true }).click();
-  await expect(page.getByText("No reviews in this view.")).toBeVisible();
+  await page.getByRole("tab", { name: "My PRs", exact: true }).click();
+  await expect(page.getByText("You're all caught up")).toBeVisible();
   await page.goto(
     `/settings/repositories/knowledge?repo=${encodeURIComponent(account.reviewRepo)}`,
   );

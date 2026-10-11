@@ -32,7 +32,7 @@ async function ownerLogin(page: Page) {
   await page.getByLabel("Code", { exact: true }).fill(totp(a.secret));
   await page.getByRole("button", { name: "Verify", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Your platform, at a glance" }),
+    page.getByRole("heading", { name: "Overview", exact: true }),
   ).toBeVisible();
 }
 
