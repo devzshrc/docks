@@ -20,6 +20,7 @@ import {
 import { Fragment, useEffect, useRef, useState } from "react";
 
 import { Count, DrawTick, flash, useJustBecame } from "@/components/motion";
+import { ScrollFade } from "@/components/scroll-fade";
 import { DeadlinePanel } from "@/components/review/deadline-panel";
 import { Checklist } from "@/components/review/checklist";
 import { FileRail } from "@/components/review/file-rail";
@@ -35,7 +36,7 @@ import { LabelsEditor } from "@/components/review/labels-editor";
 import { ReviewerPicker } from "@/components/review/reviewer-picker";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cx as cn } from "@/utils/cx";
 import {
   ReviewSessionProvider,
   useReviewSession,
@@ -357,11 +358,10 @@ function GuidedReviewContent({
           Resume review at {session.data.lastLocation.path}
         </ShadcnButton>
       )}
-      <DeadlinePanel repo={repo} number={number} />
       <header className="space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <div className="min-w-0 flex-1 space-y-2">
-            <h1 className="text-xl font-medium tracking-tight">
+            <h1 className="text-title-1-medium text-text-primary">
               {pr.title}{" "}
               <span className="text-text-3 font-normal">#{pr.number}</span>
             </h1>
@@ -512,8 +512,8 @@ function GuidedReviewContent({
         </div>
       </header>
 
-      <div className="grid gap-4 border-t pt-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-6 lg:pt-6">
-        <aside className="space-y-4 lg:sticky lg:top-4 lg:space-y-6 lg:self-start">
+      <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_260px]">
+        <aside className="order-1 space-y-5 rounded-2xl border border-separator-border bg-background-primary-default p-4 lg:col-start-1 lg:row-span-2 lg:sticky lg:top-20 lg:self-start xl:row-span-1">
           <div>
             <ShadcnButton
               variant="row"
@@ -564,29 +564,48 @@ function GuidedReviewContent({
           </div>
         </aside>
 
-        <div className="min-w-0 space-y-3">
-          {pr.state === "open" && files.length > 0 && (
-            <GuidePanel
-              repo={repo}
-              number={number}
-              state={guide.data}
-              activeStep={activeStep}
-              onStepChange={setActiveStep}
-              canAct={data.data.canAct}
-            />
-          )}
-          {guide.error && (
-            <p className="text-destructive text-sm">{guide.error.message}</p>
-          )}
-          {files.length === 0 && (
-            <p className="text-muted-foreground text-sm">
-              No file changes synced for this commit yet.
-            </p>
-          )}
-          {pr.state === "open" && <AskPanel repo={repo} number={number} />}
+        <details
+          open
+          className="order-2 min-w-0 self-start rounded-2xl border border-separator-border bg-background-primary-default p-4 lg:col-start-2 lg:row-start-1 xl:order-3 xl:col-start-3 xl:row-span-2 xl:sticky xl:top-20"
+        >
+          <summary className="cursor-pointer text-body-medium text-text-primary">
+            Review context
+          </summary>
+          <div className="mt-4">
+            <ScrollFade className="space-y-4 xl:max-h-[calc(100svh-10rem)]">
+              <DeadlinePanel repo={repo} number={number} />
+              {pr.state === "open" && files.length > 0 && (
+                <GuidePanel
+                  repo={repo}
+                  number={number}
+                  state={guide.data}
+                  activeStep={activeStep}
+                  onStepChange={setActiveStep}
+                  canAct={data.data.canAct}
+                />
+              )}
+              {guide.error && (
+                <p className="text-destructive text-sm">
+                  {guide.error.message}
+                </p>
+              )}
+              {files.length === 0 && (
+                <p className="text-muted-foreground text-sm">
+                  No file changes synced for this commit yet.
+                </p>
+              )}
+              {pr.state === "open" && <AskPanel repo={repo} number={number} />}
+            </ScrollFade>
+          </div>
+        </details>
+        <div className="order-3 min-w-0 space-y-4 lg:col-start-2 lg:row-start-2 xl:order-2 xl:row-start-1">
           {files.length > 0 && (
             <div className="flex flex-wrap items-center gap-3 text-sm">
-              <div className="segmented" role="group" aria-label="Diff layout">
+              <div
+                className="inline-flex gap-1 rounded-lg border border-separator-border bg-background-primary-default p-1"
+                role="group"
+                aria-label="Diff layout"
+              >
                 {(["unified", "split"] as const).map((m) => (
                   <ShadcnButton
                     variant="ghost"
@@ -594,7 +613,10 @@ function GuidedReviewContent({
                     type="button"
                     aria-pressed={mode === m}
                     onClick={() => setMode(m)}
-                    className="capitalize"
+                    className={cn(
+                      "capitalize",
+                      mode === m && "bg-primary-alpha-10 text-primary-base",
+                    )}
                   >
                     {m}
                   </ShadcnButton>
@@ -701,9 +723,8 @@ function GuidedReviewContent({
       {files.length > 0 && (
         <div
           className={cn(
-            "bg-popover/90 shadow-overlay animate-in fade-in slide-in-from-top-3 fixed top-[70px] right-4 z-30 flex items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4 text-[13px] backdrop-blur-md transition-colors duration-300 sm:right-6",
-            allViewed &&
-              "shadow-[0_16px_40px_rgb(0_0_0/0.4),0_0_0_1px_color-mix(in_oklab,var(--success)_45%,transparent)]",
+            "fixed inset-x-4 bottom-4 z-30 flex items-center justify-between gap-2 rounded-xl border border-separator-border bg-background-primary-default p-2 text-body-2-regular shadow-overlay sm:inset-x-auto sm:end-6 sm:justify-start sm:gap-3",
+            allViewed && "border-success/30",
           )}
         >
           {viewed < files.length ? (

@@ -6,9 +6,10 @@ import { Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
+import { ScrollFade } from "@/components/scroll-fade";
 import { FileIcon } from "@/components/file-icon";
 import { Collapse } from "@/components/motion";
-import { cn } from "@/lib/utils";
+import { cx as cn } from "@/utils/cx";
 
 function Row({ f, showDir }: { f: RankedFile; showDir: boolean }) {
   const parts = f.filename.split("/");
@@ -20,7 +21,7 @@ function Row({ f, showDir }: { f: RankedFile; showDir: boolean }) {
       href={`#file-${f.filename}`}
       title={f.filename}
       className={cn(
-        "hover:bg-muted/70 flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors",
+        "hover:bg-muted/70 flex items-center gap-2.5 rounded-lg px-2 py-2.5 transition-colors",
         f.tier === "noise" && "opacity-60",
       )}
     >
@@ -84,62 +85,64 @@ export function FileRail({ files }: { files: RankedFile[] }) {
   const grouped = files.length > 8 && groups.size > 1;
 
   return (
-    <nav aria-label="Files" className="-mx-2 max-h-[60vh] overflow-y-auto">
-      {grouped ? (
-        <div className="space-y-1">
-          {[...groups].map(([dir, list]) => {
-            const done = list.filter(
-              (f) => f.viewed && !f.changedSinceViewed,
-            ).length;
-            const open = !closed[dir];
-            return (
-              <div key={dir}>
-                <ShadcnButton
-                  variant="row"
-            size="none"
-                  type="button"
-                  aria-expanded={open}
-                  onClick={() => setClosed((c) => ({ ...c, [dir]: open }))}
-                  className="hover:bg-muted/70 text-muted-foreground flex w-full items-center gap-1.5 rounded-lg px-2 py-1 text-left text-[11px] transition-colors"
-                >
-                  <span
-                    className={cn(
-                      "inline-block transition-transform duration-150",
-                      open && "rotate-90",
-                    )}
-                    aria-hidden
+    <nav aria-label="Files" className="-mx-2">
+      <ScrollFade className="max-h-[60vh]">
+        {grouped ? (
+          <div className="space-y-1">
+            {[...groups].map(([dir, list]) => {
+              const done = list.filter(
+                (f) => f.viewed && !f.changedSinceViewed,
+              ).length;
+              const open = !closed[dir];
+              return (
+                <div key={dir}>
+                  <ShadcnButton
+                    variant="row"
+                    size="none"
+                    type="button"
+                    aria-expanded={open}
+                    onClick={() => setClosed((c) => ({ ...c, [dir]: open }))}
+                    className="hover:bg-muted/70 text-muted-foreground flex w-full items-center gap-1.5 rounded-lg px-2 py-1 text-left text-[11px] transition-colors"
                   >
-                    ›
-                  </span>
-                  <span className="font-code min-w-0 flex-1 truncate">
-                    {dir || "(root)"}
-                  </span>
-                  <span className="tabular-nums">
-                    {done}/{list.length}
-                  </span>
-                </ShadcnButton>
-                <Collapse open={open}>
-                  <ol className="space-y-px pl-3">
-                    {list.map((f) => (
-                      <li key={f.filename}>
-                        <Row f={f} showDir={false} />
-                      </li>
-                    ))}
-                  </ol>
-                </Collapse>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <ol className="space-y-px">
-          {files.map((f) => (
-            <li key={f.filename}>
-              <Row f={f} showDir />
-            </li>
-          ))}
-        </ol>
-      )}
+                    <span
+                      className={cn(
+                        "inline-block transition-transform duration-150",
+                        open && "rotate-90",
+                      )}
+                      aria-hidden
+                    >
+                      ›
+                    </span>
+                    <span className="font-code min-w-0 flex-1 truncate">
+                      {dir || "(root)"}
+                    </span>
+                    <span className="tabular-nums">
+                      {done}/{list.length}
+                    </span>
+                  </ShadcnButton>
+                  <Collapse open={open}>
+                    <ol className="space-y-px pl-3">
+                      {list.map((f) => (
+                        <li key={f.filename}>
+                          <Row f={f} showDir={false} />
+                        </li>
+                      ))}
+                    </ol>
+                  </Collapse>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <ol className="space-y-px">
+            {files.map((f) => (
+              <li key={f.filename}>
+                <Row f={f} showDir />
+              </li>
+            ))}
+          </ol>
+        )}
+      </ScrollFade>
     </nav>
   );
 }

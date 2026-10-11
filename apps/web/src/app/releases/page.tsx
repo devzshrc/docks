@@ -8,16 +8,25 @@ import { Button } from "@/components/ui-compat/controls";
 import { Input } from "@/components/ui-compat/controls";
 import { Select, SelectItem } from "@/components/ui-compat/controls";
 import { Chip } from "@/components/ui-compat/controls";
-import { RiAddLine, RiGitPullRequestLine, RiRefreshLine, RiRocketLine } from "@remixicon/react";
+import {
+  RiAddLine,
+  RiGitPullRequestLine,
+  RiRefreshLine,
+  RiRocketLine,
+} from "@remixicon/react";
 import { Button as CoreButton } from "@/components/ui/button";
-import { EmptyPreview, GhostRow, UpgradeCallout } from "@/components/ui/empty-preview";
+import {
+  EmptyPreview,
+  GhostRow,
+  UpgradeCallout,
+} from "@/components/ui/empty-preview";
 import { cx } from "@/utils/cx";
 import { QueryError } from "@/components/query-state";
 import { EvidenceExport } from "@/components/review/evidence-export";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useTRPC } from "@/trpc/react";
 const panel =
-  "overflow-hidden rounded-xl bg-card shadow-card";
+  "overflow-hidden rounded-2xl border border-separator-border bg-background-primary-default";
 const caption = "text-[13px] text-muted-foreground";
 
 function Detail({
@@ -485,7 +494,7 @@ function Releases({
                 aria-pressed={selectedId === release.id}
                 onClick={() => setSelected(release.id)}
                 className={cx(
-                  "flex w-full flex-col items-start gap-2 rounded-lg p-3 text-start outline-none transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring",
+                  "flex w-full flex-col items-start gap-2 rounded-xl p-3 text-start outline-none transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring",
                   selectedId === release.id
                     ? "bg-primary/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_40%,transparent)] hover:bg-primary/10"
                     : "",

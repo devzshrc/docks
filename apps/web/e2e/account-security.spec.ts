@@ -61,8 +61,9 @@ test("GitHub-only user creates a password before setting up 2FA", async ({
   await page
     .getByRole("button", { name: "Reset password", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/login\?next=%2Fsettings%2Faccount/);
-  await page.goto("/settings/account");
+  // Password setup preserves this signed-in session. The login guard immediately
+  // follows `next`, so assert the settled destination rather than its transient URL.
+  await expect(page).toHaveURL(/\/settings\/account$/);
   await expect(
     page.getByLabel("Current password", { exact: true }),
   ).toBeVisible();

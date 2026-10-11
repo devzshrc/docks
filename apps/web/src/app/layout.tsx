@@ -1,6 +1,6 @@
 import { DirectionProvider } from "@/components/foundations/direction/direction";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Inter } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/toast";
 import { PostHogProvider } from "@/components/analytics/posthog-provider";
@@ -9,13 +9,10 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
-// Geist for UI text, Geist Mono for code and monospace (paths, numbers).
+// Inter for UI and body text, Geist for headings. Code uses the system Menlo stack.
 // Variables live on <html> so the :root theme tokens in globals.css can reference them.
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-face" });
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono-face",
-});
 export const metadata: Metadata = {
   metadataBase: new URL("https://docks.devzshrc.in"),
   title: "Docks",
@@ -32,7 +29,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("light", geist.variable, geistMono.variable)}
+      className={cn("light", inter.variable, geist.variable)}
     >
       <body className="font-sans antialiased">
         <DirectionProvider locale="en-US">

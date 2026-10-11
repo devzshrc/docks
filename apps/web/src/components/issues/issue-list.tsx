@@ -142,7 +142,7 @@ export function IssueList({
 
   if (loading) {
     return (
-      <div className="bg-card shadow-card divide-y overflow-hidden rounded-xl">
+      <div className="border border-separator-border bg-background-primary-default shadow-none divide-y overflow-hidden rounded-xl">
         {[0, 1, 2, 3, 4].map((n) => (
           <Skeleton
             key={n}
