@@ -28,17 +28,15 @@ export function UserMenu() {
           variant="outline"
           size="sm"
           aria-label={`Account menu for ${user.name}`}
-          className="gap-1.5 py-1 pr-2.5 pl-1 font-normal has-[>svg]:pl-1"
+          className="h-11 w-full justify-start gap-2.5 border-0 px-2 text-body-2-medium shadow-none"
         >
           <PersonAvatar
             seed={user.id}
             name={user.name}
             src={user.image}
-            className="size-5"
+            className="size-7"
           />
-          <span className="hidden max-w-28 truncate sm:inline">
-            {user.name.split(" ")[0]}
-          </span>
+          <span className="min-w-0 truncate">{user.name.split(" ")[0]}</span>
         </ShadcnButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
@@ -50,7 +48,9 @@ export function UserMenu() {
             className="size-8"
           />
           <span className="grid min-w-0 leading-tight">
-            <span className="truncate text-[13px] font-medium">{user.name}</span>
+            <span className="truncate text-[13px] font-medium">
+              {user.name}
+            </span>
             <span className="text-muted-foreground truncate text-xs">
               {user.email}
             </span>

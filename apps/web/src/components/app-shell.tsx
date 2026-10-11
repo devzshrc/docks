@@ -1,7 +1,7 @@
 "use client";
 
-import { Search01Icon } from "@hugeicons/core-free-icons";
 import {
+  RiSearchLine,
   RiCalendarScheduleLine,
   RiRocketLine,
   RiInboxLine,
@@ -14,7 +14,6 @@ import {
   RiWallet3Line,
   RiNotification3Line,
 } from "@remixicon/react";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -48,14 +47,14 @@ import {
   TabsTrigger as Tab,
 } from "@/components/ui/tabs";
 import { AppIcon } from "@/components/app-icon";
-import { HueIcon, type Hue } from "@/components/ui/empty-preview";
+import { type Hue } from "@/components/ui/empty-preview";
 import {
   ShellSlotsContext,
   useShellSlotsState,
 } from "@/components/shell-slots";
 import { UserMenu } from "@/components/user-menu";
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace";
-import { cn } from "@/lib/utils";
+import { cx as cn } from "@/utils/cx";
 import { useTRPC } from "@/trpc/react";
 
 const WIDTH = {
@@ -226,23 +225,72 @@ function ShellFrame({
   }[] = [
     {
       items: [
-        { id: "inbox", label: "Inbox", icon: RiInboxLine, href: "/inbox", count: inbox.data ?? 0, tint: "text-hue-blue!" },
-        { id: "reviews", label: "Reviews", icon: RiGitPullRequestLine, href: "/review", count: waitingCount, tint: "text-hue-indigo!" },
-        { id: "issues", label: "Issues", icon: RiBugLine, href: "/issues", count: triageCount, tint: "text-hue-green!" },
+        {
+          id: "inbox",
+          label: "Inbox",
+          icon: RiInboxLine,
+          href: "/inbox",
+          count: inbox.data ?? 0,
+          tint: "text-hue-blue!",
+        },
+        {
+          id: "reviews",
+          label: "Reviews",
+          icon: RiGitPullRequestLine,
+          href: "/review",
+          count: waitingCount,
+          tint: "text-hue-indigo!",
+        },
+        {
+          id: "issues",
+          label: "Issues",
+          icon: RiBugLine,
+          href: "/issues",
+          count: triageCount,
+          tint: "text-hue-green!",
+        },
       ],
     },
     {
       title: "Planning",
       items: [
-        { id: "deadlines", label: "Deadlines", icon: RiCalendarScheduleLine, href: "/deadlines", count: 0, tint: "text-hue-amber!" },
-        { id: "releases", label: "Releases", icon: RiRocketLine, href: "/releases", count: 0, tint: "text-hue-pink!" },
+        {
+          id: "deadlines",
+          label: "Deadlines",
+          icon: RiCalendarScheduleLine,
+          href: "/deadlines",
+          count: 0,
+          tint: "text-hue-amber!",
+        },
+        {
+          id: "releases",
+          label: "Releases",
+          icon: RiRocketLine,
+          href: "/releases",
+          count: 0,
+          tint: "text-hue-pink!",
+        },
       ],
     },
     {
       title: "Team",
       items: [
-        { id: "insights", label: "Insights", icon: RiBarChartBoxLine, href: "/insights", count: 0, tint: "text-hue-teal!" },
-        { id: "team", label: "People", icon: RiTeamLine, href: "/team", count: 0, tint: "text-hue-orange!" },
+        {
+          id: "insights",
+          label: "Insights",
+          icon: RiBarChartBoxLine,
+          href: "/insights",
+          count: 0,
+          tint: "text-hue-teal!",
+        },
+        {
+          id: "team",
+          label: "People",
+          icon: RiTeamLine,
+          href: "/team",
+          count: 0,
+          tint: "text-hue-orange!",
+        },
       ],
     },
   ];
@@ -289,12 +337,12 @@ function ShellFrame({
       }}
     >
       <SidebarProvider
-        style={{ "--sidebar-width": "15.875rem" } as React.CSSProperties}
+        style={{ "--sidebar-width": "15rem" } as React.CSSProperties}
       >
         <Sidebar className="border-sidebar-border">
-          <SidebarHeader className="border-sidebar-border bg-sidebar-accent gap-0 border-b p-3">
+          <SidebarHeader className="border-sidebar-border gap-0 border-b px-4 py-5">
             <Link
-              href="/review"
+              href="/settings/workspace"
               className="flex items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               <AppIcon className="size-8 shrink-0" />
@@ -312,24 +360,26 @@ function ShellFrame({
             {navGroups.map((group, i) => (
               <SidebarGroup
                 key={group.title ?? i}
-                className={cn(
-                  "gap-1 p-3",
-                  i < navGroups.length - 1 && "border-sidebar-border border-b",
-                )}
+                className={cn("gap-2 px-3 py-3")}
               >
                 {group.title && (
                   <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
                 )}
                 <SidebarGroupContent>
-                  <SidebarMenu className="gap-0">
+                  <SidebarMenu className="gap-1">
                     {group.items.map((n) => (
                       <SidebarMenuItem
                         key={n.id}
                         className={cn(activeId === n.id && "my-px")}
                       >
                         <SidebarMenuButton asChild isActive={activeId === n.id}>
-                          <Link href={n.href}>
-                            <n.icon className={n.tint} />
+                          <Link
+                            href={n.href}
+                            aria-current={
+                              activeId === n.id ? "page" : undefined
+                            }
+                          >
+                            <n.icon aria-hidden />
                             <span>{n.label}</span>
                           </Link>
                         </SidebarMenuButton>
@@ -363,7 +413,7 @@ function ShellFrame({
               </SidebarMenuItem>
             </SidebarMenu>
             {billing.data && (
-              <div className="border-sidebar-border bg-sidebar-accent flex items-center justify-between gap-2 border-t p-4">
+              <div className="border-sidebar-border flex items-center justify-between gap-2 border-t p-4">
                 <div className="grid min-w-0 gap-1.5 leading-none">
                   <span className="truncate text-sm font-medium tracking-[-0.01em]">
                     {billing.data.plan === "team" ? "Team plan" : "Free plan"}
@@ -382,16 +432,24 @@ function ShellFrame({
                 </Button>
               </div>
             )}
+            <div className="border-t p-3">
+              <UserMenu />
+            </div>
           </SidebarFooter>
           <SidebarRail />
         </Sidebar>
-        <SidebarInset className="min-w-0">
-          <header className="bg-background/85 sticky top-0 z-20 shrink-0 backdrop-blur-md">
-            <div className="flex h-[58px] items-center gap-2 px-4 md:px-5">
-              <SidebarTrigger className="text-muted-foreground -ml-1 rounded-full" />
+        <SidebarInset className="min-w-0 bg-background-full">
+          <header className="bg-background-primary-default sticky top-0 z-20 shrink-0">
+            <div className="flex h-16 items-center gap-3 px-4 md:px-8">
+              <SidebarTrigger className="text-muted-foreground -ms-1 rounded-lg" />
               <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                {section && <HueIcon icon={section.icon} hue={section.hue} className="hidden size-6 rounded-md sm:inline-flex [&_svg]:size-3" />}
-                <h1 className="min-w-0 truncate text-base leading-none font-medium tracking-[-0.01em]">
+                {section && (
+                  <section.icon
+                    aria-hidden
+                    className="hidden size-5 text-text-secondary sm:block"
+                  />
+                )}
+                <h1 className="min-w-0 truncate text-body-medium text-text-primary">
                   {inSettings ? "Settings" : titleFor(pathname, title)}
                 </h1>
                 {billing.data && !inSettings && (
@@ -418,7 +476,7 @@ function ShellFrame({
                     )
                   }
                 >
-                  <HugeiconsIcon icon={Search01Icon} size={14} aria-hidden />
+                  <RiSearchLine className="size-4" aria-hidden />
                 </Button>
                 <Button
                   asChild
@@ -439,11 +497,10 @@ function ShellFrame({
                   </Link>
                 </Button>
                 <NewIssueButton />
-                <UserMenu />
               </div>
             </div>
             {inSettings ? (
-              <div className="overflow-x-auto border-b px-4 md:px-5">
+              <div className="overflow-x-auto border-b px-4 md:px-8">
                 <Tabs value={activeTab} onValueChange={(v) => router.push(v)}>
                   <TabList
                     variant="line"
@@ -467,21 +524,21 @@ function ShellFrame({
             )}
           </header>
           {(slots.hasFilters || slots.hasActions) && (
-            <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3 md:px-5">
+            <div className="flex flex-wrap items-center gap-2 border-b bg-background-primary-default px-4 py-3 md:px-8">
               {slots.hasFilters && (
                 <div ref={slots.setFilters} className="contents" />
               )}
               {slots.hasActions && (
                 <div
                   ref={slots.setActions}
-                  className="ml-auto flex items-center gap-1.5"
+                  className="ms-auto flex items-center gap-1.5"
                 />
               )}
             </div>
           )}
           <div
             className={cn(
-              "animate-in fade-in slide-in-from-bottom-1 ease-power3-out flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-300 md:px-5 md:py-7",
+              "mx-auto flex w-full min-w-0 flex-col gap-6 px-4 py-6 md:gap-8 md:px-8 md:py-8",
               WIDTH[width],
             )}
           >

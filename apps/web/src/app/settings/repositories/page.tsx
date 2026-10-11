@@ -56,7 +56,7 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
     );
   if (!repos.data.length) {
     return (
-      <div className="bg-card shadow-card rounded-xl">
+      <div className="border border-separator-border bg-background-primary-default shadow-none rounded-xl">
         <EmptyPreview
           icon={RiGitRepositoryLine}
           hue="purple"

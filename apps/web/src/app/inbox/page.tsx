@@ -156,7 +156,7 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
           ))}
         </div>
       ) : !q.data.items.length ? (
-        <div className="bg-card shadow-card rounded-xl">
+        <div className="border border-separator-border bg-background-primary-default shadow-none rounded-xl">
           <EmptyPreview
             icon={view === "snoozed" ? RiAlarmLine : RiInboxLine}
             hue="blue"
@@ -182,7 +182,7 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
           />
         </div>
       ) : (
-        <ul className="bg-card shadow-card divide-y overflow-hidden rounded-xl">
+        <ul className="border border-separator-border bg-background-primary-default shadow-none divide-y overflow-hidden rounded-xl">
           {q.data.items.map((item) => {
             const meta = KIND_META[item.kind];
             const isUnread = unread(item);

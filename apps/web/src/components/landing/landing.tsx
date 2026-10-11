@@ -4,7 +4,7 @@ import { RiGithubFill } from "@remixicon/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-import { Button } from "@/components/base/buttons/button";
+import { Button } from "@/components/ui/button";
 import { Hero115 } from "@/components/landing/blocks/hero115";
 import { useGithubStart } from "@/components/landing/use-github-start";
 import { useSession } from "@/lib/auth-client";
@@ -24,12 +24,13 @@ export function Landing() {
         notice={notice}
         action={
           <Button
-            leadingIcon={RiGithubFill}
+            size="lg"
             onClick={() => void start()}
             disabled={pending}
             aria-busy={pending}
             className="min-h-12 w-full px-6 shadow-none sm:w-auto"
           >
+            <RiGithubFill className="size-5" aria-hidden />
             {pending ? "Connecting…" : "Start free with GitHub"}
           </Button>
         }
