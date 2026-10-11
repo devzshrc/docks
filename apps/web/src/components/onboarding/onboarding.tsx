@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-const FINALE_MS = 1400;
+const FINALE_MS = 400;
 
 type Repo = {
   id: number;
@@ -82,13 +82,9 @@ export function OnboardingGate({
       {showApp ? (
         <motion.div
           key="app"
-          initial={
-            reduceMotion
-              ? { opacity: 0 }
-              : { opacity: 0, y: 10, filter: "blur(6px)" }
-          }
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.55, ease: EASE }}
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18, ease: EASE }}
           className="flex min-w-0 flex-col gap-8"
         >
           {children(workspace!.id)}
@@ -186,23 +182,20 @@ function Onboarding({
     <motion.section
       data-onboarding
       aria-labelledby="onboarding-title"
-      initial={
-        reduceMotion ? false : { opacity: 0, y: 10, filter: "blur(6px)" }
-      }
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       exit={
         reduceMotion
           ? { opacity: 0 }
           : {
               opacity: 0,
               y: -8,
-              scale: 0.97,
-              filter: "blur(8px)",
-              transition: { duration: 0.45, ease: EASE },
+
+              transition: { duration: 0.18, ease: EASE },
             }
       }
-      transition={{ duration: 0.5, ease: EASE }}
-      className="bg-card border-hairline mx-auto mt-[6vh] w-full max-w-lg rounded-2xl border p-6 shadow-[0_12px_32px_-16px_rgb(15_23_42/0.25)] sm:p-8"
+      transition={{ duration: 0.18, ease: EASE }}
+      className="mx-auto mt-6 w-full max-w-xl rounded-2xl border border-separator-border bg-background-primary-default p-6 sm:p-8"
     >
       <header className="space-y-1.5">
         <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -216,7 +209,7 @@ function Onboarding({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.25, ease: EASE }}
-            className="text-xl font-medium tracking-tight"
+            className="text-title-1-medium text-text-primary"
           >
             {complete ? "You're all set" : "Get your review board running"}
           </motion.h2>

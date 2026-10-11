@@ -8,7 +8,7 @@ import { BoardCard } from "@/components/review/board-card";
 import { Frame, FrameHeader, FrameTitle } from "@/components/ui-compat/frame";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cx as cn } from "@/utils/cx";
 
 const LANES = [
   { id: "needs_reviewer", title: "Needs reviewer" },
@@ -28,16 +28,10 @@ const LANE_DOT: Record<string, string> = {
 /** A faded card outline, so an empty lane still shows what lands in it. */
 function LaneEmpty({ title }: { title: string }) {
   return (
-    <div className="animate-in fade-in flex flex-col gap-2 duration-300">
-      <div aria-hidden className="space-y-2 rounded-lg border border-dashed p-3 opacity-70">
-        <span className="block h-1.5 w-1/3 rounded-full bg-foreground/[0.07]" />
-        <span className="block h-2 w-4/5 rounded-full bg-foreground/[0.09]" />
-        <span className="flex items-center gap-1.5 pt-1">
-          <span className="size-3.5 rounded-full bg-foreground/[0.07]" />
-          <span className="h-1.5 w-12 rounded-full bg-foreground/[0.07]" />
-        </span>
-      </div>
-      <p className="text-subtle px-1 text-center text-xs">No pull requests in {title.toLowerCase()}</p>
+    <div className="flex min-h-28 items-center justify-center rounded-xl border border-dashed border-separator-border p-4">
+      <p className="text-center text-caption-1-regular text-text-secondary">
+        No pull requests in {title.toLowerCase()}
+      </p>
     </div>
   );
 }
@@ -104,7 +98,7 @@ export function ReviewBoard({
         </p>
       )}
       <div
-        className="-mx-5 flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 pb-2 md:mx-0 md:grid md:overflow-visible md:px-0"
+        className="flex snap-x gap-4 overflow-x-auto pb-2 md:grid md:overflow-visible"
         style={{
           gridTemplateColumns: `repeat(${lanes.length}, minmax(0, 1fr))`,
         }}
@@ -116,15 +110,24 @@ export function ReviewBoard({
               key={lane.id}
               aria-label={lane.title}
               spacing="sm"
-              className="min-h-[26rem] w-[80vw] max-w-sm shrink-0 snap-start gap-2 bg-foreground/[0.02] p-2 shadow-[inset_0_0_0_1px_var(--border)] md:w-auto md:max-w-none"
+              className="min-h-80 w-[80vw] max-w-sm shrink-0 snap-start gap-3 rounded-2xl border-0 bg-background-tertiary-default p-3 shadow-none md:w-auto md:max-w-none"
             >
-              <FrameHeader className="flex-row items-center justify-between gap-2 px-2 pt-1.5 pb-1">
+              <FrameHeader className="flex-row items-center justify-between gap-2 px-1 py-1">
                 <FrameTitle className="flex items-center gap-2 font-medium">
-                  <span aria-hidden className={cn("size-2 rounded-full", LANE_DOT[lane.id] ?? "bg-subtle")} />
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "size-2 rounded-full",
+                      LANE_DOT[lane.id] ?? "bg-subtle",
+                    )}
+                  />
                   {lane.title}
                 </FrameTitle>
                 {cards && (
-                  <Badge variant="secondary" className="h-[18px] min-w-6 px-1.5 text-[11px] tabular-nums">
+                  <Badge
+                    variant="secondary"
+                    className="h-[18px] min-w-6 px-1.5 text-[11px] tabular-nums"
+                  >
                     <Count value={items.length} />
                   </Badge>
                 )}
@@ -134,7 +137,7 @@ export function ReviewBoard({
               ) : items.length === 0 ? (
                 <LaneEmpty title={lane.title} />
               ) : (
-                <div className="stagger flex flex-col gap-1.5">
+                <div className="flex flex-col gap-3">
                   {items.map((pr) => (
                     <BoardCard
                       key={`${pr.repo}#${pr.number}`}

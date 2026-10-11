@@ -16,7 +16,7 @@ import Link from "next/link";
 import { GhAvatar } from "@/components/gh-avatar";
 import { PrPreview } from "@/components/review/pr-preview";
 import { optimistic } from "@/lib/optimistic";
-import { cn } from "@/lib/utils";
+import { cx as cn } from "@/utils/cx";
 import { useTRPC } from "@/trpc/react";
 
 function age(iso: string) {
@@ -29,7 +29,7 @@ const CI = {
   pass: {
     icon: IconCircleCheck,
     label: "Checks passed",
-    className: "text-emerald-600",
+    className: "text-success",
   },
   fail: {
     icon: IconCircleX,
@@ -39,7 +39,7 @@ const CI = {
   pending: {
     icon: IconCircleDot,
     label: "Checks running",
-    className: "text-amber-500",
+    className: "text-warning",
   },
 } as const;
 
@@ -83,7 +83,7 @@ export function BoardCard({
   return (
     <div
       className={cn(
-        "group bg-card shadow-card relative rounded-lg p-3.5 text-sm transition-[transform,background-color] duration-150 ease-power3-out hover:-translate-y-px hover:bg-accent/60 focus-within:ring-3 focus-within:ring-ring/40 dark:hover:bg-[#202123]",
+        "group relative rounded-xl border border-separator-border bg-background-primary-default p-4 text-body-2-regular transition-colors hover:border-primary/30 focus-within:ring-2 focus-within:ring-border-focus-ring/30",
       )}
     >
       {canAct && (
@@ -91,8 +91,10 @@ export function BoardCard({
           variant="ghost"
           type="button"
           className={cn(
-            "text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 transition-[opacity,transform] duration-150 hover:scale-110 active:scale-90 focus-visible:opacity-100",
-            pr.priority ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            "text-muted-foreground hover:text-foreground absolute top-3 right-3 z-10 transition-opacity duration-150 focus-visible:opacity-100",
+            pr.priority
+              ? "opacity-100"
+              : "opacity-100 md:opacity-0 md:group-hover:opacity-100",
           )}
           aria-label={pr.priority ? "Remove priority" : "Mark as priority"}
           aria-pressed={pr.priority}
@@ -106,7 +108,7 @@ export function BoardCard({
           }
         >
           {pr.priority ? (
-            <IconStarFilled className="anim-pop size-4 text-amber-500" />
+            <IconStarFilled className="anim-pop size-4 text-warning" />
           ) : (
             <IconStar className="size-4" />
           )}
@@ -120,10 +122,10 @@ export function BoardCard({
           data-card
           className="block outline-none after:absolute after:inset-0 after:content-['']"
         >
-          <div className="text-muted-foreground truncate pr-6 font-mono text-xs">
+          <div className="truncate pe-6 text-caption-1-regular text-text-secondary">
             {pr.repo}
           </div>
-          <div className="mt-1 line-clamp-2 pr-6 leading-snug font-medium">
+          <div className="mt-2 line-clamp-2 pe-6 text-body-2-medium text-text-primary">
             <span className="text-text-3 font-normal">#{pr.number}</span>{" "}
             {pr.title}
           </div>
