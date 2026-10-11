@@ -24,14 +24,13 @@ export function BentoCard({
 }) {
   return (
     <div
-      className={cn(
-        "group/bento relative flex flex-col overflow-hidden rounded-[28px] p-7 md:p-8",
+      className={cn("group/bento relative flex flex-col overflow-hidden rounded-[28px] p-7 md:p-8",
         tone === "light" ? "bg-[#f4f4f5]" : tone === "brand" ? "bg-[#141210] text-white" : "bg-[#111113] text-white",
         className,
       )}
     >
       {tone === "brand" && <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(90% 70% at 100% 0%, rgb(3 105 161 / 0.4), transparent 60%)" }} />}
-      <h3 className="relative text-[19px] leading-tight font-semibold tracking-[-0.025em] text-balance">{title}</h3>
+      <h3 className="relative text-[19px] leading-tight font-semibold text-balance">{title}</h3>
       <p className={cn("relative mt-2 max-w-[22rem] text-[15px] leading-relaxed", tone === "light" ? "text-[#6b6b70]" : "text-white/65")}>{body}</p>
       {children && <div className="relative mt-8 flex flex-1 items-end">{children}</div>}
     </div>
@@ -59,7 +58,7 @@ export function DeadlineBoard() {
             <Face who={d.who} className="size-7 text-[9px]" />
             <div className="grid min-w-0 flex-1 gap-1.5">
               <div className="flex items-center justify-between gap-2 text-[13px]">
-                <span className="truncate font-medium tracking-[-0.01em]"><span className="text-white/40">#{d.n}</span> {d.title}</span>
+                <span className="truncate font-medium"><span className="text-white/40">#{d.n}</span> {d.title}</span>
                 <motion.span key={left} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={cn("shrink-0 text-[12px] tabular-nums", risky ? "text-amber-300" : "text-white/50")}>
                   {left < 1 ? `${Math.round(left * 60)}m` : `${left}h`} left
                 </motion.span>
@@ -106,7 +105,7 @@ export function ReleaseRing() {
           <motion.circle cx="40" cy="40" r={r} stroke={pct === 1 ? "#16a34a" : "#0369a1"} strokeWidth="6" strokeLinecap="round" fill="none" strokeDasharray={c} animate={{ strokeDashoffset: c * (1 - pct) }} transition={{ duration: 0.8, ease: EASE }} />
         </svg>
         <span className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[19px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{ready}/4</span>
+          <span className="text-[19px] leading-none font-semibold tabular-nums">{ready}/4</span>
           <span className="mt-1 text-[10px] text-white/45">ready</span>
         </span>
       </span>

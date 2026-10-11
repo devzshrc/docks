@@ -1,4 +1,5 @@
 "use client";
+import { RiArrowDownSLine } from "@remixicon/react";
 import { NativeCheckbox as ShadcnCheckbox } from "@/components/ui-compat/native-checkbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { Input as ShadcnInput } from "@/components/ui/input";
@@ -566,37 +567,32 @@ function GuidedReviewContent({
 
         <details
           open
-          className="order-2 min-w-0 self-start rounded-2xl border border-separator-border bg-background-primary-default p-4 lg:col-start-2 lg:row-start-1 xl:order-3 xl:col-start-3 xl:row-span-2 xl:sticky xl:top-20"
+          className="group/context order-2 min-w-0 self-start rounded-2xl surface-raised lg:col-start-2 lg:row-start-1 xl:order-3 xl:col-start-3 xl:row-span-2 xl:sticky xl:top-20"
         >
-          <summary className="cursor-pointer text-body-medium text-text-primary">
+          <summary className="flex cursor-pointer items-center justify-between gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none">
             Review context
+            <RiArrowDownSLine aria-hidden className="size-4 text-subtle transition-transform duration-200 group-open/context:rotate-180" />
           </summary>
-          <div className="mt-4">
-            <ScrollFade className="space-y-4 xl:max-h-[calc(100svh-10rem)]">
-              <DeadlinePanel repo={repo} number={number} />
-              {pr.state === "open" && files.length > 0 && (
-                <GuidePanel
-                  repo={repo}
-                  number={number}
-                  state={guide.data}
-                  activeStep={activeStep}
-                  onStepChange={setActiveStep}
-                  canAct={data.data.canAct}
-                />
-              )}
-              {guide.error && (
-                <p className="text-destructive text-sm">
-                  {guide.error.message}
-                </p>
-              )}
-              {files.length === 0 && (
-                <p className="text-muted-foreground text-sm">
-                  No file changes synced for this commit yet.
-                </p>
-              )}
-              {pr.state === "open" && <AskPanel repo={repo} number={number} />}
-            </ScrollFade>
-          </div>
+          <ScrollFade className="grid gap-4 px-4 pb-4 xl:max-h-[calc(100svh-10rem)]">
+            {pr.state === "open" && files.length > 0 && (
+              <GuidePanel
+                repo={repo}
+                number={number}
+                state={guide.data}
+                activeStep={activeStep}
+                onStepChange={setActiveStep}
+                canAct={data.data.canAct}
+              />
+            )}
+            {guide.error && <p className="text-sm text-destructive">{guide.error.message}</p>}
+            {files.length === 0 && <p className="text-sm text-muted-foreground">No file changes synced for this commit yet.</p>}
+            <DeadlinePanel repo={repo} number={number} />
+            {pr.state === "open" && (
+              <div className="border-t pt-4">
+                <AskPanel repo={repo} number={number} />
+              </div>
+            )}
+          </ScrollFade>
         </details>
         <div className="order-3 min-w-0 space-y-4 lg:col-start-2 lg:row-start-2 xl:order-2 xl:row-start-1">
           {files.length > 0 && (

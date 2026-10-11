@@ -26,7 +26,7 @@ function SeatEstimator() {
     <section aria-labelledby="estimate-heading" className={cx(container, "pb-20 md:pb-32")}>
       <div className="mx-auto flex max-w-[800px] flex-col gap-6 rounded-2xl bg-[#fafafa] p-6 ring-1 ring-[var(--l-line)] sm:flex-row sm:items-center sm:justify-between md:p-8">
         <div>
-          <h2 id="estimate-heading" className="font-display text-[18px] leading-6 font-semibold tracking-[-0.015em]">
+          <h2 id="estimate-heading" className="font-display text-[18px] leading-6 font-semibold">
             Estimate your Team plan
           </h2>
           <p className="mt-1 text-[14px] leading-5 text-[var(--l-ink-2)]">
@@ -45,7 +45,7 @@ function SeatEstimator() {
               <RiAddLine className="size-4" />
             </button>
           </div>
-          <output aria-live="polite" className="font-display min-w-[110px] text-right text-[24px] leading-none font-medium tracking-[-0.02em] tabular-nums">
+          <output aria-live="polite" className="font-display min-w-[110px] text-right text-[24px] leading-none font-medium tabular-nums">
             ${seats * TEAM_PRICE}
             <span className="ml-1 font-sans text-[13px] font-normal tracking-normal text-[var(--l-ink-3)]">/mo</span>
           </output>
@@ -59,7 +59,7 @@ function CompareTable() {
   return (
     <section aria-labelledby="compare-heading" className="scroll-mt-16 border-t border-[var(--l-line)] py-20 md:py-32">
       <div className={container}>
-        <h2 id="compare-heading" className="font-display mb-10 text-center text-[30px] leading-[36px] font-medium tracking-[-0.03em] md:mb-14 md:text-[40px] md:leading-[44px]">
+        <h2 id="compare-heading" className="font-display mb-10 text-center text-[30px] leading-[36px] font-medium md:mb-14 md:text-[40px] md:leading-[44px]">
           Compare plans
         </h2>
         <div className="mx-auto max-w-[800px]">
@@ -111,7 +111,7 @@ export function PricingPage() {
       <main>
         <section className="landing-sky px-4 pt-32 pb-20 sm:px-6 md:pt-40 md:pb-28">
           <div className="l-fade-up mx-auto mb-12 max-w-[640px] text-center md:mb-16">
-            <h1 className="font-display text-[36px] leading-[40px] font-medium tracking-[-0.035em] text-balance sm:text-[48px] sm:leading-[52px] md:text-[56px] md:leading-[60px]">
+            <h1 className="font-display text-[36px] leading-[40px] font-medium text-balance sm:text-[48px] sm:leading-[52px] md:text-[56px] md:leading-[60px]">
               Simple pricing for every review queue.
             </h1>
             <p className="mt-5 text-[17px] leading-[26px] text-pretty text-[var(--l-ink-2)] md:text-[18px] md:leading-[28px]">

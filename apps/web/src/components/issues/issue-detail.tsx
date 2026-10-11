@@ -314,7 +314,7 @@ export function IssueDetail({
                 </Button>
               </form>
             ) : (
-              <h1 className="text-xl leading-snug font-medium tracking-tight text-balance">
+              <h1 className="text-xl leading-snug font-medium text-balance">
                 {i.title}{" "}
                 <span className="text-text-3 font-normal">#{i.number}</span>
                 {canEdit && (
@@ -351,7 +351,7 @@ export function IssueDetail({
                 {STATUS_LABEL[i.status]}
               </Badge>
               {i.stale && (
-                <Badge variant="secondary" className=" text-warning-text">
+                <Badge variant="secondary" className="text-warning-text">
                   stale
                 </Badge>
               )}

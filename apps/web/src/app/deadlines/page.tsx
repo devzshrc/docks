@@ -318,7 +318,7 @@ function DeadlineStats({
             />
           </div>
           <div className="grid gap-1">
-            <span className="text-2xl font-semibold tracking-[-0.03em] tabular-nums">
+            <span className="text-2xl font-semibold tabular-nums">
               {s.value}
             </span>
             <span className="text-subtle text-xs">{s.hint}</span>
@@ -359,7 +359,7 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
       <section aria-label="Active review deadlines" className={panel}>
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-separator-border p-5">
           <div className="space-y-1">
-            <h2 className="text-[15px] font-medium tracking-[-0.01em]">
+            <h2 className="text-[15px] font-medium">
               Active reviews
             </h2>
             <p className={caption}>
@@ -479,7 +479,7 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
       {policies.data?.canManage && (
         <section aria-label="Repository policies" className="space-y-3">
           <div className="space-y-1">
-            <h2 className="text-[15px] font-medium tracking-[-0.01em]">
+            <h2 className="text-[15px] font-medium">
               Repository policies
             </h2>
             <p className={caption}>

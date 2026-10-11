@@ -45,8 +45,7 @@ export function PillButton({
   className?: string;
   disabled?: boolean;
 }) {
-  const classes = cn(
-    "group/pill relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full font-medium tracking-[-0.01em] whitespace-nowrap outline-none transition-[background-color,box-shadow,transform,color] duration-200 ease-power3-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#0369a1]/50 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 [&_svg]:size-4 [&_svg]:shrink-0",
+  const classes = cn("group/pill relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap outline-none transition-[background-color,box-shadow,transform,color] duration-200 ease-power3-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#0369a1]/50 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 [&_svg]:size-4 [&_svg]:shrink-0",
     size === "sm" && "h-9 px-4 text-sm",
     size === "md" && "h-11 px-5 text-[15px]",
     size === "lg" && "h-[52px] px-7 text-base",
@@ -81,8 +80,7 @@ function SiteNav({ dark }: { dark: boolean }) {
 
   return (
     <header
-      className={cn(
-        "sticky top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-300 ease-power3-out",
+      className={cn("sticky top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-300 ease-power3-out",
         scrolled || open
           ? dark
             ? "bg-black/[0.86] shadow-[0_1px_0_rgb(255_255_255/0.08)] backdrop-blur-xl backdrop-saturate-150"
@@ -94,7 +92,7 @@ function SiteNav({ dark }: { dark: boolean }) {
       <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-8 px-5 md:px-8">
         <Link
           href="/"
-          className="flex items-center gap-2 rounded-lg text-[17px] font-semibold tracking-[-0.03em] outline-none focus-visible:ring-2 focus-visible:ring-[#0369a1]/50"
+          className="flex items-center gap-2 rounded-lg text-[17px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[#0369a1]/50"
         >
           <AppIcon className="size-7" />
           Docks
@@ -149,7 +147,7 @@ function SiteNav({ dark }: { dark: boolean }) {
                   key={l.href}
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className={cn("border-b py-3 text-[17px] tracking-[-0.02em]", dark ? "border-white/10" : "border-black/5")}
+                  className={cn("border-b py-3 text-[17px]", dark ? "border-white/10" : "border-black/5")}
                 >
                   {l.label}
                 </Link>
@@ -199,7 +197,7 @@ function SiteFooter({ dark }: { dark: boolean }) {
     <footer className={cn("relative border-t", dark ? "border-white/10" : "border-black/[0.06]")}>
       <div className="mx-auto grid max-w-[1200px] grid-cols-2 gap-8 px-5 py-12 md:gap-12 md:py-16 md:grid-cols-[1.4fr_repeat(3,1fr)] md:px-8">
         <div className="col-span-2 flex flex-col gap-4 md:col-span-1">
-          <Link href="/" className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.03em]">
+          <Link href="/" className="flex items-center gap-2 text-[17px] font-semibold">
             <AppIcon className="size-7" />
             Docks
           </Link>

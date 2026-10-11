@@ -4,7 +4,6 @@ import {
   RiArrowRightLine,
   RiSearchLine,
   RiRefreshLine,
-  RiUserLine,
   RiComputerLine,
 } from "@remixicon/react";
 import Link from "next/link";
@@ -36,15 +35,56 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  AdminTrendChart,
-  AdminActivationChart,
-} from "@/components/admin/admin-charts";
-const date = (d: Date | string | null | undefined) =>
-  d ? new Date(d).toLocaleString() : "Not recorded";
-function Badge({ children }: { children: ReactNode }) {
+import { TrendChart, weekLabel } from "@/components/charts/trend-chart";
+import { PersonAvatar } from "@/components/person-avatar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+const fullDate = (d: Date) =>
+  d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+/** Relative for the past ("3h ago"), short absolute for the future ("Oct 18"); the exact time is on hover. */
+function date(d: Date | string | null | undefined) {
+  if (!d) return <span className="text-faint">—</span>;
+  const at = new Date(d);
+  const mins = Math.round((Date.now() - at.getTime()) / 60000);
+  const text =
+    mins < 0
+      ? at.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      : mins < 1
+        ? "Just now"
+        : mins < 60
+          ? `${mins}m ago`
+          : mins < 60 * 24
+            ? `${Math.round(mins / 60)}h ago`
+            : mins < 60 * 24 * 30
+              ? `${Math.round(mins / 1440)}d ago`
+              : at.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   return (
-    <span className="inline-flex rounded-full border border-separator-border bg-background-secondary-default px-2 py-1 text-caption-1-medium text-text-secondary">
+    <time dateTime={at.toISOString()} title={fullDate(at)} className="whitespace-nowrap tabular-nums">
+      {text}
+    </time>
+  );
+}
+type Tone = "good" | "warn" | "bad" | "neutral" | "info";
+const TONE: Record<Tone, string> = {
+  good: "bg-success/10 text-success [--dot:var(--success)]",
+  warn: "bg-warning/10 text-warning [--dot:var(--warning)]",
+  bad: "bg-danger/10 text-danger [--dot:var(--danger)]",
+  info: "bg-primary/10 text-primary-text [--dot:var(--primary)]",
+  neutral: "bg-muted text-muted-foreground [--dot:var(--subtle)]",
+};
+/** Picks a tone from common status words so every status chip is coloured the same way. */
+const toneOf = (label: string): Tone => {
+  const l = label.toLowerCase();
+  if (/(suspend|fail|reject|error|cancel|past.?due)/.test(l)) return "bad";
+  if (/(unverified|pending|queued|running|trial|incomplete)/.test(l)) return "warn";
+  if (/(active|ok|delivered|done|paid|verified)/.test(l)) return "good";
+  if (/team|complimentary/.test(l)) return "info";
+  return "neutral";
+};
+function Badge({ children, tone }: { children: ReactNode; tone?: Tone }) {
+  const t = tone ?? (typeof children === "string" ? toneOf(children) : "neutral");
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap capitalize ${TONE[t]}`}>
+      <span className="size-1.5 rounded-full bg-[var(--dot)]" aria-hidden />
       {children}
     </span>
   );
@@ -52,23 +92,27 @@ function Badge({ children }: { children: ReactNode }) {
 function Panel({
   title,
   description,
+  actions,
+  flush,
   children,
 }: {
-  title: string;
+  title: ReactNode;
   description?: string;
+  actions?: ReactNode;
+  /** Let a table run edge to edge inside the card. */
+  flush?: boolean;
   children: ReactNode;
 }) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-3xl border border-border-button-default bg-background-primary-default">
-      <div className="border-b border-separator-border px-5 py-4">
-        <h2 className="text-headline-medium">{title}</h2>
-        {description && (
-          <p className="mt-1 text-caption-1-medium text-text-tertiary">
-            {description}
-          </p>
-        )}
+    <section className="min-w-0 overflow-hidden rounded-2xl surface-raised">
+      <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-3">
+        <div className="min-w-0">
+          <h2 className="text-sm font-medium">{title}</h2>
+          {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+        </div>
+        {actions}
       </div>
-      <div className="p-5">{children}</div>
+      <div className={flush ? "" : "px-5 pb-5"}>{children}</div>
     </section>
   );
 }
@@ -81,45 +125,61 @@ function State({
   error?: { message: string } | null;
   empty?: boolean;
 }) {
-  if (pending) return <Skeleton className="h-40 w-full" />;
+  if (pending)
+    return (
+      <div className="grid gap-2 px-5 pb-5">
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-10 w-full rounded-lg" />
+        ))}
+      </div>
+    );
   if (error)
     return (
-      <p
-        role="alert"
-        className="p-5 text-body-2-regular text-text-error-primary"
-      >
+      <p role="alert" className="mx-5 mb-5 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
         {error.message}
       </p>
     );
   if (empty)
-    return (
-      <p className="p-8 text-center text-body-2-regular text-text-tertiary">
-        No records match this view.
-      </p>
-    );
+    return <p className="px-5 pt-6 pb-10 text-center text-sm text-muted-foreground">No records match this view.</p>;
   return null;
 }
+/** Number tiles. With `previous`, shows the change against the previous period as a coloured chip. */
 function Stats({
   items,
 }: {
-  items: { label: string; value: number | string; note?: string }[];
+  items: { label: string; value: ReactNode; note?: string; previous?: number; alert?: boolean }[];
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {items.map((s) => (
-        <div
-          key={s.label}
-          className="rounded-3xl border border-border-button-default bg-background-primary-default p-5"
-        >
-          <p className="text-caption-1-medium text-text-secondary">{s.label}</p>
-          <p className="mt-3 text-title-1-medium tabular-nums">{s.value}</p>
-          {s.note && (
-            <p className="mt-2 text-caption-1-medium text-text-tertiary">
-              {s.note}
+    <div className="stagger grid grid-cols-2 gap-3 xl:grid-cols-4">
+      {items.map((s) => {
+        const change = typeof s.value === "number" && s.previous !== undefined ? s.value - s.previous : null;
+        return (
+          <div key={s.label} className={`rounded-2xl p-4 surface-raised ${s.alert ? "ring-1 ring-danger/25" : ""}`}>
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {s.alert && <span className="size-1.5 animate-pulse rounded-full bg-danger" aria-label="Needs attention" />}
+              {s.label}
             </p>
-          )}
-        </div>
-      ))}
+            <div className="mt-2 flex items-baseline gap-2">
+              <p className={`text-2xl font-semibold  tabular-nums ${s.alert ? "text-danger" : ""}`}>
+                {typeof s.value === "number" ? s.value.toLocaleString() : s.value}
+              </p>
+              {change !== null && (
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${change > 0 ? "bg-success/10 text-success" : change < 0 ? "bg-danger/10 text-danger" : "bg-muted text-muted-foreground"}`}
+                >
+                  {change > 0 ? "+" : ""}
+                  {change.toLocaleString()}
+                </span>
+              )}
+            </div>
+            {(s.note || change !== null) && (
+              <p className="mt-1 text-xs text-subtle">
+                {s.note ?? `vs ${s.previous!.toLocaleString()} in the previous period`}
+              </p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -131,21 +191,20 @@ function DataTable({
   children: ReactNode;
 }) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          {headers.map((h) => (
-            <TableHead
-              key={h}
-              className="text-caption-1-medium text-text-tertiary"
-            >
-              {h}
-            </TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
-      <TableBody>{children}</TableBody>
-    </Table>
+    <div className="overflow-x-auto border-t">
+      <Table className="[&_td]:px-5 [&_td]:py-2.5 [&_td]:text-sm [&_th]:px-5 [&_tr]:transition-colors [&_tbody_tr:hover]:bg-muted/50">
+        <TableHeader className="sticky top-0 z-[1] bg-muted/40 backdrop-blur">
+          <TableRow className="hover:bg-transparent">
+            {headers.map((h) => (
+              <TableHead key={h} className="h-9 text-xs font-medium text-muted-foreground">
+                {h}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>{children}</TableBody>
+      </Table>
+    </div>
   );
 }
 function Pager({
@@ -157,26 +216,18 @@ function Pager({
   offset: number;
   setOffset: (n: number) => void;
 }) {
+  if (total <= 25)
+    return <p className="border-t px-5 py-3 text-xs text-subtle">{total ? `${total} ${total === 1 ? "record" : "records"}` : "0 records"}</p>;
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-separator-border pt-4 text-caption-1-medium text-text-tertiary">
-      <span>
-        {total
-          ? `${offset + 1}–${Math.min(offset + 25, total)} of ${total}`
-          : "0 records"}
+    <div className="flex items-center justify-between gap-3 border-t px-5 py-3 text-xs text-subtle">
+      <span className="tabular-nums">
+        {offset + 1}–{Math.min(offset + 25, total)} of {total}
       </span>
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          disabled={offset === 0}
-          onClick={() => setOffset(Math.max(0, offset - 25))}
-        >
+      <div className="flex gap-1.5">
+        <Button variant="outline" size="sm" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 25))}>
           Previous
         </Button>
-        <Button
-          variant="outline"
-          disabled={offset + 25 >= total}
-          onClick={() => setOffset(offset + 25)}
-        >
+        <Button variant="outline" size="sm" disabled={offset + 25 >= total} onClick={() => setOffset(offset + 25)}>
           Next
         </Button>
       </div>
@@ -336,6 +387,70 @@ function ActionDialog({
     </Dialog>
   );
 }
+const STEPS = ["Registered", "Created a workspace", "Connected GitHub", "Submitted a review"];
+/** Activation funnel as steps: how many reached each one and what share carried on from the step before. */
+function Funnel({ values }: { values: number[] }) {
+  const top = Math.max(1, values[0] ?? 0);
+  return (
+    <ol className="stagger grid gap-3">
+      {STEPS.map((label, i) => {
+        const n = values[i] ?? 0;
+        const prev = i ? (values[i - 1] ?? 0) : n;
+        const kept = prev ? Math.round((n / prev) * 100) : 0;
+        return (
+          <li key={label} className="grid gap-1.5">
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="flex items-center gap-2">
+                <span className="grid size-5 place-items-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground tabular-nums">{i + 1}</span>
+                {label}
+              </span>
+              <span className="flex items-baseline gap-2 tabular-nums">
+                <span className="font-medium">{n.toLocaleString()}</span>
+                {i > 0 && (
+                  <span className={`text-xs ${kept >= 50 ? "text-success" : kept >= 20 ? "text-warning" : "text-danger"}`}>{kept}% of previous</span>
+                )}
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-primary transition-[width] duration-700 ease-power3-out" style={{ width: `${(n / top) * 100}%`, opacity: 1 - i * 0.18 }} />
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+const FEATURE_LABEL: Record<string, string> = {
+  board_viewed: "Viewed the review board",
+  pr_opened: "Opened a pull request",
+  guide_viewed: "Read a review guide",
+  review_submitted: "Submitted a review",
+  signed_up: "Signed up",
+  workspace_created: "Created a workspace",
+  github_installed: "Installed the GitHub app",
+};
+const featureLabel = (name: string) => FEATURE_LABEL[name] ?? name.replaceAll("_", " ").replace(/^./, (c) => c.toUpperCase());
+/** Feature adoption as ranked bars: share of active users, with raw event counts alongside. */
+function Adoption({ rows, people }: { rows: { name: string; n: number; users: number }[]; people: number }) {
+  const sorted = [...rows].sort((a, b) => b.users - a.users);
+  const top = Math.max(1, people, ...sorted.map((r) => r.users));
+  return (
+    <ul className="stagger grid gap-2.5">
+      {sorted.map((f) => (
+        <li key={f.name} className="grid grid-cols-[minmax(0,12rem)_1fr_auto] items-center gap-3 text-sm">
+          <span className="truncate">{featureLabel(f.name)}</span>
+          <span className="h-1.5 overflow-hidden rounded-full bg-muted">
+            <span className="block h-full rounded-full bg-primary/70" style={{ width: `${(f.users / top) * 100}%` }} />
+          </span>
+          <span className="w-28 text-right text-xs text-muted-foreground tabular-nums">
+            <span className="font-medium text-foreground">{f.users}</span> users · {f.n.toLocaleString()}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function AdminDashboard({
   section = "overview",
   id,
@@ -359,6 +474,14 @@ export function AdminDashboard({
     [openError, setOpenError] = useState<string | null>(null),
     [days, setDays] = useState(30),
     [status, setStatus] = useState<"all" | "active" | "suspended">("all");
+  // ⌘K "search users for …" lands here with ?q=.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setSearch(q);
+    const onSearch = (e: Event) => setSearch((e as CustomEvent<string>).detail);
+    window.addEventListener("admin-search", onSearch);
+    return () => window.removeEventListener("admin-search", onSearch);
+  }, []);
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebounced(search);
@@ -441,12 +564,12 @@ export function AdminDashboard({
   const write = !!access.data && access.data.role !== "viewer",
     owner = access.data?.role === "owner";
   const titles = {
-    overview: "Your platform, at a glance",
-    users: "People using Docks",
-    workspaces: "Customer workspaces",
-    usage: "How teams use Docks",
-    activity: "Every change, accounted for",
-    health: "Keep everything running",
+    overview: "Overview",
+    users: "Users",
+    workspaces: "Workspaces",
+    usage: "Usage & retention",
+    activity: "Audit trail",
+    health: "System health",
   };
   const tableQuery =
     section === "users"
@@ -456,63 +579,54 @@ export function AdminDashboard({
         : section === "activity"
           ? audit
           : health;
+  const blurbs = {
+    overview: "Sign-ups, activation and what people do in Docks.",
+    users: "Everyone with a Docks account. Open a person to manage access or sessions.",
+    workspaces: "Customer workspaces, their plans and members.",
+    usage: "Which features stick, and who comes back in week two.",
+    activity: "Every admin change, with who made it and why.",
+    health: "Background jobs, errors and webhook deliveries. Refreshes on its own.",
+  };
   return (
-    <div className="grid gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          {id && (
-            <Link
-              href={`/admin/${section}`}
-              className="text-caption-1-medium text-text-secondary"
-            >
-              ← All {section}
-            </Link>
-          )}
-          <h1 className="mt-1 text-title-2-medium">
+    <div className="grid gap-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold">
             {id
               ? section === "users"
-                ? (user.data?.name ?? "User details")
-                : (workspace.data?.name ?? "Workspace details")
+                ? (user.data?.name ?? "Person")
+                : (workspace.data?.name ?? "Workspace")
               : titles[section]}
           </h1>
-          <p className="mt-2 text-body-2-regular text-text-secondary">
-            {id
-              ? id
-              : "Manage access, understand activity, and support your customers."}
+          <p className="mt-1 text-sm text-muted-foreground">
+            {id ? <span className="font-mono text-xs">{id}</span> : blurbs[section]}
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() =>
-            cache.invalidateQueries({ queryKey: trpc.admin.pathKey() })
-          }
-        >
-          <RiRefreshLine />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          {(section === "overview" || section === "usage") && (
+            <Tabs value={String(days)} onValueChange={(v) => setDays(Number(v))}>
+              <TabsList aria-label="Reporting range">
+                {[7, 30, 90].map((n) => (
+                  <TabsTrigger key={n} value={String(n)} className="px-3">
+                    {n}d
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          )}
+          <Button
+            variant="outline"
+            size="icon-sm"
+            aria-label="Refresh"
+            title="Refresh"
+            onClick={() => cache.invalidateQueries({ queryKey: trpc.admin.pathKey() })}
+          >
+            <RiRefreshLine />
+          </Button>
+        </div>
       </div>
       {(section === "overview" || section === "usage") && (
         <>
-          <div className="flex items-center gap-3">
-            <Select
-              value={String(days)}
-              onValueChange={(v) => setDays(Number(v))}
-            >
-              <SelectTrigger className="w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[7, 30, 90].map((n) => (
-                  <SelectItem key={n} value={String(n)}>
-                    Last {n} days
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <span className="text-caption-1-medium text-text-tertiary">
-              UTC reporting · activity is event-based
-            </span>
-          </div>
           <State pending={overview.isPending} error={overview.error} />
           {overview.data && (
             <>
@@ -522,12 +636,12 @@ export function AdminDashboard({
                   {
                     label: "New registrations",
                     value: overview.data.signups,
-                    note: `${overview.data.previousSignups} in previous period`,
+                    previous: overview.data.previousSignups,
                   },
                   {
                     label: "Active users",
                     value: overview.data.active,
-                    note: `${overview.data.previousActive} in previous period`,
+                    previous: overview.data.previousActive,
                   },
                   { label: "Workspaces", value: overview.data.workspaces },
                 ]}
@@ -537,20 +651,22 @@ export function AdminDashboard({
                   title="Registration trend"
                   description="Accounts created each day"
                 >
-                  <AdminTrendChart
+                  <TrendChart
                     rows={overview.data.days.map((d) => ({
-                      label: d.day.slice(5),
+                      label: weekLabel(d.day),
                       value: d.n,
                     }))}
                     label="Registrations"
                     ariaLabel="Daily registrations"
+                    unit="day"
+                    height={220}
                   />
                 </Panel>
                 <Panel
                   title="Activation journey"
-                  description="Users registered in the selected period; each step follows the previous step"
+                  description="People who signed up in this range, and how far they got"
                 >
-                  <AdminActivationChart values={overview.data.funnel} />
+                  <Funnel values={overview.data.funnel} />
                 </Panel>
               </div>
               <Stats
@@ -586,22 +702,14 @@ export function AdminDashboard({
               />
               <Panel
                 title="Feature adoption"
-                description="Recorded events and distinct users; page views are not counted as active usage"
+                description="Distinct people who used each feature, with total events. Page views don't count as active use."
               >
-                <DataTable headers={["Feature", "Events", "Users"]}>
-                  {overview.data.features.map((f) => (
-                    <TableRow key={f.name}>
-                      <TableCell>{f.name.replaceAll("_", " ")}</TableCell>
-                      <TableCell>{f.n}</TableCell>
-                      <TableCell>{f.users}</TableCell>
-                    </TableRow>
-                  ))}
-                </DataTable>
+                <Adoption rows={overview.data.features} people={overview.data.active} />
               </Panel>
             </>
           )}
           {section === "usage" && (
-            <Panel
+            <Panel flush
               title="Week-two retention"
               description="First review cohorts with 14 days of observation; meaningful activity during days 7–14"
             >
@@ -640,7 +748,7 @@ export function AdminDashboard({
       )}
       {section === "health" && health.data && (
         <>
-          <p className="text-caption-1-medium text-text-secondary">
+          <p className="text-xs text-subtle">
             Updated{" "}
             {health.dataUpdatedAt
               ? new Date(health.dataUpdatedAt).toLocaleTimeString()
@@ -664,13 +772,12 @@ export function AdminDashboard({
               {
                 label: "Running over 10 minutes",
                 value: health.data.queue.staleRunning,
+                alert: health.data.queue.staleRunning > 0,
                 note: "Investigate before retrying",
               },
               {
                 label: "Last job completion",
-                value: health.data.queue.lastCompletedAt
-                  ? new Date(health.data.queue.lastCompletedAt).toLocaleString()
-                  : "No data",
+                value: health.data.queue.lastCompletedAt ? date(health.data.queue.lastCompletedAt) : "No data",
               },
             ]}
           />
@@ -678,6 +785,7 @@ export function AdminDashboard({
             items={[
               {
                 label: "AI failures (5 min)",
+                alert: health.data.ai.failures > 0,
                 value: health.data.ai.calls
                   ? `${health.data.ai.failures} / ${health.data.ai.calls}`
                   : "No data",
@@ -691,6 +799,7 @@ export function AdminDashboard({
               },
               {
                 label: "Webhook failures (5 min)",
+                alert: health.data.webhooks.failures > 0,
                 value: health.data.webhooks.calls
                   ? `${health.data.webhooks.failures} / ${health.data.webhooks.calls}`
                   : "No data",
@@ -698,7 +807,7 @@ export function AdminDashboard({
               {
                 label: "Latest deployment",
                 value: health.data.deployments[0]?.sha.slice(0, 7) ?? "No data",
-                note: health.data.deployments[0]?.at.toLocaleString(),
+                note: health.data.deployments[0] ? `Deployed ${new Date(health.data.deployments[0].at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : undefined,
               },
             ]}
           />
@@ -708,6 +817,7 @@ export function AdminDashboard({
               value:
                 health.data!.statuses.find((row) => row.status === status)?.n ??
                 0,
+              alert: status === "failed" && (health.data!.statuses.find((row) => row.status === status)?.n ?? 0) > 0,
             }))}
           />
         </>
@@ -715,9 +825,9 @@ export function AdminDashboard({
       {!id &&
         ["users", "workspaces", "activity", "health"].includes(section) && (
           <>
-            <div className="flex flex-wrap gap-3">
-              <div className="relative w-full max-w-sm">
-                <RiSearchLine className="pointer-events-none absolute start-3 top-3 size-4 text-foreground-icon-tertiary" />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="relative w-full max-w-xs">
+                <RiSearchLine className="pointer-events-none absolute start-3 top-1/2 size-3.5 -translate-y-1/2 text-subtle" />
                 <Input
                   aria-label={
                     section === "health"
@@ -729,30 +839,27 @@ export function AdminDashboard({
                       ? "Search errors and deliveries…"
                       : `Search ${section}…`
                   }
-                  className="h-10 ps-9"
+                  className="h-9 rounded-full ps-8"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               {section === "users" && (
-                <Select
+                <Tabs
                   value={status}
                   onValueChange={(v) => {
                     setStatus(v as typeof status);
                     setOffset(0);
                   }}
                 >
-                  <SelectTrigger className="w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["all", "active", "suspended"].map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s === "all" ? "All accounts" : s}
-                      </SelectItem>
+                  <TabsList aria-label="Account status">
+                    {(["all", "active", "suspended"] as const).map((v) => (
+                      <TabsTrigger key={v} value={v} className="px-3 capitalize">
+                        {v === "all" ? "Everyone" : v}
+                      </TabsTrigger>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </TabsList>
+                </Tabs>
               )}
               {section === "health" && (
                 <Select
@@ -776,16 +883,22 @@ export function AdminDashboard({
                 </Select>
               )}
             </div>
-            <Panel
+            <Panel flush
               title={
                 section === "health"
                   ? "Failed background jobs"
-                  : `${tableQuery.data?.total ?? "…"} ${section === "activity" ? "admin changes" : section}`
+                  : (() => {
+                      const n = tableQuery.data?.total;
+                      const noun = { users: ["user", "users"], workspaces: ["workspace", "workspaces"], activity: ["admin change", "admin changes"] }[
+                        section as "users" | "workspaces" | "activity"
+                      ];
+                      return n === undefined ? "Loading…" : `${n.toLocaleString()} ${noun[n === 1 ? 0 : 1]}`;
+                    })()
               }
               description={
                 section === "health"
                   ? "Only safe sync jobs can be retried. Raw payloads and errors are withheld to protect credentials."
-                  : "Select a record to inspect details."
+                  : section === "activity" ? "Newest first." : "Click a row to open it."
               }
             >
               <State
@@ -804,20 +917,16 @@ export function AdminDashboard({
                   ]}
                 >
                   {users.data.rows.map((u) => (
-                    <TableRow key={u.id}>
+                    <TableRow key={u.id} className="relative cursor-pointer">
                       <TableCell>
                         <Link
                           href={`/admin/users/${u.id}`}
-                          className="flex items-center gap-3"
+                          className="flex items-center gap-3 after:absolute after:inset-0"
                         >
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background-tertiary-default">
-                            <RiUserLine />
-                          </span>
-                          <span className="grid gap-1">
-                            <span className="text-body-2-medium">{u.name}</span>
-                            <span className="text-caption-1-medium text-text-tertiary">
-                              {u.email}
-                            </span>
+                          <PersonAvatar seed={u.id} name={u.name} className="size-8" />
+                          <span className="grid min-w-0 leading-tight">
+                            <span className="truncate font-medium">{u.name}</span>
+                            <span className="truncate text-xs text-muted-foreground">{u.email}</span>
                           </span>
                         </Link>
                       </TableCell>
@@ -859,19 +968,22 @@ export function AdminDashboard({
                   ]}
                 >
                   {workspaces.data.rows.map((w) => (
-                    <TableRow key={w.id}>
+                    <TableRow key={w.id} className="relative cursor-pointer">
                       <TableCell>
                         <Link
                           href={`/admin/workspaces/${w.id}`}
-                          className="grid gap-1"
+                          className="flex items-center gap-3 after:absolute after:inset-0"
                         >
-                          <span className="text-body-2-medium">{w.name}</span>
-                          <span className="text-caption-1-medium text-text-tertiary">
-                            {w.slug}
+                          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-xs font-semibold text-muted-foreground uppercase">
+                            {w.name.slice(0, 2)}
+                          </span>
+                          <span className="grid min-w-0 leading-tight">
+                            <span className="truncate font-medium">{w.name}</span>
+                            <span className="truncate font-mono text-xs text-muted-foreground">{w.slug}</span>
                           </span>
                         </Link>
                       </TableCell>
-                      <TableCell>{w.members}</TableCell>
+                      <TableCell className="tabular-nums">{w.members}</TableCell>
                       <TableCell>
                         <Badge>
                           {w.effectivePlan === "team" && w.paidPlan !== "team"
@@ -880,7 +992,7 @@ export function AdminDashboard({
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {w.subscriptionStatus ?? "No subscription"}
+                        {w.subscriptionStatus ? <Badge>{w.subscriptionStatus}</Badge> : <span className="text-subtle">None</span>}
                       </TableCell>
                       <TableCell>
                         <Button
@@ -964,7 +1076,7 @@ export function AdminDashboard({
             </Panel>
             {section === "health" && (
               <>
-                <Panel
+                <Panel flush
                   title={`${errors.data?.total ?? "…"} grouped errors`}
                   description="Repeat instances of the same bug share one row. Full stacks stay in this admin view."
                 >
@@ -1039,7 +1151,7 @@ export function AdminDashboard({
                     />
                   )}
                 </Panel>
-                <Panel
+                <Panel flush
                   title={`${webhooks.data?.total ?? "…"} webhook deliveries`}
                   description={
                     webhooks.data
@@ -1230,7 +1342,7 @@ export function AdminDashboard({
                   ))}
                 </div>
               </Panel>
-              <Panel title="Recent product activity">
+              <Panel flush title="Recent product activity">
                 <DataTable headers={["Event", "When"]}>
                   {user.data.events.map((e, i) => (
                     <TableRow key={i}>
@@ -1240,7 +1352,7 @@ export function AdminDashboard({
                   ))}
                 </DataTable>
               </Panel>
-              <Panel
+              <Panel flush
                 title="Recent logins"
                 description="Historical logins before this feature was installed are unavailable."
               >
@@ -1276,7 +1388,7 @@ export function AdminDashboard({
                   },
                 ]}
               />
-              <Panel
+              <Panel flush
                 title="Billing & complimentary access"
                 description="Complimentary grants are separate from the payment subscription."
               >
@@ -1350,7 +1462,7 @@ export function AdminDashboard({
                   </DataTable>
                 </div>
               </Panel>
-              <Panel title="People">
+              <Panel flush title="People">
                 <DataTable headers={["Person", "Email", "Role"]}>
                   {workspace.data.members.map((m) => (
                     <TableRow key={m.id}>
@@ -1363,7 +1475,7 @@ export function AdminDashboard({
                   ))}
                 </DataTable>
               </Panel>
-              <Panel title="Repositories & integrations">
+              <Panel flush title="Repositories & integrations">
                 <DataTable
                   headers={["Repository", "Status", "Last metadata update"]}
                 >

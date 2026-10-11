@@ -20,7 +20,7 @@ export function LinkedIssues({ repo, number }: { repo: string; number: number })
 
   return (
     <section aria-labelledby="linked-heading" className="animate-in fade-in space-y-2 duration-200">
-      <h3 id="linked-heading" className="text-sm font-semibold tracking-tight">
+      <h3 id="linked-heading" className="text-sm font-semibold">
         Linked issues
       </h3>
       <ul className="-mx-2 space-y-0.5">

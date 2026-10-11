@@ -67,7 +67,7 @@ function Billing({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="space-y-8">
       <div className="max-w-xl space-y-2">
-        <p className="text-2xl font-medium tracking-tight">A plan for the way you ship.</p>
+        <p className="text-2xl font-medium">A plan for the way you ship.</p>
         <p className="text-sm leading-relaxed text-muted-foreground">Start small. Add deadlines, release visibility, and review evidence as your team grows.</p>
       </div>
       {checkout && CHECKOUT_STATUS[checkout] && <p role="status" className="rounded-lg border bg-muted/40 p-4 text-sm">{CHECKOUT_STATUS[checkout]}</p>}
