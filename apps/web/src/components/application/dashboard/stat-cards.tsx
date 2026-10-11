@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { HueIcon, type Hue } from "@/components/ui/empty-preview";
 
 const TONE_HUE: Record<StatTone, Hue> = { blue: "blue", orange: "orange", purple: "purple", pink: "pink", sky: "teal", emerald: "green" };
-const CYCLE: Hue[] = ["indigo", "teal", "amber", "green"];
+const CYCLE: Hue[] = ["blue", "teal", "amber", "green"];
 export type StatTone =
   "blue" | "orange" | "purple" | "pink" | "sky" | "emerald";
 export type Stat = {

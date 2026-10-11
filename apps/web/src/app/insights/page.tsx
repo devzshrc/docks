@@ -6,7 +6,7 @@ import { useState } from "react"
 import { QueryError } from "@/components/query-state"
 import { AppShell } from "@/components/app-shell"
 import { RankedBars } from "@/components/charts/ranked-bars"
-import { TrendChart } from "@/components/charts/trend-chart"
+import { TrendChart, weekLabel } from "@/components/charts/trend-chart"
 import { Panel, StatStrip } from "@/components/panel"
 import { ShellFilters } from "@/components/shell-slots"
 import { FilterSelect, ToggleChip } from "@/components/toolbar"
@@ -77,16 +77,17 @@ function Insights({ workspaceId }: { workspaceId: string }) {
           <section className="grid gap-4 md:grid-cols-2">
             <Panel title="Merged per week" description="Last 12 weeks">
               <TrendChart
-                rows={data.data.trend.map((w) => ({ label: w.week.slice(5), value: w.merged }))}
+                rows={data.data.trend.map((w) => ({ label: weekLabel(w.week), value: w.merged }))}
                 label="PRs merged"
                 ariaLabel="Line chart of pull requests merged per week over the last 12 weeks"
               />
             </Panel>
             <Panel title="Time to first review" description="Median per week">
               <TrendChart
-                rows={data.data.trend.map((w) => ({ label: w.week.slice(5), value: w.medianHoursToFirstReview }))}
+                rows={data.data.trend.map((w) => ({ label: weekLabel(w.week), value: w.medianHoursToFirstReview }))}
                 label="Median hours"
                 format={(v) => fmt(v)}
+                polarity="lower"
                 color="var(--hue-teal)"
                 ariaLabel="Line chart of median hours to first review per week over the last 12 weeks"
               />
