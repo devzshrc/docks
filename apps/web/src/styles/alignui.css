@@ -1,0 +1,70 @@
+/* AlignUI's open-source component tokens, bridged to Docks' semantic palette.
+ * Reference: https://alignui.com/docs/v1.2/foundations/color
+ * Existing screens and AlignUI components share these same colors. */
+@theme inline {
+  --color-bg-white-0: var(--card);
+  --color-bg-weak-50: var(--muted);
+  --color-bg-soft-200: var(--border);
+  --color-bg-strong-950: var(--foreground);
+  --color-bg-surface-800: var(--soft);
+  --color-text-strong-950: var(--foreground);
+  --color-text-sub-600: var(--muted-foreground);
+  --color-text-soft-400: var(--subtle);
+  --color-text-disabled-300: var(--faint);
+  --color-text-white-0: var(--card);
+  --color-static-white: var(--primary-foreground);
+  --color-stroke-soft-200: var(--border);
+  --color-stroke-strong-950: var(--foreground);
+  --color-primary-base: var(--primary);
+  --color-primary-darker: var(--primary-hover);
+  --color-primary-alpha-10: color-mix(in oklab, var(--primary) 8%, var(--card));
+  --color-error-base: var(--destructive);
+  --color-error-light: var(--tag-red-bg);
+  --shadow-regular-xs: var(--shadow-control);
+  --shadow-button-primary-focus: 0 0 0 3px
+    color-mix(in oklab, var(--primary) 20%, transparent);
+  --shadow-button-important-focus: 0 0 0 3px
+    color-mix(in oklab, var(--primary) 16%, transparent);
+  --shadow-button-error-focus: 0 0 0 3px
+    color-mix(in oklab, var(--destructive) 16%, transparent);
+  --radius-10: 0.625rem;
+}
+
+/* A static, low contrast wash inspired by Grainient's light backgrounds. */
+.quiet-gradient {
+  background-color: var(--card);
+  background-image:
+    radial-gradient(
+      ellipse at 25% 100%,
+      color-mix(in oklab, var(--primary) 7%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse at 85% 100%,
+      color-mix(in oklab, var(--hue-teal) 5%, transparent),
+      transparent 55%
+    );
+}
+
+[data-auth] [data-slot="card"] {
+  @apply gap-6 rounded-2xl border border-separator-border py-8 shadow-none;
+}
+[data-auth] [data-slot="card-header"],
+[data-auth] [data-slot="card-content"] {
+  @apply px-6 sm:px-8;
+}
+[data-auth] [data-slot="card-title"] {
+  @apply text-title-1-medium text-text-primary;
+}
+[data-auth] [data-slot="card-description"] {
+  @apply text-body-2-regular text-text-secondary;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

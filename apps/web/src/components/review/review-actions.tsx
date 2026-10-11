@@ -186,7 +186,7 @@ export function ReviewActions({
   }
 
   return (
-    <div className="bg-background/95 border-hairline sticky bottom-0 space-y-3 border-t p-4 backdrop-blur">
+    <div className="space-y-4 rounded-2xl border border-separator-border bg-background-primary-default p-5">
       <section aria-label="Merge readiness" className="space-y-1 text-xs">
         <div className="flex items-center gap-2">
           <strong className="font-medium">Merge readiness</strong>
@@ -296,7 +296,7 @@ export function ReviewActions({
         {canMerge && (
           <span className="flex items-center gap-1">
             <ShadcnSelect
-              className="bg-(--field) hover:bg-(--field-hover) h-8 rounded-full border px-3 text-xs"
+              className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-lg border px-3 text-body-2-regular"
               aria-label="Merge method"
               value={method}
               onChange={(e) => setMethod(e.target.value as typeof method)}
