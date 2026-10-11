@@ -65,7 +65,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     <div className="min-h-svh bg-background-full text-text-primary lg:flex">
       <aside
         className={cx(
-          "border-separator-border bg-background-secondary-default lg:sticky lg:top-0 lg:flex lg:h-svh lg:w-60 lg:shrink-0 lg:flex-col lg:border-e",
+          "border-separator-border bg-background-primary-default lg:sticky lg:top-0 lg:flex lg:h-svh lg:w-60 lg:shrink-0 lg:flex-col lg:border-e",
           open ? "block" : "hidden",
         )}
       >
@@ -97,7 +97,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 className={cx(
                   "flex min-h-11 items-center gap-3 rounded-xl px-3 text-body-2-medium transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring",
                   active.path === s.path
-                    ? "bg-background-tertiary-default text-text-primary"
+                    ? "bg-primary-alpha-10 text-primary-base"
                     : "text-text-secondary hover:bg-background-secondary-hover",
                 )}
               >

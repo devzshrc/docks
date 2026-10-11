@@ -22,11 +22,14 @@ export function DeadlinePanel({
   return (
     <section
       aria-label="Review deadlines"
-      className="space-y-2 rounded-lg border p-3 text-sm"
+      className="space-y-3 rounded-xl border border-separator-border bg-background-tertiary-default p-3 text-body-2-regular"
     >
-      <div className="flex justify-between">
+      <div className="flex flex-col gap-1">
         <strong>Review deadlines</strong>
-        <Link className="underline" href="/deadlines">
+        <Link
+          className="text-caption-1-regular text-text-secondary underline underline-offset-4"
+          href="/deadlines"
+        >
           Policies and overdue reviews
         </Link>
       </div>
