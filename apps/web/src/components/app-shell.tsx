@@ -56,6 +56,7 @@ import {
 import { UserMenu } from "@/components/user-menu";
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useTRPC } from "@/trpc/react";
 
 const WIDTH = {
@@ -435,6 +436,7 @@ function ShellFrame({
                   </Link>
                 </Button>
                 <NewIssueButton />
+                <ThemeToggle />
                 <UserMenu />
               </div>
             </div>

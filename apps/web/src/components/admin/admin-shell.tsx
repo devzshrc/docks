@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useTRPC } from "@/trpc/react";
 
 type Section = { path: string; label: string; icon: typeof RiGroupLine; key: string };
@@ -287,6 +288,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <span className="size-1.5 rounded-full bg-status shadow-[0_0_0_2px_color-mix(in_oklab,var(--status)_25%,transparent)]" />
             Live data
           </span>
+          <ThemeToggle />
         </header>
         <main key={path} className="animate-in fade-in slide-in-from-bottom-[3px] mx-auto max-w-7xl p-4 duration-200 md:p-6">
           {children}

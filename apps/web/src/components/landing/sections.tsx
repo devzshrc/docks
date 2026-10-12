@@ -34,7 +34,7 @@ export function Problem() {
         <SectionHead eyebrow="The problem" title="Code review is where good work goes to wait." body="GitHub stores your pull requests well. It doesn't help your team decide what to read next." />
         <div className="grid gap-px overflow-hidden rounded-2xl bg-[var(--l-line)] ring-1 ring-[var(--l-line)] md:grid-cols-3">
           {PROBLEMS.map((p) => (
-            <div key={p.n} className="bg-white p-6 md:p-8">
+            <div key={p.n} className="bg-[var(--l-surface)] p-6 md:p-8">
               <p className="font-mono text-[12px] text-[var(--l-ink-3)]">{p.n}</p>
               <h3 className="font-display mt-6 text-[18px] leading-6 font-semibold">{p.title}</h3>
               <p className="mt-2 text-[15px] leading-6 text-[var(--l-ink-2)]">{p.body}</p>
@@ -50,7 +50,7 @@ export function Problem() {
 function ConnectVisual() {
   return (
     <div className="relative flex h-full items-center justify-center gap-0">
-      <span className="hiw-pop grid size-11 place-items-center rounded-xl bg-[#0b0b0c] text-white shadow-[0_6px_14px_-6px_rgb(0_0_0/0.5)]">
+      <span className="hiw-pop grid size-11 place-items-center rounded-xl bg-[var(--l-ink)] text-[var(--l-bg)] shadow-[0_6px_14px_-6px_rgb(0_0_0/0.5)]">
         <RiGithubFill className="size-6" />
       </span>
       <span className="relative mx-3 h-px w-20 bg-[repeating-linear-gradient(90deg,rgb(11_11_12/0.25)_0_4px,transparent_4px_8px)]">
@@ -61,7 +61,7 @@ function ConnectVisual() {
       </span>
       <div className="absolute inset-x-0 bottom-5 flex justify-center gap-1.5">
         {["acme/api", "acme/web", "acme/infra"].map((r, i) => (
-          <span key={r} className="hiw-chip rounded-full bg-white px-2 py-0.5 font-mono text-[10.5px] text-[var(--l-ink-2)] shadow-[0_0_0_1px_rgb(0_0_0/0.07)]" style={{ animationDelay: `${900 + i * 180}ms` }}>
+          <span key={r} className="hiw-chip rounded-full bg-[var(--l-surface)] px-2 py-0.5 font-mono text-[10.5px] text-[var(--l-ink-2)] shadow-[0_0_0_1px_var(--l-line)]" style={{ animationDelay: `${900 + i * 180}ms` }}>
             {r}
           </span>
         ))}
@@ -81,7 +81,7 @@ function QueueVisual() {
       {rows.map((r, i) => (
         <div
           key={r.t}
-          className={cx("hiw-row flex items-center gap-2 rounded-lg bg-white px-2.5 py-2 text-[11.5px] shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_2px_rgb(0_0_0/0.04)]", i === 0 && "hiw-first")}
+          className={cx("hiw-row flex items-center gap-2 rounded-lg bg-[var(--l-surface)] px-2.5 py-2 text-[11.5px] shadow-[0_0_0_1px_var(--l-line),0_1px_2px_rgb(0_0_0/0.04)]", i === 0 && "hiw-first")}
           style={{ animationDelay: `${i * 140}ms` }}
         >
           <span className="size-1.5 rounded-full" style={{ background: r.c }} />
@@ -100,10 +100,10 @@ function PostVisual() {
         <RiCheckLine className="size-3.5" />
         Approve
       </span>
-      <span className="relative grid size-11 place-items-center rounded-xl bg-[#0b0b0c] text-white">
+      <span className="relative grid size-11 place-items-center rounded-xl bg-[var(--l-ink)] text-[var(--l-bg)]">
         <RiGithubFill className="size-6" />
         <span className="hiw-ping absolute inset-0 rounded-xl ring-2 ring-[#16a34a]" />
-        <span className="hiw-badge absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-[#16a34a] text-white ring-2 ring-white">
+        <span className="hiw-badge absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-[#16a34a] text-white ring-2 ring-[var(--l-surface)]">
           <RiCheckLine className="size-3" />
         </span>
       </span>
@@ -136,7 +136,7 @@ function useLive<T extends HTMLElement>() {
 export function HowItWorks() {
   const live = useLive<HTMLOListElement>();
   return (
-    <section id="how" className="scroll-mt-16 bg-[#fafafa] py-20 md:py-32">
+    <section id="how" className="scroll-mt-16 bg-[var(--l-soft)] py-20 md:py-32">
       <div className={container}>
         <SectionHead eyebrow="How it works" title="From sign-in to first review in two minutes." body="Docks sits on top of GitHub. Your history, branches and permissions stay where they are." />
         <ol ref={live} className="hiw relative grid gap-4 md:grid-cols-3 md:gap-5">
@@ -146,8 +146,8 @@ export function HowItWorks() {
           </span>
           {STEPS.map((s, i) => (
             <li key={s.title} className="relative grid grid-rows-[auto_auto_1fr] justify-items-center gap-0 text-center">
-              <span className="relative z-[1] grid size-7 place-items-center rounded-full bg-[var(--l-ink)] font-mono text-[12px] text-white ring-4 ring-[#fafafa]">{i + 1}</span>
-              <div className="mt-5 h-[168px] w-full overflow-hidden rounded-2xl bg-white text-left shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_2px_rgb(0_0_0/0.03),0_12px_28px_-18px_rgb(15_23_42/0.18)]">{s.visual}</div>
+              <span className="relative z-[1] grid size-7 place-items-center rounded-full bg-[var(--l-ink)] font-mono text-[12px] text-[var(--l-bg)] ring-4 ring-[var(--l-soft)]">{i + 1}</span>
+              <div className="mt-5 h-[168px] w-full overflow-hidden rounded-2xl bg-[var(--l-surface)] text-left shadow-[0_0_0_1px_var(--l-line),0_1px_2px_rgb(0_0_0/0.03),0_12px_28px_-18px_rgb(15_23_42/0.18)]">{s.visual}</div>
               <div className="mt-5 max-w-[300px]">
                 <h3 className="font-display text-[18px] leading-6 font-semibold">{s.title}</h3>
                 <p className="mt-1.5 text-[15px] leading-6 text-pretty text-[var(--l-ink-2)]">{s.body}</p>
@@ -166,17 +166,17 @@ export function PlanCards({ onStart }: { onStart: () => void }) {
       {PLAN_OPTIONS.map((plan) => {
         const hi = "highlighted" in plan && plan.highlighted;
         return (
-          <div key={plan.name} className={cx("flex flex-col rounded-2xl p-6 md:p-8", hi ? "bg-[var(--l-ink)] text-white" : "bg-white shadow-[0_0_0_1px_rgb(0_0_0/0.08)]")}>
+          <div key={plan.name} className={cx("flex flex-col rounded-2xl p-6 md:p-8", hi ? "bg-[var(--l-ink)] text-[var(--l-bg)]" : "bg-[var(--l-surface)] shadow-[0_0_0_1px_var(--l-line)]")}>
             <h3 className="font-display text-[16px] font-semibold">{plan.name}</h3>
-            <p className={cx("mt-1 text-[14px] leading-5", hi ? "text-white/65" : "text-[var(--l-ink-2)]")}>{plan.description}</p>
+            <p className={cx("mt-1 text-[14px] leading-5", hi ? "text-[color-mix(in_oklab,var(--l-bg)_65%,transparent)]" : "text-[var(--l-ink-2)]")}>{plan.description}</p>
             <p className="mt-6 flex items-baseline gap-1.5">
               <span className="font-display text-[40px] leading-none font-medium">{plan.monthlyPrice}</span>
-              <span className={cx("text-[13px]", hi ? "text-white/65" : "text-[var(--l-ink-3)]")}>{plan.priceNote}</span>
+              <span className={cx("text-[13px]", hi ? "text-[color-mix(in_oklab,var(--l-bg)_65%,transparent)]" : "text-[var(--l-ink-3)]")}>{plan.priceNote}</span>
             </p>
-            <ul className={cx("mt-6 flex flex-col gap-2.5 border-t pt-6 text-[14px] leading-5", hi ? "border-white/10" : "border-[var(--l-line)]")}>
+            <ul className={cx("mt-6 flex flex-col gap-2.5 border-t pt-6 text-[14px] leading-5", hi ? "border-[color-mix(in_oklab,var(--l-bg)_12%,transparent)]" : "border-[var(--l-line)]")}>
               {plan.features.map((f) => (
                 <li key={f} className="flex gap-2.5">
-                  <RiCheckLine className={cx("mt-0.5 size-4 shrink-0", hi ? "text-[#7cc8fb]" : "text-[var(--l-blue)]")} />
+                  <RiCheckLine className={cx("mt-0.5 size-4 shrink-0", hi ? "text-[var(--l-sky)]" : "text-[var(--l-blue)]")} />
                   {f}
                 </li>
               ))}

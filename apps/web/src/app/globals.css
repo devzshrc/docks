@@ -348,13 +348,22 @@
     background: color-mix(in oklab, var(--primary) 30%, transparent);
   }
 }
-.theme-fade,
-.theme-fade * {
-  transition:
-    background-color 300ms var(--ease-power3-out),
-    border-color 300ms var(--ease-power3-out),
-    color 300ms var(--ease-power3-out) !important;
+/* Theme switch: the whole page crossfades as one snapshot (View Transitions API), so gradients,
+ * shadows and colours all change together instead of element by element. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  mix-blend-mode: normal;
 }
+::view-transition-old(root) {
+  animation-name: theme-fade-out;
+}
+::view-transition-new(root) {
+  animation-name: theme-fade-in;
+}
+@keyframes theme-fade-out { to { opacity: 0; } }
+@keyframes theme-fade-in { from { opacity: 0; } }
 @layer utilities {
   .eyebrow {
     font-size: 11px;
@@ -562,6 +571,11 @@ kbd {
 
 /* Landing page: sky-to-peach atmosphere, Geist display + Inter body. */
 .landing {
+  --l-bg: #ffffff;
+  --l-surface: #ffffff; /* cards */
+  --l-raised: #ffffff; /* selected tab, pill on a surface */
+  --l-soft: #fafafa; /* alternate section background */
+  --l-muted: #f5f5f4; /* wells inside cards */
   --l-ink: #0b0b0c;
   --l-ink-2: #45474d;
   --l-ink-3: #74767c;
@@ -569,21 +583,49 @@ kbd {
   --l-blue: #2f7bf5;
   --l-sky: #7cc8fb;
   --l-peach: #fde8d7;
+  --l-frame: rgb(255 255 255 / 0.6); /* product preview bezel */
+  --l-frame-edge: rgb(15 23 42 / 0.08);
+  --l-frame-shadow: rgb(30 60 110 / 0.35);
+  --l-sky-gradient:
+    radial-gradient(60% 40% at 50% 62%, rgb(255 255 255 / 0.55), transparent 70%),
+    linear-gradient(180deg, var(--l-sky) 0%, #b9e0fa 26%, #e6eff5 46%, var(--l-peach) 66%, #fff6ef 82%, #fff 100%);
+  --l-sky-gradient-reverse: linear-gradient(0deg, var(--l-sky) 0%, #c7e6fa 40%, var(--l-peach) 80%, #fff 100%);
   font-family: var(--font-inter-face), ui-sans-serif, system-ui, sans-serif;
   color: var(--l-ink);
-  background: #fff;
+  background: var(--l-bg);
   font-feature-settings: "cv11", "ss01";
+}
+/* Dark landing: a night sky — deep blue at the top fading to near-black, with a faint warm horizon. */
+.dark .landing {
+  --l-bg: #07080a;
+  --l-surface: #0e1013;
+  --l-raised: #1a1d22;
+  --l-soft: #0a0b0d;
+  --l-muted: #15171b;
+  --l-ink: #f4f6f8;
+  --l-ink-2: #a6abb3;
+  --l-ink-3: #727881;
+  --l-line: rgb(255 255 255 / 0.08);
+  --l-blue: #4c8ffb;
+  --l-frame: rgb(255 255 255 / 0.04);
+  --l-frame-edge: rgb(255 255 255 / 0.09);
+  --l-frame-shadow: rgb(0 0 0 / 0.7);
+  --l-sky-gradient:
+    radial-gradient(70% 45% at 50% 0%, rgb(47 123 245 / 0.28), transparent 70%),
+    radial-gradient(50% 30% at 50% 70%, rgb(253 186 140 / 0.06), transparent 70%),
+    linear-gradient(180deg, #0b1526 0%, #0a0f19 38%, #08090c 70%, var(--l-bg) 100%);
+  --l-sky-gradient-reverse:
+    radial-gradient(60% 60% at 50% 100%, rgb(47 123 245 / 0.25), transparent 70%),
+    linear-gradient(0deg, #0b1526 0%, #0a0f19 50%, var(--l-surface) 100%);
 }
 .landing .font-display {
   font-family: var(--font-geist-face), ui-sans-serif, system-ui, sans-serif;
 }
 .landing-sky {
-  background:
-    radial-gradient(60% 40% at 50% 62%, rgb(255 255 255 / 0.55), transparent 70%),
-    linear-gradient(180deg, var(--l-sky) 0%, #b9e0fa 26%, #e6eff5 46%, var(--l-peach) 66%, #fff6ef 82%, #fff 100%);
+  background: var(--l-sky-gradient);
 }
 .landing-sky-reverse {
-  background: linear-gradient(0deg, var(--l-sky) 0%, #c7e6fa 40%, var(--l-peach) 80%, #fff 100%);
+  background: var(--l-sky-gradient-reverse);
 }
 .l-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
@@ -591,10 +633,10 @@ kbd {
   transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
   outline: none; white-space: nowrap;
 }
-.l-btn:focus-visible { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--l-blue); }
+.l-btn:focus-visible { box-shadow: 0 0 0 3px var(--l-bg), 0 0 0 5px var(--l-blue); }
 .l-btn:active { transform: translateY(0.5px) scale(0.99); }
 .l-btn-primary {
-  color: #fff; background: linear-gradient(180deg, #4c8ffb, var(--l-blue));
+  color: #fff; background: linear-gradient(180deg, #4c8ffb, #2f7bf5);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 0 0 1px #1f66da, 0 6px 16px -6px rgb(47 123 245 / 0.6);
 }
 .l-btn-primary:hover { background: linear-gradient(180deg, #5a98fb, #2a72e8); }
@@ -603,8 +645,14 @@ kbd {
   box-shadow: 0 0 0 1px rgb(11 11 12 / 0.08), 0 1px 2px rgb(11 11 12 / 0.06), inset 0 1px 0 #fff;
 }
 .l-btn-secondary:hover { background: #fff; }
-.l-btn-dark { color: #fff; background: var(--l-ink); }
-.l-btn-dark:hover { background: #26272b; }
+.dark .l-btn-secondary {
+  background: rgb(255 255 255 / 0.06);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.1), inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+.dark .l-btn-secondary:hover { background: rgb(255 255 255 / 0.1); }
+/* Inverted pill: ink on light, light on dark. */
+.l-btn-dark { color: var(--l-bg); background: var(--l-ink); }
+.l-btn-dark:hover { background: color-mix(in oklab, var(--l-ink) 86%, var(--l-bg)); }
 .l-fade-up { animation: l-fade-up 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 @keyframes l-fade-up { from { opacity: 0; transform: translateY(8px); } }
 @media (prefers-reduced-motion: reduce) { .l-fade-up { animation: none; } }
@@ -664,10 +712,6 @@ kbd {
 .ring-fill { animation: ring-fill 900ms cubic-bezier(0.25, 1, 0.5, 1) 120ms backwards; }
 @keyframes ring-fill { from { stroke-dashoffset: var(--ring-empty); } }
 
-/* Landing product demo */
-@keyframes demo-in { from { opacity: 0; transform: translateY(6px); } }
-@keyframes demo-drop { from { opacity: 0; transform: translateY(-10px) scale(0.98); } }
-
 /* How it works loops: 4s cycle, paused until the section is on screen (.is-live). */
 .hiw :is(.hiw-pop, .hiw-travel, .hiw-chip, .hiw-row, .hiw-first, .hiw-press, .hiw-fly, .hiw-ping, .hiw-badge, .hiw-line) {
   animation-duration: 4s;
@@ -712,4 +756,76 @@ kbd {
   * {
     letter-spacing: var(--tracking-auto);
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * Dark theme, unified. One surface scale for both token layers (shadcn here,
+ * BoardUI in styles/theme.css) so a page never mixes two greys:
+ *   background #0b0c0e → card #121316 → raised/popover #17181b → muted #1c1d21
+ * Brand blue is lifted a step for contrast on dark. Depth comes from a faint
+ * light hairline plus deep shadows, since shadows alone don't read on black.
+ * Declared after both imports, so these win over the earlier .dark blocks.
+ * ------------------------------------------------------------------------- */
+.dark {
+  --background: #0b0c0e;
+  --foreground: #f4f6f8;
+  --card: #121316;
+  --card-foreground: #f4f6f8;
+  --popover: #17181b;
+  --popover-foreground: #f4f6f8;
+  --primary: #2f7bf5;
+  --primary-hover: #4c8ffb;
+  --primary-foreground: #ffffff;
+  --primary-text: #7fb0ff;
+  --secondary: #17181b;
+  --secondary-foreground: #f4f6f8;
+  --muted: #1c1d21;
+  --muted-foreground: #9a9ea6;
+  --accent: #1a1b1f;
+  --accent-foreground: #f4f6f8;
+  --border: #232428;
+  --input: #2c2d32;
+  --ring: #4c8ffb;
+  --sidebar: #0e0f11;
+  --sidebar-foreground: #9a9ea6;
+  --sidebar-primary: #1c1d21;
+  --sidebar-primary-foreground: #f4f6f8;
+  --sidebar-accent: #15161a;
+  --sidebar-accent-foreground: #f4f6f8;
+  --sidebar-border: #1e1f23;
+  --chart-1: #4c8ffb;
+  --chart-2: #8ab8fb;
+  --line-strong: #2e2f34;
+  --subtle: #70747c;
+  --faint: #4b4e55;
+  --hue-indigo: #8f8ff0;
+
+  --shadow-control: 0 0 0 1px rgb(255 255 255 / 0.08), 0 1px 2px 0 rgb(0 0 0 / 0.45), inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+  --shadow-control-active: 0 0 0 1px rgb(255 255 255 / 0.1), inset 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-primary: 0 0 0 1px #1d63d6, 0 1px 2px 0 rgb(0 0 0 / 0.5), 0 4px 14px -4px rgb(47 123 245 / 0.45), inset 0 1px 0 0 rgb(255 255 255 / 0.25), inset 0 -3px 6px 0 rgb(0 0 0 / 0.15);
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px 0 rgb(0 0 0 / 0.5), 0 8px 24px -12px rgb(0 0 0 / 0.6), inset 0 1px 0 0 rgb(255 255 255 / 0.04);
+  --shadow-card-hover: 0 0 0 1px rgb(255 255 255 / 0.11), 0 2px 4px 0 rgb(0 0 0 / 0.5), 0 14px 32px -14px rgb(0 0 0 / 0.75), inset 0 1px 0 0 rgb(255 255 255 / 0.05);
+  --shadow-overlay: 0 0 0 1px rgb(255 255 255 / 0.09), 0 20px 48px -12px rgb(0 0 0 / 0.75);
+  --surface-sheen: linear-gradient(180deg, #141518 0%, #121316 100%);
+
+  /* BoardUI surfaces follow the same scale. */
+  --color-background-full: var(--background);
+  --color-background-secondary-default: var(--background);
+  --color-background-secondary-hover: var(--accent);
+  --color-background-primary-default: var(--card);
+  --color-background-primary-hover: var(--accent);
+  --color-background-primary-active: var(--muted);
+  --color-background-tertiary-default: var(--muted);
+  --color-background-tertiary-hover: #24252a;
+  --color-separator-border: var(--border);
+  --color-border-button-default: #2a2b30;
+}
+/* Glass finishes are light-only; dark controls use the flat surface plus hairline. */
+.dark .glass-surface,
+.dark .glass-surface:hover {
+  background-image: none;
+}
+.dark .tile-bevel {
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.06), transparent 70%);
+  box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.08), 0 1px 2px 0 rgb(0 0 0 / 0.4);
 }

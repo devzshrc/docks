@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppIcon } from "@/components/app-icon";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cx } from "@/utils/cx";
 
 const LINKS = [
@@ -27,7 +28,7 @@ export function LandingNav({ onStart }: { onStart: () => void }) {
     <header
       className={cx("fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-200",
         scrolled
-          ? "bg-white/75 shadow-[0_1px_0_var(--l-line)] backdrop-blur-xl"
+          ? "bg-[color-mix(in_oklab,var(--l-bg)_75%,transparent)] shadow-[0_1px_0_var(--l-line)] backdrop-blur-xl"
           : "bg-transparent",
       )}
     >
@@ -47,6 +48,7 @@ export function LandingNav({ onStart }: { onStart: () => void }) {
           ))}
         </ul>
         <div className="flex items-center justify-end gap-5">
+          <ThemeToggle className="bg-none bg-transparent text-[var(--l-ink-2)] shadow-none hover:bg-[var(--l-line)] hover:text-[var(--l-ink)]" />
           <a href="/login" className={link}>Sign in</a>
           <button type="button" onClick={onStart} className="l-btn l-btn-dark h-9 px-4 text-[14px]">
             Start free

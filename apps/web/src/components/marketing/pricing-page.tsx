@@ -18,13 +18,13 @@ function Cell({ value }: { value: boolean | string }) {
 }
 
 const stepper =
-  "grid size-9 place-items-center rounded-full bg-white text-[var(--l-ink)] shadow-[0_0_0_1px_rgb(0_0_0/0.08)] transition-colors hover:bg-[#f5f5f4] outline-none focus-visible:ring-2 focus-visible:ring-[var(--l-blue)] disabled:opacity-40";
+  "grid size-9 place-items-center rounded-full bg-[var(--l-surface)] text-[var(--l-ink)] shadow-[0_0_0_1px_var(--l-line)] transition-colors hover:bg-[var(--l-muted)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--l-blue)] disabled:opacity-40";
 
 function SeatEstimator() {
   const [seats, setSeats] = useState(12);
   return (
     <section aria-labelledby="estimate-heading" className={cx(container, "pb-20 md:pb-32")}>
-      <div className="mx-auto flex max-w-[800px] flex-col gap-6 rounded-2xl bg-[#fafafa] p-6 ring-1 ring-[var(--l-line)] sm:flex-row sm:items-center sm:justify-between md:p-8">
+      <div className="mx-auto flex max-w-[800px] flex-col gap-6 rounded-2xl bg-[var(--l-soft)] p-6 ring-1 ring-[var(--l-line)] sm:flex-row sm:items-center sm:justify-between md:p-8">
         <div>
           <h2 id="estimate-heading" className="font-display text-[18px] leading-6 font-semibold">
             Estimate your Team plan
