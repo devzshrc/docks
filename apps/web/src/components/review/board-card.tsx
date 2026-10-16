@@ -176,12 +176,12 @@ export function BoardCard({
           </Badge>
         ))}
         {pr.reviewers.length > 0 && (
-          <span className="ml-auto flex -space-x-1.5">
+          <span className="ml-auto flex -space-x-1">
             {pr.reviewers.slice(0, 3).map((r) => (
               <GhAvatar
                 key={r.login}
                 login={r.login}
-                className="ring-card ring-2"
+                className="ring-card size-5 text-[9px] ring-2"
               />
             ))}
           </span>

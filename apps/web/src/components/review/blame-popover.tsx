@@ -2,6 +2,7 @@
 
 import type { BlameRange } from "@docks/api"
 import { useQuery } from "@tanstack/react-query"
+import { useState } from "react"
 
 import { Skeleton } from "@/components/ui/skeleton"
 import { useTRPC } from "@/trpc/react"
@@ -48,14 +49,28 @@ export function BlameLine({
   children: React.ReactNode
 }) {
   const r = ranges ? rangeFor(ranges, line) : null
+  // Fixed to the viewport so the diff's scroll container can't clip it; placed on hover/focus.
+  const [at, setAt] = useState<{ x: number; y: number } | null>(null)
+  if (!isPending && !ranges) return <>{children}</>
+  const show = (el: HTMLElement) => {
+    const rect = el.getBoundingClientRect()
+    setAt({ x: Math.min(rect.left, window.innerWidth - 272), y: rect.top })
+  }
   return (
-    <span className="group/blame relative inline-block">
+    <span
+      className="relative inline-block"
+      onMouseEnter={(e) => show(e.currentTarget)}
+      onMouseLeave={() => setAt(null)}
+      onFocus={(e) => show(e.currentTarget)}
+      onBlur={() => setAt(null)}
+    >
       <span className="cursor-default underline decoration-dotted decoration-muted-foreground/40 underline-offset-2">
         {children}
       </span>
       <span
         role="tooltip"
-        className="invisible absolute bottom-full left-1/2 z-20 mb-1 w-64 -translate-x-1/2 rounded-md border bg-popover p-2 text-left font-sans text-xs shadow-lg group-hover/blame:visible group-focus-within/blame:visible"
+        style={at ? { left: at.x, top: at.y - 6 } : undefined}
+        className={`fixed z-50 w-64 -translate-y-full rounded-md border bg-popover p-2 text-left font-sans text-xs shadow-overlay ${at ? "block" : "hidden"}`}
       >
         {isPending ? (
           <Skeleton className="h-8 w-full" />

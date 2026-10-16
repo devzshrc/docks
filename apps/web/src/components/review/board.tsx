@@ -110,7 +110,7 @@ export function ReviewBoard({
               key={lane.id}
               aria-label={lane.title}
               spacing="sm"
-              className="self-start w-[80vw] max-w-sm shrink-0 snap-start gap-3 rounded-md border-0 bg-background-tertiary-default p-3 shadow-none md:w-auto md:max-w-none"
+              className="w-[80vw] max-w-sm shrink-0 snap-start gap-3 rounded-md border-0 bg-background-tertiary-default p-3 shadow-none md:w-auto md:max-w-none"
             >
               <FrameHeader className="flex-row items-center justify-between gap-2 px-1 py-1">
                 <FrameTitle className="flex items-center gap-2 font-medium">
