@@ -856,13 +856,11 @@ function DataCard({
   );
 
   return (
-    <Card className="border-destructive/40">
+    <>
+    <Card>
       <CardHeader>
-        <CardTitle>Data</CardTitle>
-        <CardDescription>
-          Export everything this workspace stores, or delete the workspace and
-          all its data.
-        </CardDescription>
+        <CardTitle>Export</CardTitle>
+        <CardDescription>Download everything this workspace stores as JSON.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
@@ -879,7 +877,16 @@ function DataCard({
             </p>
           )}
         </div>
-        {canDelete && (
+      </CardContent>
+    </Card>
+    {/* Irreversible actions live alone, at the very end, behind a typed confirmation. */}
+    {canDelete && (
+      <Card className="border-destructive/40">
+        <CardHeader>
+          <CardTitle className="text-destructive">Danger zone</CardTitle>
+          <CardDescription>Deleting the workspace removes its members, repositories, settings and history for everyone.</CardDescription>
+        </CardHeader>
+        <CardContent>
           <form
             className="space-y-2"
             onSubmit={(e) => {
@@ -915,9 +922,10 @@ function DataCard({
               <p className="text-destructive text-sm">{errorMessage(remove.error)}</p>
             )}
           </form>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    )}
+    </>
   );
 }
 

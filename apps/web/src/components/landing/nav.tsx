@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppIcon } from "@/components/app-icon";
+import { useSession } from "@/lib/auth-client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cx } from "@/utils/cx";
 
@@ -17,6 +18,7 @@ const link =
 
 export function LandingNav({ onStart }: { onStart: () => void }) {
   const [scrolled, setScrolled] = useState(false);
+  const signedIn = Boolean(useSession().data?.user);
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 8);
     on();
@@ -49,10 +51,19 @@ export function LandingNav({ onStart }: { onStart: () => void }) {
         </ul>
         <div className="flex items-center justify-end gap-5">
           <ThemeToggle className="bg-none bg-transparent text-[var(--l-ink-2)] shadow-none hover:bg-[var(--l-line)] hover:text-[var(--l-ink)]" />
-          <a href="/login" className={link}>Sign in</a>
-          <button type="button" onClick={onStart} className="l-btn l-btn-dark h-9 px-4 text-[14px]">
-            Start free
-          </button>
+          {/* Signed-in visitors get a way back into the app, not a sign-up pitch. */}
+          {signedIn ? (
+            <a href="/review" className="l-btn l-btn-dark h-9 px-4 text-[14px]">
+              Open Docks
+            </a>
+          ) : (
+            <>
+              <a href="/login" className={link}>Sign in</a>
+              <button type="button" onClick={onStart} className="l-btn l-btn-dark h-9 px-4 text-[14px]">
+                Start free
+              </button>
+            </>
+          )}
         </div>
       </nav>
     </header>

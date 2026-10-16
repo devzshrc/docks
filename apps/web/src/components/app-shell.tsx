@@ -12,7 +12,6 @@ import {
   RiSettings3Line,
   RiUserAddLine,
   RiWallet3Line,
-  RiNotification3Line,
 } from "@remixicon/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@tanstack/react-query";
@@ -163,7 +162,9 @@ function ShellFrame({
   const pathname = usePathname();
   const router = useRouter();
   const trpc = useTRPC();
-  const { workspace } = useWorkspace();
+  const { workspace, isPending: workspacePending, isError: workspaceError } = useWorkspace();
+  // Before a workspace exists, every nav item leads to an empty page: keep the person on setup.
+  const setup = !workspacePending && !workspaceError && !workspace;
   const settings = useWorkspaceSettings(workspace?.id);
   const billing = useQuery({
     ...trpc.billing.status.queryOptions({ workspaceId: workspace?.id ?? "" }),
@@ -279,21 +280,14 @@ function ShellFrame({
       <SidebarProvider
         style={{ "--sidebar-width": "15.875rem" } as React.CSSProperties}
       >
-        <Sidebar className="border-sidebar-border">
+        {!setup && <Sidebar className="border-sidebar-border">
           <SidebarHeader className="border-sidebar-border bg-sidebar-accent gap-0 border-b p-3">
             <Link
               href="/review"
               className="flex items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               <AppIcon className="size-8 shrink-0" />
-              <span className="grid min-w-0 gap-1 leading-none">
-                <span className="truncate text-sm font-medium">
-                  {workspace?.name ?? "Docks"}
-                </span>
-                <span className="text-subtle truncate text-xs">
-                  Code review workspace
-                </span>
-              </span>
+              <span className="truncate text-sm font-medium">{workspace?.name ?? "Docks"}</span>
             </Link>
           </SidebarHeader>
           <SidebarContent className="gap-0">
@@ -368,14 +362,14 @@ function ShellFrame({
             )}
           </SidebarFooter>
           <SidebarRail />
-        </Sidebar>
+        </Sidebar>}
         <SidebarInset className="min-w-0">
           <header className="bg-background/85 sticky top-0 z-20 shrink-0 backdrop-blur-md">
             <div className="flex h-[58px] items-center gap-2 px-4 md:px-5">
-              <SidebarTrigger className="text-muted-foreground -ml-1 rounded-full" />
+              {setup ? <AppIcon className="size-7" /> : <SidebarTrigger className="text-muted-foreground -ml-1 rounded-full" />}
               <div className="flex min-w-0 flex-1 items-center gap-2.5">
                 <h1 className="min-w-0 truncate text-base leading-none font-medium">
-                  {inSettings ? "Settings" : titleFor(pathname, title)}
+                  {setup ? "Set up Docks" : inSettings ? "Settings" : titleFor(pathname, title)}
                 </h1>
               </div>
               <div className="flex items-center gap-1.5">
@@ -392,24 +386,6 @@ function ShellFrame({
                   }
                 >
                   <HugeiconsIcon icon={Search01Icon} size={14} aria-hidden />
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="icon-sm"
-                  className="relative hidden sm:inline-flex"
-                >
-                  <Link
-                    href="/inbox"
-                    aria-label={
-                      inbox.data ? `Inbox, ${inbox.data} unread` : "Inbox"
-                    }
-                  >
-                    <RiNotification3Line aria-hidden />
-                    {(inbox.data ?? 0) > 0 && (
-                      <span className="bg-danger ring-background absolute top-[7px] right-[8px] size-[5px] rounded-full ring-2" />
-                    )}
-                  </Link>
                 </Button>
                 <NewIssueButton />
                 <ThemeToggle />

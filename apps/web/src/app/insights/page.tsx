@@ -70,19 +70,19 @@ function Insights({ workspaceId }: { workspaceId: string }) {
               },
               { label: "Opened to merged", value: fmt(data.data.cycleTime.medianHours), sub: `median · ${data.data.cycleTime.sample} merged` },
               { label: "PRs opened", value: String(data.data.opened), sub: `${data.data.unreviewed} without a review` },
-              { label: "PRs merged", value: String(data.data.merged) },
+              { label: "PRs merged", value: String(data.data.merged), sub: `${data.data.opened ? Math.round((data.data.merged / data.data.opened) * 100) : 0}% of opened` },
             ]}
           />
 
           <section className="grid gap-4 md:grid-cols-2">
-            <Panel title="Merged per week" description="Last 12 weeks">
+            <Panel title="Merged per week" description="Weekly trend, always the last 12 weeks">
               <TrendChart
                 rows={data.data.trend.map((w) => ({ label: weekLabel(w.week), value: w.merged }))}
                 label="PRs merged"
                 ariaLabel="Line chart of pull requests merged per week over the last 12 weeks"
               />
             </Panel>
-            <Panel title="Time to first review" description="Median per week">
+            <Panel title="Time to first review" description="Weekly median, always the last 12 weeks">
               <TrendChart
                 rows={data.data.trend.map((w) => ({ label: weekLabel(w.week), value: w.medianHoursToFirstReview }))}
                 label="Median hours"
@@ -115,7 +115,17 @@ function Insights({ workspaceId }: { workspaceId: string }) {
             </dl>
           </Panel>
 
-          {data.data.repos.length > 0 && (
+          {data.data.repos.length === 1 && (
+            // One bar filling the whole panel looks alarming and compares nothing; say it instead.
+            <Panel title="Time to first review by repository" description="Median time to first review">
+              <p className="text-sm">
+                <span className="font-medium">{data.data.repos[0]!.repo}</span> gets a first review in{" "}
+                <span className="font-medium tabular-nums">{fmt(data.data.repos[0]!.medianHoursToFirstReview ?? 0)}</span> on median across{" "}
+                {data.data.repos[0]!.prs} PRs. Rankings appear once more repositories are enabled.
+              </p>
+            </Panel>
+          )}
+          {data.data.repos.length > 1 && (
             <Panel title="Slowest repositories" description="Median time to first review">
               <RankedBars
                 rows={data.data.repos.map((r) => ({ name: r.repo, value: r.medianHoursToFirstReview ?? 0, note: `${r.prs} PRs` }))}

@@ -137,6 +137,20 @@ function GuidedReviewContent({
   // Phones: PR details and the file list start folded so the diff is one scroll away.
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [filesOpen, setFilesOpen] = useState(false);
+  // Focus mode gives the diff the full width; remembered per device.
+  const [focus, setFocus] = useState(false);
+  useEffect(() => {
+    try {
+      setFocus(localStorage.getItem("review:focus") === "1");
+    } catch {}
+  }, []);
+  const toggleFocus = () =>
+    setFocus((f) => {
+      try {
+        localStorage.setItem("review:focus", f ? "0" : "1");
+      } catch {}
+      return !f;
+    });
   const [mode, setModeState] = useState<"unified" | "split">("unified");
   useEffect(() => {
     try {
@@ -516,8 +530,8 @@ function GuidedReviewContent({
         </div>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_260px]">
-        <aside className="order-1 space-y-5 rounded-2xl border border-separator-border bg-background-primary-default p-4 lg:col-start-1 lg:row-span-2 lg:sticky lg:top-20 lg:self-start xl:row-span-1">
+      <div className={cn("grid gap-5", !focus && "lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_260px]")}>
+        <aside className="order-1 space-y-5 rounded-2xl border border-separator-border bg-background-primary-default p-4 lg:col-start-1 lg:row-span-2 lg:sticky lg:top-20 lg:self-start xl:row-span-1" hidden={focus}>
           <div>
             <ShadcnButton
               variant="row"
@@ -560,23 +574,18 @@ function GuidedReviewContent({
           </div>
           <LinkedIssues repo={repo} number={number} />
           <FollowUps repo={repo} number={number} />
-          <div className="hidden lg:block">
-            <Checklist
-              items={checklistItems}
-              storageKey={`checklist:${repo}#${number}@${pr.headSha}`}
-            />
-          </div>
         </aside>
 
         <details
           open
-          className="group/context order-2 min-w-0 self-start rounded-2xl surface-raised lg:col-start-2 lg:row-start-1 xl:order-3 xl:col-start-3 xl:row-span-2 xl:sticky xl:top-20"
+          hidden={focus}
+          className="group/context order-4 min-w-0 self-start rounded-2xl surface-raised lg:order-2 lg:col-start-2 lg:row-start-1 xl:order-3 xl:col-start-3 xl:row-span-2 xl:sticky xl:top-20"
         >
           <summary className="flex cursor-pointer items-center justify-between gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none">
             Review context
             <RiArrowDownSLine aria-hidden className="size-4 text-subtle transition-transform duration-200 group-open/context:rotate-180" />
           </summary>
-          <ScrollFade className="grid gap-4 px-4 pb-4 xl:max-h-[calc(100svh-10rem)]">
+          <ScrollFade className="grid gap-4 px-4 pb-4 xl:max-h-[calc(100svh-13rem)]">
             {pr.state === "open" && files.length > 0 && (
               <GuidePanel
                 repo={repo}
@@ -597,7 +606,7 @@ function GuidedReviewContent({
             )}
           </ScrollFade>
         </details>
-        <div className="order-3 min-w-0 space-y-4 lg:col-start-2 lg:row-start-2 xl:order-2 xl:row-start-1">
+        <div className={cn("order-2 min-w-0 space-y-4 lg:order-3 xl:order-2", !focus && "lg:col-start-2 lg:row-start-2 xl:row-start-1")}>
           {files.length > 0 && (
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <div
@@ -682,6 +691,16 @@ function GuidedReviewContent({
                 </Link>
               )}
               <FileFinder files={files} />
+              <ShadcnButton
+                variant="ghost"
+                size="xs"
+                type="button"
+                aria-pressed={focus}
+                onClick={toggleFocus}
+                className="text-muted-foreground hover:text-foreground hidden h-7 px-2 lg:inline-flex"
+              >
+                {focus ? "Show panels" : "Focus diff"}
+              </ShadcnButton>
             </div>
           )}
           {visible.map((f) => (
@@ -705,7 +724,8 @@ function GuidedReviewContent({
               onViewedChange={(v) => setViewed(f.filename, v)}
             />
           ))}
-          <div className="pt-2 lg:hidden">
+          {/* Sits right above the verdict, where it's actually answered. */}
+          <div className="pt-2">
             <Checklist
               items={checklistItems}
               storageKey={`checklist:${repo}#${number}@${pr.headSha}`}
@@ -740,6 +760,17 @@ function GuidedReviewContent({
               >
                 Next unviewed ↓
               </ShadcnButton>
+              {pr.state === "open" && data.data.canAct && (
+                <ShadcnButton
+                  size="xs"
+                  variant="outline"
+                  type="button"
+                  onClick={() => document.getElementById("review-actions")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                  className="h-7 px-3"
+                >
+                  Review
+                </ShadcnButton>
+              )}
             </>
           ) : (
             <>

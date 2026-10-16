@@ -1,6 +1,5 @@
 "use client";
 import { errorMessage } from "@/lib/error-message";
-import { RiArrowDownSLine } from "@remixicon/react";
 import { PersonalReviewInbox } from "@/components/review/personal-inbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import {
@@ -323,15 +322,11 @@ export default function Page() {
       {workspace ? (
         <div className="flex flex-col gap-8">
           <PersonalReviewInbox key={workspace.id} workspaceId={workspace.id} />
-          <details className="group rounded-xl bg-card shadow-card">
-            <summary className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none">
-              Activity notifications
-              <RiArrowDownSLine aria-hidden className="size-4 text-subtle transition-transform duration-200 ease-power3-out group-open:rotate-180" />
-            </summary>
-            <div className="animate-in fade-in slide-in-from-top-1 px-4 pt-1 pb-4 duration-200">
-              <Inbox key={workspace.id} workspaceId={workspace.id} />
-            </div>
-          </details>
+          {/* Everything that needs you lives on this one page; activity is part of it, not hidden behind a toggle. */}
+          <section aria-labelledby="activity-heading" className="flex flex-col gap-3">
+            <h2 id="activity-heading" className="text-sm font-medium">Activity</h2>
+            <Inbox key={workspace.id} workspaceId={workspace.id} />
+          </section>
         </div>
       ) : (
         <p>Select a workspace.</p>

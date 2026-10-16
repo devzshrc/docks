@@ -1,6 +1,6 @@
 "use client";
 
-import { RiAddLine, RiSearchLine, RiTimeLine, RiUserAddLine } from "@remixicon/react";
+import { RiSearchLine, RiTimeLine, RiUserAddLine } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -126,26 +126,7 @@ function PersonCard({ p, scale }: { p: Person; scale: number }) {
   );
 }
 
-function InviteTile({ onClick }: { onClick: () => void }) {
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={onClick}
-        className="group grid h-full min-h-[172px] w-full place-items-center rounded-xl border border-dashed border-line-strong text-sm text-muted-foreground transition-[background-color,border-color,color] duration-200 hover:border-primary/40 hover:bg-primary/[0.03] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none"
-      >
-        <span className="flex flex-col items-center gap-2">
-          <span className="grid size-9 place-items-center rounded-full bg-card shadow-control transition-transform duration-200 ease-power3-out group-hover:scale-110 group-hover:rotate-90">
-            <RiAddLine className="size-4" />
-          </span>
-          Invite people
-        </span>
-      </button>
-    </li>
-  );
-}
-
-function Summary({ people, onInvite }: { people: Person[]; onInvite: () => void }) {
+function Summary({ people, viewers, onInvite }: { people: Person[]; viewers: number; onInvite: () => void }) {
   const open = people.reduce((n, p) => n + p.openReviews, 0);
   const busiest = [...people].sort((a, b) => b.openReviews - a.openReviews)[0];
   const atLimit = people.filter((p) => p.overLimit).length;
@@ -181,6 +162,11 @@ function Summary({ people, onInvite }: { people: Person[]; onInvite: () => void 
             {atLimit > 0 && <span className="text-warning"> {atLimit} at their limit.</span>}
             {away > 0 && ` ${away} away.`}
           </p>
+          {viewers > 0 && (
+            <p className="text-xs text-subtle">
+              {viewers} read-only {viewers === 1 ? "viewer isn't" : "viewers aren't"} shown, since viewers don&apos;t review.
+            </p>
+          )}
         </div>
       </div>
       <Button onClick={onInvite} size="lg" className="shrink-0">
@@ -230,10 +216,10 @@ function Load({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="grid gap-5">
-      <Summary people={all} onInvite={() => setInviting(true)} />
+      <Summary people={all} viewers={(people.data ?? []).length - all.length} onInvite={() => setInviting(true)} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Tabs value={filter} onValueChange={setFilter}>
+        {filters.length > 1 ? <Tabs value={filter} onValueChange={setFilter}>
           <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <TabsList aria-label="Filter people">
               {filters.map((f) => (
@@ -244,7 +230,7 @@ function Load({ workspaceId }: { workspaceId: string }) {
               ))}
             </TabsList>
           </div>
-        </Tabs>
+        </Tabs> : <span />}
         <label className="relative w-full sm:w-56">
           <span className="sr-only">Search people</span>
           <RiSearchLine className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-subtle" aria-hidden />
@@ -264,7 +250,6 @@ function Load({ workspaceId }: { workspaceId: string }) {
           {visible.map((p) => (
             <PersonCard key={p.userId} p={p} scale={scale} />
           ))}
-          {filter === "all" && !search && <InviteTile onClick={() => setInviting(true)} />}
         </ul>
       )}
 

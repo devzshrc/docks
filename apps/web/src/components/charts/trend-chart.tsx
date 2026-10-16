@@ -207,7 +207,7 @@ export function TrendChart({
           />
           <Area
             dataKey="value"
-            type="monotoneX"
+            type="linear"
             stroke="var(--color-value)"
             strokeWidth={2}
             fill={`url(#${fillId})`}

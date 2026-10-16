@@ -97,9 +97,22 @@ function Board({ workspaceId }: { workspaceId: string }) {
     <div className="space-y-6">
       <Greeting workspaceId={workspaceId} cards={data?.cards ?? []} />
       <ShellFilters>
+        {/* Saved views first: the common questions are one click, everything else sits behind Filters. */}
+        <div role="group" aria-label="Views" className="flex items-center gap-1">
+          {(
+            [
+              ["All", !filters.mine && !filters.waitingOnMe && !filters.priority, { mine: false, waitingOnMe: false, priority: false }],
+              ["Waiting on me", filters.waitingOnMe, { mine: false, waitingOnMe: true, priority: false }],
+              ["Mine", filters.mine, { mine: true, waitingOnMe: false, priority: false }],
+              ["Priority", filters.priority, { mine: false, waitingOnMe: false, priority: true }],
+            ] as const
+          ).map(([label, on, next]) => (
+            <ToggleChip key={label} on={on} label={label} onChange={() => set(next)} />
+          ))}
+        </div>
         <ToolbarSearch
           ref={search}
-          placeholder="Search ( / )"
+          placeholder="Search"
           aria-label="Search pull requests"
           value={filters.q}
           onChange={(e) => set({ q: e.target.value })}
@@ -109,7 +122,7 @@ function Board({ workspaceId }: { workspaceId: string }) {
           type="button"
           aria-expanded={filtersOpen}
           onClick={() => setFiltersOpen((o) => !o)}
-          className="tex-neutral flex h-8 items-center gap-2 rounded-full px-3 text-xs md:hidden"
+          className="text-muted-foreground hover:text-foreground flex h-8 items-center gap-2 rounded-full border px-3 text-xs"
         >
           Filters
           {activeCount > 0 && (
@@ -130,10 +143,10 @@ function Board({ workspaceId }: { workspaceId: string }) {
         <div
           className={cn(
             "animate-in fade-in contents duration-150",
-            !filtersOpen && "max-md:hidden",
+            !filtersOpen && "hidden",
           )}
         >
-          <FilterSelect
+          {(data?.repos.length ?? 0) > 1 && <FilterSelect
             label="Repository"
             value={String(filters.repoIds[0] ?? "")}
             onChange={(v) => set({ repoIds: v ? [Number(v)] : [] })}
@@ -144,7 +157,7 @@ function Board({ workspaceId }: { workspaceId: string }) {
                 label: r.fullName,
               })) ?? []),
             ]}
-          />
+          />}
           <FilterSelect
             label="Author"
             value={filters.author ?? ""}
@@ -198,25 +211,6 @@ function Board({ workspaceId }: { workspaceId: string }) {
               { value: "biggest", label: "Biggest first" },
               { value: "risk", label: "Most at risk" },
             ]}
-          />
-          <span
-            className="bg-hairline mx-1 hidden h-5 w-px md:block"
-            aria-hidden
-          />
-          <ToggleChip
-            on={filters.mine}
-            label="Mine"
-            onChange={(v) => set({ mine: v })}
-          />
-          <ToggleChip
-            on={filters.waitingOnMe}
-            label="Waiting on me"
-            onChange={(v) => set({ waitingOnMe: v })}
-          />
-          <ToggleChip
-            on={filters.priority}
-            label="Priority"
-            onChange={(v) => set({ priority: v })}
           />
           <ToggleChip
             on={filters.includeDrafts}
