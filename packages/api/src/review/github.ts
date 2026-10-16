@@ -651,6 +651,23 @@ export function userClient(getToken: () => Promise<string>) {
         method: "DELETE",
         body: JSON.stringify({ reviewers: logins }),
       }),
+    /** Rewrite the PR description, as the person (GitHub allows the author and anyone with write access). */
+    updateBody: (repo: string, n: number, body: string) =>
+      call(`/repos/${repo}/pulls/${n}`, { method: "PATCH", body: JSON.stringify({ body }) }),
+    /** Ask GitHub to merge on its own once every required check and review passes. */
+    enableAutoMerge: async (repo: string, n: number, method: "merge" | "squash" | "rebase") => {
+      const [owner, name] = repo.split("/");
+      const found = await graphql<{ repository: { pullRequest: { id: string } | null } | null }>(
+        "query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){id}}}",
+        { owner, name, number: n },
+      );
+      const id = found.repository?.pullRequest?.id;
+      if (!id) throw new Error("Pull request not found on GitHub");
+      await graphql(
+        "mutation($id:ID!,$method:PullRequestMergeMethod!){enablePullRequestAutoMerge(input:{pullRequestId:$id,mergeMethod:$method}){clientMutationId}}",
+        { id, method: method.toUpperCase() },
+      );
+    },
     merge: (
       repo: string,
       n: number,

@@ -1,4 +1,6 @@
 "use client";
+import type { AskDetail } from "@/components/review/ask-panel";
+import { RISK_LABEL, formattingOnly, riskSummary, riskyLines } from "@/lib/review-signals";
 import { errorMessage } from "@/lib/error-message";
 import { NativeCheckbox as ShadcnCheckbox } from "@/components/ui-compat/native-checkbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
@@ -74,6 +76,14 @@ const ROW = {
 const VIRTUAL_AT = 300;
 /** Past this many changed lines a diff waits for an explicit click before it renders at all. */
 const LARGE_DIFF = 8000;
+/** Amber edge on lines that deserve a careful read (see lib/review-signals). */
+const RISK_ROW = "shadow-[inset_3px_0_0_var(--color-amber-500)]";
+/** One-click questions about a line, answered by the PR's Ask panel with this line as context. */
+const ASK_PRESETS: [string, (code: string, path: string, line: number) => string][] = [
+  ["Explain", (code, path, line) => `Explain what ${path}:${line} does and why it changed: \`${code.slice(0, 160)}\``],
+  ["Who uses this?", (code, path, line) => `Where is the code at ${path}:${line} called or used, and could this change break any caller? \`${code.slice(0, 160)}\``],
+  ["Risks?", (code, path, line) => `What could go wrong with ${path}:${line}? Think about edge cases, security and performance. \`${code.slice(0, 160)}\``],
+];
 const TIER_LABEL = {
   core: null,
   config: "config",
@@ -240,8 +250,27 @@ function Composer({
             {l}
           </ShadcnButton>
         ))}
+        <span className="ml-auto flex items-center gap-1">
+          {ASK_PRESETS.map(([label, q]) => (
+            <ShadcnButton
+              variant="ghost"
+              key={label}
+              type="button"
+              className="text-muted-foreground hover:bg-muted rounded-md px-1.5 py-0.5 text-[11px]"
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent<AskDetail>("review-ask", {
+                    detail: { path, line, question: q(lineText.trim(), path, line) },
+                  }),
+                )
+              }
+            >
+              {label}
+            </ShadcnButton>
+          ))}
+        </span>
         {!startLine && (
-          <span className="text-muted-foreground ml-auto text-[11px]">
+          <span className="text-muted-foreground basis-full text-[11px]">
             Shift-click another line number to select a range
           </span>
         )}
@@ -569,7 +598,10 @@ export function FileDiff({
   branch: string;
 }) {
   const trpc = useTRPC();
-  const [open, setOpen] = useState(file.tier !== "noise" && !file.viewed);
+  // Noise and whitespace-only files start folded: they rarely need reading.
+  const [open, setOpen] = useState(
+    () => file.tier !== "noise" && !file.viewed && !(file.patch && formattingOnly(parsePatch(file.patch))),
+  );
   const [everOpen, setEverOpen] = useState(open);
   useEffect(() => {
     if (open) setEverOpen(true);
@@ -617,6 +649,13 @@ export function FileDiff({
     [file.patch],
   );
   const symbols = useMemo(() => changedSymbols(lines).slice(0, 12), [lines]);
+  const risky = useMemo(() => riskyLines(file.filename, lines), [file.filename, lines]);
+  const risks = useMemo(() => riskSummary(risky), [risky]);
+  const formatting = useMemo(() => formattingOnly(lines), [lines]);
+  const riskMark = (line?: DiffLine) => {
+    const kind = line && risky.get(line);
+    return kind ? { className: RISK_ROW, title: `Look closely: ${RISK_LABEL[kind]}` } : {};
+  };
   const pairs = useMemo(() => pairChanges(lines), [lines]);
   const content = useQuery({
     ...trpc.review.fileContent.queryOptions({
@@ -958,8 +997,10 @@ export function FileDiff({
     return (
       <>
         <tr
+          title={riskMark(line).title}
           className={cn(
             ROW[line.kind],
+            riskMark(line).className,
             line.extra &&
               "text-muted-foreground bg-muted/30 animate-in fade-in duration-300",
           )}
@@ -1023,8 +1064,10 @@ export function FileDiff({
             className={cn(
               "w-1/2 border-r px-2 whitespace-pre",
               left && ROW[left.kind === "ctx" ? "ctx" : "del"],
+              riskMark(left).className,
               left?.extra && "text-muted-foreground bg-muted/30",
             )}
+            title={riskMark(left).title}
           >
             {left && (
               <Code
@@ -1045,8 +1088,10 @@ export function FileDiff({
             className={cn(
               "w-1/2 px-2 whitespace-pre",
               right && ROW[right.kind === "ctx" ? "ctx" : "add"],
+              riskMark(right).className,
               right?.extra && "text-muted-foreground bg-muted/30",
             )}
+            title={riskMark(right).title}
           >
             {right && (
               <Code
@@ -1191,6 +1236,17 @@ export function FileDiff({
           <span className="truncate font-mono text-xs">{file.filename}</span>
         </ShadcnButton>
         {tier && <Badge variant="outline">{tier}</Badge>}
+        {formatting && <Badge variant="outline">formatting only</Badge>}
+        {risks.slice(0, 1).map((k) => (
+          <Badge
+            key={k}
+            variant="outline"
+            title={`${[...risky.values()].filter((v) => v === k).length} highlighted lines`}
+            className="border-amber-500/40 text-amber-700 dark:text-amber-300"
+          >
+            {RISK_LABEL[k]}
+          </Badge>
+        ))}
         {file.changedSinceViewed && (
           <Badge variant="secondary">changed since you viewed</Badge>
         )}

@@ -873,6 +873,29 @@ export const reviewRouter = router({
       await refreshPr(repoRow.id, input.number);
       return { merged: result.merged };
     }),
+  /** Set the PR description (the author accepting a suggested description from the review guide). */
+  updateDescription: protectedProcedure
+    .input(pr.extend({ body: z.string().min(1).max(20_000) }))
+    .mutation(async ({ ctx, input }) => {
+      const repoRow = await repoForAction(ctx.user.id, input.repo, "review.act");
+      await githubAs(ctx.user.id).updateBody(repoRow.fullName, input.number, input.body).catch(githubFailure);
+      await audit(repoRow.workspaceId, ctx.user.id, "review.description", `${repoRow.fullName}#${input.number}`);
+      await refreshPr(repoRow.id, input.number);
+      return { ok: true };
+    }),
+  /** Turn on GitHub auto-merge: GitHub merges by itself once checks and required reviews pass. */
+  autoMerge: protectedProcedure
+    .input(pr.extend({ method: z.enum(["merge", "squash", "rebase"]).default("squash") }))
+    .mutation(async ({ ctx, input }) => {
+      const repoRow = await repoForAction(ctx.user.id, input.repo, "review.act");
+      await githubAs(ctx.user.id)
+        .enableAutoMerge(repoRow.fullName, input.number, input.method)
+        .catch(githubFailure);
+      await audit(repoRow.workspaceId, ctx.user.id, "review.auto_merge", `${repoRow.fullName}#${input.number}`, {
+        method: input.method,
+      });
+      return { enabled: true };
+    }),
   /** Drop the cached guide and queue a fresh one; at most once a minute per PR. */
   regenerateGuide: protectedProcedure
     .input(pr)

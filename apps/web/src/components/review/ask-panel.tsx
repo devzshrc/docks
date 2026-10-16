@@ -1,11 +1,13 @@
 "use client";
 import { errorMessage } from "@/lib/error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { useNewIssue } from "@/components/new-issue/provider";
 import { useTRPC } from "@/trpc/react";
+
+export type AskDetail = { path: string; line: number; question: string };
 
 export function AskPanel({ repo, number }: { repo: string; number: number }) {
   const trpc = useTRPC();
@@ -35,6 +37,24 @@ export function AskPanel({ repo, number }: { repo: string; number: number }) {
       },
     }),
   );
+  // "Ask" from a diff line (file-diff dispatches review-ask) opens the panel and asks straight away.
+  const askRef = useRef(ask);
+  askRef.current = ask;
+  useEffect(() => {
+    const onAsk = (e: Event) => {
+      const d = (e as CustomEvent<AskDetail>).detail;
+      setOpen(true);
+      setQuestion("");
+      setPath(d.path);
+      setLine(String(d.line));
+      askRef.current.mutate({ repo, number, question: d.question, path: d.path, line: d.line, knowledgeIds: [] });
+      requestAnimationFrame(() =>
+        document.getElementById("ask-panel")?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+      );
+    };
+    window.addEventListener("review-ask", onAsk);
+    return () => window.removeEventListener("review-ask", onAsk);
+  }, [repo, number]);
   if (!open)
     return (
       <Button variant="secondary" onClick={() => setOpen(true)}>
@@ -43,6 +63,7 @@ export function AskPanel({ repo, number }: { repo: string; number: number }) {
     );
   return (
     <section
+      id="ask-panel"
       className="flex flex-col gap-3 rounded-3xl border border-border-button-default p-4"
       aria-label="Ask about this PR"
     >

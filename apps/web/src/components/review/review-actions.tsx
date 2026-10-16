@@ -7,7 +7,17 @@ import { NativeSelect as ShadcnSelect } from "@/components/ui-compat/native-sele
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { commentLabel } from "@/lib/diff";
 
 import { MentionTextarea } from "@/components/mention-textarea";
 import type { PendingComment } from "@/components/review/file-diff";
@@ -25,6 +35,13 @@ const MERGE_STATE: Record<string, string> = {
   dirty: "Has merge conflicts. Resolve them on GitHub or locally.",
   behind: "Behind the base branch. Update it first.",
   draft: "Still a draft",
+};
+
+type ApproveMode = "plain" | "nits" | "auto";
+const APPROVE_LABEL: Record<ApproveMode, string> = {
+  plain: "Approve",
+  nits: "Approve with nits",
+  auto: "Approve and auto-merge",
 };
 
 /** Approve, request changes, comment, merge (§5.3). */
@@ -97,6 +114,10 @@ export function ReviewActions({
       onSuccess: (_data, vars) => {
         setBody((current) => (current === vars.body ? "" : current));
         onSubmitted?.(vars.comments ?? []);
+        if (vars.event === "APPROVE" && autoAfterApprove.current) {
+          autoAfterApprove.current = false;
+          autoMerge.mutate({ repo, number, method });
+        }
         void session.flush();
         const said =
           vars.event === "APPROVE"
@@ -163,7 +184,32 @@ export function ReviewActions({
       onSuccess: () => toast("Merged"),
     }),
   );
-  const busy = submit.isPending || merge.isPending;
+  // "Approve with nits" says the remaining comments are optional; "auto-merge" lets GitHub merge once checks pass.
+  const [approveMode, setApproveMode] = useState<ApproveMode>("plain");
+  const autoAfterApprove = useRef(false);
+  const autoMerge = useMutation(
+    trpc.review.autoMerge.mutationOptions({
+      onSuccess: () => toast("Auto-merge is on. GitHub merges once checks and required reviews pass.", "success"),
+      onError: (e) => setError(errorMessage(e)),
+    }),
+  );
+  const busy = submit.isPending || merge.isPending || autoMerge.isPending;
+
+  // The full form sits below the diff; once it's out of view, a compact verdict bar stays on screen.
+  const root = useRef<HTMLDivElement>(null);
+  const [offscreen, setOffscreen] = useState(false);
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setOffscreen(!e!.isIntersecting && e!.boundingClientRect.top > 0));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const blockingCount = pending.filter((c) => commentLabel(c.body) === "blocking").length;
+  const summary = pending.length
+    ? `${pending.length} comment${pending.length > 1 ? "s" : ""}${blockingCount ? ` · ${blockingCount} blocking` : ""}`
+    : null;
 
   if (!githubLogin || needsGithub) {
     return (
@@ -189,11 +235,35 @@ export function ReviewActions({
       setError("Inspect outdated comment locations first");
       return;
     }
-    submit.mutate({ repo, number, headSha, event, body, comments: pending });
+    let text = body;
+    if (event === "APPROVE" && approveMode === "nits")
+      text = `${body.trim() ? `${body.trim()}\n\n` : ""}Approved with nits: fine to merge once the non-blocking comments are addressed.`;
+    autoAfterApprove.current = event === "APPROVE" && approveMode === "auto";
+    submit.mutate({ repo, number, headSha, event, body: text, comments: pending });
   }
+  const approveLabel = APPROVE_LABEL[approveMode];
+  const scrollToForm = () => root.current?.scrollIntoView({ behavior: "smooth", block: "center" });
 
   return (
-    <div className="space-y-4 rounded-2xl border border-separator-border bg-background-primary-default p-5">
+    <div ref={root} className="space-y-4 rounded-2xl border border-separator-border bg-background-primary-default p-5">
+      {offscreen && !own && (
+        <div
+          role="region"
+          aria-label="Review verdict"
+          className="animate-in fade-in slide-in-from-bottom-2 fixed bottom-4 left-1/2 z-30 hidden -translate-x-1/2 items-center gap-2 rounded-xl border border-separator-border bg-background-primary-default p-2 text-sm shadow-overlay md:flex"
+        >
+          <span className="text-muted-foreground px-2 tabular-nums">{summary ?? "No comments yet"}</span>
+          <Button size="sm" disabled={busy} pending={submit.isPending && submit.variables?.event === "APPROVE"} onClick={() => send("APPROVE")}>
+            {approveLabel}
+          </Button>
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => (body.trim() || pending.length ? send("REQUEST_CHANGES") : scrollToForm())}>
+            Request changes
+          </Button>
+          <Button size="sm" variant="ghost" onClick={scrollToForm}>
+            Write summary ↓
+          </Button>
+        </div>
+      )}
       <section aria-label="Merge readiness" className="space-y-1 text-xs">
         <div className="flex items-center gap-2">
           <strong className="font-medium">Merge readiness</strong>
@@ -266,15 +336,50 @@ export function ReviewActions({
         aria-label="Review comment"
       />
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          size="sm"
-          disabled={busy || own}
-          title={own ? "You can't approve your own pull request" : undefined}
-          pending={submit.isPending && submit.variables?.event === "APPROVE"}
-          onClick={() => send("APPROVE")}
-        >
-          Approve
-        </Button>
+        <span className="inline-flex">
+          <Button
+            size="sm"
+            className="rounded-r-none"
+            disabled={busy || own}
+            title={own ? "You can't approve your own pull request" : undefined}
+            pending={submit.isPending && submit.variables?.event === "APPROVE"}
+            onClick={() => send("APPROVE")}
+          >
+            {approveLabel}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" className="rounded-l-none border-l border-white/25 px-2" disabled={busy || own} aria-label="Approval options">
+                ▾
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-72">
+              <DropdownMenuLabel>Approve how?</DropdownMenuLabel>
+              <DropdownMenuRadioGroup value={approveMode} onValueChange={(v) => setApproveMode(v as ApproveMode)}>
+                <DropdownMenuRadioItem value="plain">
+                  <span className="grid">
+                    <span>Approve</span>
+                    <span className="text-muted-foreground text-xs">Ready to merge as it is.</span>
+                  </span>
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="nits">
+                  <span className="grid">
+                    <span>Approve with nits</span>
+                    <span className="text-muted-foreground text-xs">Merge after the optional comments, no second review.</span>
+                  </span>
+                </DropdownMenuRadioItem>
+                {canMerge && (
+                  <DropdownMenuRadioItem value="auto">
+                    <span className="grid">
+                      <span>Approve and auto-merge</span>
+                      <span className="text-muted-foreground text-xs">GitHub merges once checks and required reviews pass.</span>
+                    </span>
+                  </DropdownMenuRadioItem>
+                )}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </span>
         <Button
           size="sm"
           variant="outline"
@@ -333,8 +438,7 @@ export function ReviewActions({
         )}
         {pending.length > 0 && (
           <span className="text-xs">
-            {pending.length} pending comment{pending.length > 1 ? "s" : ""} will
-            be sent with your review ·{" "}
+            {summary} will be sent with your review ·{" "}
             <ShadcnButton
               variant="ghost"
               type="button"

@@ -20,6 +20,7 @@ import {
   IconExternalLink,
   IconGitBranch,
 } from "@tabler/icons-react";
+import { reviewMinutes } from "@/lib/review-signals";
 import { Fragment, useEffect, useRef, useState } from "react";
 
 import { Count, DrawTick, flash, useJustBecame } from "@/components/motion";
@@ -33,6 +34,7 @@ import { AskPanel } from "@/components/review/ask-panel";
 import { FixWithAgent, OpenInPx0 } from "@/components/review/agent-handoff";
 import { FileFinder } from "@/components/review/file-finder";
 import { FileDiff, type PendingComment } from "@/components/review/file-diff";
+import { AuthorPreflight } from "@/components/review/author-preflight";
 import { GuidePanel } from "@/components/review/guide-panel";
 import { ReviewActions } from "@/components/review/review-actions";
 import { LabelsEditor } from "@/components/review/labels-editor";
@@ -134,6 +136,7 @@ function GuidedReviewContent({
       ),
     }));
   const [sinceOnly, setSinceOnly] = useState(false);
+  const sinceDefaulted = useRef(false);
   // Phones: PR details and the file list start folded so the diff is one scroll away.
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [filesOpen, setFilesOpen] = useState(false);
@@ -143,6 +146,15 @@ function GuidedReviewContent({
     try {
       setFocus(localStorage.getItem("review:focus") === "1");
     } catch {}
+  }, []);
+  // An inline "Ask" needs the context panel: leave focus mode and open it.
+  useEffect(() => {
+    const onAsk = () => {
+      setFocus(false);
+      document.getElementById("review-context")?.setAttribute("open", "");
+    };
+    window.addEventListener("review-ask", onAsk);
+    return () => window.removeEventListener("review-ask", onAsk);
   }, []);
   const toggleFocus = () =>
     setFocus((f) => {
@@ -167,6 +179,11 @@ function GuidedReviewContent({
   const since = useQuery(
     trpc.review.sinceLastReview.queryOptions({ repo, number }),
   );
+  useEffect(() => {
+    if (sinceDefaulted.current || !since.data?.files?.length) return;
+    sinceDefaulted.current = true;
+    setSinceOnly(true);
+  }, [since.data?.files?.length]);
   const refreshThreads = () =>
     Promise.all([
       queryClient.invalidateQueries(
@@ -335,6 +352,12 @@ function GuidedReviewContent({
       ? new Set(ready.steps[activeStep].files)
       : null;
   const newSince = since.data?.files ? new Set(since.data.files) : null;
+  // Coming back to a PR you already reviewed: show only what changed, and how your comments fared.
+  const mine = (threads.data?.threads ?? []).filter(
+    (t) => me && t.comments[0]?.author.toLowerCase() === me.toLowerCase(),
+  );
+  const addressed = mine.filter((t) => t.isResolved || t.isOutdated);
+  const stillOpen = mine.filter((t) => !t.isResolved && !t.isOutdated);
   const visible = files
     .filter((f) => !stepFiles || stepFiles.has(f.filename))
     .filter((f) => !sinceOnly || !newSince || newSince.has(f.filename));
@@ -361,7 +384,7 @@ function GuidedReviewContent({
         <ShadcnButton
           variant="outline"
           type="button"
-          className="bg-card animate-in fade-in slide-in-from-bottom-2 fixed bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-full text-xs shadow-lg"
+          className="bg-card animate-in fade-in slide-in-from-bottom-2 fixed bottom-20 left-1/2 z-30 -translate-x-1/2 rounded-full text-xs shadow-lg md:bottom-6 md:left-[calc(var(--sidebar-width,0px)+1.5rem)] md:translate-x-0"
           onClick={() => {
             const location = session.data.lastLocation;
             if (location && files.some((f) => f.filename === location.path)) {
@@ -398,6 +421,9 @@ function GuidedReviewContent({
                 <span className="text-success-text">+{pr.additions}</span>{" "}
                 <span className="text-danger-text">−{pr.deletions}</span>
                 <span className="text-text-3"> · {files.length} files</span>
+                <span className="text-text-3" title="Estimated from size, file types and skipping generated files">
+                  {" "}· about {reviewMinutes(files)} min to review
+                </span>
               </span>
               {blocking > 0 && (
                 <Badge variant="secondary" className="" data-tone="danger">
@@ -530,6 +556,16 @@ function GuidedReviewContent({
         </div>
       </header>
 
+      {pr.state === "open" && Boolean(me) && pr.author.toLowerCase() === me!.toLowerCase() && (
+        <AuthorPreflight
+          repo={repo}
+          number={number}
+          pr={pr}
+          files={files}
+          checks={checks}
+          guide={ready}
+        />
+      )}
       <div className={cn("grid gap-5", !focus && "lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_260px]")}>
         <aside className="order-1 space-y-5 rounded-2xl border border-separator-border bg-background-primary-default p-4 lg:col-start-1 lg:row-span-2 lg:sticky lg:top-20 lg:self-start xl:row-span-1" hidden={focus}>
           <div>
@@ -578,6 +614,7 @@ function GuidedReviewContent({
 
         <details
           open
+          id="review-context"
           hidden={focus}
           className="group/context order-4 min-w-0 self-start rounded-2xl surface-raised lg:order-2 lg:col-start-2 lg:row-start-1 xl:order-3 xl:col-start-3 xl:row-span-2 xl:sticky xl:top-20"
         >
@@ -630,6 +667,34 @@ function GuidedReviewContent({
                   </ShadcnButton>
                 ))}
               </div>
+              {since.data?.reviewedSha && (
+                <div role="status" className="bg-card basis-full rounded-xl border p-3 text-sm">
+                  <p className="font-medium">
+                    Welcome back.{" "}
+                    {since.data.files?.length
+                      ? `${since.data.files.length} file${since.data.files.length === 1 ? "" : "s"} changed since your review.`
+                      : "Nothing changed since your review."}
+                  </p>
+                  {mine.length > 0 && (
+                    <p className="text-muted-foreground">
+                      {addressed.length} of {mine.length} of your comments addressed
+                      {stillOpen.length > 0 ? ". Still open:" : ". All done."}
+                    </p>
+                  )}
+                  {stillOpen.length > 0 && (
+                    <ul className="mt-1.5 grid gap-1">
+                      {stillOpen.slice(0, 5).map((t) => (
+                        <li key={t.id} className="truncate">
+                          <a href={`#file-${t.path}`} className="hover:underline">
+                            <span className="font-mono text-xs">{t.path.split("/").pop()}{t.line ? `:${t.line}` : ""}</span>{" "}
+                            <span className="text-muted-foreground">{t.comments[0]?.body.slice(0, 90)}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
               {since.data?.files && since.data.files.length > 0 && (
                 <label className="flex items-center gap-1.5">
                   <ShadcnCheckbox
