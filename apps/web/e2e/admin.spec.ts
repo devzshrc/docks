@@ -47,11 +47,13 @@ test("anonymous and ordinary workspace owners cannot access administration", asy
 }) => {
   await page.goto("/admin");
   await expect(
-    page.getByRole("heading", { name: "Administration is protected" }),
+    page.getByRole("heading", { name: "Sign in to open administration" }),
   ).toBeVisible();
   const a = accounts();
   await login(page, a.memberEmail, a.password);
-  await expect(page.getByText("Not found", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "You don't have access to administration" }),
+  ).toBeVisible();
 });
 
 test("owner signs in with real 2FA, searches users, and revokes another session", async ({

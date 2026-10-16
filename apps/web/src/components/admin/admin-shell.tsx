@@ -153,29 +153,43 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </div>
       </div>
     );
-  if (access.error)
+  if (access.error) {
+    // Signed out: offer sign-in. Signed in without access: say so plainly and point back to the app.
+    const signedOut = (access.error as { data?: { code?: string } }).data?.code === "UNAUTHORIZED";
     return (
       <main className="mx-auto flex min-h-svh max-w-md flex-col justify-center gap-5 p-8">
         <span className="grid size-11 place-items-center rounded-xl bg-muted text-muted-foreground">
           <RiShieldKeyholeLine className="size-5" />
         </span>
         <div className="grid gap-2">
-          <h1 className="text-lg font-medium">You don't have access to administration</h1>
+          <h1 className="text-lg font-medium">
+            {signedOut ? "Sign in to open administration" : "You don't have access to administration"}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Administration is limited to Docks operators with two-factor authentication turned on. If you should have
-            access, turn on two-factor authentication in your account settings.
+            {signedOut
+              ? "Administration is for Docks operators. Sign in with an operator account that has two-factor authentication turned on."
+              : "Administration is limited to Docks operators with two-factor authentication turned on. If you should have access, turn on two-factor authentication in your account settings."}
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild>
-            <Link href="/review">Back to Docks</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/settings/account">Account settings</Link>
-          </Button>
+          {signedOut ? (
+            <Button asChild>
+              <Link href="/login?next=%2Fadmin">Sign in</Link>
+            </Button>
+          ) : (
+            <>
+              <Button asChild>
+                <Link href="/review">Back to Docks</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/settings/account">Account settings</Link>
+              </Button>
+            </>
+          )}
         </div>
       </main>
     );
+  }
 
   const active = activeFor(path);
   const detail = path !== active.path;
