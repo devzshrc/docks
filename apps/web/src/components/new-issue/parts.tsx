@@ -80,7 +80,7 @@ export function AssigneeChips({
             onClick={() => onToggle(p.login)}
             title={p.reasons.join(" · ") || p.name}
             className={cn(
-              "flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-xs transition-[color,background-color,border-color,transform] duration-150 active:scale-95",
+              "flex items-center gap-2 rounded border py-1 pr-3 pl-1 text-xs transition-[color,background-color,border-color,transform] duration-150 active:scale-95",
               on
                 ? "border-primary/30 bg-primary/10 text-primary-text"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -115,7 +115,7 @@ export function SimilarStrip({ repo, title }: { repo: string; title: string }) {
   if (!items.length) return null;
   return (
     <div
-      className="animate-in fade-in rounded-lg border border-amber-500/30 bg-amber-500/5 text-sm duration-200"
+      className="animate-in fade-in rounded-md border border-amber-500/30 bg-amber-500/5 text-sm duration-200"
       aria-live="polite"
     >
       <ShadcnButton
@@ -193,7 +193,7 @@ export function TraceOffer({
   if (dismissed || !fresh.length) return null;
   return (
     <div
-      className="animate-in fade-in slide-in-from-bottom-1 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm duration-200"
+      className="animate-in fade-in slide-in-from-bottom-1 flex flex-wrap items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm duration-200"
       aria-live="polite"
     >
       <span>
@@ -274,7 +274,7 @@ export function FilePicker({
         }}
         placeholder="Search files…"
         aria-label="Search files to reference"
-        className="bg-(--field) hover:bg-(--field-hover) h-8 w-full rounded-lg border px-3 text-sm outline-none"
+        className="bg-(--field) hover:bg-(--field-hover) h-8 w-full rounded-md border px-3 text-sm outline-none"
       />
       {res.data?.length === 0 && debounced.length >= 2 && (
         <p className="text-muted-foreground px-1 text-xs">No matching files.</p>

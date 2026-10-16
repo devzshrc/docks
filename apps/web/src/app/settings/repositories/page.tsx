@@ -57,7 +57,7 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
     );
   if (!repos.data.length) {
     return (
-      <div className="border border-separator-border bg-background-primary-default shadow-none rounded-xl">
+      <div className="border border-separator-border bg-background-primary-default shadow-none rounded-md">
         <EmptyPreview
           icon={RiGitRepositoryLine}
           hue="purple"
@@ -78,7 +78,7 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
       {setRepo.error && (
         <p className="text-destructive text-sm">{errorMessage(setRepo.error)}</p>
       )}
-      <div className="bg-muted/50 rounded-xl border p-0.75">
+      <div className="bg-muted/50 rounded-md border p-0.75">
         <div className="bg-card overflow-hidden rounded-[calc(var(--radius-xl)-4px)] border shadow-xs">
           <div className="overflow-x-auto">
             <Table>
@@ -137,7 +137,7 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
                     </TableCell>
                     <TableCell>
                       <ShadcnSelect
-                        className="bg-(--field) hover:bg-(--field-hover) h-8 rounded-lg border px-2 text-sm"
+                        className="bg-(--field) hover:bg-(--field-hover) h-8 rounded-md border px-2 text-sm"
                         aria-label={`Auto-assign reviewers for ${r.fullName}`}
                         value={r.autoAssign}
                         onChange={(e) =>

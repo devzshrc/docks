@@ -26,7 +26,7 @@ export function LinkedIssues({ repo, number }: { repo: string; number: number })
       <ul className="-mx-2 space-y-0.5">
         {linear.map((i) => (
           <li key={i.id}>
-            <a href={i.url} target="_blank" rel="noreferrer" className="hover:bg-muted/70 flex gap-2.5 rounded-lg px-2 py-2 transition-colors">
+            <a href={i.url} target="_blank" rel="noreferrer" className="hover:bg-muted/70 flex gap-2.5 rounded-md px-2 py-2 transition-colors">
               <span className="mt-1.5 size-2 shrink-0 rounded-full" style={{ backgroundColor: i.state.color }} aria-hidden />
               <span className="min-w-0 flex-1 space-y-1">
                 <span className="block text-[13px] leading-snug">
@@ -48,7 +48,7 @@ export function LinkedIssues({ repo, number }: { repo: string; number: number })
               href={i.url}
               target="_blank"
               rel="noreferrer"
-              className={cn("hover:bg-muted/70 flex gap-2.5 rounded-lg px-2 py-2 transition-colors", i.relation === "mentioned" && "opacity-80")}
+              className={cn("hover:bg-muted/70 flex gap-2.5 rounded-md px-2 py-2 transition-colors", i.relation === "mentioned" && "opacity-80")}
             >
               {dot(i.state === "open")}
               <span className="min-w-0 flex-1 space-y-1">

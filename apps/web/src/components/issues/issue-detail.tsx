@@ -113,7 +113,7 @@ function CloseMenu({
       </DropdownMenu>
       {dup && (
         <div
-          className="bg-card border-hairline fixed inset-x-4 top-24 z-50 mx-auto w-full max-w-md space-y-3 rounded-xl border p-4 shadow-lg"
+          className="bg-card border-hairline fixed inset-x-4 top-24 z-50 mx-auto w-full max-w-md space-y-3 rounded-md border p-4 shadow-lg"
           role="dialog"
           aria-label="Close as duplicate"
         >
@@ -269,7 +269,7 @@ export function IssueDetail({
     "",
   );
 
-  if (q.isPending) return <Skeleton className="h-96 w-full rounded-xl" />;
+  if (q.isPending) return <Skeleton className="h-96 w-full rounded-md" />;
   if (q.error)
     return <QueryError error={q.error} onRetry={() => void q.refetch()} />;
   const i = q.data;
@@ -399,7 +399,7 @@ export function IssueDetail({
       {i.offline && (
         <p
           role="status"
-          className="text-warning-text bg-warning-bg border-warning-border rounded-lg border px-3 py-2 text-sm"
+          className="text-warning-text bg-warning-bg border-warning-border rounded-md border px-3 py-2 text-sm"
         >
           Couldn't reach GitHub just now, so this is the last synced copy.
           Comments and edits are unavailable until it's back.
@@ -434,7 +434,7 @@ export function IssueDetail({
                   onChange={(e) => setBody(e.target.value)}
                   rows={12}
                   aria-label="Issue description"
-                  className="bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border p-3 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  className="bg-(--field) hover:bg-(--field-hover) w-full rounded-md border p-3 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                 />
                 <div className="flex gap-2">
                   <Button
@@ -475,7 +475,7 @@ export function IssueDetail({
             {i.comments.map((c) => (
               <div
                 key={c.id}
-                className="bg-card overflow-hidden rounded-lg border shadow-xs"
+                className="bg-card overflow-hidden rounded-md border shadow-xs"
               >
                 <div className="border-hairline text-muted-foreground flex items-center gap-2 border-b px-4 py-2 text-xs">
                   <GhAvatar login={c.author} className="size-5" />
@@ -511,7 +511,7 @@ export function IssueDetail({
                   rows={4}
                   placeholder="Leave a comment (⌘↵ to send)"
                   aria-label="Comment"
-                  className="bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  className="bg-(--field) hover:bg-(--field-hover) w-full rounded-md border p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                 />
                 <Button
                   size="sm"

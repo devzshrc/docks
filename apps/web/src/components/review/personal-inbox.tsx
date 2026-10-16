@@ -58,7 +58,7 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
       {q.isPending && (
         <div role="status" aria-label="Loading reviews" className="flex flex-col gap-2">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-[76px] rounded-xl" />
+            <Skeleton key={i} className="h-[76px] rounded-md" />
           ))}
         </div>
       )}
@@ -78,7 +78,7 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
         </p>
       )}
       {q.data?.items.length === 0 && (
-        <div className="animate-in fade-in flex flex-col items-center gap-3 rounded-xl bg-card px-6 py-12 text-center shadow-card duration-200">
+        <div className="animate-in fade-in flex flex-col items-center gap-3 rounded-md bg-card px-6 py-12 text-center shadow-card duration-200">
           <span className="grid size-9 place-items-center rounded-full bg-muted text-subtle">
             <RiInbox2Line className="size-4" aria-hidden />
           </span>
@@ -92,12 +92,12 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
         {q.data?.items.map((pr) => (
           <li
             key={`${pr.repo}#${pr.number}`}
-            className="group relative flex flex-wrap items-center gap-3 rounded-xl bg-card p-4 shadow-card transition-shadow duration-150 hover:shadow-[0_0_0_1px_rgb(15_23_42/0.09),0_2px_4px_0_rgb(15_23_42/0.05),0_10px_24px_-10px_rgb(15_23_42/0.14)]"
+            className="group relative flex flex-wrap items-center gap-3 rounded-md bg-card p-4 shadow-card transition-shadow duration-150 hover:shadow-[0_0_0_1px_rgb(15_23_42/0.09),0_2px_4px_0_rgb(15_23_42/0.05),0_10px_24px_-10px_rgb(15_23_42/0.14)]"
           >
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <Link
                 // The whole row opens the pull request; the buttons sit above this overlay.
-                className="truncate text-sm font-medium text-foreground outline-none after:absolute after:inset-0 after:rounded-xl after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-ring/60"
+                className="truncate text-sm font-medium text-foreground outline-none after:absolute after:inset-0 after:rounded-md after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-ring/60"
                 href={`/review/${pr.repo}/${pr.number}`}
               >
                 {pr.title}

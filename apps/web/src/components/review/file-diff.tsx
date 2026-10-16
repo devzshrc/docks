@@ -1215,7 +1215,7 @@ export function FileDiff({
       id={`file-${file.filename}`}
       data-viewed={file.viewed || undefined}
       className={cn(
-        "bg-background-primary-default scroll-mt-20 rounded-xl border border-separator-border",
+        "bg-background-primary-default scroll-mt-20 rounded-md border border-separator-border",
         !near && "[contain-intrinsic-size:auto_3rem] [content-visibility:auto]",
       )}
     >

@@ -120,7 +120,7 @@ export function InviteDialog({
         <div className="px-6">
           <div
             onClick={() => inputRef.current?.focus()}
-            className="flex min-h-[84px] cursor-text flex-wrap content-start gap-1.5 rounded-xl bg-secondary p-2 shadow-control transition-shadow focus-within:shadow-[0_0_0_1px_var(--primary),0_0_0_4px_color-mix(in_oklab,var(--primary)_15%,transparent)]"
+            className="flex min-h-[84px] cursor-text flex-wrap content-start gap-1.5 rounded-md bg-secondary p-2 shadow-control transition-shadow focus-within:shadow-[0_0_0_1px_var(--primary),0_0_0_4px_color-mix(in_oklab,var(--primary)_15%,transparent)]"
           >
             {chips.map((chip) => {
               const invalid = !EMAIL.test(chip.email);
@@ -129,7 +129,7 @@ export function InviteDialog({
                   key={chip.email}
                   title={chip.error}
                   className={cn(
-                    "animate-in fade-in zoom-in-95 inline-flex h-7 items-center gap-1.5 rounded-full pr-1 pl-2.5 text-xs font-medium duration-150",
+                    "animate-in fade-in zoom-in-95 inline-flex h-7 items-center gap-1.5 rounded pr-1 pl-2.5 text-xs font-medium duration-150",
                     invalid || chip.status === "error"
                       ? "bg-danger/10 text-danger"
                       : chip.status === "sent"
@@ -190,7 +190,7 @@ export function InviteDialog({
             />
           </div>
           {problem && (
-            <div role="alert" className="animate-in fade-in slide-in-from-top-1 mt-3 flex items-center justify-between gap-3 rounded-lg bg-warning/10 px-3 py-2 text-xs text-foreground duration-200">
+            <div role="alert" className="animate-in fade-in slide-in-from-top-1 mt-3 flex items-center justify-between gap-3 rounded-md bg-warning/10 px-3 py-2 text-xs text-foreground duration-200">
               <span>{problem}</span>
               {/upgrade/i.test(problem) && (
                 <Link href="/settings/billing" className="shrink-0 font-medium text-primary-text hover:underline">
@@ -226,7 +226,7 @@ export function InviteDialog({
             )}
           </div>
           {link && (
-            <div className="animate-in fade-in slide-in-from-top-1 mt-3 flex items-center gap-2 rounded-lg bg-muted/70 p-1 pl-3 duration-200">
+            <div className="animate-in fade-in slide-in-from-top-1 mt-3 flex items-center gap-2 rounded-md bg-muted/70 p-1 pl-3 duration-200">
               <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">{link}</span>
               <Button
                 size="sm"

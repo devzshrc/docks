@@ -84,7 +84,7 @@ const toneOf = (label: string): Tone => {
 function Badge({ children, tone }: { children: ReactNode; tone?: Tone }) {
   const t = tone ?? (typeof children === "string" ? toneOf(children) : "neutral");
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap capitalize ${TONE[t]}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium whitespace-nowrap capitalize ${TONE[t]}`}>
       <span className="size-1.5 rounded-full bg-[var(--dot)]" aria-hidden />
       {children}
     </span>
@@ -105,7 +105,7 @@ function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-2xl surface-raised">
+    <section className="min-w-0 overflow-hidden rounded-md surface-raised">
       <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-3">
         <div className="min-w-0">
           <h2 className="text-sm font-medium">{title}</h2>
@@ -130,13 +130,13 @@ function State({
     return (
       <div className="grid gap-2 px-5 pb-5">
         {[0, 1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-10 w-full rounded-lg" />
+          <Skeleton key={i} className="h-10 w-full rounded-md" />
         ))}
       </div>
     );
   if (error)
     return (
-      <p role="alert" className="mx-5 mb-5 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
+      <p role="alert" className="mx-5 mb-5 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
         {errorMessage(error)}
       </p>
     );
@@ -155,7 +155,7 @@ function Stats({
       {items.map((s) => {
         const change = typeof s.value === "number" && s.previous !== undefined ? s.value - s.previous : null;
         return (
-          <div key={s.label} className={`rounded-2xl p-4 surface-raised ${s.alert ? "ring-1 ring-danger/25" : ""}`}>
+          <div key={s.label} className={`rounded-md p-4 surface-raised ${s.alert ? "ring-1 ring-danger/25" : ""}`}>
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
               {s.alert && <span className="size-1.5 animate-pulse rounded-full bg-danger" aria-label="Needs attention" />}
               {s.label}
@@ -166,7 +166,7 @@ function Stats({
               </p>
               {change !== null && (
                 <span
-                  className={`rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${change > 0 ? "bg-success/10 text-success" : change < 0 ? "bg-danger/10 text-danger" : "bg-muted text-muted-foreground"}`}
+                  className={`rounded px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${change > 0 ? "bg-success/10 text-success" : change < 0 ? "bg-danger/10 text-danger" : "bg-muted text-muted-foreground"}`}
                 >
                   {change > 0 ? "+" : ""}
                   {change.toLocaleString()}
@@ -412,8 +412,8 @@ function Funnel({ values }: { values: number[] }) {
                 )}
               </span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full bg-primary transition-[width] duration-700 ease-power3-out" style={{ width: `${(n / top) * 100}%`, opacity: 1 - i * 0.18 }} />
+            <div className="h-2 overflow-hidden rounded-sm bg-muted">
+              <div className="h-full rounded-sm bg-primary transition-[width] duration-700 ease-power3-out" style={{ width: `${(n / top) * 100}%`, opacity: 1 - i * 0.18 }} />
             </div>
           </li>
         );
@@ -440,8 +440,8 @@ function Adoption({ rows, people }: { rows: { name: string; n: number; users: nu
       {sorted.map((f) => (
         <li key={f.name} className="grid grid-cols-[minmax(0,12rem)_1fr_auto] items-center gap-3 text-sm">
           <span className="truncate">{featureLabel(f.name)}</span>
-          <span className="h-1.5 overflow-hidden rounded-full bg-muted">
-            <span className="block h-full rounded-full bg-primary/70" style={{ width: `${(f.users / top) * 100}%` }} />
+          <span className="h-1.5 overflow-hidden rounded-sm bg-muted">
+            <span className="block h-full rounded-sm bg-primary/70" style={{ width: `${(f.users / top) * 100}%` }} />
           </span>
           <span className="w-28 text-right text-xs text-muted-foreground tabular-nums">
             <span className="font-medium text-foreground">{f.users}</span> users · {f.n.toLocaleString()}
@@ -840,7 +840,7 @@ export function AdminDashboard({
                       ? "Search errors and deliveries…"
                       : `Search ${section}…`
                   }
-                  className="h-9 rounded-full ps-8"
+                  className="h-9 rounded ps-8"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -977,7 +977,7 @@ export function AdminDashboard({
                           href={`/admin/workspaces/${w.id}`}
                           className="flex items-center gap-3 after:absolute after:inset-0"
                         >
-                          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-xs font-semibold text-muted-foreground uppercase">
+                          <span className="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-xs font-semibold text-muted-foreground uppercase">
                             {w.name.slice(0, 2)}
                           </span>
                           <span className="grid min-w-0 leading-tight">
@@ -1135,7 +1135,7 @@ export function AdminDashboard({
                               <TableCell colSpan={5}>
                                 <pre
                                   dir="ltr"
-                                  className="max-h-64 overflow-auto rounded-xl border border-separator-border bg-background-secondary-default p-4 font-mono text-caption-1-medium text-text-secondary whitespace-pre-wrap break-all"
+                                  className="max-h-64 overflow-auto rounded-md border border-separator-border bg-background-secondary-default p-4 font-mono text-caption-1-medium text-text-secondary whitespace-pre-wrap break-all"
                                 >
                                   {e.stack ?? "No stack recorded."}
                                 </pre>
@@ -1298,7 +1298,7 @@ export function AdminDashboard({
                   {user.data.sessions.map((s) => (
                     <div
                       key={s.id}
-                      className="flex flex-wrap items-center gap-4 rounded-xl border border-separator-border p-4"
+                      className="flex flex-wrap items-center gap-4 rounded-md border border-separator-border p-4"
                     >
                       <RiComputerLine className="size-5 text-foreground-icon-secondary" />
                       <div className="min-w-0 flex-1">
@@ -1337,7 +1337,7 @@ export function AdminDashboard({
                     <Link
                       key={m.id}
                       href={`/admin/workspaces/${m.id}`}
-                      className="flex justify-between rounded-xl border border-separator-border p-4"
+                      className="flex justify-between rounded-md border border-separator-border p-4"
                     >
                       <span>{m.name}</span>
                       <Badge>{m.role}</Badge>

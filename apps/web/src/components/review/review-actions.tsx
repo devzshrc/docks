@@ -213,7 +213,7 @@ export function ReviewActions({
 
   if (!githubLogin || needsGithub) {
     return (
-      <div className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-sm">
+      <div className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-md border p-4 text-sm">
         <div>
           <p className="font-medium">Connect GitHub to review here</p>
           <p className="text-muted-foreground">Approvals, change requests and merges are posted to GitHub as you.</p>
@@ -245,12 +245,12 @@ export function ReviewActions({
   const scrollToForm = () => root.current?.scrollIntoView({ behavior: "smooth", block: "center" });
 
   return (
-    <div ref={root} className="space-y-4 rounded-2xl border border-separator-border bg-background-primary-default p-5">
+    <div ref={root} className="space-y-4 rounded-md border border-separator-border bg-background-primary-default p-5">
       {offscreen && !own && (
         <div
           role="region"
           aria-label="Review verdict"
-          className="animate-in fade-in slide-in-from-bottom-2 fixed bottom-4 left-1/2 z-30 hidden -translate-x-1/2 items-center gap-2 rounded-xl border border-separator-border bg-background-primary-default p-2 text-sm shadow-overlay md:flex"
+          className="animate-in fade-in slide-in-from-bottom-2 fixed bottom-4 left-1/2 z-30 hidden -translate-x-1/2 items-center gap-2 rounded-md border border-separator-border bg-background-primary-default p-2 text-sm shadow-overlay md:flex"
         >
           <span className="text-muted-foreground px-2 tabular-nums">{summary ?? "No comments yet"}</span>
           <Button size="sm" disabled={busy} pending={submit.isPending && submit.variables?.event === "APPROVE"} onClick={() => send("APPROVE")}>
@@ -269,7 +269,7 @@ export function ReviewActions({
           <strong className="font-medium">Merge readiness</strong>
           <span
             className={cn(
-              "inline-flex h-5 items-center gap-1 rounded-full border px-2 text-[11px]",
+              "inline-flex h-5 items-center gap-1 rounded border px-2 text-[11px]",
               readiness.data?.state === "ready"
                 ? "border-(--tag-green-border) bg-(--tag-green-bg) text-(--tag-green-text)"
                 : readiness.data?.state === "blocked"
@@ -409,7 +409,7 @@ export function ReviewActions({
           // Merging is a different decision from the review verdict, so it sits apart at the far end.
           <span className="ml-auto flex items-center gap-1 border-l pl-3">
             <ShadcnSelect
-              className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-lg border px-3 text-body-2-regular"
+              className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-md border px-3 text-body-2-regular"
               aria-label="Merge method"
               value={method}
               onChange={(e) => setMethod(e.target.value as typeof method)}

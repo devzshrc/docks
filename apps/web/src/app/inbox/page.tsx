@@ -153,11 +153,11 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
       ) : q.isPending ? (
         <div className="space-y-2">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-[74px] w-full rounded-xl" />
+            <Skeleton key={i} className="h-[74px] w-full rounded-md" />
           ))}
         </div>
       ) : !q.data.items.length ? (
-        <div className="bg-card shadow-card rounded-xl">
+        <div className="bg-card shadow-card rounded-md">
           <EmptyPreview
             icon={view === "snoozed" ? RiAlarmLine : RiInboxLine}
             hue="blue"
@@ -183,7 +183,7 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
           />
         </div>
       ) : (
-        <ul className="bg-card shadow-card divide-y overflow-hidden rounded-xl">
+        <ul className="bg-card shadow-card divide-y overflow-hidden rounded-md">
           {q.data.items.map((item) => {
             const meta = KIND_META[item.kind];
             const isUnread = unread(item);

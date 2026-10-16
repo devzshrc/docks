@@ -52,7 +52,7 @@ import { useTRPC } from "@/trpc/react";
 
 /** One row of the details panel: fixed label column, controls aligned on a shared left edge. */
 const ROW =
-  "grid grid-cols-[88px_minmax(0,1fr)] items-center gap-4 px-4 py-2.5 min-h-11";
+  "grid grid-cols-[88px_minmax(0,1fr)] items-center gap-4 py-1.5 min-h-10";
 
 const REVIEW_STATE = {
   APPROVED: { label: "Approved", variant: "secondary" },
@@ -384,7 +384,7 @@ function GuidedReviewContent({
         <ShadcnButton
           variant="outline"
           type="button"
-          className="bg-card animate-in fade-in slide-in-from-bottom-2 fixed bottom-20 left-1/2 z-30 -translate-x-1/2 rounded-full text-xs shadow-lg md:bottom-6 md:left-[calc(var(--sidebar-width,0px)+1.5rem)] md:translate-x-0"
+          className="bg-card animate-in fade-in slide-in-from-bottom-2 fixed right-4 bottom-20 z-30 rounded-md text-xs shadow-overlay sm:right-6"
           onClick={() => {
             const location = session.data.lastLocation;
             if (location && files.some((f) => f.filename === location.path)) {
@@ -437,7 +437,7 @@ function GuidedReviewContent({
               href={pr.url}
               target="_blank"
               rel="noreferrer"
-              className="tex-neutral flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium"
+              className="tex-neutral flex h-8 items-center gap-1.5 rounded px-3 text-xs font-medium"
             >
               GitHub <IconExternalLink className="size-3.5" aria-hidden />
             </a>
@@ -469,7 +469,7 @@ function GuidedReviewContent({
             type="button"
             aria-expanded={detailsOpen}
             onClick={() => setDetailsOpen((o) => !o)}
-            className="hover:bg-muted/60 flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors lg:hidden"
+            className="hover:bg-muted/60 flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left text-sm transition-colors lg:hidden"
           >
             <span className="font-medium">Details</span>
             <span className="text-muted-foreground flex-1 truncate text-right text-xs">
@@ -495,9 +495,9 @@ function GuidedReviewContent({
             )}
           >
             {/* Aligned label column: the eye scans down one edge instead of hunting. */}
-            <dl className="bg-card divide-y rounded-lg border shadow-xs text-sm">
+            <dl className="grid gap-x-10 border-y py-2 text-sm xl:grid-cols-2">
               {pr.state === "open" && (
-                <div className={ROW}>
+                <div className={cn(ROW, "xl:col-span-2")}>
                   <dt className="text-muted-foreground text-xs">Reviewers</dt>
                   <dd>
                     <ReviewerPicker repo={repo} number={number} />
@@ -566,8 +566,8 @@ function GuidedReviewContent({
           guide={ready}
         />
       )}
-      <div className={cn("grid gap-5", !focus && "lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_260px]")}>
-        <aside className="order-1 space-y-5 rounded-2xl border border-separator-border bg-background-primary-default p-4 lg:col-start-1 lg:row-span-2 lg:sticky lg:top-20 lg:self-start xl:row-span-1" hidden={focus}>
+      <div className={cn("grid gap-6", !focus && "lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_260px]")}>
+        <aside className="order-1 space-y-5 lg:col-start-1 lg:row-span-2 lg:sticky lg:top-20 lg:self-start lg:border-r lg:pr-5 xl:row-span-1" hidden={focus}>
           <div>
             <ShadcnButton
               variant="row"
@@ -593,10 +593,10 @@ function GuidedReviewContent({
                 <Count value={viewed} /> of {files.length}
               </span>
             </ShadcnButton>
-            <div className="bg-muted h-1.5 rounded-full">
+            <div className="bg-muted h-1.5 rounded-sm">
               <div
                 className={cn(
-                  "h-1.5 rounded-full bg-emerald-600 transition-all duration-300",
+                  "h-1.5 rounded-sm bg-emerald-600 transition-all duration-300",
                   justDone && "anim-pulse-once",
                 )}
                 style={{
@@ -616,13 +616,13 @@ function GuidedReviewContent({
           open
           id="review-context"
           hidden={focus}
-          className="group/context order-4 min-w-0 self-start rounded-2xl surface-raised lg:order-2 lg:col-start-2 lg:row-start-1 xl:order-3 xl:col-start-3 xl:row-span-2 xl:sticky xl:top-20"
+          className="group/context order-4 min-w-0 self-start border-t pt-2 xl:border-t-0 xl:border-l xl:pl-5 lg:order-2 lg:col-start-2 lg:row-start-1 xl:order-3 xl:col-start-3 xl:row-span-2 xl:sticky xl:top-20"
         >
-          <summary className="flex cursor-pointer items-center justify-between gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none">
+          <summary className="flex cursor-pointer items-center justify-between gap-2 py-2 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none">
             Review context
             <RiArrowDownSLine aria-hidden className="size-4 text-subtle transition-transform duration-200 group-open/context:rotate-180" />
           </summary>
-          <ScrollFade className="grid gap-4 px-4 pb-4 xl:max-h-[calc(100svh-13rem)]">
+          <ScrollFade className="grid gap-4 pb-4 xl:max-h-[calc(100svh-13rem)]">
             {pr.state === "open" && files.length > 0 && (
               <GuidePanel
                 repo={repo}
@@ -647,7 +647,7 @@ function GuidedReviewContent({
           {files.length > 0 && (
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <div
-                className="inline-flex gap-1 rounded-lg border border-separator-border bg-background-primary-default p-1"
+                className="inline-flex gap-1 rounded-md border border-separator-border bg-background-primary-default p-1"
                 role="group"
                 aria-label="Diff layout"
               >
@@ -668,7 +668,7 @@ function GuidedReviewContent({
                 ))}
               </div>
               {since.data?.reviewedSha && (
-                <div role="status" className="bg-card basis-full rounded-xl border p-3 text-sm">
+                <div role="status" className="bg-card basis-full rounded-md border p-3 text-sm">
                   <p className="font-medium">
                     Welcome back.{" "}
                     {since.data.files?.length
@@ -807,7 +807,7 @@ function GuidedReviewContent({
       {files.length > 0 && (
         <div
           className={cn(
-            "fixed inset-x-4 bottom-4 z-30 flex items-center justify-between gap-2 rounded-xl border border-separator-border bg-background-primary-default p-2 text-body-2-regular shadow-overlay sm:inset-x-auto sm:end-6 sm:justify-start sm:gap-3",
+            "fixed inset-x-4 bottom-4 z-30 flex items-center justify-between gap-2 rounded-md border border-separator-border bg-background-primary-default p-2 text-body-2-regular shadow-overlay sm:inset-x-auto sm:end-6 sm:justify-start sm:gap-3",
             allViewed && "border-success/30",
           )}
         >
@@ -899,7 +899,7 @@ function GuidedReviewContent({
       </Dialog>
 
       {outdatedDrafts && (
-        <div role="alert" className="rounded-lg border p-3 text-sm">
+        <div role="alert" className="rounded-md border p-3 text-sm">
           Some pending comments refer to an earlier commit. Inspect their
           locations before submission.
           {pending

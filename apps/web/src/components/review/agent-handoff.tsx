@@ -191,7 +191,7 @@ export function OpenInPx0({
         <ShadcnButton
           variant="ghost"
           type="button"
-          className="tex-neutral flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium"
+          className="tex-neutral flex h-8 items-center gap-1.5 rounded px-3 text-xs font-medium"
         >
           {copied ? (
             <DrawTick className="size-3.5 text-emerald-600 dark:text-emerald-400" />

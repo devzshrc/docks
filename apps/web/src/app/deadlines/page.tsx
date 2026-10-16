@@ -42,7 +42,7 @@ type Rules = {
   leadUserId: string;
 };
 const panel =
-  "overflow-hidden rounded-2xl border border-separator-border bg-background-primary-default";
+  "overflow-hidden rounded-md border border-separator-border bg-background-primary-default";
 const caption = "text-[13px] text-muted-foreground";
 
 function Policy({
@@ -84,7 +84,7 @@ function Policy({
     Boolean(rules.leadUserId);
   return (
     <details className={panel}>
-      <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-xl p-5 outline-none transition-colors hover:bg-foreground/[0.02] focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+      <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-md p-5 outline-none transition-colors hover:bg-foreground/[0.02] focus-visible:ring-2 focus-visible:ring-border-focus-ring">
         <div className="min-w-0 space-y-1">
           <h3 className="break-words text-body-medium text-text-primary">
             {repo}
@@ -307,7 +307,7 @@ function DeadlineStats({
       {stats.map((s) => (
         <div
           key={s.label}
-          className="bg-card shadow-card flex flex-col gap-3 rounded-xl p-4"
+          className="bg-card shadow-card flex flex-col gap-3 rounded-md p-4"
         >
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground text-[13px]">{s.label}</span>

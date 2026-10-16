@@ -58,11 +58,11 @@ export function IssueBoard({
             <div className="stagger flex flex-col gap-1.5">
               {loading &&
                 [0, 1].map((n) => (
-                  <Skeleton key={n} className="h-24 w-full rounded-xl" />
+                  <Skeleton key={n} className="h-24 w-full rounded-md" />
                 ))}
               {!loading && items.length === 0 && (
                 // An empty lane says so plainly; skeleton bars here read as "still loading".
-                <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-6 text-center text-xs">
+                <p className="text-muted-foreground rounded-md border border-dashed px-3 py-6 text-center text-xs">
                   Nothing here
                 </p>
               )}
@@ -73,7 +73,7 @@ export function IssueBoard({
                 return (
                   <article
                     key={`${i.repo}#${i.number}`}
-                    className="bg-card surface-hover relative rounded-lg border p-3.5 text-sm shadow-xs"
+                    className="bg-card surface-hover relative rounded-md border p-3.5 text-sm shadow-xs"
                   >
                     <Link
                       href={`/issues/${i.repo}/${i.number}`}

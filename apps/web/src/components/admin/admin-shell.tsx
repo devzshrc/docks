@@ -144,10 +144,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <div className="flex min-h-svh">
         <div className="hidden w-60 border-e border-sidebar-border bg-sidebar lg:block" />
         <div className="flex-1 p-8">
-          <Skeleton className="h-8 w-56 rounded-lg" />
+          <Skeleton className="h-8 w-56 rounded-md" />
           <div className="mt-8 grid gap-3 sm:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-28 rounded-2xl" />
+              <Skeleton key={i} className="h-28 rounded-md" />
             ))}
           </div>
         </div>
@@ -158,7 +158,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     const signedOut = (access.error as { data?: { code?: string } }).data?.code === "UNAUTHORIZED";
     return (
       <main className="mx-auto flex min-h-svh max-w-md flex-col justify-center gap-5 p-8">
-        <span className="grid size-11 place-items-center rounded-xl bg-muted text-muted-foreground">
+        <span className="grid size-11 place-items-center rounded-md bg-muted text-muted-foreground">
           <RiShieldKeyholeLine className="size-5" />
         </span>
         <div className="grid gap-2">
@@ -220,7 +220,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={() => setJumpOpen(true)}
-            className="flex h-8 w-full items-center gap-2 rounded-lg bg-secondary px-2.5 text-[13px] text-subtle shadow-control transition-colors hover:text-foreground"
+            className="flex h-8 w-full items-center gap-2 rounded-md bg-secondary px-2.5 text-[13px] text-subtle shadow-control transition-colors hover:text-foreground"
           >
             <RiSearchLine className="size-3.5" />
             Jump to…
@@ -239,7 +239,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                     href={s.path}
                     onClick={() => setNavOpen(false)}
                     aria-current={on ? "page" : undefined}
-                    className={cn("group flex h-8 items-center gap-2 rounded-lg px-2 text-sm transition-[background-color,color,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none",
+                    className={cn("group flex h-8 items-center gap-2 rounded-md px-2 text-sm transition-[background-color,color,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none",
                       on
                         ? "bg-sidebar-primary font-medium text-foreground shadow-control"
                         : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground",
@@ -255,7 +255,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="border-t border-sidebar-border p-3">
-          <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5">
+          <div className="flex items-center gap-2.5 rounded-md px-2 py-1.5">
             <PersonAvatar seed={access.data.email} name={access.data.email} />
             <div className="min-w-0 flex-1 leading-tight">
               <p className="truncate text-xs font-medium">{access.data.email}</p>
@@ -264,7 +264,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </div>
           <Link
             href="/review"
-            className="mt-1 flex h-8 items-center gap-2 rounded-lg px-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+            className="mt-1 flex h-8 items-center gap-2 rounded-md px-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
           >
             <RiArrowLeftLine className="size-3.5" />
             Back to Docks
@@ -301,7 +301,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <span className="truncate font-medium">{active.label}</span>
             )}
           </nav>
-          <span className="ms-auto inline-flex items-center gap-1.5 rounded-full bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
+          <span className="ms-auto inline-flex items-center gap-1.5 rounded bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
             <span className="size-1.5 rounded-full bg-status shadow-[0_0_0_2px_color-mix(in_oklab,var(--status)_25%,transparent)]" />
             Live data
           </span>

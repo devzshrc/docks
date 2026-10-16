@@ -39,9 +39,9 @@ function Usage({ label, used, limit }: { label: string; used: number; limit: num
         </span>
       </div>
       {limit !== null && (
-        <div className="bg-muted h-1.5 rounded-full">
+        <div className="bg-muted h-1.5 rounded-sm">
           <div
-            className={pct >= 100 ? "bg-destructive h-1.5 rounded-full" : "h-1.5 rounded-full bg-primary"}
+            className={pct >= 100 ? "bg-destructive h-1.5 rounded-sm" : "h-1.5 rounded-sm bg-primary"}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -77,8 +77,8 @@ function Billing({ workspaceId }: { workspaceId: string }) {
           {s.canManage && s.hasBillingAccount && <Button variant="outline" onClick={() => portal.mutate({ workspaceId })} disabled={portal.isPending}>Manage billing</Button>}
         </CardContent>
       </Card>
-      {checkout && CHECKOUT_STATUS[checkout] && <p role="status" className="rounded-lg border bg-muted/40 p-4 text-sm">{CHECKOUT_STATUS[checkout]}</p>}
-      {s.complimentary && <p role="status" className="rounded-3xl border border-border-button-default bg-background-primary-default p-4 text-body-2-regular text-text-secondary">Your workspace has complimentary Team access. No subscription charge is created for this access.</p>}
+      {checkout && CHECKOUT_STATUS[checkout] && <p role="status" className="rounded-md border bg-muted/40 p-4 text-sm">{CHECKOUT_STATUS[checkout]}</p>}
+      {s.complimentary && <p role="status" className="rounded-md border border-border-button-default bg-background-primary-default p-4 text-body-2-regular text-text-secondary">Your workspace has complimentary Team access. No subscription charge is created for this access.</p>}
       <PlanCards current={s.plan} actions={{
         free: <Button variant="outline" className="w-full" disabled>{team ? "Included in Team" : "Your current plan"}</Button>,
         team: team ? <Button className="w-full" disabled>You're on Team</Button> : <Button className="w-full" onClick={() => upgrade.mutate({ workspaceId })} disabled={!s.canManage || upgrade.isPending}>{upgrade.isPending ? "Opening checkout…" : "Upgrade to Team"}</Button>,

@@ -33,7 +33,7 @@ export function PrPreview({ repo, number, children }: { repo: string; number: nu
           align="start"
           sideOffset={10}
           collisionPadding={16}
-          className="bg-popover text-popover-foreground border-hairline data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out z-50 w-80 rounded-xl border p-4 text-sm shadow-lg duration-150"
+          className="bg-popover text-popover-foreground border-hairline data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out z-50 w-80 rounded-md border p-4 text-sm shadow-lg duration-150"
         >
           {!pr ? (
             <div className="space-y-2" aria-busy>

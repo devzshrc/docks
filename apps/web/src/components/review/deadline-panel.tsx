@@ -47,14 +47,14 @@ export function DeadlinePanel({ repo, number }: { repo: string; number: number }
             const overdue = !cycle.pausedAt && cycle.dueAt.getTime() <= Date.now();
             const status = cycle.pausedAt ? "Paused" : overdue ? "Overdue" : "Due";
             return (
-              <li key={cycle.id} className="grid gap-2 rounded-xl bg-muted/50 p-3">
+              <li key={cycle.id} className="grid gap-2 rounded-md bg-muted/50 p-3">
                 <div className="flex items-center justify-between gap-2 text-sm">
                   <span className="truncate font-medium">
                     {cycle.kind === "first" ? "First review" : `Review by ${cycle.reviewer}`}
                   </span>
                   <span
                     className={cn(
-                      "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                      "inline-flex shrink-0 items-center gap-1 rounded px-2 py-0.5 text-xs font-medium",
                       overdue ? "bg-danger/10 text-danger" : cycle.pausedAt ? "bg-muted text-muted-foreground" : "bg-warning/10 text-warning",
                     )}
                   >

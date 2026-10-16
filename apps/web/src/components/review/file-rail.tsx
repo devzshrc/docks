@@ -21,7 +21,7 @@ function Row({ f, showDir }: { f: RankedFile; showDir: boolean }) {
       href={`#file-${f.filename}`}
       title={f.filename}
       className={cn(
-        "hover:bg-muted/70 flex items-center gap-2.5 rounded-lg px-2 py-2.5 transition-colors",
+        "hover:bg-muted/70 flex items-center gap-2.5 rounded-md px-2 py-2.5 transition-colors",
         f.tier === "noise" && "opacity-60",
       )}
     >
@@ -102,7 +102,7 @@ export function FileRail({ files }: { files: RankedFile[] }) {
                     type="button"
                     aria-expanded={open}
                     onClick={() => setClosed((c) => ({ ...c, [dir]: open }))}
-                    className="hover:bg-muted/70 text-muted-foreground flex w-full items-center gap-1.5 rounded-lg px-2 py-1 text-left text-[11px] transition-colors"
+                    className="hover:bg-muted/70 text-muted-foreground flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] transition-colors"
                   >
                     <span
                       className={cn(

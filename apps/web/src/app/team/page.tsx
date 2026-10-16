@@ -77,7 +77,7 @@ function PersonCard({ p, scale }: { p: Person; scale: number }) {
     <li>
       <Link
         href={`/people/${p.userId}`}
-        className="group flex h-full flex-col gap-4 rounded-xl bg-card p-4 surface-raised transition-[box-shadow,transform] duration-200 ease-power3-out hover:-translate-y-px hover:shadow-card-hover focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none active:translate-y-0"
+        className="group flex h-full flex-col gap-4 rounded-md bg-card p-4 surface-raised transition-[box-shadow,transform] duration-200 ease-power3-out hover:-translate-y-px hover:shadow-card-hover focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none active:translate-y-0"
       >
         <div className="flex items-start gap-3">
           <Face seed={p.userId} name={p.name} src={p.image} githubLogin={p.githubLogin} presence={presence} />
@@ -87,10 +87,10 @@ function PersonCard({ p, scale }: { p: Person; scale: number }) {
               {p.githubLogin ? `@${p.githubLogin}` : "GitHub not linked"}
             </p>
           </div>
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground capitalize">{p.role}</span>
+          <span className="rounded bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground capitalize">{p.role}</span>
         </div>
 
-        <div className="flex items-center gap-3 rounded-lg bg-muted/60 p-2.5">
+        <div className="flex items-center gap-3 rounded-md bg-muted/60 p-2.5">
           <LoadRing value={p.openReviews} max={limit} warn={p.overLimit} />
           <div className="min-w-0 text-xs leading-[1.35]">
             <p className="font-medium text-foreground">
@@ -133,7 +133,7 @@ function Summary({ people, viewers, onInvite }: { people: Person[]; viewers: num
   const away = people.filter((p) => p.away).length;
   const stack = people.slice(0, 5);
   return (
-    <section className="flex flex-col gap-5 rounded-xl bg-card p-5 surface-raised sm:flex-row sm:items-center sm:justify-between">
+    <section className="flex flex-col gap-5 rounded-md bg-card p-5 surface-raised sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-4">
         <div className="group/stack flex shrink-0 -space-x-2.5">
           {stack.map((p, i) => (
@@ -197,10 +197,10 @@ function Load({ workspaceId }: { workspaceId: string }) {
   if (people.isPending || teams.isPending)
     return (
       <div className="grid gap-5">
-        <Skeleton className="h-[84px] rounded-xl" />
+        <Skeleton className="h-[84px] rounded-md" />
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-[172px] rounded-xl" />
+            <Skeleton key={i} className="h-[172px] rounded-md" />
           ))}
         </div>
       </div>
@@ -238,13 +238,13 @@ function Load({ workspaceId }: { workspaceId: string }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or login"
-            className="h-9 w-full rounded-full bg-secondary pr-3 pl-8 text-sm shadow-control transition-shadow outline-none placeholder:text-subtle focus:shadow-[0_0_0_1px_var(--primary),0_0_0_4px_color-mix(in_oklab,var(--primary)_15%,transparent)]"
+            className="h-9 w-full rounded bg-secondary pr-3 pl-8 text-sm shadow-control transition-shadow outline-none placeholder:text-subtle focus:shadow-[0_0_0_1px_var(--primary),0_0_0_4px_color-mix(in_oklab,var(--primary)_15%,transparent)]"
           />
         </label>
       </div>
 
       {visible.length === 0 && filter !== "all" ? (
-        <p className="rounded-xl bg-card px-6 py-10 text-center text-sm text-muted-foreground surface-raised">Nobody matches this filter.</p>
+        <p className="rounded-md bg-card px-6 py-10 text-center text-sm text-muted-foreground surface-raised">Nobody matches this filter.</p>
       ) : (
         <ul key={filter} className="stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {visible.map((p) => (

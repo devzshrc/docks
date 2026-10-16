@@ -43,7 +43,7 @@ function Log({ workspaceId }: { workspaceId: string }) {
       <div className="flex flex-wrap gap-2">
         <ShadcnSelect
           aria-label="Filter by action"
-          className="bg-background hover:bg-muted h-8 rounded-lg border px-2 text-sm shadow-xs"
+          className="bg-background hover:bg-muted h-8 rounded-md border px-2 text-sm shadow-xs"
           value={action}
           onChange={(e) => setAction(e.target.value)}
         >
@@ -59,7 +59,7 @@ function Log({ workspaceId }: { workspaceId: string }) {
         </ShadcnSelect>
         <ShadcnSelect
           aria-label="Filter by person"
-          className="bg-background hover:bg-muted h-8 rounded-lg border px-2 text-sm shadow-xs"
+          className="bg-background hover:bg-muted h-8 rounded-md border px-2 text-sm shadow-xs"
           value={actorId}
           onChange={(e) => setActorId(e.target.value)}
         >

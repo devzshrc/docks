@@ -108,7 +108,7 @@ export function AuthorPreflight({
   if (dismissed || (todo === 0 && !items.some((i) => i.ok === "wait"))) return null;
 
   return (
-    <section aria-label="Before you ask for review" className="rounded-2xl border border-separator-border bg-card p-4">
+    <section aria-label="Before you ask for review" className="rounded-md border border-separator-border bg-card p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-medium">Before reviewers start</h2>

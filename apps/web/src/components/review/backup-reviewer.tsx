@@ -48,7 +48,7 @@ export function BackupReviewer({
         {open ? "Cancel" : "Choose a backup reviewer"}
       </Button>
       {open && (
-        <div className="animate-in fade-in slide-in-from-top-1 space-y-2 rounded-lg bg-card p-3 text-sm shadow-control duration-150">
+        <div className="animate-in fade-in slide-in-from-top-1 space-y-2 rounded-md bg-card p-3 text-sm shadow-control duration-150">
           <p className="text-xs text-muted-foreground">
             Keep the original reviewer requested. Suggestions do not guarantee
             required code-owner approval. GitHub team ownership is not

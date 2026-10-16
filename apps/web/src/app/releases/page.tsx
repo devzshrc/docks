@@ -26,7 +26,7 @@ import { EvidenceExport } from "@/components/review/evidence-export";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useTRPC } from "@/trpc/react";
 const panel =
-  "overflow-hidden rounded-2xl border border-separator-border bg-background-primary-default";
+  "overflow-hidden rounded-md border border-separator-border bg-background-primary-default";
 const caption = "text-[13px] text-muted-foreground";
 
 function Detail({
@@ -132,7 +132,7 @@ function Detail({
       {incomplete && (
         <p
           role="alert"
-          className="rounded-xl bg-background-secondary-default p-3 text-body-2-regular text-text-error-primary"
+          className="rounded-md bg-background-secondary-default p-3 text-body-2-regular text-text-error-primary"
         >
           This report is incomplete because some repositories are outside your
           access.
@@ -140,7 +140,7 @@ function Detail({
       )}
       {error && <QueryError error={error} />}
       {items.length === 0 && (
-        <div className="rounded-xl bg-muted/30">
+        <div className="rounded-md bg-muted/30">
           <EmptyPreview
             icon={RiGitPullRequestLine}
             hue="pink"
@@ -163,7 +163,7 @@ function Detail({
         {items.map((item) => (
           <article
             key={`${item.pr.repoId}:${item.pr.number}`}
-            className="bg-card shadow-card space-y-3 rounded-xl p-4"
+            className="bg-card shadow-card space-y-3 rounded-md p-4"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <Link
@@ -406,7 +406,7 @@ function Releases({
           className={panel}
           open={!list.isPending && list.data?.length === 0 ? true : undefined}
         >
-          <summary className="cursor-pointer rounded-xl p-5 text-body-medium text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+          <summary className="cursor-pointer rounded-md p-5 text-body-medium text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
             Create a release
           </summary>
           <form
@@ -494,7 +494,7 @@ function Releases({
                 aria-pressed={selectedId === release.id}
                 onClick={() => setSelected(release.id)}
                 className={cx(
-                  "flex w-full flex-col items-start gap-2 rounded-xl p-3 text-start outline-none transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring",
+                  "flex w-full flex-col items-start gap-2 rounded-md p-3 text-start outline-none transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring",
                   selectedId === release.id
                     ? "bg-primary/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_40%,transparent)] hover:bg-primary/10"
                     : "",

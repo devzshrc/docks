@@ -29,7 +29,7 @@ export function EvidenceExport({
     <div className="grid gap-2">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs leading-relaxed text-muted-foreground">Review and merge records for audits.</p>
-        <div className="flex shrink-0 rounded-full bg-muted/70 p-0.5">
+        <div className="flex shrink-0 rounded-md bg-muted/70 p-0.5">
           {(["json", "csv"] as const).map((format) => (
             <Button
               key={format}
@@ -38,7 +38,7 @@ export function EvidenceExport({
               title={`Download evidence as ${format.toUpperCase()}`}
               disabled={!prs.length || exportReport.isPending}
               onClick={() => exportReport.mutate({ workspaceId, prs, format })}
-              className="h-6 rounded-full px-2.5 text-[11px] hover:bg-card hover:shadow-control"
+              className="h-6 rounded px-2.5 text-[11px] hover:bg-card hover:shadow-control"
             >
               {format.toUpperCase()}
             </Button>

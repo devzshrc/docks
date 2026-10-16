@@ -53,11 +53,11 @@
   --track: #e4e4e7;
   --status: #10b981;
   --primary-text: #1f66da;
-  --shadow-control: 0 0 0 1px rgb(15 23 42 / 0.09), 0 1px 1px 0 rgb(15 23 42 / 0.04), 0 2px 3px -2px rgb(15 23 42 / 0.12), inset 0 1px 0 0 rgb(255 255 255 / 1), inset 0 -1px 0 0 rgb(15 23 42 / 0.04);
-  --shadow-control-active: 0 0 0 1px rgb(15 23 42 / 0.12), 0 1px 1px 0 rgb(15 23 42 / 0.06), inset 0 1px 2px 0 rgb(15 23 42 / 0.06);
+  --shadow-control: 0 0 0 1px rgb(15 23 42 / 0.10);
+  --shadow-control-active: 0 0 0 1px rgb(15 23 42 / 0.10);
   --shadow-primary: 0 0 0 1px #1d63d6, 0 1px 2px 0 rgb(17 60 140 / 0.28), 0 4px 10px -4px rgb(47 123 245 / 0.55), inset 0 1px 0 0 rgb(255 255 255 / 0.32), inset 0 -3px 6px 0 rgb(0 0 0 / 0.10);
-  --shadow-card: 0 0 0 1px rgb(15 23 42 / 0.06), 0 1px 1px 0 rgb(15 23 42 / 0.03), 0 3px 6px -3px rgb(15 23 42 / 0.08), 0 12px 24px -16px rgb(15 23 42 / 0.10), inset 0 -1px 0 0 rgb(15 23 42 / 0.03);
-  --shadow-card-hover: 0 0 0 1px rgb(15 23 42 / 0.08), 0 1px 1px 0 rgb(15 23 42 / 0.04), 0 6px 12px -6px rgb(15 23 42 / 0.12), 0 20px 32px -20px rgb(15 23 42 / 0.16), inset 0 -1px 0 0 rgb(15 23 42 / 0.03);
+  --shadow-card: 0 0 0 1px rgb(15 23 42 / 0.10);
+  --shadow-card-hover: 0 0 0 1px rgb(15 23 42 / 0.16);
   --surface-sheen: linear-gradient(180deg, rgb(255 255 255 / 1) 0%, rgb(251 251 252 / 1) 100%);
   --shadow-overlay: 0 16px 40px -8px rgb(0 0 0 / 0.16), 0 0 0 1px rgb(0 0 0 / 0.08);
   --tag-blue-bg: #eef4ff; --tag-blue-border: #d7e5ff; --tag-blue-text: #1d4ed8;
@@ -194,10 +194,10 @@
   --track: #3a3a3a;
   --status: #16c89e;
   --primary-text: #a397ff;
-  --shadow-control: 0 0 0 1px rgb(0 0 0 / 0.4), inset 0 1px 0 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.06);
-  --shadow-control-active: 0 0 0 1px rgb(0 0 0 / 0.4), inset 0 1px 0 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  --shadow-control: 0 0 0 1px rgb(255 255 255 / 0.08);
+  --shadow-control-active: 0 0 0 1px rgb(255 255 255 / 0.08);
   --shadow-primary: 0 4px 4px 0 rgb(42 42 42 / 0.32), 0 0 0 1px #0e0e0e, inset 0 4px 6px 0 rgb(255 255 255 / 0.2), inset 0 0 0 1px rgb(255 255 255 / 0.15), inset 0 -8px 14px 0 rgb(0 0 0 / 0.15);
-  --shadow-card: 0 4px 4px 0 rgb(15 15 15 / 0.24), 0 0 0 1px #0e0e0e, inset 0 1px 0 0 rgb(255 255 255 / 0.06), inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.08);
   --shadow-overlay: 0 16px 40px 0 rgb(0 0 0 / 0.5), 0 0 0 1px #0e0e0e, inset 0 0 0 1px rgb(255 255 255 / 0.06);
   --tag-blue-bg: #1d2b3e; --tag-blue-border: #23354c; --tag-blue-text: #bfdbfe;
   --tag-purple-bg: #231f3a; --tag-purple-border: #4b437b; --tag-purple-text: #b7aee9;
@@ -691,8 +691,8 @@ kbd {
 @keyframes stagger-in { from { opacity: 0; transform: translateY(4px); } }
 
 /* Raised surface: faint top-lit gradient + layered card shadow, shared by cards and tiles. */
+/* Flat surface: a hairline edge, no gloss or drop shadow. */
 @utility surface-raised {
-  background-image: var(--surface-sheen);
   box-shadow: var(--shadow-card);
 }
 /* Tinted icon tile with a pressed-glass bevel. */
@@ -815,11 +815,11 @@ kbd {
   --faint: #4b4e55;
   --hue-indigo: #8f8ff0;
 
-  --shadow-control: 0 0 0 1px rgb(255 255 255 / 0.08), 0 1px 2px 0 rgb(0 0 0 / 0.45), inset 0 1px 0 0 rgb(255 255 255 / 0.06);
-  --shadow-control-active: 0 0 0 1px rgb(255 255 255 / 0.1), inset 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-control: 0 0 0 1px rgb(255 255 255 / 0.08);
+  --shadow-control-active: 0 0 0 1px rgb(255 255 255 / 0.08);
   --shadow-primary: 0 0 0 1px #1d63d6, 0 1px 2px 0 rgb(0 0 0 / 0.5), 0 4px 14px -4px rgb(47 123 245 / 0.45), inset 0 1px 0 0 rgb(255 255 255 / 0.25), inset 0 -3px 6px 0 rgb(0 0 0 / 0.15);
-  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px 0 rgb(0 0 0 / 0.5), 0 8px 24px -12px rgb(0 0 0 / 0.6), inset 0 1px 0 0 rgb(255 255 255 / 0.04);
-  --shadow-card-hover: 0 0 0 1px rgb(255 255 255 / 0.11), 0 2px 4px 0 rgb(0 0 0 / 0.5), 0 14px 32px -14px rgb(0 0 0 / 0.75), inset 0 1px 0 0 rgb(255 255 255 / 0.05);
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.08);
+  --shadow-card-hover: 0 0 0 1px rgb(255 255 255 / 0.14);
   --shadow-overlay: 0 0 0 1px rgb(255 255 255 / 0.09), 0 20px 48px -12px rgb(0 0 0 / 0.75);
   --surface-sheen: linear-gradient(180deg, #141518 0%, #121316 100%);
 

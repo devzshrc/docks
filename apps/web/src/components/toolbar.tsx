@@ -46,7 +46,7 @@ export function ToolbarSearch({
       />
       <Input
         type="search"
-        className="h-[30px] rounded-full border-0 pl-8 text-xs shadow-control"
+        className="h-[30px] rounded border-0 pl-8 text-xs shadow-control"
         {...props}
       />
     </div>

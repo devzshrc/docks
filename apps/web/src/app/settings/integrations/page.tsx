@@ -284,7 +284,7 @@ function SlackCard({ workspaceId }: { workspaceId: string }) {
                 <label htmlFor="digest-hour">Send at</label>
                 <ShadcnSelect
                   id="digest-hour"
-                  className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-lg border px-2"
+                  className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-md border px-2"
                   value={connection.digestHour}
                   onChange={(e) =>
                     setDigest.mutate({
@@ -475,7 +475,7 @@ function LinearCard({ workspaceId }: { workspaceId: string }) {
             <label htmlFor="linear-team">File new issues in</label>
             <ShadcnSelect
               id="linear-team"
-              className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-lg border px-2"
+              className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-md border px-2"
               value={linear.data.teamId ?? ""}
               disabled={setTeam.isPending}
               onChange={(e) =>

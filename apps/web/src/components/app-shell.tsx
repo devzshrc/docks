@@ -57,10 +57,12 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTRPC } from "@/trpc/react";
 
+/* Collapsing the sidebar hands its width to the page: dashboards widen, the board and review fill it. */
 const WIDTH = {
   narrow: "max-w-[720px]", // single-column forms
-  default: "max-w-[1200px]", // every dashboard and settings page shares one left edge
-  wide: "max-w-[1360px]", // board and code review
+  // Written out in full so Tailwind sees the class.
+  default: "max-w-[1200px] group-has-[[data-side=left][data-state=collapsed]]/sidebar-wrapper:max-w-[1440px]", // every dashboard and settings page shares one left edge
+  wide: "max-w-none", // board and code review use all the room they get
 } as const;
 
 
@@ -284,7 +286,7 @@ function ShellFrame({
           <SidebarHeader className="border-sidebar-border bg-sidebar-accent gap-0 border-b p-3">
             <Link
               href="/review"
-              className="flex items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               <AppIcon className="size-8 shrink-0" />
               <span className="truncate text-sm font-medium">{workspace?.name ?? "Docks"}</span>

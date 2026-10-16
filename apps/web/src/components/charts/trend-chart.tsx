@@ -52,11 +52,11 @@ function InsightTooltip({
   const DeltaIcon = (insight.delta ?? 0) >= 0 ? RiArrowUpLine : RiArrowDownLine;
   const share = row.value !== null && insight.average > 0 ? Math.min(1, row.value / (insight.average * 2)) : 0;
   return (
-    <div className="trend-tooltip animate-in fade-in zoom-in-[0.97] w-56 rounded-xl bg-popover p-3 text-xs shadow-overlay duration-150">
+    <div className="trend-tooltip animate-in fade-in zoom-in-[0.97] w-56 rounded-md bg-popover p-3 text-xs shadow-overlay duration-150">
       <div className="flex items-center justify-between gap-2 text-muted-foreground">
         <span>{unit === "week" ? `Week of ${row.label}` : row.label}</span>
         {insight.delta !== null && insight.delta !== 0 && (
-          <span className={cn("inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-medium tabular-nums", TONE_CHIP[insight.deltaTone])}>
+          <span className={cn("inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-medium tabular-nums", TONE_CHIP[insight.deltaTone])}>
             <DeltaIcon className="size-3" aria-hidden />
             {format(Math.abs(insight.delta))}
           </span>
@@ -71,8 +71,8 @@ function InsightTooltip({
       <p className={cn("mt-1 font-medium", TONE_TEXT[insight.headlineTone])}>{insight.headline}</p>
       {row.value !== null && insight.average > 0 && (
         <div className="mt-2.5 grid gap-1">
-          <div className="relative h-1 rounded-full bg-muted">
-            <div className="absolute inset-y-0 left-0 rounded-full bg-[var(--color-value)] transition-[width] duration-200" style={{ width: `${share * 100}%` }} />
+          <div className="relative h-1 rounded-sm bg-muted">
+            <div className="absolute inset-y-0 left-0 rounded-sm bg-[var(--color-value)] transition-[width] duration-200" style={{ width: `${share * 100}%` }} />
             <div className="absolute -top-0.5 left-1/2 h-2 w-px bg-foreground/40" aria-hidden />
           </div>
           <span className="text-[11px] text-subtle">Marker is the average, {format(Math.round(insight.average * 10) / 10)}</span>
@@ -146,7 +146,7 @@ export function TrendChart({
         e.preventDefault();
         setKb(next);
       }}
-      className="trend-reveal relative rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+      className="trend-reveal relative rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
     >
       {kb !== null && (
         <div className="pointer-events-none absolute top-0 right-0 z-10" aria-live="polite">

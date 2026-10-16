@@ -142,7 +142,7 @@ export function IssueList({
 
   if (loading) {
     return (
-      <div className="border border-separator-border bg-background-primary-default shadow-none divide-y overflow-hidden rounded-xl">
+      <div className="border border-separator-border bg-background-primary-default shadow-none divide-y overflow-hidden rounded-md">
         {[0, 1, 2, 3, 4].map((n) => (
           <Skeleton
             key={n}
@@ -160,7 +160,7 @@ export function IssueList({
         <div
           role="toolbar"
           aria-label="Bulk actions"
-          className="bg-card border-hairline sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 text-sm shadow-sm"
+          className="bg-card border-hairline sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-sm shadow-sm"
         >
           <span className="font-medium tabular-nums">
             {chosen.length} selected

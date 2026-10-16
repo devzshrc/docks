@@ -103,9 +103,9 @@ export function Checklist({
             )}
           </span>
         </div>
-        <div className="bg-muted h-1 overflow-hidden rounded-full" aria-hidden>
+        <div className="bg-muted h-1 overflow-hidden rounded-sm" aria-hidden>
           <div
-            className={cn("h-full rounded-full transition-[width,background-color] duration-300",
+            className={cn("h-full rounded-sm transition-[width,background-color] duration-300",
               complete ? "bg-emerald-500" : "bg-primary",
               justDone && "anim-pulse-once",
             )}
@@ -124,7 +124,7 @@ export function Checklist({
                 aria-label={item.question}
                 isSelected={checked}
                 onChange={() => toggle(i)}
-                className="hover:bg-muted/70 flex cursor-pointer gap-3 rounded-lg px-2 py-2.5 transition-colors"
+                className="hover:bg-muted/70 flex cursor-pointer gap-3 rounded-md px-2 py-2.5 transition-colors"
               >
                 <span className="min-w-0 flex-1 space-y-1.5">
                   <span

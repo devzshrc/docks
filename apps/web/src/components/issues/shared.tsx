@@ -36,7 +36,7 @@ export function LabelChip({ name, color }: { name: string; color: string }) {
   const c = /^[0-9a-f]{6}$/i.test(color) ? `#${color}` : "#888888"
   return (
     <span
-      className="inline-flex h-5 max-w-40 items-center truncate rounded-full border px-2 text-[11px] leading-none"
+      className="inline-flex h-5 max-w-40 items-center truncate rounded border px-2 text-[11px] leading-none"
       style={{ borderColor: `color-mix(in oklch, ${c} 45%, transparent)`, backgroundColor: `color-mix(in oklch, ${c} 14%, transparent)` }}
     >
       {name}

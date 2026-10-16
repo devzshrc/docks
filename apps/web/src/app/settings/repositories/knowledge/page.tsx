@@ -80,7 +80,7 @@ function Knowledge() {
         {q.data?.documents.map((d) => (
           <article
             key={d.id}
-            className="flex flex-col gap-3 rounded-3xl border border-border-button-default p-4"
+            className="flex flex-col gap-3 rounded-md border border-border-button-default p-4"
           >
             <h2 className="text-title-3-semibold text-text-primary">
               {d.title}
@@ -132,7 +132,7 @@ function Knowledge() {
         )}
         {draft && (
           <section
-            className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-4"
+            className="flex flex-col gap-4 rounded-md border border-border-button-default p-4"
             aria-label="Knowledge editor"
           >
             <Input

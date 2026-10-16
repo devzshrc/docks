@@ -64,7 +64,7 @@ export function AskPanel({ repo, number }: { repo: string; number: number }) {
   return (
     <section
       id="ask-panel"
-      className="flex flex-col gap-3 rounded-3xl border border-border-button-default p-4"
+      className="flex flex-col gap-3 rounded-md border border-border-button-default p-4"
       aria-label="Ask about this PR"
     >
       <h3 className="text-headline-medium text-text-primary">

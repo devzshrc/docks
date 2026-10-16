@@ -73,9 +73,9 @@ const EMPTY: Draft = {
 };
 const TYPES = Object.keys(TEMPLATES) as IssueType[];
 const select =
-  "bg-(--field) hover:bg-(--field-hover) h-9 rounded-lg border px-2 text-sm";
+  "bg-(--field) hover:bg-(--field-hover) h-9 rounded-md border px-2 text-sm";
 
-const bannerClass = "rounded-lg border px-3 py-2 text-sm";
+const bannerClass = "rounded-md border px-3 py-2 text-sm";
 
 function lastRepo() {
   try {
@@ -522,7 +522,7 @@ export function NewIssuePanel({
                     rows={10}
                     value={draft.body}
                     onChange={(v) => patch({ body: v })}
-                    className="bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border px-3 py-2 text-sm"
+                    className="bg-(--field) hover:bg-(--field-hover) w-full rounded-md border px-3 py-2 text-sm"
                   />
                   {draft.body.trim() !== tpl.body && (
                     <ShadcnButton
@@ -556,7 +556,7 @@ export function NewIssuePanel({
                             values: { ...d.values, [s.key]: v },
                           }))
                         }
-                        className="bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border px-3 py-2 text-sm"
+                        className="bg-(--field) hover:bg-(--field-hover) w-full rounded-md border px-3 py-2 text-sm"
                       />
                     </div>
                   ))}
@@ -781,7 +781,7 @@ function FormFieldInput({
 }) {
   const id = `issue-f-${field.id}`;
   const box =
-    "bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border px-3 py-2 text-sm";
+    "bg-(--field) hover:bg-(--field-hover) w-full rounded-md border px-3 py-2 text-sm";
   return (
     <div>
       <Label htmlFor={id}>
@@ -916,7 +916,7 @@ function Done({
       {dropped.length > 0 && (
         <p
           role="alert"
-          className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-sm text-amber-800 dark:text-amber-300"
+          className="rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-sm text-amber-800 dark:text-amber-300"
         >
           Created, but GitHub didn&apos;t apply {dropped.join(", ")}. Setting
           labels and assignees needs triage access on the repository.

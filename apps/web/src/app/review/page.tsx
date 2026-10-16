@@ -122,11 +122,11 @@ function Board({ workspaceId }: { workspaceId: string }) {
           type="button"
           aria-expanded={filtersOpen}
           onClick={() => setFiltersOpen((o) => !o)}
-          className="text-muted-foreground hover:text-foreground flex h-8 items-center gap-2 rounded-full border px-3 text-xs"
+          className="text-muted-foreground hover:text-foreground flex h-8 items-center gap-2 rounded border px-3 text-xs"
         >
           Filters
           {activeCount > 0 && (
-            <span className="bg-primary text-primary-foreground rounded-full px-1.5 text-[11px] tabular-nums">
+            <span className="bg-primary text-primary-foreground rounded px-1.5 text-[11px] tabular-nums">
               {activeCount}
             </span>
           )}
@@ -277,7 +277,7 @@ function Board({ workspaceId }: { workspaceId: string }) {
       {data && data.cards.length === 0 && !active && !filters.q && (
         <div
           role="status"
-          className="bg-card flex items-start gap-3 rounded-lg border shadow-xs px-5 py-4 text-sm"
+          className="bg-card flex items-start gap-3 rounded-md border shadow-xs px-5 py-4 text-sm"
         >
           <span
             className="bg-primary/15 text-primary-text mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-xs"

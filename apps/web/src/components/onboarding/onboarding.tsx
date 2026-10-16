@@ -202,7 +202,7 @@ function Onboarding({
             }
       }
       transition={{ duration: 0.5, ease: EASE }}
-      className="bg-card border-hairline mx-auto mt-[6vh] w-full max-w-lg rounded-2xl border p-6 shadow-[0_12px_32px_-16px_rgb(15_23_42/0.25)] sm:p-8"
+      className="bg-card border-hairline mx-auto mt-[6vh] w-full max-w-lg rounded-md border p-6 shadow-[0_12px_32px_-16px_rgb(15_23_42/0.25)] sm:p-8"
     >
       <header className="space-y-1.5">
         <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -232,9 +232,9 @@ function Onboarding({
         const count = complete ? STEPS.length : STEPS.filter((s) => done[s.id]).length;
         return (
           <div className="mt-5 flex items-center gap-3" aria-label={`${count} of ${STEPS.length} steps done`}>
-            <div className="bg-muted h-1 flex-1 overflow-hidden rounded-full">
+            <div className="bg-muted h-1 flex-1 overflow-hidden rounded-sm">
               <div
-                className="bg-primary h-full rounded-full transition-[width] duration-500 ease-power3-out"
+                className="bg-primary h-full rounded-sm transition-[width] duration-500 ease-power3-out"
                 style={{ width: `${(count / STEPS.length) * 100}%` }}
               />
             </div>
@@ -253,7 +253,7 @@ function Onboarding({
             <li
               key={s.id}
               aria-current={active ? "step" : undefined}
-              className={cn("rounded-xl transition-colors duration-300",
+              className={cn("rounded-md transition-colors duration-300",
                 active && "bg-muted/60",
               )}
             >
@@ -505,7 +505,7 @@ function GithubStep({
         </p>
       )}
       {unlinked.length > 0 && (
-        <div className="bg-card border-hairline divide-hairline divide-y rounded-lg border">
+        <div className="bg-card border-hairline divide-hairline divide-y rounded-md border">
           {unlinked.map((i) => (
             <div
               key={i.id}
@@ -607,7 +607,7 @@ function ReposStep({
           aria-label="Filter repositories"
         />
       )}
-      <ul className="bg-card border-hairline divide-hairline max-h-64 divide-y overflow-y-auto rounded-lg border">
+      <ul className="bg-card border-hairline divide-hairline max-h-64 divide-y overflow-y-auto rounded-md border">
         {shown.map((r) => (
           <li key={r.id}>
             <label className="row-hover flex cursor-pointer items-center justify-between gap-3 px-3 py-2.5 text-sm">
@@ -718,7 +718,7 @@ function SyncingAccess() {
   return (
     <div
       role="status"
-      className="bg-muted/60 mt-5 flex items-start gap-3 rounded-xl px-4 py-3 text-sm"
+      className="bg-muted/60 mt-5 flex items-start gap-3 rounded-md px-4 py-3 text-sm"
     >
       <LoaderCircleIcon
         className="text-muted-foreground mt-0.5 size-4 shrink-0 animate-spin motion-reduce:animate-none"

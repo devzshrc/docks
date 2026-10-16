@@ -61,7 +61,7 @@ export function GuidePanel({
   const ai = guide.source === "ai";
   const row = (active: boolean) =>
     cn(
-      "group flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-[background-color,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none",
+      "group flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-[background-color,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none",
       active ? "bg-card shadow-control" : "hover:bg-muted/60",
     );
 

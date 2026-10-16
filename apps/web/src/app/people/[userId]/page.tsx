@@ -140,7 +140,7 @@ function PrList({
       </CardHeader>
       <CardContent>
         {rows.length === 0 ? (
-          <p className="text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed px-3 py-4 text-[13px]"><span aria-hidden className="bg-hue-orange/60 size-1.5 rounded-full" />{empty}</p>
+          <p className="text-muted-foreground flex items-center gap-2 rounded-md border border-dashed px-3 py-4 text-[13px]"><span aria-hidden className="bg-hue-orange/60 size-1.5 rounded-full" />{empty}</p>
         ) : (
           <ul className="divide-y text-sm">
             {rows.map((r) => (

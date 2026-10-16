@@ -172,7 +172,7 @@ function Issues({ workspaceId }: { workspaceId: string }) {
             me={me}
             empty={
               list.data?.syncing ? (
-                <div className="bg-card shadow-card rounded-xl">
+                <div className="bg-card shadow-card rounded-md">
                   {slowImport ? (
                     <EmptyPreview
                       icon={RiDownloadCloud2Line}
@@ -192,7 +192,7 @@ function Issues({ workspaceId }: { workspaceId: string }) {
                   )}
                 </div>
               ) : (
-                <div className="bg-card shadow-card rounded-xl">
+                <div className="bg-card shadow-card rounded-md">
                   <EmptyPreview
                     icon={filtered ? RiFilterOffLine : RiBugLine}
                     hue="green"

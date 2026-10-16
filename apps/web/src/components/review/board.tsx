@@ -28,7 +28,7 @@ const LANE_DOT: Record<string, string> = {
 /** A faded card outline, so an empty lane still shows what lands in it. */
 function LaneEmpty({ title }: { title: string }) {
   return (
-    <div className="flex min-h-28 items-center justify-center rounded-xl border border-dashed border-separator-border p-4">
+    <div className="flex min-h-28 items-center justify-center rounded-md border border-dashed border-separator-border p-4">
       <p className="text-center text-caption-1-regular text-text-secondary">
         No pull requests in {title.toLowerCase()}
       </p>
@@ -110,7 +110,7 @@ export function ReviewBoard({
               key={lane.id}
               aria-label={lane.title}
               spacing="sm"
-              className="self-start w-[80vw] max-w-sm shrink-0 snap-start gap-3 rounded-2xl border-0 bg-background-tertiary-default p-3 shadow-none md:w-auto md:max-w-none"
+              className="self-start w-[80vw] max-w-sm shrink-0 snap-start gap-3 rounded-md border-0 bg-background-tertiary-default p-3 shadow-none md:w-auto md:max-w-none"
             >
               <FrameHeader className="flex-row items-center justify-between gap-2 px-1 py-1">
                 <FrameTitle className="flex items-center gap-2 font-medium">
@@ -133,7 +133,7 @@ export function ReviewBoard({
                 )}
               </FrameHeader>
               {loading ? (
-                <Skeleton className="h-28 w-full rounded-lg" />
+                <Skeleton className="h-28 w-full rounded-md" />
               ) : items.length === 0 ? (
                 <LaneEmpty title={lane.title} />
               ) : (

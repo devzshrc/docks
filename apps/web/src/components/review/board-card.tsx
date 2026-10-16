@@ -83,7 +83,7 @@ export function BoardCard({
   return (
     <div
       className={cn(
-        "group relative rounded-xl border border-separator-border bg-background-primary-default p-4 text-body-2-regular transition-colors hover:border-primary/30 focus-within:ring-2 focus-within:ring-border-focus-ring/30",
+        "group relative rounded-md border border-separator-border bg-background-primary-default p-4 text-body-2-regular transition-colors hover:border-primary/30 focus-within:ring-2 focus-within:ring-border-focus-ring/30",
       )}
     >
       {canAct && (

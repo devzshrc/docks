@@ -14,7 +14,7 @@ const days = (d: number | null) => (d === null ? "—" : `${d}d`)
 export function IssueInsights({ workspaceId }: { workspaceId: string }) {
   const trpc = useTRPC()
   const q = useQuery(trpc.issues.insights.queryOptions({ workspaceId }))
-  if (q.isPending) return <Skeleton className="h-64 w-full rounded-xl" />
+  if (q.isPending) return <Skeleton className="h-64 w-full rounded-md" />
   if (q.error) return <QueryError error={q.error} onRetry={() => void q.refetch()} />
   const d = q.data
   const aging = [

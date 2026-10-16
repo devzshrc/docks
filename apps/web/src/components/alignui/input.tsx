@@ -103,12 +103,12 @@ export const inputVariants = tv({
         input: "h-10",
       },
       small: {
-        root: "rounded-lg",
+        root: "rounded-md",
         wrapper: "gap-2 px-2.5",
         input: "h-9",
       },
       xsmall: {
-        root: "rounded-lg",
+        root: "rounded-md",
         wrapper: "gap-1.5 px-2",
         input: "h-8",
       },

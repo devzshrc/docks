@@ -56,7 +56,7 @@ function Insights({ workspaceId }: { workspaceId: string }) {
       </ShellFilters>
 
       {data.isPending ? (
-        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-md" />
       ) : data.error ? (
         <QueryError error={data.error} onRetry={() => void data.refetch()} />
       ) : (
@@ -95,7 +95,7 @@ function Insights({ workspaceId }: { workspaceId: string }) {
           </section>
 
           <Panel title="PR size" description="Pull requests opened in this range">
-            <div className="flex h-2 gap-0.5 overflow-hidden rounded-full" aria-hidden>
+            <div className="flex h-2 gap-0.5 overflow-hidden rounded-sm" aria-hidden>
               {(["S", "M", "L"] as const).map((k, i) => (
                 <div
                   key={k}

@@ -62,7 +62,7 @@ function RuleCard({
 }) {
   const set = onChange;
   return (
-    <fieldset className="animate-in fade-in slide-in-from-bottom-1 space-y-4 rounded-xl border p-4 duration-200">
+    <fieldset className="animate-in fade-in slide-in-from-bottom-1 space-y-4 rounded-md border p-4 duration-200">
       <div className="flex items-center justify-between">
         <legend className="text-sm font-medium">Rule {index + 1}</legend>
         <Button type="button" size="xs" variant="ghost" onClick={onRemove}>
@@ -123,7 +123,7 @@ function RuleCard({
             </label>
             <ShadcnSelect
               id={`team-${rule.id}`}
-              className="bg-(--field) hover:bg-(--field-hover) h-9 w-full rounded-lg border px-2 text-sm"
+              className="bg-(--field) hover:bg-(--field-hover) h-9 w-full rounded-md border px-2 text-sm"
               value={rule.teamId ?? ""}
               onChange={(e) => set({ teamId: e.target.value || null })}
             >
@@ -154,7 +154,7 @@ function RuleCard({
           <ShadcnTextarea
             id={`comment-${rule.id}`}
             rows={2}
-            className="bg-(--field) hover:bg-(--field-hover) w-full rounded-lg border px-3 py-2 text-sm"
+            className="bg-(--field) hover:bg-(--field-hover) w-full rounded-md border px-3 py-2 text-sm"
             placeholder="This PR is large. Could it be split into smaller ones?"
             defaultValue={rule.comment ?? ""}
             onBlur={(e) => set({ comment: e.target.value.trim() || null })}
@@ -217,7 +217,7 @@ export function RulesEditor({
         </SheetHeader>
         <div className="space-y-4 px-4 pb-6">
           {rules.length === 0 && (
-            <p className="text-muted-foreground rounded-lg bg-muted/50 p-4 text-sm">
+            <p className="text-muted-foreground rounded-md bg-muted/50 p-4 text-sm">
               Examples: touches <code className="font-code">billing/</code> →
               label &ldquo;billing&rdquo; and request the payments team. Over
               800 lines → comment asking to split.
