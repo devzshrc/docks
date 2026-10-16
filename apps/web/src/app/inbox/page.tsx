@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { RiArrowDownSLine } from "@remixicon/react";
 import { PersonalReviewInbox } from "@/components/review/personal-inbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
@@ -145,7 +146,7 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
       </div>
       {error && (
         <p role="alert" className="text-destructive text-sm">
-          {error.message}
+          {errorMessage(error)}
         </p>
       )}
       {q.error ? (

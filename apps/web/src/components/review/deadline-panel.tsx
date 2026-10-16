@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { RiTimeLine } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -37,7 +38,7 @@ export function DeadlinePanel({ repo, number }: { repo: string; number: number }
       >
         {cycles.error && (
           <p role="alert" className="text-sm text-danger">
-            {cycles.error.message}
+            {errorMessage(cycles.error)}
           </p>
         )}
         {cycles.data?.length === 0 && <p className="text-sm text-muted-foreground">No deadline on this pull request.</p>}

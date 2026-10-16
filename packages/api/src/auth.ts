@@ -143,8 +143,9 @@ export const auth = betterAuth({
       update: { after: scrubGithubTokens },
     },
   },
-  // Built-in limiter on /api/auth/* (sign-in, sign-up, reset).
-  rateLimit: { enabled: true, window: 60, max: 30 },
+  // Built-in limiter on /api/auth/* (sign-in, sign-up, reset). Session reads run on every page load and
+  // must never throttle, or ordinary navigation signs people out.
+  rateLimit: { enabled: true, window: 60, max: 30, customRules: { "/get-session": false } },
   plugins: [
     twoFactor({ issuer: "Docks" }),
     {

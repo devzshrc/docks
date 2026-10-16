@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import { errorMessage } from "@/lib/error-message";
 import { RiArrowDownSLine } from "@remixicon/react";
 import { NativeCheckbox as ShadcnCheckbox } from "@/components/ui-compat/native-checkbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
@@ -308,7 +310,7 @@ function GuidedReviewContent({
 
   if (data.isPending) return <Skeleton className="h-64 w-full" />;
   if (data.error)
-    return <p className="text-destructive text-sm">{data.error.message}</p>;
+    return <p className="text-destructive text-sm">{errorMessage(data.error)}</p>;
 
   const { pr, files, reviewers, checks, me } = data.data;
   const outdatedDrafts = pending.some((c) => c.headSha !== pr.headSha);
@@ -341,10 +343,11 @@ function GuidedReviewContent({
   return (
     <div className="animate-in fade-in flex flex-col gap-6 pb-20 duration-300">
       {session.data.lastLocation && (
+        // Floats instead of sitting above the title, so it never pushes the page down when it appears.
         <ShadcnButton
-          variant="ghost"
+          variant="outline"
           type="button"
-          className="text-xs underline"
+          className="bg-card animate-in fade-in slide-in-from-bottom-2 fixed bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-full text-xs shadow-lg"
           onClick={() => {
             const location = session.data.lastLocation;
             if (location && files.some((f) => f.filename === location.path)) {
@@ -584,7 +587,7 @@ function GuidedReviewContent({
                 canAct={data.data.canAct}
               />
             )}
-            {guide.error && <p className="text-sm text-destructive">{guide.error.message}</p>}
+            {guide.error && <p className="text-sm text-destructive">{errorMessage(guide.error)}</p>}
             {files.length === 0 && <p className="text-sm text-muted-foreground">No file changes synced for this commit yet.</p>}
             <DeadlinePanel repo={repo} number={number} />
             {pr.state === "open" && (
@@ -674,9 +677,9 @@ function GuidedReviewContent({
                 </span>
               )}
               {threads.data?.needsGithub && (
-                <span className="text-muted-foreground">
-                  Connect your GitHub account to see and add comments.
-                </span>
+                <Link href="/settings/integrations" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+                  Connect GitHub to see and add comments →
+                </Link>
               )}
               <FileFinder files={files} />
             </div>
@@ -863,6 +866,7 @@ function GuidedReviewContent({
             repo={repo}
             number={number}
             githubLogin={me}
+            needsGithub={Boolean(threads.data?.needsGithub)}
             own={Boolean(me) && pr.author.toLowerCase() === me!.toLowerCase()}
             headSha={pr.headSha}
             canMerge={!pr.draft}

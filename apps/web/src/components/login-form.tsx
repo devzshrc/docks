@@ -85,7 +85,7 @@ export function LoginForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="you@company.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -111,7 +111,7 @@ export function LoginForm({
               </Field>
               <Field>
                 <Button type="submit" size="lg" disabled={pending}>
-                  {pending ? "Logging in…" : "Login"}
+                  {pending ? "Signing in…" : "Sign in"}
                 </Button>
                 {error && <FieldError>{error}</FieldError>}
                 {unverified && (

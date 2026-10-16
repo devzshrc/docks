@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -72,7 +73,7 @@ function Knowledge() {
         {q.isPending && repo && <p role="status">Loading knowledge…</p>}
         {q.error && (
           <p role="alert" className="text-text-error-primary">
-            {q.error.message}
+            {errorMessage(q.error)}
           </p>
         )}
         {q.data?.documents.length === 0 && <p>No documents yet.</p>}
@@ -118,7 +119,7 @@ function Knowledge() {
           >
             <h2 className="text-headline-medium">Revision history</h2>
             {revisions.isPending && <p>Loading revisions…</p>}
-            {revisions.error && <p role="alert">{revisions.error.message}</p>}
+            {revisions.error && <p role="alert">{errorMessage(revisions.error)}</p>}
             {revisions.data?.map((r) => (
               <article key={r.id}>
                 <h3 className="text-body-medium">
@@ -186,7 +187,7 @@ function Knowledge() {
             </div>
             {save.error && (
               <p role="alert" className="text-text-error-primary">
-                {save.error.message}
+                {errorMessage(save.error)}
               </p>
             )}
             {revisions.data?.map((r) => (

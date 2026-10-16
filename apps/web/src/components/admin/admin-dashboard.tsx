@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   RiArrowRightLine,
@@ -136,7 +137,7 @@ function State({
   if (error)
     return (
       <p role="alert" className="mx-5 mb-5 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
-        {error.message}
+        {errorMessage(error)}
       </p>
     );
   if (empty)
@@ -362,7 +363,7 @@ function ActionDialog({
               role="alert"
               className="text-body-2-regular text-text-error-primary"
             >
-              {mutation.error.message}
+              {errorMessage(mutation.error)}
             </p>
           )}
           <div className="flex justify-end gap-2">

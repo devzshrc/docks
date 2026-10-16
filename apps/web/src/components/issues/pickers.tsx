@@ -1,5 +1,6 @@
 "use client"
 
+import { errorMessage } from "@/lib/error-message";
 import { IconCheck } from "@tabler/icons-react"
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
@@ -71,7 +72,7 @@ export function AssigneeMenu({
         <DropdownMenuLabel>Assign to</DropdownMenuLabel>
         <Filterable placeholder="Filter people" value={q} onChange={setQ} />
         {meta.isPending && <p className="text-muted-foreground px-3 py-2 text-xs">Loading…</p>}
-        {meta.error && <p className="text-destructive px-3 py-2 text-xs">{meta.error.message}</p>}
+        {meta.error && <p className="text-destructive px-3 py-2 text-xs">{errorMessage(meta.error)}</p>}
         {meta.data && people.length === 0 && <p className="text-muted-foreground px-3 py-2 text-xs">No one matches</p>}
         {people.map((login) => (
           <DropdownMenuItem key={login} onSelect={(e) => { e.preventDefault(); toggle(login) }}>
@@ -121,7 +122,7 @@ export function LabelMenu({
         <DropdownMenuLabel>Labels</DropdownMenuLabel>
         <Filterable placeholder="Filter labels" value={q} onChange={setQ} />
         {meta.isPending && <p className="text-muted-foreground px-3 py-2 text-xs">Loading…</p>}
-        {meta.error && <p className="text-destructive px-3 py-2 text-xs">{meta.error.message}</p>}
+        {meta.error && <p className="text-destructive px-3 py-2 text-xs">{errorMessage(meta.error)}</p>}
         {meta.data && labels.length === 0 && <p className="text-muted-foreground px-3 py-2 text-xs">No labels match</p>}
         {labels.map((l) => (
           <DropdownMenuItem key={l.name} onSelect={(e) => { e.preventDefault(); toggle(l.name) }}>
@@ -155,7 +156,7 @@ export function MilestoneMenu({
       <DropdownMenuContent align="start" className="max-h-80 w-60 overflow-y-auto">
         <DropdownMenuLabel>Milestone</DropdownMenuLabel>
         {meta.isPending && <p className="text-muted-foreground px-3 py-2 text-xs">Loading…</p>}
-        {meta.error && <p className="text-destructive px-3 py-2 text-xs">{meta.error.message}</p>}
+        {meta.error && <p className="text-destructive px-3 py-2 text-xs">{errorMessage(meta.error)}</p>}
         {meta.data && meta.data.milestones.length === 0 && <p className="text-muted-foreground px-3 py-2 text-xs">No open milestones</p>}
         {meta.data?.milestones.map((m) => (
           <DropdownMenuItem key={m.number} onSelect={() => onChange(m.number)}>

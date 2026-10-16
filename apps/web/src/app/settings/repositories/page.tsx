@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { RiGitRepositoryLine } from "@remixicon/react";
 import { Button as CoreButton } from "@/components/ui/button";
 import { EmptyPreview } from "@/components/ui/empty-preview";
@@ -75,7 +76,7 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="space-y-2">
       {setRepo.error && (
-        <p className="text-destructive text-sm">{setRepo.error.message}</p>
+        <p className="text-destructive text-sm">{errorMessage(setRepo.error)}</p>
       )}
       <div className="bg-muted/50 rounded-xl border p-0.75">
         <div className="bg-card overflow-hidden rounded-[calc(var(--radius-xl)-4px)] border shadow-xs">

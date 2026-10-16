@@ -314,7 +314,12 @@ export function ReviewSessionProvider({
       }}
     >
       <div
-        className="mb-4 space-y-2 rounded-lg border p-3 text-xs"
+        // Routine autosave stays quiet (screen readers still hear it); the panel only shows when something needs a decision.
+        className={
+          !query.error && !conflict && !legacy && Object.keys(data.textDrafts).length === 0 && ["Loading review recovery…", "Saved", "Saving…", "Unsaved changes"].includes(status)
+            ? "sr-only"
+            : "mb-4 space-y-2 rounded-lg border p-3 text-xs"
+        }
         aria-live="polite"
       >
         <div className="flex flex-wrap items-center gap-3">

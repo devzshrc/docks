@@ -1,5 +1,6 @@
 "use client"
 
+import { errorMessage } from "@/lib/error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { useParams } from "next/navigation"
@@ -113,7 +114,7 @@ function EditProfile({
               Save
             </Button>
             {save.isSuccess && <span className="text-sm text-emerald-600">Saved</span>}
-            {save.error && <span className="text-destructive text-sm">{save.error.message}</span>}
+            {save.error && <span className="text-destructive text-sm">{errorMessage(save.error)}</span>}
           </div>
         </form>
       </CardContent>
@@ -164,7 +165,7 @@ function Person({ workspaceId, userId }: { workspaceId: string; userId: string }
   const trpc = useTRPC()
   const person = useQuery(trpc.people.person.queryOptions({ workspaceId, userId }))
   if (person.isPending) return <Skeleton className="h-48 w-full max-w-3xl" />
-  if (person.error) return <p className="text-destructive text-sm">{person.error.message}</p>
+  if (person.error) return <p className="text-destructive text-sm">{errorMessage(person.error)}</p>
   const p = person.data
 
   return (

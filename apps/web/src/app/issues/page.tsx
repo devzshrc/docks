@@ -4,6 +4,7 @@ import { RiBugLine, RiDownloadCloud2Line, RiFilterOffLine } from "@remixicon/rea
 import { EmptyPreview, GhostRow } from "@/components/ui/empty-preview";
 import { useQuery } from "@tanstack/react-query"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 
 import { AppShell } from "@/components/app-shell"
@@ -54,6 +55,14 @@ function Issues({ workspaceId }: { workspaceId: string }) {
     enabled: isList,
     refetchInterval: (q) => (q.state.data?.syncing ? 4_000 : 30_000),
   })
+  // A first import normally lands within seconds; past this point say it's slow instead of spinning forever.
+  const [slowImport, setSlowImport] = useState(false)
+  const syncing = Boolean(list.data?.syncing)
+  useEffect(() => {
+    if (!syncing) return setSlowImport(false)
+    const t = window.setTimeout(() => setSlowImport(true), 45_000)
+    return () => window.clearTimeout(t)
+  }, [syncing])
   const board = useQuery({
     ...trpc.issues.board.queryOptions({ workspaceId, repoIds: filters.repoId ? [filters.repoId] : undefined }),
     enabled: filters.view === "board",
@@ -164,7 +173,23 @@ function Issues({ workspaceId }: { workspaceId: string }) {
             empty={
               list.data?.syncing ? (
                 <div className="bg-card shadow-card rounded-xl">
-                  <EmptyPreview icon={RiDownloadCloud2Line} hue="green" title="Importing issues from GitHub…" description="This takes a moment the first time. They appear here on their own." />
+                  {slowImport ? (
+                    <EmptyPreview
+                      icon={RiDownloadCloud2Line}
+                      hue="green"
+                      title="The import is taking longer than usual"
+                      description={
+                        <>
+                          GitHub may be slow or the connection may need attention.{" "}
+                          <Link href="/settings/integrations" className="text-foreground underline underline-offset-4">
+                            Check sync health
+                          </Link>
+                        </>
+                      }
+                    />
+                  ) : (
+                    <EmptyPreview icon={RiDownloadCloud2Line} hue="green" title="Importing issues from GitHub…" description="This takes a moment the first time. They appear here on their own." />
+                  )}
                 </div>
               ) : (
                 <div className="bg-card shadow-card rounded-xl">

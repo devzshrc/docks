@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { NativeCheckbox as ShadcnCheckbox } from "@/components/ui-compat/native-checkbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { Input as ShadcnInput } from "@/components/ui/input";
@@ -294,7 +295,7 @@ function Composer({
         </Button>
         {post.error && (
           <span role="alert" className="text-destructive text-sm">
-            {post.error.message}
+            {errorMessage(post.error)}
           </span>
         )}
       </div>
@@ -1107,7 +1108,7 @@ export function FileDiff({
       if (content.error)
         return (
           <p className="text-destructive px-3 py-4 text-sm">
-            {content.error.message}
+            {errorMessage(content.error)}
           </p>
         );
       return <MarkdownPreview text={content.data!.text} />;
@@ -1122,7 +1123,7 @@ export function FileDiff({
       if (content.error)
         return (
           <p className="text-destructive px-3 py-4 text-sm">
-            {content.error.message}
+            {errorMessage(content.error)}
           </p>
         );
       return fileText!.length > VIRTUAL_AT ? (

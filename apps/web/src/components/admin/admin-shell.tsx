@@ -160,15 +160,18 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <RiShieldKeyholeLine className="size-5" />
         </span>
         <div className="grid gap-2">
-          <h1 className="text-lg font-medium">Administration is protected</h1>
-          <p className="text-sm text-muted-foreground">{access.error.message}</p>
+          <h1 className="text-lg font-medium">You don't have access to administration</h1>
+          <p className="text-sm text-muted-foreground">
+            Administration is limited to Docks operators with two-factor authentication turned on. If you should have
+            access, turn on two-factor authentication in your account settings.
+          </p>
         </div>
         <div className="flex gap-2">
           <Button asChild>
-            <Link href="/settings/account">Account settings</Link>
+            <Link href="/review">Back to Docks</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href="/login?next=%2Fadmin">Sign in</Link>
+            <Link href="/settings/account">Account settings</Link>
           </Button>
         </div>
       </main>

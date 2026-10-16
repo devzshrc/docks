@@ -9,7 +9,7 @@ test("personal review inbox and knowledge revision lifecycle", async ({
   await page.goto("/login?next=%2Finbox");
   await page.getByLabel("Email", { exact: true }).fill(account.memberEmail);
   await page.getByLabel("Password", { exact: true }).fill(account.password);
-  await page.getByRole("button", { name: "Login", exact: true }).click();
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Inbox", exact: true }),
   ).toBeVisible();

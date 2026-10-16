@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { Button as ShadcnButton } from "@/components/ui/button";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -401,7 +402,7 @@ function WorkspaceStep() {
       </div>
       {create.error && (
         <p role="alert" className="text-destructive text-sm">
-          {create.error.message}
+          {errorMessage(create.error)}
         </p>
       )}
     </form>
@@ -531,7 +532,7 @@ function GithubStep({
       )}
       {link.error && (
         <p role="alert" className="text-destructive text-sm">
-          {link.error.message}
+          {errorMessage(link.error)}
         </p>
       )}
       <Button
@@ -629,7 +630,7 @@ function ReposStep({
       </ul>
       {set.error && (
         <p role="alert" className="text-destructive text-sm">
-          {set.error.message}
+          {errorMessage(set.error)}
         </p>
       )}
       <div className="flex items-center justify-between gap-3">

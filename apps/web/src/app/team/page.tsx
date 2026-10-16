@@ -138,7 +138,7 @@ function InviteTile({ onClick }: { onClick: () => void }) {
           <span className="grid size-9 place-items-center rounded-full bg-card shadow-control transition-transform duration-200 ease-power3-out group-hover:scale-110 group-hover:rotate-90">
             <RiAddLine className="size-4" />
           </span>
-          Invite a teammate
+          Invite people
         </span>
       </button>
     </li>

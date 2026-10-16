@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { RiInboxLine } from "@remixicon/react";
 import { EmptyPreview } from "@/components/ui/empty-preview";
 import { Button as ShadcnButton } from "@/components/ui/button";
@@ -18,7 +19,7 @@ export function QueryError({
       role="alert"
       className="text-destructive border-destructive/30 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm"
     >
-      <span>{error.message}</span>
+      <span>{errorMessage(error)}</span>
       {onRetry && (
         <ShadcnButton
           variant="ghost"

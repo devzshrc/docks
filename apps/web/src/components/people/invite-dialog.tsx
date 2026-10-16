@@ -113,7 +113,7 @@ export function InviteDialog({
         }}
       >
         <DialogHeader className="px-6 pt-6 pb-4">
-          <DialogTitle>Invite teammates</DialogTitle>
+          <DialogTitle>Invite people</DialogTitle>
           <DialogDescription>Each email gets a personal link that works for 7 days.</DialogDescription>
         </DialogHeader>
 

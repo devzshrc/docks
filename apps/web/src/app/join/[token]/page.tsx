@@ -1,5 +1,6 @@
 "use client"
 
+import { errorMessage } from "@/lib/error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
@@ -43,7 +44,7 @@ function Join({ token }: { token: string }) {
       </CardHeader>
       <CardContent className="space-y-3">
         {preview.isPending && <p className="text-muted-foreground text-sm">Checking invite…</p>}
-        {preview.error && <p className="text-destructive text-sm">{preview.error.message}</p>}
+        {preview.error && <p className="text-destructive text-sm">{errorMessage(preview.error)}</p>}
         {preview.data?.wrongAccount && (
           <p className="text-sm">
             This invite is for <span className="font-medium">{preview.data.wrongAccount}</span>. Sign out and sign in
@@ -61,7 +62,7 @@ function Join({ token }: { token: string }) {
               Join workspace
             </Button>
           ))}
-        {accept.error && <p className="text-destructive text-sm">{accept.error.message}</p>}
+        {accept.error && <p className="text-destructive text-sm">{errorMessage(accept.error)}</p>}
       </CardContent>
     </Card>
   )

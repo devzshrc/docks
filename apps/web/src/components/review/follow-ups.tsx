@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/react";
 export function FollowUps({ repo, number }: { repo: string; number: number }) {
@@ -16,7 +17,7 @@ export function FollowUps({ repo, number }: { repo: string; number: number }) {
         <p>Loading follow-ups…</p>
       ) : q.error ? (
         <p role="alert" className="text-text-error-primary">
-          {q.error.message}
+          {errorMessage(q.error)}
         </p>
       ) : !q.data?.length ? (
         <p className="text-body-regular text-text-secondary">

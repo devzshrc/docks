@@ -39,6 +39,8 @@ export function GitHubSignIn({ label = "Continue with GitHub" }: { label?: strin
   }, [])
 
   const unavailable = config.data ? !config.data.githubLogin : false
+  // Without GitHub sign-in on this installation, offer only what works: the email form.
+  if (unavailable && !error) return null
 
   return (
     <div className="space-y-3">
@@ -69,7 +71,6 @@ export function GitHubSignIn({ label = "Continue with GitHub" }: { label?: strin
         <IconBrandGithub className="size-4" aria-hidden />
         {label}
       </Button>
-      {unavailable && <p className="text-muted-foreground text-center text-xs">GitHub sign-in isn&apos;t set up on this server yet.</p>}
       {error && (
         <p role="alert" className="text-destructive text-center text-sm">
           {error}

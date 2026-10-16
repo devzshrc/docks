@@ -13,7 +13,7 @@ test("authorized health summaries refresh and fit desktop/mobile", async ({
   await page.goto("/login?next=%2Fadmin");
   await page.getByLabel("Email", { exact: true }).fill(account.ownerEmail);
   await page.getByLabel("Password", { exact: true }).fill(account.password);
-  await page.getByRole("button", { name: "Login", exact: true }).click();
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/two-factor/);
   await page.getByLabel("Code", { exact: true }).fill(totp(account.secret));
   await page.getByRole("button", { name: "Verify", exact: true }).click();

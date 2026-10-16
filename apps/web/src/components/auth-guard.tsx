@@ -13,21 +13,23 @@ import { nextPath } from "@/lib/utils"
  */
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { data: session, isPending } = useSession()
+  const { data: session, isPending, error, refetch } = useSession()
+  // A failed session check (rate limit, network blip) is not a sign-out: keep the person here and retry.
+  const failed = Boolean(error) && !session?.user
 
   React.useEffect(() => {
-    if (!isPending && !session?.user) {
+    if (!isPending && !error && !session?.user) {
       router.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`)
     }
-  }, [isPending, session, router])
+  }, [isPending, error, session, router])
 
-  if (isPending || !session?.user) {
-    return (
-      <div className="flex min-h-svh items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      </div>
-    )
-  }
+  React.useEffect(() => {
+    if (!failed) return
+    const retry = window.setTimeout(() => void refetch(), 3000)
+    return () => window.clearTimeout(retry)
+  }, [failed, refetch])
+
+  if (isPending || !session?.user) return <SessionWait failed={failed} />
 
   return <>{children}</>
 }
@@ -50,13 +52,21 @@ export function RedirectIfAuthed({
     }
   }, [isPending, session, router])
 
-  if (isPending || session?.user) {
-    return (
-      <div className="flex min-h-svh items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      </div>
-    )
-  }
+  if (isPending || session?.user) return <SessionWait />
 
   return <>{children}</>
+}
+
+/** Quiet placeholder while the session resolves: no flashing text, only a note if it takes a while or fails. */
+function SessionWait({ failed = false }: { failed?: boolean }) {
+  return (
+    <div className="flex min-h-svh items-center justify-center bg-background" aria-busy="true">
+      <p
+        role="status"
+        className="text-sm text-muted-foreground animate-in fade-in duration-300 [animation-delay:700ms] [animation-fill-mode:both]"
+      >
+        {failed ? "Reconnecting…" : "Loading your workspace…"}
+      </p>
+    </div>
+  )
 }

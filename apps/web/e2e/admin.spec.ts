@@ -18,7 +18,7 @@ async function login(page: Page, email: string, password: string) {
   await page.goto("/login?next=%2Fadmin");
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Login", exact: true }).click();
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
 }
 async function ownerLogin(page: Page) {
   const a = accounts();

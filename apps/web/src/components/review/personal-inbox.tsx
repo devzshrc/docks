@@ -1,4 +1,6 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
+import { timeAgo } from "@/lib/utils";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -62,17 +64,17 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
       )}
       {q.error && (
         <p role="alert" className="text-text-error-primary">
-          {q.error.message}
+          {errorMessage(q.error)}
         </p>
       )}
       {snooze.error && (
         <p role="alert" className="text-text-error-primary">
-          {snooze.error.message}
+          {errorMessage(snooze.error)}
         </p>
       )}
       {claim.error && (
         <p role="alert" className="text-text-error-primary">
-          {claim.error.message}
+          {errorMessage(claim.error)}
         </p>
       )}
       {q.data?.items.length === 0 && (
@@ -90,26 +92,28 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
         {q.data?.items.map((pr) => (
           <li
             key={`${pr.repo}#${pr.number}`}
-            className="group flex flex-wrap items-center gap-3 rounded-xl bg-card p-4 shadow-card transition-shadow duration-150 hover:shadow-[0_0_0_1px_rgb(15_23_42/0.09),0_2px_4px_0_rgb(15_23_42/0.05),0_10px_24px_-10px_rgb(15_23_42/0.14)]"
+            className="group relative flex flex-wrap items-center gap-3 rounded-xl bg-card p-4 shadow-card transition-shadow duration-150 hover:shadow-[0_0_0_1px_rgb(15_23_42/0.09),0_2px_4px_0_rgb(15_23_42/0.05),0_10px_24px_-10px_rgb(15_23_42/0.14)]"
           >
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <Link
-                className="truncate text-sm font-medium text-foreground decoration-foreground/30 underline-offset-4 hover:underline"
+                // The whole row opens the pull request; the buttons sit above this overlay.
+                className="truncate text-sm font-medium text-foreground outline-none after:absolute after:inset-0 after:rounded-xl after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-ring/60"
                 href={`/review/${pr.repo}/${pr.number}`}
               >
                 {pr.title}
               </Link>
               <p className="truncate text-xs text-muted-foreground">
-                <span className="font-mono">{pr.repo} #{pr.number}</span>{" "}·{" "}
-                {pr.draft ? "Draft" : pr.column.replaceAll("_", " ")} ·{" "}
-                {pr.requestedReviewers.join(", ") || "No reviewer requested"}
-              </p>
-              <p className="text-xs text-subtle">
-                Synced {pr.syncedAt.toLocaleString()}
+                {pr.repo} #{pr.number} ·{" "}
+                <span className="first-letter:uppercase inline-block">{pr.draft ? "draft" : pr.column.replaceAll("_", " ")}</span> ·{" "}
+                {pr.requestedReviewers.length ? `Reviewers: ${pr.requestedReviewers.join(", ")}` : "No reviewer requested"} ·{" "}
+                <time dateTime={new Date(pr.syncedAt).toISOString()} title={new Date(pr.syncedAt).toLocaleString()}>
+                  updated {timeAgo(pr.syncedAt)}
+                </time>
               </p>
             </div>
             {view !== "my_prs" && !pr.claimedBy && (
               <Button
+                className="relative z-10"
                 size="sm"
                 disabled={claim.isPending}
                 onClick={() =>
@@ -124,6 +128,7 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
               </Button>
             )}
             <Button
+              className="relative z-10"
               variant="outline"
               size="sm"
               disabled={snooze.isPending}

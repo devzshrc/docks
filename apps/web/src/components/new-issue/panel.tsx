@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { NativeCheckbox as ShadcnCheckbox } from "@/components/ui-compat/native-checkbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { Input as ShadcnInput } from "@/components/ui/input";
@@ -385,7 +386,7 @@ export function NewIssuePanel({
                   )}
                 >
                   Couldn&apos;t load this repository&apos;s details.{" "}
-                  {opts.error.message}{" "}
+                  {errorMessage(opts.error)}{" "}
                   <ShadcnButton
                     variant="ghost"
                     type="button"
@@ -727,7 +728,7 @@ export function NewIssuePanel({
               </span>
               {create.error && (
                 <span role="alert" className="text-destructive text-xs">
-                  {create.error.message}
+                  {errorMessage(create.error)}
                 </span>
               )}
               <span className="ml-auto flex gap-2">

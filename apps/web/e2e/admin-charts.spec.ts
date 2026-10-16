@@ -15,7 +15,7 @@ test("admin charts render, support keyboard exploration, and fit the viewport", 
   await page.goto("/login?next=%2Fadmin");
   await page.getByLabel("Email", { exact: true }).fill(a.ownerEmail);
   await page.getByLabel("Password", { exact: true }).fill(a.password);
-  await page.getByRole("button", { name: "Login", exact: true }).click();
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/two-factor/);
   await page.getByLabel("Code", { exact: true }).fill(totp(a.secret));
   await page.getByRole("button", { name: "Verify", exact: true }).click();

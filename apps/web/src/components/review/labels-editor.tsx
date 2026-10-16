@@ -1,5 +1,6 @@
 "use client"
 
+import { errorMessage } from "@/lib/error-message";
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 
@@ -44,7 +45,7 @@ export function LabelsEditor({ repo, number, labels, canAct }: { repo: string; n
         <Input value={value} onChange={(e) => setValue(e.target.value)} className="h-8 w-72" aria-label="Labels, comma-separated" autoFocus />
         <Button size="sm" type="submit" disabled={save.isPending}>Save</Button>
         <Button size="sm" type="button" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
-        {save.error && <span className="text-destructive">{save.error.message}</span>}
+        {save.error && <span className="text-destructive">{errorMessage(save.error)}</span>}
       </form>
     )
   }

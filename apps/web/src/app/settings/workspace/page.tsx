@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { NativeCheckbox as ShadcnCheckbox } from "@/components/ui-compat/native-checkbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { Input as ShadcnInput } from "@/components/ui/input";
@@ -91,7 +92,7 @@ function NameCard({
         </form>
         {rename.error && (
           <p className="text-destructive mt-2 text-sm">
-            {rename.error.message}
+            {errorMessage(rename.error)}
           </p>
         )}
       </CardContent>
@@ -172,7 +173,7 @@ function RepoAccess({
             </label>
           ))}
           {save.error && (
-            <p className="text-destructive">{save.error.message}</p>
+            <p className="text-destructive">{errorMessage(save.error)}</p>
           )}
         </div>
       )}
@@ -607,7 +608,7 @@ function StuckCard({
           </Button>
           {save.error && (
             <span className="text-destructive text-sm">
-              {save.error.message}
+              {errorMessage(save.error)}
             </span>
           )}
         </form>
@@ -653,7 +654,7 @@ function SecurityCard({
           Require two-factor authentication
         </label>
         {set.error && (
-          <p className="text-destructive text-sm">{set.error.message}</p>
+          <p className="text-destructive text-sm">{errorMessage(set.error)}</p>
         )}
         <Link
           href="/settings/audit"
@@ -700,7 +701,7 @@ function InvitesCard({ workspaceId }: { workspaceId: string }) {
   );
 
   return (
-    <Card>
+    <Card id="invite" className="scroll-mt-24">
       <CardHeader>
         <CardTitle>Invite people</CardTitle>
         <CardDescription>
@@ -735,7 +736,7 @@ function InvitesCard({ workspaceId }: { workspaceId: string }) {
         )}
         {inviteEmail.error && (
           <p className="text-destructive text-sm">
-            {inviteEmail.error.message}
+            {errorMessage(inviteEmail.error)}
           </p>
         )}
         <p className="text-muted-foreground text-sm">
@@ -749,7 +750,7 @@ function InvitesCard({ workspaceId }: { workspaceId: string }) {
           Create invite link
         </Button>
         {create.error && (
-          <p className="text-destructive text-sm">{create.error.message}</p>
+          <p className="text-destructive text-sm">{errorMessage(create.error)}</p>
         )}
         {link && (
           <div className="flex max-w-xl gap-2">
@@ -874,7 +875,7 @@ function DataCard({
           </Button>
           {exportData.error && (
             <p className="text-destructive mt-2 text-sm">
-              {exportData.error.message}
+              {errorMessage(exportData.error)}
             </p>
           )}
         </div>
@@ -911,7 +912,7 @@ function DataCard({
               </Button>
             </div>
             {remove.error && (
-              <p className="text-destructive text-sm">{remove.error.message}</p>
+              <p className="text-destructive text-sm">{errorMessage(remove.error)}</p>
             )}
           </form>
         )}
@@ -936,7 +937,7 @@ function Content() {
     );
   }
   if (settings.error)
-    return <p className="text-destructive text-sm">{settings.error.message}</p>;
+    return <p className="text-destructive text-sm">{errorMessage(settings.error)}</p>;
   const can = settings.data!.can;
   return (
     <div className="flex flex-col gap-6">

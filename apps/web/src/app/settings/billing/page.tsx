@@ -1,5 +1,6 @@
 "use client"
 
+import { errorMessage } from "@/lib/error-message";
 import { useMutation, useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
@@ -66,10 +67,16 @@ function Billing({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="space-y-8">
-      <div className="max-w-xl space-y-2">
-        <p className="text-2xl font-medium">A plan for the way you ship.</p>
-        <p className="text-sm leading-relaxed text-muted-foreground">Start small. Add deadlines, release visibility, and review evidence as your team grows.</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">Workspace usage {s.status && s.status !== "active" && <Badge variant="destructive">{s.status.replace("_", " ")}</Badge>}</CardTitle>
+          <CardDescription>{s.complimentary ? "Complimentary Team access" : team ? `Team plan${s.currentPeriodEnd ? ` · Renews ${new Date(s.currentPeriodEnd).toLocaleDateString()}` : ""}` : "Free plan · includes up to 5 people and 3 repositories"}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid gap-6 sm:grid-cols-2"><Usage label="Members" used={s.usage.members} limit={s.limits.members} /><Usage label="Enabled repositories" used={s.usage.repos} limit={s.limits.repos} /></div>
+          {s.canManage && s.hasBillingAccount && <Button variant="outline" onClick={() => portal.mutate({ workspaceId })} disabled={portal.isPending}>Manage billing</Button>}
+        </CardContent>
+      </Card>
       {checkout && CHECKOUT_STATUS[checkout] && <p role="status" className="rounded-lg border bg-muted/40 p-4 text-sm">{CHECKOUT_STATUS[checkout]}</p>}
       {s.complimentary && <p role="status" className="rounded-3xl border border-border-button-default bg-background-primary-default p-4 text-body-2-regular text-text-secondary">Your workspace has complimentary Team access. No subscription charge is created for this access.</p>}
       <PlanCards current={s.plan} actions={{
@@ -78,17 +85,7 @@ function Billing({ workspaceId }: { workspaceId: string }) {
       }} />
       <p className="text-xs text-muted-foreground">Team is billed monthly per workspace member. Applicable taxes are added at checkout.</p>
       {!s.canManage && <p className="text-sm text-muted-foreground">Only workspace owners can change the plan.</p>}
-      {error && <p role="alert" className="text-destructive text-sm">{error.message}</p>}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">Workspace usage {s.status && s.status !== "active" && <Badge variant="destructive">{s.status.replace("_", " ")}</Badge>}</CardTitle>
-          <CardDescription>{s.complimentary ? "Complimentary Team access" : team ? `Team plan${s.currentPeriodEnd ? ` · Renews ${new Date(s.currentPeriodEnd).toLocaleDateString()}` : ""}` : "Free plan · 5 people and 3 repositories"}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="grid gap-6 sm:grid-cols-2"><Usage label="Members" used={s.usage.members} limit={s.limits.members} /><Usage label="Enabled repositories" used={s.usage.repos} limit={s.limits.repos} /></div>
-          {s.canManage && s.hasBillingAccount && <Button variant="outline" onClick={() => portal.mutate({ workspaceId })} disabled={portal.isPending}>Manage billing</Button>}
-        </CardContent>
-      </Card>
+      {error && <p role="alert" className="text-destructive text-sm">{errorMessage(error)}</p>}
     </div>
   )
 }

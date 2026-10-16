@@ -85,7 +85,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
       <CardHeader>
         <CardTitle className="text-xl font-semibold">Create an account</CardTitle>
         <CardDescription>
-          Enter your information below to create your account
+          Free for small teams. Set up in two minutes.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -93,7 +93,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
         <form onSubmit={onSubmit}>
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="name">Full Name</FieldLabel>
+              <FieldLabel htmlFor="name">Name</FieldLabel>
               <Input
                 id="name"
                 type="text"
@@ -108,7 +108,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="you@company.com"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

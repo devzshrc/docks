@@ -48,7 +48,6 @@ import {
   TabsTrigger as Tab,
 } from "@/components/ui/tabs";
 import { AppIcon } from "@/components/app-icon";
-import { HueIcon, type Hue } from "@/components/ui/empty-preview";
 import {
   ShellSlotsContext,
   useShellSlotsState,
@@ -65,16 +64,6 @@ const WIDTH = {
   wide: "max-w-[1360px]", // board and code review
 } as const;
 
-const SECTION: Record<string, { icon: typeof RiInboxLine; hue: Hue }> = {
-  inbox: { icon: RiInboxLine, hue: "blue" },
-  reviews: { icon: RiGitPullRequestLine, hue: "indigo" },
-  issues: { icon: RiBugLine, hue: "green" },
-  deadlines: { icon: RiCalendarScheduleLine, hue: "amber" },
-  releases: { icon: RiRocketLine, hue: "pink" },
-  insights: { icon: RiBarChartBoxLine, hue: "teal" },
-  team: { icon: RiTeamLine, hue: "orange" },
-  settings: { icon: RiSettings3Line, hue: "purple" },
-};
 
 const SETTINGS_TABS = [
   { value: "/settings/workspace", label: "Workspace" },
@@ -222,33 +211,31 @@ function ShellFrame({
       icon: typeof RiInboxLine;
       href: string;
       count: number;
-      tint: string;
     }[];
   }[] = [
     {
       items: [
-        { id: "inbox", label: "Inbox", icon: RiInboxLine, href: "/inbox", count: inbox.data ?? 0, tint: "text-hue-blue!" },
-        { id: "reviews", label: "Reviews", icon: RiGitPullRequestLine, href: "/review", count: waitingCount, tint: "text-hue-indigo!" },
-        { id: "issues", label: "Issues", icon: RiBugLine, href: "/issues", count: triageCount, tint: "text-hue-green!" },
+        { id: "inbox", label: "Inbox", icon: RiInboxLine, href: "/inbox", count: inbox.data ?? 0 },
+        { id: "reviews", label: "Reviews", icon: RiGitPullRequestLine, href: "/review", count: waitingCount },
+        { id: "issues", label: "Issues", icon: RiBugLine, href: "/issues", count: triageCount },
       ],
     },
     {
       title: "Planning",
       items: [
-        { id: "deadlines", label: "Deadlines", icon: RiCalendarScheduleLine, href: "/deadlines", count: 0, tint: "text-hue-amber!" },
-        { id: "releases", label: "Releases", icon: RiRocketLine, href: "/releases", count: 0, tint: "text-hue-pink!" },
+        { id: "deadlines", label: "Deadlines", icon: RiCalendarScheduleLine, href: "/deadlines", count: 0 },
+        { id: "releases", label: "Releases", icon: RiRocketLine, href: "/releases", count: 0 },
       ],
     },
     {
       title: "Team",
       items: [
-        { id: "insights", label: "Insights", icon: RiBarChartBoxLine, href: "/insights", count: 0, tint: "text-hue-teal!" },
-        { id: "team", label: "People", icon: RiTeamLine, href: "/team", count: 0, tint: "text-hue-orange!" },
+        { id: "insights", label: "Insights", icon: RiBarChartBoxLine, href: "/insights", count: 0 },
+        { id: "team", label: "People", icon: RiTeamLine, href: "/team", count: 0 },
       ],
     },
   ];
   const activeId = activeIdFor(pathname);
-  const section = activeId ? SECTION[activeId] : undefined;
 
   const canAudit = settings.data ? settings.data.can["audit.read"] : true;
   const tabs = SETTINGS_TABS.filter(
@@ -326,7 +313,7 @@ function ShellFrame({
                       <SidebarMenuItem key={n.id}>
                         <SidebarMenuButton asChild isActive={activeId === n.id}>
                           <Link href={n.href}>
-                            <n.icon className={n.tint} />
+                            <n.icon />
                             <span>{n.label}</span>
                           </Link>
                         </SidebarMenuButton>
@@ -354,7 +341,7 @@ function ShellFrame({
                 <SidebarMenuButton asChild>
                   <Link href="/team">
                     <RiUserAddLine />
-                    <span>Invite teammates</span>
+                    <span>Invite people</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -387,20 +374,9 @@ function ShellFrame({
             <div className="flex h-[58px] items-center gap-2 px-4 md:px-5">
               <SidebarTrigger className="text-muted-foreground -ml-1 rounded-full" />
               <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                {section && <HueIcon icon={section.icon} hue={section.hue} className="hidden size-6 rounded-md sm:inline-flex [&_svg]:size-3" />}
                 <h1 className="min-w-0 truncate text-base leading-none font-medium">
                   {inSettings ? "Settings" : titleFor(pathname, title)}
                 </h1>
-                {billing.data && !inSettings && (
-                  <Link
-                    href="/settings/billing"
-                    aria-label={`Current plan: ${billing.data.plan === "team" ? "Team" : "Free"}. View billing`}
-                    className="bg-muted/70 border-line-strong hidden shrink-0 items-center gap-1 rounded-full border py-[3px] pr-[7px] pl-[5px] text-xs leading-none transition-colors hover:bg-muted sm:inline-flex"
-                  >
-                    <span className="bg-status size-1.5 rounded-full shadow-[0_0_0_2px_color-mix(in_oklab,var(--status)_25%,transparent)]" />
-                    {billing.data.plan === "team" ? "Team" : "Free"}
-                  </Link>
-                )}
               </div>
               <div className="flex items-center gap-1.5">
                 {actions}

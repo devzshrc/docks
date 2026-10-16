@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { NativeSelect as ShadcnSelect } from "@/components/ui-compat/native-select";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -67,7 +68,7 @@ function CreateWorkspace() {
         </form>
         {create.error && (
           <p className="text-destructive mt-2 text-sm">
-            {create.error.message}
+            {errorMessage(create.error)}
           </p>
         )}
       </CardContent>
@@ -116,7 +117,7 @@ function GitHubCard({ workspaceId }: { workspaceId: string }) {
           </p>
         )}
         {install.error ? (
-          <p className="text-destructive text-sm">{install.error.message}</p>
+          <p className="text-destructive text-sm">{errorMessage(install.error)}</p>
         ) : (
           <Button asChild disabled={!install.data}>
             <a href={install.data?.url}>Install GitHub App</a>
@@ -146,7 +147,7 @@ function GitHubCard({ workspaceId }: { workspaceId: string }) {
               </div>
             ))}
             {link.error && (
-              <p className="text-destructive text-sm">{link.error.message}</p>
+              <p className="text-destructive text-sm">{errorMessage(link.error)}</p>
             )}
           </div>
         )}
@@ -206,7 +207,7 @@ function GitHubAccountCard() {
             </Button>
           ) : (
             <p className="text-muted-foreground text-sm">
-              GitHub sign-in isn't configured on the server yet.
+              Connecting a GitHub account isn't available on this Docks installation yet.
             </p>
           ))}
       </CardContent>
@@ -249,7 +250,7 @@ function SlackCard({ workspaceId }: { workspaceId: string }) {
 
   if (slack.isPending) return <Skeleton className="h-32 w-full max-w-lg" />;
   if (slack.error)
-    return <p className="text-destructive text-sm">{slack.error.message}</p>;
+    return <p className="text-destructive text-sm">{errorMessage(slack.error)}</p>;
   const { connection, connectUrl, canManage } = slack.data;
 
   return (
@@ -351,7 +352,7 @@ function SlackCard({ workspaceId }: { workspaceId: string }) {
             </Button>
           ) : (
             <p className="text-muted-foreground text-sm">
-              Slack isn&apos;t configured on the server yet.
+              Slack isn&apos;t available on this Docks installation yet.
             </p>
           )
         ) : (
@@ -359,7 +360,7 @@ function SlackCard({ workspaceId }: { workspaceId: string }) {
             Ask a workspace owner to connect Slack.
           </p>
         )}
-        {error && <p className="text-destructive text-sm">{error.message}</p>}
+        {error && <p className="text-destructive text-sm">{errorMessage(error)}</p>}
       </CardContent>
     </Card>
   );
@@ -402,7 +403,7 @@ function LinearCard({ workspaceId }: { workspaceId: string }) {
 
   if (linear.isPending) return <Skeleton className="h-32 w-full max-w-lg" />;
   if (linear.error)
-    return <p className="text-destructive text-sm">{linear.error.message}</p>;
+    return <p className="text-destructive text-sm">{errorMessage(linear.error)}</p>;
   const { orgName, canManage } = linear.data;
 
   return (

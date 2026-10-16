@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/base/buttons/button";
@@ -51,7 +52,7 @@ export function AskPanel({ repo, number }: { repo: string; number: number }) {
       {history.isPending && <p role="status">Loading conversation…</p>}
       {history.error && (
         <p role="alert" className="text-text-error-primary">
-          {history.error.message}
+          {errorMessage(history.error)}
         </p>
       )}
       {history.data?.questions.map((q) => (
@@ -156,7 +157,7 @@ export function AskPanel({ repo, number }: { repo: string; number: number }) {
       </div>
       {knowledge.error && (
         <p role="alert" className="text-text-error-primary">
-          {knowledge.error.message}
+          {errorMessage(knowledge.error)}
         </p>
       )}
       <div className="flex flex-wrap gap-2">
@@ -201,7 +202,7 @@ export function AskPanel({ repo, number }: { repo: string; number: number }) {
       </form>
       {ask.error && (
         <p role="alert" className="text-text-error-primary">
-          {ask.error.message}
+          {errorMessage(ask.error)}
         </p>
       )}
       <p className="text-caption-1-regular text-text-tertiary">

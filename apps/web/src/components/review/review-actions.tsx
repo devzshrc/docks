@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/error-message";
 import { cn } from "@/lib/utils";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { NativeSelect as ShadcnSelect } from "@/components/ui-compat/native-select";
@@ -33,6 +34,7 @@ export function ReviewActions({
   headSha,
   canMerge,
   githubLogin,
+  needsGithub = false,
   own = false,
   mergeableState = null,
   pending = [],
@@ -45,6 +47,8 @@ export function ReviewActions({
   headSha: string;
   canMerge: boolean;
   githubLogin: string | null;
+  /** The server can't act on GitHub as this person yet, so every action would fail. */
+  needsGithub?: boolean;
   /** GitHub refuses approvals and change requests from the PR's own author. */
   own?: boolean;
   mergeableState?: string | null;
@@ -127,7 +131,7 @@ export function ReviewActions({
         void refresh();
       },
       onError: (e, _vars, ctx) => {
-        setError(e.message);
+        setError(errorMessage(e));
       },
     }),
   );
@@ -154,20 +158,23 @@ export function ReviewActions({
             }),
           },
         ],
-        { settled: () => void refresh(), onError: (e) => setError(e.message) },
+        { settled: () => void refresh(), onError: (e) => setError(errorMessage(e)) },
       ),
       onSuccess: () => toast("Merged"),
     }),
   );
   const busy = submit.isPending || merge.isPending;
 
-  if (!githubLogin) {
+  if (!githubLogin || needsGithub) {
     return (
-      <div className="bg-background sticky bottom-0 border-t p-3 text-sm">
-        <Link href="/settings/integrations" className="underline">
-          Connect your GitHub account
-        </Link>{" "}
-        to review and merge from here.
+      <div className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-sm">
+        <div>
+          <p className="font-medium">Connect GitHub to review here</p>
+          <p className="text-muted-foreground">Approvals, change requests and merges are posted to GitHub as you.</p>
+        </div>
+        <Button size="sm" asChild>
+          <Link href="/settings/integrations">Connect GitHub</Link>
+        </Button>
       </div>
     );
   }
@@ -294,7 +301,8 @@ export function ReviewActions({
           Comment
         </Button>
         {canMerge && (
-          <span className="flex items-center gap-1">
+          // Merging is a different decision from the review verdict, so it sits apart at the far end.
+          <span className="ml-auto flex items-center gap-1 border-l pl-3">
             <ShadcnSelect
               className="bg-(--field) hover:bg-(--field-hover) h-9 rounded-lg border px-3 text-body-2-regular"
               aria-label="Merge method"

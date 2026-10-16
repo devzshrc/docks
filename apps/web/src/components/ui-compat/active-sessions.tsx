@@ -1,4 +1,5 @@
 "use client";
+import { timeAgo } from "@/lib/utils";
 import { useState, type ReactNode } from "react";
 import {
   Table,
@@ -125,7 +126,7 @@ export function ActiveSessions({
                     </p>
                   </TableCell>
                   <TableCell>
-                    {new Date(s.lastActiveAt).toLocaleString()}
+                    <time title={new Date(s.lastActiveAt).toLocaleString()}>{timeAgo(s.lastActiveAt)}</time>
                   </TableCell>
                   <TableCell>
                     {s.current ? (
