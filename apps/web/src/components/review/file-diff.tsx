@@ -1,6 +1,6 @@
 "use client";
 import type { AskDetail } from "@/components/review/ask-panel";
-import { RISK_LABEL, formattingOnly, riskSummary, riskyLines } from "@/lib/review-signals";
+import { RISK_LABEL, type RiskKind, formattingOnly, riskSummary, riskyLines } from "@/lib/review-signals";
 import { errorMessage } from "@/lib/error-message";
 import { NativeCheckbox as ShadcnCheckbox } from "@/components/ui-compat/native-checkbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
@@ -76,8 +76,6 @@ const ROW = {
 const VIRTUAL_AT = 300;
 /** Past this many changed lines a diff waits for an explicit click before it renders at all. */
 const LARGE_DIFF = 8000;
-/** Amber edge on lines that deserve a careful read (see lib/review-signals). */
-const RISK_ROW = "shadow-[inset_3px_0_0_var(--color-amber-500)]";
 /** One-click questions about a line, answered by the PR's Ask panel with this line as context. */
 const ASK_PRESETS: [string, (code: string, path: string, line: number) => string][] = [
   ["Explain", (code, path, line) => `Explain what ${path}:${line} does and why it changed: \`${code.slice(0, 160)}\``],
@@ -652,10 +650,6 @@ export function FileDiff({
   const risky = useMemo(() => riskyLines(file.filename, lines), [file.filename, lines]);
   const risks = useMemo(() => riskSummary(risky), [risky]);
   const formatting = useMemo(() => formattingOnly(lines), [lines]);
-  const riskMark = (line?: DiffLine) => {
-    const kind = line && risky.get(line);
-    return kind ? { className: RISK_ROW, title: `Look closely: ${RISK_LABEL[kind]}` } : {};
-  };
   const pairs = useMemo(() => pairChanges(lines), [lines]);
   const content = useQuery({
     ...trpc.review.fileContent.queryOptions({
@@ -753,11 +747,14 @@ export function FileDiff({
     side,
     text,
     extra,
+    risk,
   }: {
     n?: number;
     side: Side;
     text: string;
     extra?: boolean;
+    /** Lines worth a careful read show their number in amber, explained on hover. */
+    risk?: RiskKind;
   }) {
     const showBlame =
       side === "LEFT" && n !== undefined && !extra && file.status !== "added";
@@ -779,8 +776,10 @@ export function FileDiff({
       <td
         className={cn(
           "text-muted-foreground w-10 px-2 text-right align-top select-none",
+          risk && "font-semibold text-amber-600 dark:text-amber-400",
           selected(side, n) && "bg-sky-500/20",
         )}
+        title={risk ? `Worth a careful look: ${RISK_LABEL[risk].toLowerCase()}` : undefined}
       >
         {n !== undefined && canAct && !extra ? (
           <ShadcnButton
@@ -997,10 +996,8 @@ export function FileDiff({
     return (
       <>
         <tr
-          title={riskMark(line).title}
           className={cn(
             ROW[line.kind],
-            riskMark(line).className,
             line.extra &&
               "text-muted-foreground bg-muted/30 animate-in fade-in duration-300",
           )}
@@ -1008,12 +1005,14 @@ export function FileDiff({
           {NumberCell({
             n: line.kind === "add" ? undefined : line.oldNo,
             side: "LEFT",
+            risk: line.kind === "del" ? risky.get(line) : undefined,
             text: line.text,
             extra: line.extra,
           })}
           {NumberCell({
             n: line.kind === "del" ? undefined : line.newNo,
             side: "RIGHT",
+            risk: line.kind === "add" ? risky.get(line) : undefined,
             text: line.text,
             extra: line.extra,
           })}
@@ -1057,6 +1056,7 @@ export function FileDiff({
           {NumberCell({
             n: left?.oldNo,
             side: "LEFT",
+            risk: left ? risky.get(left) : undefined,
             text: left?.text ?? "",
             extra: left?.extra,
           })}
@@ -1064,10 +1064,8 @@ export function FileDiff({
             className={cn(
               "w-1/2 border-r px-2 whitespace-pre",
               left && ROW[left.kind === "ctx" ? "ctx" : "del"],
-              riskMark(left).className,
               left?.extra && "text-muted-foreground bg-muted/30",
             )}
-            title={riskMark(left).title}
           >
             {left && (
               <Code
@@ -1081,6 +1079,7 @@ export function FileDiff({
           {NumberCell({
             n: right?.newNo,
             side: "RIGHT",
+            risk: right ? risky.get(right) : undefined,
             text: right?.text ?? "",
             extra: right?.extra,
           })}
@@ -1088,10 +1087,8 @@ export function FileDiff({
             className={cn(
               "w-1/2 px-2 whitespace-pre",
               right && ROW[right.kind === "ctx" ? "ctx" : "add"],
-              riskMark(right).className,
               right?.extra && "text-muted-foreground bg-muted/30",
             )}
-            title={riskMark(right).title}
           >
             {right && (
               <Code
@@ -1241,10 +1238,10 @@ export function FileDiff({
           <Badge
             key={k}
             variant="outline"
-            title={`${[...risky.values()].filter((v) => v === k).length} highlighted lines`}
+            title={`Line numbers in amber touch ${RISK_LABEL[k].toLowerCase()}. Read those closely.`}
             className="border-amber-500/40 text-amber-700 dark:text-amber-300"
           >
-            {RISK_LABEL[k]}
+            {RISK_LABEL[k]} · {risky.size} {risky.size === 1 ? "line" : "lines"}
           </Badge>
         ))}
         {file.changedSinceViewed && (
@@ -1315,14 +1312,12 @@ export function FileDiff({
       </header>
       {everOpen && (
         <Collapse open={open}>
-          {view === "diff" && symbols.length > 0 && (
+          {view === "diff" && symbols.length > 2 && (
             <nav
               aria-label="Changed symbols"
-              className="flex flex-wrap items-center gap-1.5 border-b px-3 py-1.5"
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-3 py-1.5 text-[11px]"
             >
-              <span className="text-muted-foreground mr-1 text-[11px]">
-                Outline
-              </span>
+              <span className="text-muted-foreground">Jump to</span>
               {symbols.map((s) => (
                 <ShadcnButton
                   variant="ghost"
@@ -1348,7 +1343,7 @@ export function FileDiff({
                         ),
                       );
                   }}
-                  className="bg-muted text-muted-foreground hover:text-foreground hover:bg-accent rounded-md px-1.5 py-0.5 font-code text-[11px] transition-colors"
+                  className="text-foreground hover:text-primary h-auto p-0 font-code text-[11px] underline-offset-4 hover:underline"
                 >
                   {s.name}
                 </ShadcnButton>
