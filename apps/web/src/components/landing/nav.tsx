@@ -28,7 +28,7 @@ export function LandingNav({ onStart }: { onStart: () => void }) {
     <header
       className={cx("fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-200",
         scrolled
-          ? "bg-[color-mix(in_oklab,var(--l-bg)_75%,transparent)] shadow-[0_1px_0_var(--l-line)] backdrop-blur-xl"
+          ? "bg-[color-mix(in_oklab,var(--l-bg)_75%,transparent)] shadow-[0_1px_0_var(--l-line)] backdrop-blur-md"
           : "bg-transparent",
       )}
     >

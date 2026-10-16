@@ -15,9 +15,10 @@ import {
   RiTimerLine,
   RiUserAddLine,
 } from "@remixicon/react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 import { AppIcon } from "@/components/app-icon";
+import { Peep } from "@/components/landing/hero-orbit";
 import { StatCards } from "@/components/application/dashboard/stat-cards";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { Face } from "@/components/people/face";
@@ -32,10 +33,9 @@ import { cn } from "@/lib/utils";
 
 const W = 1200;
 const H = 750;
-const ROTATE_MS = 7000;
 
-type View = "inbox" | "review" | "insights" | "team";
-const VIEWS: { id: View; label: string; caption: string }[] = [
+export type View = "inbox" | "review" | "insights" | "team";
+export const VIEWS: { id: View; label: string; caption: string }[] = [
   { id: "inbox", label: "Inbox", caption: "Every pull request that needs you, oldest wait first." },
   { id: "review", label: "Guided review", caption: "A summary and a reading order for each change, with deadlines alongside." },
   { id: "insights", label: "Insights", caption: "How fast reviews move, with a plain takeaway on every week." },
@@ -72,6 +72,57 @@ const HEADER: Record<View, { title: string; icon: typeof RiInboxLine; hue: Hue }
   insights: { title: "Insights", icon: RiBarChartBoxLine, hue: "teal" },
   team: { title: "People", icon: RiTeamLine, hue: "orange" },
 };
+
+/* ---------- story beats ---------- */
+
+/** Which story step is on screen, and whether its reviewers have landed in the preview yet. */
+const Story = createContext({ step: 0, landed: false });
+const useResolved = (step: number) => {
+  const s = useContext(Story);
+  return s.step === step && s.landed;
+};
+
+/** What each story step's reviewers say once they land: [face, line], in seat order. */
+export const VOICES: [face: number, says: string][][] = [
+  [[0, "First in everyone’s queue now."], [7, "Found it without digging through CI pings."]],
+  [[5, "Three steps. The limiter first."], [13, "Asked a real question instead of “LGTM”."]],
+  [[3, "First review: 6.8h → 4.2h."], [12, "No PR waits three days anymore."]],
+  [[1, "Leo had room, so it’s his."], [10, "At my limit, and Docks noticed."]],
+];
+
+/** A seat for one travelling reviewer (see peep-trail.tsx) and the line they say once they land. */
+function Beat({ step, seat, side = "right", className }: { step: number; seat: number; side?: "left" | "right"; className: string }) {
+  const on = useResolved(step);
+  const [face, says] = VOICES[step]![seat]!;
+  // Phones show these lines under the preview instead (see story.tsx), where they can be read.
+  return (
+    <span className={cn("pointer-events-none absolute z-20 flex items-center gap-2 max-sm:hidden", side === "left" && "flex-row-reverse", className)}>
+      <span data-peep-for={`story-${step}`} className="contents">
+        <Peep i={face} size={46} slot />
+      </span>
+      <span
+        className={cn(
+          "rounded-2xl bg-card px-3.5 py-2 text-[15px] leading-5 font-medium whitespace-nowrap text-foreground shadow-[0_0_0_1px_var(--border),0_10px_24px_-10px_rgb(15_23_42/0.35)] transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          side === "left" ? "origin-right rounded-br-[5px]" : "origin-left rounded-bl-[5px]",
+          on ? "scale-100 opacity-100 delay-150" : "scale-90 opacity-0",
+        )}
+      >
+        {says}
+      </span>
+    </span>
+  );
+}
+
+/** A status that flips once the step resolves, e.g. Overdue → In review. */
+function Flip({ step, before, after }: { step: number; before: ReactNode; after: ReactNode }) {
+  const on = useResolved(step);
+  return (
+    <span className="relative inline-grid">
+      <span className={cn("col-start-1 row-start-1 transition-[opacity,transform] duration-300", on ? "-translate-y-1 opacity-0" : "opacity-100")}>{before}</span>
+      <span className={cn("col-start-1 row-start-1 transition-[opacity,transform] duration-300", on ? "opacity-100 delay-300" : "translate-y-1 opacity-0")}>{after}</span>
+    </span>
+  );
+}
 
 /* ---------- shell (mirrors components/app-shell.tsx) ---------- */
 
@@ -164,8 +215,10 @@ function InboxView() {
         ))}
       </div>
       <ul className="grid gap-2">
-        {PRS.map((pr) => (
-          <li key={pr.n} className="flex items-center gap-3 rounded-2xl p-4 surface-raised">
+        {PRS.map((pr, i) => (
+          <li key={pr.n} className="relative flex items-center gap-3 rounded-2xl p-4 surface-raised">
+            {i === 0 && <Beat step={0} seat={0} className="top-1/2 left-[46%] -translate-y-1/2" />}
+            {i === 2 && <Beat step={0} seat={1} className="top-1/2 left-[40%] -translate-y-1/2" />}
             <div className="grid min-w-0 flex-1 gap-1">
               <p className="truncate text-sm font-medium">{pr.title}</p>
               <p className="truncate text-xs text-muted-foreground">
@@ -178,9 +231,17 @@ function InboxView() {
             <span className="font-mono text-xs tabular-nums">
               <span className="text-success">+{pr.add}</span> <span className="text-danger">−{pr.del}</span>
             </span>
-            <Badge variant="secondary" data-tone={pr.tone}>
-              {pr.label}
-            </Badge>
+            {i === 0 ? (
+              <Flip
+                step={0}
+                before={<Badge variant="secondary" data-tone={pr.tone}>{pr.label}</Badge>}
+                after={<Badge variant="secondary" data-tone="info">In review</Badge>}
+              />
+            ) : (
+              <Badge variant="secondary" data-tone={pr.tone}>
+                {pr.label}
+              </Badge>
+            )}
             <span className="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-primary glass-sheen">Open</span>
           </li>
         ))}
@@ -225,7 +286,8 @@ function ReviewView() {
             </div>
           ))}
         </div>
-        <div className="m-3 grid gap-2 rounded-md border bg-background p-3 text-sm">
+        <div className="relative m-3 grid gap-2 rounded-md border bg-background p-3 text-sm">
+          <Beat step={1} seat={1} className="top-full right-6 mt-3" side="left" />
           <div className="flex items-center gap-2">
             <Face seed="preview-you" name="You" className="size-5" />
             <span className="font-medium">You</span>
@@ -234,7 +296,8 @@ function ReviewView() {
           <p className="text-muted-foreground">Should the window reset per account as well as per IP?</p>
         </div>
       </div>
-      <div className="grid content-start gap-4 rounded-2xl p-4 surface-raised">
+      <div className="relative grid content-start gap-4 rounded-2xl p-4 surface-raised">
+        <Beat step={1} seat={0} className="bottom-6 left-4" />
         <SideSection
           label={
             <span className="inline-flex items-center gap-1.5">
@@ -273,10 +336,21 @@ function ReviewView() {
           <div className="grid gap-2 rounded-xl bg-muted/50 p-3">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">First review</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-xs font-medium text-danger">
-                <span className="size-1.5 rounded-full bg-current" />
-                Overdue
-              </span>
+              <Flip
+                step={1}
+                before={
+                  <span className="inline-flex items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-xs font-medium text-danger">
+                    <span className="size-1.5 rounded-full bg-current" />
+                    Overdue
+                  </span>
+                }
+                after={
+                  <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                    <span className="size-1.5 rounded-full bg-current" />
+                    Reviewed
+                  </span>
+                }
+              />
             </div>
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <RiTimeLine className="size-3.5" />
@@ -297,7 +371,9 @@ const FIRST_REVIEW = [11, 9.5, 10, 8, 8.5, 7, 7.5, 6, 6.5, 5, 5.2, 4.2].map((val
 
 function InsightsView() {
   return (
-    <div className="grid gap-4">
+    <div className="relative grid gap-4">
+      <Beat step={2} seat={0} className="-bottom-16 left-0" />
+      <Beat step={2} seat={1} side="left" className="top-[250px] right-[60px]" />
       <StatCards
         stats={[
           { icon: RiTimerLine, label: "Time to first review", value: "4.2h", description: "median · down from 6.8h", deltaColor: "neutral" },
@@ -351,7 +427,8 @@ function Ring({ value, max, warn }: { value: number; max: number; warn: boolean 
 function TeamView() {
   return (
     <div className="grid gap-4">
-      <div className="flex items-center gap-4 rounded-xl p-4 surface-raised">
+      <div className="relative flex items-center gap-4 rounded-xl p-4 surface-raised">
+        <Beat step={3} seat={1} side="left" className="top-1/2 right-5 -translate-y-1/2" />
         <div className="flex -space-x-2.5">
           {PEOPLE.slice(0, 5).map((p, i) => (
             <span key={p.id} style={{ zIndex: 5 - i }}>
@@ -367,8 +444,10 @@ function TeamView() {
         </div>
       </div>
       <ul className="grid grid-cols-3 gap-3">
-        {PEOPLE.map((p) => (
-          <li key={p.id} className="grid gap-3.5 rounded-xl p-4 surface-raised">
+        {PEOPLE.map((p, i) => (
+          <li key={p.id} className="relative grid gap-3.5 rounded-xl p-4 surface-raised">
+            {i === 1 && <Beat step={3} seat={0} className="-top-4 left-[46%]" />}
+            
             <div className="flex items-start gap-3">
               <Face seed={p.id} name={p.name} presence={p.presence} />
               <div className="min-w-0 flex-1 pt-0.5">
@@ -411,82 +490,65 @@ function useFit() {
   return { ref, scale };
 }
 
-export function ProductPreview() {
-  const [view, setView] = useState<View>("inbox");
+// Built once: switching steps re-renders only the shell and the beats, never the views (or their charts).
+const BODIES: Record<View, ReactNode> = { inbox: <InboxView />, review: <ReviewView />, insights: <InsightsView />, team: <TeamView /> };
+
+/** The landing preview, driven by the story: `view` and `story` come from the scroll position. */
+export function ProductPreview({ view, story, onPick }: { view: View; story: { step: number; landed: boolean }; onPick: (v: View) => void }) {
   const { ref, scale } = useFit();
-  const hold = useRef(false);
-  const visible = useRef(true);
-
-  // Rotate slowly through the views while on screen; stop for good once someone picks one.
-  const [picked, setPicked] = useState(false);
-  useEffect(() => {
-    if (picked || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setInterval(() => {
-      if (hold.current || !visible.current || document.hidden) return;
-      setView((v) => VIEWS[(VIEWS.findIndex((x) => x.id === v) + 1) % VIEWS.length]!.id);
-    }, ROTATE_MS);
-    return () => window.clearInterval(id);
-  }, [picked]);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => (visible.current = e!.isIntersecting), { threshold: 0.3 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [ref]);
-  const pick = useCallback((v: View) => {
-    setPicked(true);
-    setView(v);
-  }, []);
-
-  const active = VIEWS.find((v) => v.id === view)!;
-  const body = { inbox: <InboxView />, review: <ReviewView />, insights: <InsightsView />, team: <TeamView /> }[view];
 
   return (
-    <div className="mx-auto w-full max-w-[1120px]">
-      <div
-        onMouseEnter={() => (hold.current = true)}
-        onMouseLeave={() => (hold.current = false)}
-        className="rounded-[20px] bg-[var(--l-frame)] p-2 shadow-[0_0_0_1px_var(--l-frame-edge),0_1px_2px_rgb(0_0_0/0.04),0_24px_60px_-24px_var(--l-frame-shadow)] md:p-2.5"
-      >
-        <div ref={ref} className="relative aspect-[16/10] overflow-hidden rounded-[13px] bg-background shadow-[0_0_0_1px_var(--l-frame-edge)]">
-          <div className="absolute top-0 left-0 origin-top-left" style={{ width: W, height: H, transform: `scale(${scale})` }} inert aria-hidden>
-            <Shell view={view}>
-              <div key={view} className="h-full animate-in fade-in duration-300">
-                {body}
-              </div>
-            </Shell>
+    <Story.Provider value={story}>
+      <div className="w-full">
+        <div className="rounded-[20px] bg-[var(--l-frame)] p-2 shadow-[0_0_0_1px_var(--l-frame-edge),0_1px_2px_rgb(0_0_0/0.04),0_24px_60px_-24px_var(--l-frame-shadow)] md:p-2.5">
+          <div ref={ref} className="relative aspect-[16/10] overflow-hidden rounded-[13px] bg-background shadow-[0_0_0_1px_var(--l-frame-edge)]">
+            <div className="absolute top-0 left-0 origin-top-left" style={{ width: W, height: H, transform: `scale(${scale})` }} inert aria-hidden>
+              <Shell view={view}>
+                {/* Every view stays mounted, so the reviewers' seats in each exist before it shows. */}
+                <div className="relative h-full">
+                  {VIEWS.map((v) => (
+                    <div
+                      key={v.id}
+                      className={cn(
+                        // Hidden views go `invisible` after fading, so only one is painted; seats still measure.
+                        "absolute inset-0 transition-[opacity,transform,visibility] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                        v.id === view ? "visible translate-y-0 opacity-100" : "pointer-events-none invisible translate-y-2 opacity-0",
+                      )}
+                    >
+                      {BODIES[v.id]}
+                    </div>
+                  ))}
+                </div>
+              </Shell>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="mt-8 flex flex-col items-center gap-3">
-        <div className="max-w-full overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div role="tablist" aria-label="Product preview" className="flex w-max gap-1 rounded-full bg-[var(--l-surface)] p-1 shadow-[0_0_0_1px_var(--l-line)]">
-            {VIEWS.map((v) => {
-              const on = v.id === view;
-              return (
-                <button
-                  key={v.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={on}
-                  onClick={() => pick(v.id)}
-                  className={cn(
-                    "h-8 rounded-full px-4 text-[13px] whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[var(--l-blue)]",
-                    on ? "bg-[var(--l-raised)] font-medium text-[var(--l-ink)] shadow-[0_0_0_1px_var(--l-line),0_1px_2px_rgb(0_0_0/0.06)]" : "text-[var(--l-ink-2)] hover:text-[var(--l-ink)]",
-                  )}
-                >
-                  {v.label}
-                </button>
-              );
-            })}
+        <div className="mt-4 flex justify-center">
+          <div className="max-w-full overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div role="tablist" aria-label="Product preview" className="flex w-max gap-1 rounded-full bg-[var(--l-surface)] p-1 shadow-[0_0_0_1px_var(--l-line)]">
+              {VIEWS.map((v) => {
+                const on = v.id === view;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={on}
+                    onClick={() => onPick(v.id)}
+                    className={cn(
+                      "h-8 rounded-full px-4 text-[13px] whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[var(--l-blue)]",
+                      on ? "bg-[var(--l-raised)] font-medium text-[var(--l-ink)] shadow-[0_0_0_1px_var(--l-line),0_1px_2px_rgb(0_0_0/0.06)]" : "text-[var(--l-ink-2)] hover:text-[var(--l-ink)]",
+                    )}
+                  >
+                    {v.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-        <p key={view} className="animate-in fade-in text-center text-[14px] text-[var(--l-ink-2)] duration-300" aria-live="polite">
-          {active.caption}
-        </p>
       </div>
-    </div>
+    </Story.Provider>
   );
 }

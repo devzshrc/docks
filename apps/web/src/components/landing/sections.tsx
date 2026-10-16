@@ -4,6 +4,7 @@ import { RiCheckLine, RiGithubFill } from "@remixicon/react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { AppIcon } from "@/components/app-icon";
 import { FAQ } from "@/components/marketing/plans";
+import { FACES, Peep } from "@/components/landing/hero-orbit";
 import { PLAN_OPTIONS } from "@/components/landing/plan-options";
 import { cx } from "@/utils/cx";
 
@@ -18,31 +19,6 @@ function SectionHead({ eyebrow, title, body }: { eyebrow: string; title: string;
       </h2>
       <p className="mt-4 text-[16px] leading-6 text-pretty text-[var(--l-ink-2)] md:text-[17px] md:leading-[26px]">{body}</p>
     </div>
-  );
-}
-
-const PROBLEMS = [
-  { n: "01", title: "Reviews hide in notifications", body: "Requests are buried between CI noise and mentions, so pull requests sit for days without anyone noticing." },
-  { n: "02", title: "Big diffs have no reading order", body: "Forty files in alphabetical order. Reviewers skim, miss the important change and approve anyway." },
-  { n: "03", title: "Nobody knows whose turn it is", body: "Authors wait on reviewers and reviewers wait on authors. The pull request stalls in between." },
-];
-
-export function Problem() {
-  return (
-    <section id="problem" className="scroll-mt-16 py-20 md:py-32">
-      <div className={container}>
-        <SectionHead eyebrow="The problem" title="Code review is where good work goes to wait." body="GitHub stores your pull requests well. It doesn't help your team decide what to read next." />
-        <div className="grid gap-px overflow-hidden rounded-2xl bg-[var(--l-line)] ring-1 ring-[var(--l-line)] md:grid-cols-3">
-          {PROBLEMS.map((p) => (
-            <div key={p.n} className="bg-[var(--l-surface)] p-6 md:p-8">
-              <p className="font-mono text-[12px] text-[var(--l-ink-3)]">{p.n}</p>
-              <h3 className="font-display mt-6 text-[18px] leading-6 font-semibold">{p.title}</h3>
-              <p className="mt-2 text-[15px] leading-6 text-[var(--l-ink-2)]">{p.body}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -72,19 +48,18 @@ function ConnectVisual() {
 
 function QueueVisual() {
   const rows = [
-    { t: "Rate-limit login", w: "26h", c: "#f59e0b" },
-    { t: "Billing to RSC", w: "4h", c: "#2f7bf5" },
-    { t: "Pin Postgres", w: "1h", c: "#10b981" },
+    { t: "Rate-limit login", w: "26h", peep: 0 },
+    { t: "Billing to RSC", w: "4h", peep: 1 },
+    { t: "Pin Postgres", w: "1h", peep: 13 },
   ];
   return (
-    <div className="flex h-full flex-col justify-center gap-1.5 px-6">
+    <div data-peep-anchor="how" className="flex h-full flex-col justify-center gap-1.5 px-6">
       {rows.map((r, i) => (
         <div
           key={r.t}
-          className={cx("hiw-row flex items-center gap-2 rounded-lg bg-[var(--l-surface)] px-2.5 py-2 text-[11.5px] shadow-[0_0_0_1px_var(--l-line),0_1px_2px_rgb(0_0_0/0.04)]", i === 0 && "hiw-first")}
-          style={{ animationDelay: `${i * 140}ms` }}
+          className={cx("flex items-center gap-2 rounded-lg bg-[var(--l-surface)] px-2.5 py-2 text-[11.5px] shadow-[0_0_0_1px_var(--l-line),0_1px_2px_rgb(0_0_0/0.04)]", i === 0 && "hiw-first")}
         >
-          <span className="size-1.5 rounded-full" style={{ background: r.c }} />
+          <Peep i={r.peep} size={22} slot className="shadow-none" />
           <span className="flex-1 truncate font-medium">{r.t}</span>
           <span className="text-[10.5px] text-[var(--l-ink-3)] tabular-nums">{r.w}</span>
         </div>
@@ -195,11 +170,26 @@ export function PlanCards({ onStart }: { onStart: () => void }) {
   );
 }
 
+/** The hero's queue, one last time: the whole cast settles into a row above the plans. */
+function TeamRow() {
+  return (
+    <div className="mb-10 flex flex-col items-center gap-3">
+      <div data-peep-anchor="pricing" className="flex -space-x-1.5 max-sm:-space-x-3.5">
+        {FACES.map((face, i) => (
+          <Peep key={face.cell} i={i} size={36} slot />
+        ))}
+      </div>
+      <p className="text-[14px] text-[var(--l-ink-2)]">Bring the whole queue. Pay per member only when you grow.</p>
+    </div>
+  );
+}
+
 export function Pricing({ onStart }: { onStart: () => void }) {
   return (
     <section id="pricing" className="scroll-mt-16 py-20 md:py-32">
       <div className={container}>
         <SectionHead eyebrow="Pricing" title="Free for small teams. Simple when you grow." body="Start without a card. Upgrade when the whole team reviews in Docks." />
+        <TeamRow />
         <PlanCards onStart={onStart} />
         <p className="mt-8 text-center text-[14px] text-[var(--l-ink-2)]">
           <a href="/pricing" className="font-medium text-[var(--l-ink)] underline decoration-[var(--l-line)] underline-offset-4 hover:decoration-current">Compare every feature</a>

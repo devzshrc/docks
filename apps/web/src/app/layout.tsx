@@ -36,7 +36,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(geist.variable, inter.variable)}
     >
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <DirectionProvider locale="en-US">
           <ThemeProvider>
             <PostHogProvider>
