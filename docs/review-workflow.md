@@ -12,7 +12,7 @@
 
 AI must be enabled for the repository, and the existing server-side OpenAI configuration must be available. Questions reserve their quota before contacting the provider, under a per-user database lock. The limit is 30 answers per user per hour across repositories. Failed attempts don't count, and a pending attempt only counts for its first 5 minutes; a separate cap of 60 attempts per hour stops retry loops. The per-minute scheduler marks attempts pending for more than 5 minutes as failed, so an interrupted Worker no longer holds quota. Failed attempts remain private and can be retried as a new question.
 
-Context includes the PR description, bounded diff, at most five prior turns from this commit, and up to three selected knowledge documents truncated to 6,000 characters each. The diff is bounded to 60,000 characters. Knowledge revisions used are saved with the answer. No full-repository retrieval or embeddings are introduced. Citations are validated against new-side lines in supplied patches and open immutable GitHub commit permalinks. Deleted-side citation navigation and streamed answers are not included in this release.
+Context includes the PR description, bounded diff, at most five prior turns from this commit, and up to three selected knowledge documents truncated to 6,000 characters each. The diff is bounded to 60,000 characters. Knowledge revisions used are saved with the answer. No full-repository retrieval or embeddings are introduced. Citations are validated against new-side lines in supplied patches and open immutable GitHub commit permalinks. Old-side lines are cited as `path:-line` and open the PR files view at that line; new-side lines open immutable commit permalinks.
 
 ## Retry behavior
 

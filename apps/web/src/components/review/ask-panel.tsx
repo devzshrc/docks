@@ -93,13 +93,17 @@ export function AskPanel({ repo, number }: { repo: string; number: number }) {
           <div className="flex flex-wrap gap-2">
             {q.citations.map((c) => (
               <a
-                key={`${c.path}:${c.line}`}
+                key={`${c.side}:${c.path}:${c.line}`}
                 className="text-caption-1-regular underline"
-                href={`https://github.com/${repo}/blob/${q.headSha}/${c.path.split("/").map(encodeURIComponent).join("/")}#L${c.line}`}
+                href={
+                  c.side === "LEFT" && c.anchor
+                    ? `https://github.com/${repo}/pull/${number}/files#${c.anchor}`
+                    : `https://github.com/${repo}/blob/${q.headSha}/${c.path.split("/").map(encodeURIComponent).join("/")}#L${c.line}`
+                }
                 target="_blank"
                 rel="noreferrer"
               >
-                {c.path}:{c.line}
+                {c.path}:{c.side === "LEFT" ? `${c.line} (removed)` : c.line}
               </a>
             ))}
           </div>
