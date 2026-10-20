@@ -17,7 +17,6 @@ import {
 import { enqueue } from "../jobs.js";
 import { boardFilters, filterBoard, sizeOf } from "../review/board.js";
 import { latestVerdicts } from "../review/columns.js";
-import { askPr } from "../review/ask.js";
 import { decrypt } from "../crypto.js";
 import { linearIssues } from "../linear.js";
 import {
@@ -33,6 +32,7 @@ import {
   installationClient,
 } from "../review/github.js";
 import { askQuotaError, askUsageQuery } from "../review/ask-quota.js";
+import { answerQuestion } from "../review/ask-service.js";
 import { rulesChecklist, storedRepoRules } from "../review/repo-rules.js";
 import { TOO_LARGE_REASON, fallbackGuide, guideKey, tooLargeForGuide } from "../review/guide.js";
 import { githubAs, githubIdentity } from "../review/github-user.js";
@@ -1567,6 +1567,7 @@ export const reviewRouter = router({
         path: z.string().max(500).optional(),
         line: z.number().int().positive().optional(),
         knowledgeIds: z.array(z.string().uuid()).max(3).default([]),
+        stream: z.boolean().default(false),
         history: z
           .array(
             z.object({
@@ -1580,10 +1581,7 @@ export const reviewRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const repoRow = await repoForUser(ctx.user.id, input.repo);
-      const { headSha, title, body } = await headShaOf(
-        repoRow.id,
-        input.number,
-      );
+      const { headSha } = await headShaOf(repoRow.id, input.number);
       const files = await db
         .select({
           filename: schema.prFile.path,
@@ -1647,24 +1645,6 @@ export const reviewRouter = router({
             code: "BAD_REQUEST",
             message: "A selected knowledge document is unavailable",
           });
-        const prior = await db
-          .select()
-          .from(schema.reviewQuestion)
-          .where(
-            and(
-              eq(schema.reviewQuestion.userId, ctx.user.id),
-              eq(schema.reviewQuestion.repoId, repoRow.id),
-              eq(schema.reviewQuestion.prNumber, input.number),
-              eq(schema.reviewQuestion.headSha, headSha),
-              eq(schema.reviewQuestion.status, "completed"),
-            ),
-          )
-          .orderBy(desc(schema.reviewQuestion.createdAt))
-          .limit(5);
-        const history = prior.reverse().flatMap((q) => [
-          { role: "user" as const, content: q.question },
-          { role: "assistant" as const, content: q.answer.slice(0, 8000) },
-        ]);
         const reservation = await db.transaction(async (tx) => {
           await tx.execute(
             sql`SELECT pg_advisory_xact_lock(hashtextextended(${`ask:${ctx.user.id}`}, 0))`,
@@ -1693,44 +1673,9 @@ export const reviewRouter = router({
             .returning();
           return row!;
         });
-        try {
-          const answer = await askPr(
-            {
-              title,
-              body,
-              files: scoped,
-              question: contextualQuestion,
-              history,
-              knowledge: knowledge.map((k) => ({
-                ...k,
-                body: k.body.slice(0, 6000),
-              })),
-            },
-            { workspaceId: repoRow.workspaceId, repoId: repoRow.id },
-          );
-          const citations = diffCitations(answer, scoped);
-          const [saved] = await db
-            .update(schema.reviewQuestion)
-            .set({
-              answer,
-              citations,
-              status: "completed",
-              updatedAt: new Date(),
-            })
-            .where(eq(schema.reviewQuestion.id, reservation.id))
-            .returning();
-          return saved!;
-        } catch (err) {
-          await db
-            .update(schema.reviewQuestion)
-            .set({
-              answer: "This question failed. Ask again to retry.",
-              status: "failed",
-              updatedAt: new Date(),
-            })
-            .where(eq(schema.reviewQuestion.id, reservation.id));
-          throw err;
-        }
+        // Streaming clients open GET /ask/:id/stream for the answer; others wait here.
+        if (input.stream) return reservation;
+        return await answerQuestion(reservation.id);
       } catch (err) {
         if (err instanceof TRPCError) throw err;
         logError("ask.failed", err);

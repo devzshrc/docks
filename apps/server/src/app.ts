@@ -1,6 +1,8 @@
 import {
   appRouter,
+  answerQuestion,
   auth,
+  startQuestionStream,
   canJoinLive,
   completeAuthorization,
   connectSlack,
@@ -21,6 +23,7 @@ import { checkReadiness } from "./readiness.js";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
+import { streamSSE } from "hono/streaming";
 import { rateLimit, type RateLimitBinding } from "./rate-limit.js";
 
 export type AppEnv = {
@@ -118,7 +121,9 @@ export function createApp(
                   "/live",
                 ].includes(path)
               ? path
-              : "unmatched";
+              : /^\/ask\/[^/]+\/stream$/.test(path)
+                ? "/ask/:id/stream"
+                : "unmatched";
         logEvent(c.res.status >= 500 ? "error" : "info", "http.completed", {
           method: c.req.method,
           route,
@@ -283,6 +288,26 @@ export function createApp(
       logError("slack.failed", err);
       return back("failed");
     }
+  });
+
+  // Ask answers as server-sent events: `delta` chunks, then `done` with the saved question.
+  app.get("/ask/:id/stream", async (c) => {
+    const ctx = await createContext(c.req.raw, c.get("requestId"));
+    if (!ctx.user) return c.json({ error: "Not authenticated" }, 401);
+    const id = c.req.param("id");
+    if (!/^[0-9a-f-]{36}$/.test(id)) return c.json({ error: "Not found" }, 404);
+    const claimed = await startQuestionStream(id, ctx.user.id).catch(() => null);
+    if (!claimed) return c.json({ error: "This question isn't waiting for an answer" }, 409);
+    return streamSSE(c, async (stream) => {
+      try {
+        const saved = await answerQuestion(id, (text) => {
+          void stream.writeSSE({ event: "delta", data: JSON.stringify({ text }) });
+        });
+        await stream.writeSSE({ event: "done", data: JSON.stringify({ id: saved.id, status: saved.status }) });
+      } catch {
+        await stream.writeSSE({ event: "error", data: JSON.stringify({ message: "Couldn't get an answer right now. Try again." }) });
+      }
+    });
   });
 
   app.get("/healthz", (c) =>
