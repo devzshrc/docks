@@ -43,6 +43,43 @@ function appJwt(): string {
 const CONDITIONAL = /^\/(repos\/[^/?]+\/[^/?]+(\/(labels|assignees|milestones|issues\/\d+))?|installation\/repositories)(\?|$)/;
 const ETAG_TTL_MS = 6 * 3_600_000;
 
+/** Latest rate-limit reading per token (hashed). In memory, shared through KV when it runs low. */
+export interface RateLimit {
+  limit: number;
+  remaining: number;
+  resetAt: number;
+}
+const LOW_SHARE = 0.1;
+const tokenKey = (token: string) => createHash("sha256").update(token).digest("hex").slice(0, 16);
+const rateLimits = new Map<string, RateLimit>();
+
+async function recordRateLimit(token: string, headers: Headers) {
+  const limit = Number(headers.get("x-ratelimit-limit"));
+  const remaining = Number(headers.get("x-ratelimit-remaining"));
+  const reset = Number(headers.get("x-ratelimit-reset"));
+  if (!limit || Number.isNaN(remaining)) return;
+  const reading = { limit, remaining, resetAt: reset * 1000 };
+  const key = tokenKey(token);
+  rateLimits.set(key, reading);
+  if (remaining / limit < LOW_SHARE) await cacheSet(`rl:${key}`, Math.max(1000, reading.resetAt - Date.now()), reading);
+}
+
+export async function rateLimitForToken(token: string): Promise<RateLimit | null> {
+  const key = tokenKey(token);
+  const local = rateLimits.get(key);
+  const shared = await cacheGet<RateLimit>(`rl:${key}`);
+  const best = [local, shared].filter((r): r is RateLimit => !!r && r.resetAt > Date.now()).sort((a, b) => a.remaining - b.remaining)[0];
+  return best ?? null;
+}
+
+/** Remaining GitHub budget for an installation, if we've seen it recently. */
+export async function installationRateLimit(installationId: number): Promise<RateLimit | null> {
+  const cached = tokenCache.get(installationId);
+  return cached ? rateLimitForToken(cached.token) : null;
+}
+
+export const isLow = (r: RateLimit | null) => !!r && r.remaining / r.limit < LOW_SHARE;
+
 async function request<T>(path: string, token: string, init: RequestInit = {}) {
   const url = path.startsWith("http") ? path : `${API}${path}`;
   const conditional = !init.method && CONDITIONAL.test(path);
@@ -61,6 +98,7 @@ async function request<T>(path: string, token: string, init: RequestInit = {}) {
       ...init.headers,
     },
   });
+  await recordRateLimit(token, res.headers);
   if (res.status === 304 && prior) return { body: prior.body as T, next: nextLink(prior.link) };
   if (!res.ok) {
     throw new GitHubError(res.status, `GitHub ${res.status} ${path}: ${await res.text()}`);

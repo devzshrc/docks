@@ -1,3 +1,5 @@
+import { RetryJobAtError } from "../jobs.js";
+import { installationRateLimit, isLow } from "./github.js";
 import { collectEvidence } from "../delivery/evidence.js";
 import { reconcileDeadlines } from "../delivery/deadlines.js";
 import { db, schema } from "@docks/db";
@@ -118,6 +120,9 @@ async function loadRepo(repoId: number) {
 export async function syncRepo(repoId: number) {
   const repo = await loadRepo(repoId);
   if (!repo?.enabled) return;
+  // Backfills can wait: when the installation's GitHub budget is low, retry after it resets.
+  const budget = await installationRateLimit(repo.installationId);
+  if (isLow(budget)) throw new RetryJobAtError(new Date(budget!.resetAt + 5_000));
   const pulls = await installationClient(repo.installationId).listOpenPulls(repo.fullName);
   for (const p of pulls) await enqueue("sync_pr", { repoId, number: p.number });
 

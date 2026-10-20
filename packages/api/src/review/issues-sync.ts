@@ -1,3 +1,5 @@
+import { RetryJobAtError } from "../jobs.js";
+import { installationRateLimit, isLow } from "./github.js";
 import { publishForRepo } from "../live.js";
 import { db, schema } from "@docks/db";
 import { and, eq, notInArray } from "drizzle-orm";
@@ -66,6 +68,9 @@ export async function syncIssue(repoId: number, number: number) {
 export async function syncRepoIssues(repoId: number) {
   const repo = await loadRepo(repoId);
   if (!repo?.enabled) return;
+  // Backfills can wait: when the installation's GitHub budget is low, retry after it resets.
+  const budget = await installationRateLimit(repo.installationId);
+  if (isLow(budget)) throw new RetryJobAtError(new Date(budget!.resetAt + 5_000));
   const gh = installationClient(repo.installationId);
   const since = new Date(Date.now() - 90 * 24 * 3_600_000).toISOString();
   const [open, closed] = await Promise.all([gh.listIssues(repo.fullName, { state: "open" }), gh.listIssues(repo.fullName, { state: "closed", since })]);
