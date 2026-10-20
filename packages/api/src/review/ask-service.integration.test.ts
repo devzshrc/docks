@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { generateKeyPairSync, randomUUID } from "node:crypto";
 import { test } from "node:test";
 import { closeDb, db, schema } from "@docks/db";
 import { eq } from "drizzle-orm";
@@ -37,9 +37,29 @@ test("streamed Ask answers: owner-only single claim, deltas, saved citations", {
   const users = ["a", "b"].map((n) => ({ id: `${id}-${n}`, name: n, email: `${id}-${n}@example.test`, emailVerified: true, image: null }));
   const realFetch = globalThis.fetch;
   process.env.OPENAI_API_KEY = "test-only-not-real";
+  process.env.GITHUB_APP_ID = "123";
+  process.env.GITHUB_APP_PRIVATE_KEY = generateKeyPairSync("rsa", { modulusLength: 2048 })
+    .privateKey.export({ type: "pkcs8", format: "pem" })
+    .toString();
+  const repoFiles: Record<string, string> = {
+    "src/a.ts": 'import { helper } from "./helper.js";\nexport const a = helper();\nexport const b = 2;',
+    "src/helper.ts": "export function helper() { return 1; }",
+  };
+  let aiPrompt = "";
   globalThis.fetch = (async (url: string | URL | Request, init?: RequestInit) => {
     const path = url instanceof Request ? url.url : String(url);
-    if (path.includes("api.openai.com/v1/responses")) return sseResponse(["See src/a.ts:", "2 for it."]);
+    if (path.includes("api.openai.com/v1/responses")) {
+      aiPrompt = url instanceof Request ? await url.clone().text() : String(init?.body);
+      return sseResponse(["See src/a.ts:", "2 for it."]);
+    }
+    if (path.includes("/access_tokens")) return Response.json({ token: "t", expires_at: new Date(Date.now() + 3_600_000).toISOString() });
+    const contents = path.match(/\/contents\/([^?]+)\?ref=/);
+    if (contents) {
+      const file = repoFiles[decodeURIComponent(contents[1]!)];
+      return file
+        ? Response.json({ content: Buffer.from(file).toString("base64"), encoding: "base64" })
+        : Response.json({ message: "Not Found" }, { status: 404 });
+    }
     return realFetch(url, init);
   }) as typeof fetch;
   t.after(async () => {
@@ -75,4 +95,8 @@ test("streamed Ask answers: owner-only single claim, deltas, saved citations", {
   assert.equal(saved.status, "completed");
   assert.equal(saved.answer, "See src/a.ts:2 for it.");
   assert.deepEqual(saved.citations, [{ path: "src/a.ts", line: 2, side: "RIGHT" }]);
+  // The changed file and the file it imports go along whole.
+  assert.match(aiPrompt, /Full files at the head commit/);
+  assert.match(aiPrompt, /### src\/a.ts/);
+  assert.match(aiPrompt, /### src\/helper.ts/);
 });

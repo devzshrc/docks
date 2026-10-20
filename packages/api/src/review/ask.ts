@@ -22,6 +22,8 @@ export async function askPr(
     files: GuideFile[];
     question: string;
     knowledge?: { id: string; version: number; title: string; body: string }[];
+    /** Whole files at the head commit (changed files and what they import), already budgeted. */
+    fullFiles?: { path: string; content: string }[];
     history: { role: "user" | "assistant"; content: string }[];
   },
   context: AiContext = {},
@@ -43,7 +45,7 @@ export async function askPr(
         { role: "system" as const, content: SYSTEM },
         {
           role: "user" as const,
-          content: `Pull request: ${input.title}\n\n${input.body?.trim() || "No description."}\n\nRepository knowledge:\n${JSON.stringify(input.knowledge ?? [])}\n\nDiff (bounded to 60,000 characters):\n\n${renderDiff(input.files).slice(0, 60000)}\n[Only supplied code is available.]`,
+          content: `Pull request: ${input.title}\n\n${input.body?.trim() || "No description."}\n\nRepository knowledge:\n${JSON.stringify(input.knowledge ?? [])}\n\nDiff (bounded to 60,000 characters):\n\n${renderDiff(input.files).slice(0, 60000)}${input.fullFiles?.length ? `\n\nFull files at the head commit (for context; cite lines from the diff):\n\n${input.fullFiles.map((f) => `### ${f.path}\n${f.content}`).join("\n\n")}` : ""}\n[Only supplied code is available.]`,
         },
         ...input.history.slice(-10),
         { role: "user" as const, content: input.question },

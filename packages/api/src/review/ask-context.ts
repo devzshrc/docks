@@ -47,3 +47,67 @@ export function diffCitations(answer: string, files: GuideFile[]): AskCitation[]
   }
   return citations;
 }
+
+/** Budget for full-file context sent with a question, on top of the diff. */
+export const FULL_FILE_BUDGET = 40_000;
+const MAX_FULL_FILES = 5;
+const MAX_IMPORTS = 3;
+
+/**
+ * Which changed files to send whole: the selected one first, then the biggest
+ * code changes. Generated files and deletions are never worth it.
+ */
+export function pickContextFiles(
+  files: { filename: string; tier: string; additions: number; deletions: number; status?: string | null }[],
+  selected?: string | null,
+): string[] {
+  const usable = files.filter((f) => f.tier !== "noise" && f.status !== "removed");
+  // A question about one file gets that file (and its imports), nothing else.
+  if (selected) return usable.some((f) => f.filename === selected) ? [selected] : [];
+  return usable
+    .filter((f) => f.tier === "core")
+    .sort((a, b) => b.additions + b.deletions - (a.additions + a.deletions))
+    .map((f) => f.filename)
+    .slice(0, MAX_FULL_FILES);
+}
+
+/** Candidate repo paths for one file's relative imports (JS/TS and Python), nearest first. */
+export function relativeImports(path: string, content: string): string[][] {
+  const dir = path.split("/").slice(0, -1);
+  const resolve = (spec: string) => {
+    const parts = [...dir];
+    for (const seg of spec.split("/")) {
+      if (seg === "..") parts.pop();
+      else if (seg !== "." && seg) parts.push(seg);
+    }
+    return parts.join("/");
+  };
+  const out: string[][] = [];
+  if (/\.[cm]?[jt]sx?$/.test(path)) {
+    for (const m of content.matchAll(/(?:from\s+|import\s*\(\s*|require\s*\(\s*|import\s+)["'](\.{1,2}\/[^"']+)["']/g)) {
+      const base = resolve(m[1]!).replace(/\.[cm]?js$/, "");
+      out.push([".ts", ".tsx", ".js", ".jsx", "/index.ts", "/index.tsx", "/index.js"].map((ext) => base + ext));
+    }
+  } else if (path.endsWith(".py")) {
+    for (const m of content.matchAll(/^from\s+(\.+)([\w.]*)\s+import/gm)) {
+      const up = m[1]!.length - 1;
+      const base = [...dir.slice(0, dir.length - up), ...m[2]!.split(".").filter(Boolean)].join("/");
+      out.push([`${base}.py`, `${base}/__init__.py`]);
+    }
+  }
+  const seen = new Set<string>();
+  return out.filter((c) => !seen.has(c[0]!) && seen.add(c[0]!)).slice(0, MAX_IMPORTS);
+}
+
+/** Keep whole files in order until the budget runs out; the last one may be cut with a marker. */
+export function budgetFiles(files: { path: string; content: string }[], budget = FULL_FILE_BUDGET) {
+  const out: { path: string; content: string }[] = [];
+  let left = budget;
+  for (const f of files) {
+    if (left <= 500) break;
+    const content = f.content.length > left ? `${f.content.slice(0, left)}\n[file truncated]` : f.content;
+    out.push({ path: f.path, content });
+    left -= Math.min(f.content.length, left);
+  }
+  return out;
+}
