@@ -14,6 +14,7 @@ import Link from "next/link";
 import { optimistic } from "@/lib/optimistic";
 import { QueryError } from "@/components/query-state";
 import { AppShell } from "@/components/app-shell";
+import { RepoRulesSheet } from "@/components/repo-rules-sheet";
 import { RulesEditor } from "@/components/rules-editor";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -179,7 +180,11 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
                       />
                     </TableCell>
                     <TableCell>
-                      <RulesEditor workspaceId={workspaceId} repo={r} />
+                      <div className="flex items-center gap-1">
+                        <RulesEditor workspaceId={workspaceId} repo={r} />
+                        {/* The server checks repos.manage on refresh; errors show in the sheet. */}
+                        <RepoRulesSheet repo={r} canManage />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
