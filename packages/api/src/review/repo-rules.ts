@@ -144,3 +144,55 @@ export async function retierOpenPrs(repoId: number, rules: RepoRules | null) {
       );
   }
 }
+
+/**
+ * A suggested rules file from the repo's layout. Only rules that match
+ * something in the tree are included, so the file explains this repo.
+ */
+export function starterRulesYaml(paths: string[]): string {
+  const dirs = new Set<string>();
+  for (const p of paths) {
+    const parts = p.split("/");
+    for (let i = 1; i < parts.length; i++) dirs.add(parts.slice(0, i).join("/"));
+  }
+  const has = (re: RegExp) => [...dirs].filter((d) => re.test(d));
+  const top = (re: RegExp) => [...new Set(has(re).map((d) => d.match(re)![0]))].sort();
+  const lines = (globs: string[]) => globs.map((g) => `"${g}"`).join(", ");
+  const tiers: Record<string, string[]> = {};
+
+  // Monorepo packages: their src folders are the code that matters.
+  const monorepo = top(/^(apps|packages|services|libs)\/[^/]+(?=\/src$)/);
+  if (monorepo.length) tiers.core = [...new Set(monorepo.map((d) => `${d.split("/")[0]}/*/src/**`))];
+  const generated = top(/(^|.*\/)(gen|generated|__generated__|codegen)$/).map((d) => `${d}/`);
+  const genFiles = ["*.pb.go", "*_pb2.py", "*.generated.ts", "*.gen.go"].filter((g) => paths.some((p) => globToRegExp(g).test(p)));
+  if (generated.length || genFiles.length) tiers.noise = [...generated, ...genFiles.map((g) => `**/${g}`)];
+  const infra = top(/^(infra|deploy|terraform|k8s|helm|charts|ops)$/).map((d) => `${d}/`);
+  if (infra.length) tiers.config = infra;
+  const fixtures = top(/(^|.*\/)(testdata|fixtures|__fixtures__|__snapshots__)$/).map((d) => `${d}/`);
+  if (fixtures.length) tiers.test = fixtures;
+
+  const checklist: { paths: string[]; question: string }[] = [];
+  const migrations = top(/(^|.*\/)(migrations|drizzle|alembic\/versions|db\/migrate|prisma\/migrations)$/).map((d) => `${d}/`);
+  if (migrations.length) checklist.push({ paths: migrations, question: "Does this migration handle existing rows, and can it be rolled back?" });
+  const auth = top(/(^|.*\/)(auth|authentication|permissions?|access)$/).map((d) => `${d}/`);
+  if (auth.length) checklist.push({ paths: auth, question: "Could this change let someone see or do more than they should?" });
+  const billing = top(/(^|.*\/)(billing|payments?|invoices?)$/).map((d) => `${d}/`);
+  if (billing.length) checklist.push({ paths: billing, question: "Are money amounts, currencies and retries handled exactly once?" });
+  const ci = paths.some((p) => p.startsWith(".github/workflows/")) ? [".github/workflows/"] : [];
+  if (ci.length) checklist.push({ paths: ci, question: "Does this CI change keep secrets out of logs and pull requests from forks?" });
+
+  const out = [
+    "# Docks review rules: ranks files and adds checklist questions for this repository.",
+    "# Generated from the repository layout; edit freely. Docs: Settings → Repositories → Review rules.",
+  ];
+  const tierKeys = Object.keys(tiers);
+  if (tierKeys.length) {
+    out.push("tiers:");
+    for (const k of ["core", "config", "test", "noise"]) if (tiers[k]) out.push(`  ${k}: [${lines(tiers[k]!)}]`);
+  } else out.push("tiers: {}");
+  if (checklist.length) {
+    out.push("checklist:");
+    for (const c of checklist) out.push(`  - paths: [${lines(c.paths)}]`, `    question: "${c.question}"`);
+  } else out.push("checklist: []");
+  return `${out.join("\n")}\n`;
+}

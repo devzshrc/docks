@@ -527,6 +527,25 @@ export function userClient(getToken: () => Promise<string>) {
   return {
     ...issueApi(call, paginate),
     me: () => call<GhUser>("/user"),
+    /** One-file PR: branch off `base`, commit `content` to `path`, open the pull request. */
+    openFilePr: async (
+      repo: string,
+      input: { base: string; branch: string; path: string; content: string; message: string; title: string; body: string },
+    ) => {
+      const ref = await call<{ object: { sha: string } }>(`/repos/${repo}/git/ref/heads/${encodeURIComponent(input.base)}`);
+      await call(`/repos/${repo}/git/refs`, {
+        method: "POST",
+        body: JSON.stringify({ ref: `refs/heads/${input.branch}`, sha: ref.object.sha }),
+      });
+      await call(`/repos/${repo}/contents/${input.path.split("/").map(encodeURIComponent).join("/")}`, {
+        method: "PUT",
+        body: JSON.stringify({ message: input.message, content: Buffer.from(input.content).toString("base64"), branch: input.branch }),
+      });
+      return call<{ number: number; html_url: string }>(`/repos/${repo}/pulls`, {
+        method: "POST",
+        body: JSON.stringify({ title: input.title, head: input.branch, base: input.base, body: input.body }),
+      });
+    },
     getPull: (repo: string, n: number) =>
       call<GhPull>(`/repos/${repo}/pulls/${n}`),
     mergeSnapshot: async (repo: string, n: number) => {

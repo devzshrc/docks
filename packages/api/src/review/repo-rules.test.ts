@@ -39,3 +39,28 @@ test("rulesChecklist only returns questions whose paths changed", () => {
   assert.deepEqual(rulesChecklist(rules, ["db/migrations/0042.sql"]), ["Does this migration handle existing rows?"]);
   assert.deepEqual(rulesChecklist(rules, ["src/a.ts"]), []);
 });
+
+test("starterRulesYaml suggests only rules that match the repo, and parses", async () => {
+  const { starterRulesYaml } = await import("./repo-rules.js");
+  const yaml = starterRulesYaml([
+    "packages/api/src/index.ts",
+    "apps/web/src/page.tsx",
+    "packages/db/drizzle/0001.sql",
+    "proto/gen/user.pb.go",
+    "infra/main.tf",
+    "src/auth/login.ts",
+    "tests/fixtures/a.json",
+    ".github/workflows/ci.yml",
+    "README.md",
+  ]);
+  const parsed = parseRepoRules(yaml);
+  assert.ok("rules" in parsed, yaml);
+  assert.deepEqual(parsed.rules.tiers.core, ["packages/*/src/**", "apps/*/src/**"].sort((a, b) => (yaml.indexOf(a) - yaml.indexOf(b))));
+  assert.ok(parsed.rules.tiers.noise!.includes("proto/gen/"));
+  assert.ok(parsed.rules.tiers.noise!.includes("**/*.pb.go"));
+  assert.deepEqual(parsed.rules.tiers.config, ["infra/"]);
+  assert.deepEqual(parsed.rules.tiers.test, ["tests/fixtures/"]);
+  assert.deepEqual(parsed.rules.checklist.map((c) => c.paths[0]), ["packages/db/drizzle/", "src/auth/", ".github/workflows/"]);
+  // A plain repo still gets a valid, empty file.
+  assert.ok("rules" in parseRepoRules(starterRulesYaml(["index.js"])));
+});
