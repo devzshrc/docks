@@ -1,49 +1,25 @@
 "use client";
+
 import { errorMessage } from "@/lib/error-message";
 import { NativeCheckbox as ShadcnCheckbox } from "@/components/ui-compat/native-checkbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
-import { Input as ShadcnInput } from "@/components/ui/input";
 import { NativeSelect as ShadcnSelect } from "@/components/ui-compat/native-select";
-
-import {
-  compileBody,
-  compileForm,
-  MAX_BODY,
-  MAX_TITLE,
-  missingForm,
-  missingRequired,
-  TEMPLATES,
-  type CodeRef,
-  type IssueType,
-} from "@docks/api/issue";
+import { compileBody, compileForm, MAX_BODY, MAX_TITLE, missingForm, missingRequired, TEMPLATES, type CodeRef, type IssueType } from "@docks/api/issue";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-
 import { MentionTextarea } from "@/components/mention-textarea";
-import { DrawTick } from "@/components/motion";
-import {
-  AssigneeChips,
-  FilePicker,
-  Label,
-  SimilarStrip,
-  TraceOffer,
-} from "@/components/new-issue/parts";
+import { AssigneeChips, FilePicker, Label, SimilarStrip, TraceOffer } from "@/components/new-issue/parts";
 import type { IssueSeed, IssueSource } from "@/components/new-issue/provider";
-import { FixWithAgent } from "@/components/review/agent-handoff";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDraft } from "@/hooks/use-draft";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
+import { FormFieldInput, select } from "./form-field";
+import { type DoneInfo, Done } from "./done";
 
 interface Draft {
   type: IssueType;
@@ -72,8 +48,6 @@ const EMPTY: Draft = {
   traceDismissed: false,
 };
 const TYPES = Object.keys(TEMPLATES) as IssueType[];
-const select =
-  "bg-(--field) hover:bg-(--field-hover) h-9 rounded-md border px-2 text-sm";
 
 const bannerClass = "rounded-md border px-3 py-2 text-sm";
 
@@ -755,217 +729,5 @@ export function NewIssuePanel({
         )}
       </SheetContent>
     </Sheet>
-  );
-}
-
-interface DoneInfo {
-  number: number;
-  url: string;
-  branch: string;
-  dropped: { labels: string[]; assignees: string[] };
-  title: string;
-  body: string;
-  byApp: boolean;
-  linear: { id: string; url: string } | null;
-  linearError: string | null;
-}
-
-function FormFieldInput({
-  field,
-  value,
-  onChange,
-}: {
-  field: import("@docks/api/issue").FormField;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const id = `issue-f-${field.id}`;
-  const box =
-    "bg-(--field) hover:bg-(--field-hover) w-full rounded-md border px-3 py-2 text-sm";
-  return (
-    <div>
-      <Label htmlFor={id}>
-        {field.label}
-        {field.required && <span className="text-destructive"> *</span>}
-      </Label>
-      {field.description && (
-        <p className="text-muted-foreground -mt-1 mb-1.5 text-xs">
-          {field.description}
-        </p>
-      )}
-      {field.kind === "textarea" ? (
-        <MentionTextarea
-          id={id}
-          rows={4}
-          value={value}
-          placeholder={field.placeholder}
-          onChange={onChange}
-          className={box}
-        />
-      ) : field.kind === "input" ? (
-        <Input
-          id={id}
-          value={value}
-          placeholder={field.placeholder}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      ) : field.kind === "dropdown" ? (
-        <ShadcnSelect
-          id={id}
-          className={cn(select, "w-full")}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        >
-          <option value="">Choose…</option>
-          {field.options.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </ShadcnSelect>
-      ) : (
-        <div className="space-y-1.5">
-          {field.options.map((opt) => {
-            const set = new Set(value.split("\n").filter(Boolean));
-            return (
-              <label key={opt} className="flex items-center gap-2 text-sm">
-                <ShadcnCheckbox
-                  checked={set.has(opt)}
-                  onChange={(e) => {
-                    e.target.checked ? set.add(opt) : set.delete(opt);
-                    onChange([...set].join("\n"));
-                  }}
-                />
-                {opt}
-              </label>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Done({
-  done,
-  repo,
-  onAnother,
-  onClose,
-}: {
-  done: DoneInfo;
-  repo: string;
-  onAnother: () => void;
-  onClose: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-  const prompt = [
-    `Implement ${repo}#${done.number}: ${done.title}`,
-    done.body,
-    `Work on a new branch named ${done.branch} off the default branch. Make the smallest change that resolves the issue, keep the existing style, add or update tests, and open a pull request whose description says "Closes #${done.number}".`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-  const dropped = [
-    ...done.dropped.labels.map((l) => `label "${l}"`),
-    ...done.dropped.assignees.map((a) => `assignee ${a}`),
-  ];
-
-  return (
-    <div className="animate-in fade-in space-y-5 p-5 duration-200">
-      <div className="flex items-start gap-3">
-        <DrawTick className="mt-0.5 size-5 text-emerald-600 dark:text-emerald-400" />
-        <div className="min-w-0 space-y-1">
-          <a
-            href={done.url}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium hover:underline"
-          >
-            <span className="text-muted-foreground font-code mr-1.5 text-xs">
-              #{done.number}
-            </span>
-            {done.title}
-          </a>
-          <p className="text-muted-foreground text-xs">{repo}</p>
-        </div>
-      </div>
-      {done.byApp && (
-        <p className="text-muted-foreground text-xs">
-          Filed by the Docks app on your behalf. Connect GitHub to create issues
-          as yourself.
-        </p>
-      )}
-      {done.linear && (
-        <p className="text-sm">
-          Also in Linear:{" "}
-          <a
-            href={done.linear.url}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium underline underline-offset-2"
-          >
-            {done.linear.id}
-          </a>
-        </p>
-      )}
-      {done.linearError && (
-        <p role="alert" className="text-sm text-amber-800 dark:text-amber-300">
-          The GitHub issue was created, but Linear failed: {done.linearError}
-        </p>
-      )}
-      {dropped.length > 0 && (
-        <p
-          role="alert"
-          className="rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-sm text-amber-800 dark:text-amber-300"
-        >
-          Created, but GitHub didn&apos;t apply {dropped.join(", ")}. Setting
-          labels and assignees needs triage access on the repository.
-        </p>
-      )}
-      <div className="space-y-1.5">
-        <p className="text-sm font-medium">Start working on it</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(done.branch);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 1600);
-              } catch {}
-            }}
-          >
-            {copied ? "Copied" : "Copy branch name"}
-          </Button>
-          <code className="text-muted-foreground font-code text-xs">
-            {done.branch}
-          </code>
-          <FixWithAgent prompt={prompt} label="Fix with agent" />
-        </div>
-        <p className="text-muted-foreground text-xs">
-          A PR from that branch shows this issue in its Linked issues panel.
-        </p>
-      </div>
-      <div className="flex gap-2 border-t pt-4">
-        <Button type="button" onClick={onAnother}>
-          Create another
-        </Button>
-        <Button type="button" variant="ghost" asChild>
-          <a href={done.url} target="_blank" rel="noreferrer">
-            Open on GitHub
-          </a>
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className="ml-auto"
-          onClick={onClose}
-        >
-          Close
-        </Button>
-      </div>
-    </div>
   );
 }
