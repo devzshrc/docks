@@ -45,6 +45,8 @@ const { values: args } = parseArgs({
     label: { type: "string" },
     compare: { type: "string" },
     yes: { type: "boolean", default: false },
+    // Exit non-zero if the structural checks miss the launch bar (CI runs this on the free baseline).
+    check: { type: "boolean", default: false },
   },
 });
 
@@ -312,3 +314,21 @@ writeFileSync(
 );
 
 console.log(`\nReport: ${join(outDir, "report.md")}`);
+
+if (args.check) {
+  const c = summary.checks;
+  const failures = [
+    ok.length < results.length && `${results.length - ok.length} case(s) failed to run`,
+    c.fullCoverage < 0.9 && `only ${Math.round(c.fullCoverage * 100)}% of guides cover every file (bar: 90%)`,
+    c.invalidPaths > 0 && `${c.invalidPaths} invented file path(s)`,
+    c.duplicateFiles > 0 && `${c.duplicateFiles} file(s) placed in more than one step`,
+    c.noiseInSteps > 0 && `${c.noiseInSteps} lockfile/generated file(s) in steps`,
+    // AI runs must also meet the step and checklist bars; the fallback has no checklist by design.
+    !args.baseline && c.stepCountOk < 0.9 && `step count in range for only ${Math.round(c.stepCountOk * 100)}% (bar: 90%)`,
+  ].filter(Boolean);
+  if (failures.length) {
+    console.error(`\nEval check failed:\n- ${failures.join("\n- ")}`);
+    process.exit(1);
+  }
+  console.log("Eval check passed.");
+}

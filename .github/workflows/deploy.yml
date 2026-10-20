@@ -56,6 +56,7 @@ jobs:
         run: |
           pnpm --filter @docks/api typecheck
           pnpm --filter @docks/api test
+          pnpm --filter @docks/api eval:guide --baseline --check
           pnpm --filter @docks/api build
       - name: Server and browser test types
         run: |
