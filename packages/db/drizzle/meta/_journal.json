@@ -225,6 +225,13 @@
       "when": 1792480879378,
       "tag": "0031_fixed_cassandra_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792481150831,
+      "tag": "0032_redundant_squirrel_girl",
+      "breakpoints": true
     }
   ]
 }

@@ -3,9 +3,9 @@ import { db, schema } from "@docks/db";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { decrypt } from "./crypto.js";
 import { sendEmail } from "./email.js";
-import { computeInsights, type Insights } from "./insights.js";
+import type { Insights } from "./insights.js";
+import { insightsFromSql } from "./insights-sql.js";
 import { enqueue } from "./jobs.js";
-import { insightRows } from "./routers/insights.js";
 
 /**
  * Weekly report (plan M7): Monday, after 09:00 UTC, last 7 days of numbers to
@@ -59,8 +59,7 @@ export async function sendWeeklyReport(workspaceId: string, date: string) {
   if (!repos.length) return;
   const to = new Date();
   const from = new Date(to.getTime() - 7 * 24 * 3_600_000);
-  const { prs, reviews } = await insightRows(repos, from);
-  const report = computeInsights(prs, reviews, { from, to, weeks: 1 });
+  const report = await insightsFromSql(repos, { from, to, weeks: 1 });
   if (report.opened === 0 && report.merged === 0) return; // quiet week
   const text = weeklyText(ws.name, report);
 

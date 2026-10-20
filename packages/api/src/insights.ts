@@ -1,9 +1,8 @@
 import { sizeOf } from "./review/board.js";
 
 /**
- * Review insights (plan M7), computed in memory from mirrored PRs and reviews.
- * ponytail: fine for tens of thousands of PRs per range; move to SQL
- * aggregates if a workspace outgrows that.
+ * Review insights (plan M7), computed in memory. Production reads come from
+ * insights-sql.ts; this is the readable reference its integration test checks against.
  */
 
 export interface InsightPr {
