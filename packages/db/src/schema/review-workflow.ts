@@ -57,6 +57,8 @@ export interface AskCitation {
   path: string;
   line: number;
   side: "LEFT" | "RIGHT";
+  /** LEFT only: GitHub PR files-view anchor (diff-<sha256(path)>L<line>); old lines have no head permalink. */
+  anchor?: string;
 }
 export const reviewQuestion = pgTable(
   "review_question",

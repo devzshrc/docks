@@ -45,7 +45,9 @@ export function ReviewSessionProvider({
 }) {
   const trpc = useTRPC();
   const { data: auth } = useSession();
-  const pull = useQuery(trpc.review.get.queryOptions({ repo, number }));
+  const pull = useQuery(
+    trpc.review.get.queryOptions({ repo, number, lightweight: true }),
+  );
   const query = useQuery({
     ...trpc.review.session.queryOptions({
       repo,
@@ -316,7 +318,16 @@ export function ReviewSessionProvider({
       <div
         // Routine autosave stays quiet (screen readers still hear it); the panel only shows when something needs a decision.
         className={
-          !query.error && !conflict && !legacy && Object.keys(data.textDrafts).length === 0 && ["Loading review recovery…", "Saved", "Saving…", "Unsaved changes"].includes(status)
+          !query.error &&
+          !conflict &&
+          !legacy &&
+          Object.keys(data.textDrafts).length === 0 &&
+          [
+            "Loading review recovery…",
+            "Saved",
+            "Saving…",
+            "Unsaved changes",
+          ].includes(status)
             ? "sr-only"
             : "mb-4 space-y-2 rounded-lg border p-3 text-xs"
         }

@@ -1,3 +1,6 @@
+import { RetryJobAtError } from "../jobs.js";
+import { installationRateLimit, isLow } from "./github.js";
+import { publishForRepo } from "../live.js";
 import { db, schema } from "@docks/db";
 import { and, eq, notInArray } from "drizzle-orm";
 import { enqueue } from "../jobs.js";
@@ -50,6 +53,7 @@ export async function syncIssue(repoId: number, number: number) {
   try {
     const issue = await installationClient(repo.installationId).getIssueRest(repo.fullName, number);
     await upsertIssue(repoId, issue);
+    await publishForRepo(repoId, { t: "issues" });
   } catch (err) {
     // Deleted or transferred away: drop our copy.
     if (err instanceof GitHubError && (err.status === 404 || err.status === 410)) {
@@ -64,6 +68,9 @@ export async function syncIssue(repoId: number, number: number) {
 export async function syncRepoIssues(repoId: number) {
   const repo = await loadRepo(repoId);
   if (!repo?.enabled) return;
+  // Backfills can wait: when the installation's GitHub budget is low, retry after it resets.
+  const budget = await installationRateLimit(repo.installationId);
+  if (isLow(budget)) throw new RetryJobAtError(new Date(budget!.resetAt + 5_000));
   const gh = installationClient(repo.installationId);
   const since = new Date(Date.now() - 90 * 24 * 3_600_000).toISOString();
   const [open, closed] = await Promise.all([gh.listIssues(repo.fullName, { state: "open" }), gh.listIssues(repo.fullName, { state: "closed", since })]);
@@ -78,4 +85,5 @@ export async function syncRepoIssues(repoId: number) {
   for (const s of stale) await enqueue("sync_issue", { repoId, number: s.number });
 
   await db.update(schema.repository).set({ issuesSyncedAt: new Date() }).where(eq(schema.repository.id, repoId));
+  await publishForRepo(repoId, { t: "issues" });
 }

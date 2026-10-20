@@ -455,9 +455,16 @@ test(
             );
           await assert.rejects(
             () => alice.review.ask({ repo, number: 1, question: "Over limit" }),
-            /30 questions/,
+            /30 answers/,
           );
           assert.equal(aiRequests, 1);
+          // Failed attempts give their quota back.
+          await db
+            .update(schema.reviewQuestion)
+            .set({ status: "failed" })
+            .where(eq(schema.reviewQuestion.question, "Quota fixture"));
+          await alice.review.ask({ repo, number: 1, question: "After failures" });
+          assert.equal(aiRequests, 2);
           await db
             .delete(schema.reviewQuestion)
             .where(eq(schema.reviewQuestion.userId, people[0]!.id));

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
+import { type GuideFeedback, VoteButtons } from "./guide-vote";
 import { SideSection } from "./side-section";
 
 /** Summary and numbered tour steps; clicking a step filters the diff (§5.3). */
@@ -19,6 +20,7 @@ export function GuidePanel({
   activeStep,
   onStepChange,
   canAct = true,
+  feedback,
 }: {
   repo: string;
   number: number;
@@ -26,6 +28,8 @@ export function GuidePanel({
   activeStep: number | null;
   onStepChange: (step: number | null) => void;
   canAct?: boolean;
+  /** Thumbs on the summary and steps; only for AI guides. */
+  feedback?: GuideFeedback | null;
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -92,7 +96,12 @@ export function GuidePanel({
       >
         <p className="text-sm leading-relaxed text-pretty">{guide.summary}</p>
         {error && <p className="text-sm text-destructive">{error}</p>}
-        {ai && state.model && <p className="text-[11px] text-subtle">By {state.model} · check it against the diff.</p>}
+        {ai && state.model && (
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-subtle">By {state.model} · check it against the diff.</p>
+            {feedback && <VoteButtons feedback={feedback} item="summary" label="summary" />}
+          </div>
+        )}
       </SideSection>
 
       {guide.steps.length > 0 && (
@@ -117,7 +126,17 @@ export function GuidePanel({
             {guide.steps.map((step, i) => {
               const on = activeStep === i;
               return (
-                <li key={i}>
+                <li key={i} className="group/step relative">
+                  {ai && feedback && (
+                    <span
+                      className={cn(
+                        "absolute right-1.5 bottom-1.5 z-10 transition-opacity",
+                        feedback.votes[`step:${i}`] ? "opacity-100" : "opacity-0 group-hover/step:opacity-100 group-focus-within/step:opacity-100",
+                      )}
+                    >
+                      <VoteButtons feedback={feedback} item={`step:${i}`} label={step.title} />
+                    </span>
+                  )}
                   <button type="button" onClick={() => onStepChange(on ? null : i)} aria-pressed={on} className={row(on)}>
                     <span
                       className={cn(

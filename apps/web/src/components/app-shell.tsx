@@ -56,18 +56,20 @@ import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTRPC } from "@/trpc/react";
+import { LiveProvider, usePollInterval } from "@/hooks/use-live";
 
 /* Collapsing the sidebar hands its width to the page: dashboards widen, the board and review fill it. */
 const WIDTH = {
   narrow: "max-w-[720px]", // single-column forms
   // Written out in full so Tailwind sees the class.
-  default: "max-w-[1200px] group-has-[[data-side=left][data-state=collapsed]]/sidebar-wrapper:max-w-[1440px]", // every dashboard and settings page shares one left edge
+  default:
+    "max-w-[1200px] group-has-[[data-side=left][data-state=collapsed]]/sidebar-wrapper:max-w-[1440px]", // every dashboard and settings page shares one left edge
   wide: "max-w-none", // board and code review use all the room they get
 } as const;
 
-
 const SETTINGS_TABS = [
   { value: "/settings/workspace", label: "Workspace" },
+  { value: "/settings/setup", label: "Setup" },
   { value: "/settings/repositories", label: "Repositories" },
   { value: "/settings/integrations", label: "Integrations" },
   { value: "/settings/billing", label: "Billing" },
@@ -133,19 +135,26 @@ export function AppShell({
 }) {
   return (
     <RequireAuth>
-      <NewIssueProvider>
-        <ShellFrame
-          title={title}
-          description={description}
-          actions={actions}
-          width={width}
-        >
-          {children}
-        </ShellFrame>
-        <CommandPalette />
-      </NewIssueProvider>
+      <LiveWorkspace>
+        <NewIssueProvider>
+          <ShellFrame
+            title={title}
+            description={description}
+            actions={actions}
+            width={width}
+          >
+            {children}
+          </ShellFrame>
+          <CommandPalette />
+        </NewIssueProvider>
+      </LiveWorkspace>
     </RequireAuth>
   );
+}
+
+function LiveWorkspace({ children }: { children: React.ReactNode }) {
+  const { workspace } = useWorkspace();
+  return <LiveProvider workspaceId={workspace?.id}>{children}</LiveProvider>;
 }
 
 function ShellFrame({
@@ -164,7 +173,11 @@ function ShellFrame({
   const pathname = usePathname();
   const router = useRouter();
   const trpc = useTRPC();
-  const { workspace, isPending: workspacePending, isError: workspaceError } = useWorkspace();
+  const {
+    workspace,
+    isPending: workspacePending,
+    isError: workspaceError,
+  } = useWorkspace();
   // Before a workspace exists, every nav item leads to an empty page: keep the person on setup.
   const setup = !workspacePending && !workspaceError && !workspace;
   const settings = useWorkspaceSettings(workspace?.id);
@@ -192,7 +205,7 @@ function ShellFrame({
       workspaceId: workspace?.id ?? "",
     }),
     enabled: Boolean(workspace),
-    refetchInterval: 30_000,
+    refetchInterval: usePollInterval(30_000),
     retry: false,
   });
   const waitingCount = waiting.data?.cards.length ?? 0;
@@ -218,23 +231,65 @@ function ShellFrame({
   }[] = [
     {
       items: [
-        { id: "inbox", label: "Inbox", icon: RiInboxLine, href: "/inbox", count: inbox.data ?? 0 },
-        { id: "reviews", label: "Reviews", icon: RiGitPullRequestLine, href: "/review", count: waitingCount },
-        { id: "issues", label: "Issues", icon: RiBugLine, href: "/issues", count: triageCount },
+        {
+          id: "inbox",
+          label: "Inbox",
+          icon: RiInboxLine,
+          href: "/inbox",
+          count: inbox.data ?? 0,
+        },
+        {
+          id: "reviews",
+          label: "Reviews",
+          icon: RiGitPullRequestLine,
+          href: "/review",
+          count: waitingCount,
+        },
+        {
+          id: "issues",
+          label: "Issues",
+          icon: RiBugLine,
+          href: "/issues",
+          count: triageCount,
+        },
       ],
     },
     {
       title: "Planning",
       items: [
-        { id: "deadlines", label: "Deadlines", icon: RiCalendarScheduleLine, href: "/deadlines", count: 0 },
-        { id: "releases", label: "Releases", icon: RiRocketLine, href: "/releases", count: 0 },
+        {
+          id: "deadlines",
+          label: "Deadlines",
+          icon: RiCalendarScheduleLine,
+          href: "/deadlines",
+          count: 0,
+        },
+        {
+          id: "releases",
+          label: "Releases",
+          icon: RiRocketLine,
+          href: "/releases",
+          count: 0,
+        },
       ],
     },
     {
       title: "Team",
       items: [
-        { id: "insights", label: "Insights", icon: RiBarChartBoxLine, href: "/insights", count: 0 },
-        { id: "team", label: "People", icon: RiTeamLine, href: "/team", count: 0 },
+        {
+          id: "insights",
+          label: "Insights",
+          icon: RiBarChartBoxLine,
+          href: "/insights",
+          count: 0,
+        },
+        {
+          id: "team",
+          label: "People",
+          icon: RiTeamLine,
+          href: "/team",
+          count: 0,
+        },
       ],
     },
   ];
@@ -251,9 +306,7 @@ function ShellFrame({
   const intro = inSettings
     ? (title || description) && (
         <div className="space-y-1">
-          {title && (
-            <h2 className="text-base font-medium">{title}</h2>
-          )}
+          {title && <h2 className="text-base font-medium">{title}</h2>}
           {description && (
             <p className="text-muted-foreground max-w-2xl text-sm">
               {description}
@@ -282,96 +335,113 @@ function ShellFrame({
       <SidebarProvider
         style={{ "--sidebar-width": "15.875rem" } as React.CSSProperties}
       >
-        {!setup && <Sidebar className="border-sidebar-border">
-          <SidebarHeader className="border-sidebar-border bg-sidebar-accent gap-0 border-b p-3">
-            <Link
-              href="/review"
-              className="flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-            >
-              <AppIcon className="size-8 shrink-0" />
-              <span className="truncate text-sm font-medium">{workspace?.name ?? "Docks"}</span>
-            </Link>
-          </SidebarHeader>
-          <SidebarContent className="gap-0">
-            {navGroups.map((group, i) => (
-              <SidebarGroup
-                key={group.title ?? i}
-                className={cn("gap-1 p-3",
-                  i < navGroups.length - 1 && "border-sidebar-border border-b",
-                )}
+        {!setup && (
+          <Sidebar className="border-sidebar-border">
+            <SidebarHeader className="border-sidebar-border bg-sidebar-accent gap-0 border-b p-3">
+              <Link
+                href="/review"
+                className="flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               >
-                {group.title && (
-                  <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
-                )}
-                <SidebarGroupContent>
-                  <SidebarMenu className="gap-0">
-                    {group.items.map((n) => (
-                      <SidebarMenuItem key={n.id}>
-                        <SidebarMenuButton asChild isActive={activeId === n.id}>
-                          <Link href={n.href}>
-                            <n.icon />
-                            <span>{n.label}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                        {n.count > 0 && (
-                          <SidebarMenuBadge>{n.count}</SidebarMenuBadge>
-                        )}
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            ))}
-          </SidebarContent>
-          <SidebarFooter className="gap-0 p-0">
-            <SidebarMenu className="border-sidebar-border gap-0 border-t p-3">
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={activeId === "settings"}>
-                  <Link href="/settings/workspace">
-                    <RiSettings3Line />
-                    <span>Settings</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/team">
-                    <RiUserAddLine />
-                    <span>Invite people</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-            {billing.data && (
-              <div className="border-sidebar-border bg-sidebar-accent flex items-center justify-between gap-2 border-t p-4">
-                <div className="grid min-w-0 gap-1.5 leading-none">
-                  <span className="truncate text-sm font-medium">
-                    {billing.data.plan === "team" ? "Team plan" : "Free plan"}
-                  </span>
-                  <span className="text-subtle truncate text-xs">
-                    {billing.data.plan === "team"
-                      ? "Every review tool on"
-                      : "Up to 5 people"}
-                  </span>
+                <AppIcon className="size-8 shrink-0" />
+                <span className="truncate text-sm font-medium">
+                  {workspace?.name ?? "Docks"}
+                </span>
+              </Link>
+            </SidebarHeader>
+            <SidebarContent className="gap-0">
+              {navGroups.map((group, i) => (
+                <SidebarGroup
+                  key={group.title ?? i}
+                  className={cn(
+                    "gap-1 p-3",
+                    i < navGroups.length - 1 &&
+                      "border-sidebar-border border-b",
+                  )}
+                >
+                  {group.title && (
+                    <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+                  )}
+                  <SidebarGroupContent>
+                    <SidebarMenu className="gap-0">
+                      {group.items.map((n) => (
+                        <SidebarMenuItem key={n.id}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={activeId === n.id}
+                          >
+                            <Link href={n.href}>
+                              <n.icon />
+                              <span>{n.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                          {n.count > 0 && (
+                            <SidebarMenuBadge>{n.count}</SidebarMenuBadge>
+                          )}
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              ))}
+            </SidebarContent>
+            <SidebarFooter className="gap-0 p-0">
+              <SidebarMenu className="border-sidebar-border gap-0 border-t p-3">
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={activeId === "settings"}>
+                    <Link href="/settings/workspace">
+                      <RiSettings3Line />
+                      <span>Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/team">
+                      <RiUserAddLine />
+                      <span>Invite people</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+              {billing.data && (
+                <div className="border-sidebar-border bg-sidebar-accent flex items-center justify-between gap-2 border-t p-4">
+                  <div className="grid min-w-0 gap-1.5 leading-none">
+                    <span className="truncate text-sm font-medium">
+                      {billing.data.plan === "team" ? "Team plan" : "Free plan"}
+                    </span>
+                    <span className="text-subtle truncate text-xs">
+                      {billing.data.plan === "team"
+                        ? "Every review tool on"
+                        : "Up to 5 people"}
+                    </span>
+                  </div>
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href="/settings/billing">
+                      <RiWallet3Line aria-hidden />
+                      {billing.data.plan === "team" ? "Billing" : "Upgrade"}
+                    </Link>
+                  </Button>
                 </div>
-                <Button asChild variant="secondary" size="sm">
-                  <Link href="/settings/billing">
-                    <RiWallet3Line aria-hidden />
-                    {billing.data.plan === "team" ? "Billing" : "Upgrade"}
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </SidebarFooter>
-          <SidebarRail />
-        </Sidebar>}
+              )}
+            </SidebarFooter>
+            <SidebarRail />
+          </Sidebar>
+        )}
         <SidebarInset className="min-w-0">
           <header className="bg-background/85 sticky top-0 z-20 shrink-0 backdrop-blur-md">
             <div className="flex h-[58px] items-center gap-2 px-4 md:px-5">
-              {setup ? <AppIcon className="size-7" /> : <SidebarTrigger className="text-muted-foreground -ml-1 rounded-full" />}
+              {setup ? (
+                <AppIcon className="size-7" />
+              ) : (
+                <SidebarTrigger className="text-muted-foreground -ml-1 rounded-full" />
+              )}
               <div className="flex min-w-0 flex-1 items-center gap-2.5">
                 <h1 className="min-w-0 truncate text-base leading-none font-medium">
-                  {setup ? "Set up Docks" : inSettings ? "Settings" : titleFor(pathname, title)}
+                  {setup
+                    ? "Set up Docks"
+                    : inSettings
+                      ? "Settings"
+                      : titleFor(pathname, title)}
                 </h1>
               </div>
               <div className="flex items-center gap-1.5">
@@ -432,7 +502,8 @@ function ShellFrame({
             </div>
           )}
           <div
-            className={cn("animate-in fade-in slide-in-from-bottom-[3px] ease-power3-out flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-200 md:px-5 md:py-7",
+            className={cn(
+              "animate-in fade-in slide-in-from-bottom-[3px] ease-power3-out flex w-full min-w-0 flex-col gap-6 px-4 py-6 duration-200 md:px-5 md:py-7",
               WIDTH[width],
             )}
           >

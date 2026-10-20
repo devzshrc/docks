@@ -2,11 +2,12 @@
 import { errorMessage } from "@/lib/error-message";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/react";
+import { usePollInterval } from "@/hooks/use-live";
 export function FollowUps({ repo, number }: { repo: string; number: number }) {
   const trpc = useTRPC();
   const q = useQuery({
     ...trpc.review.followUps.queryOptions({ repo, number }),
-    refetchInterval: 30000,
+    refetchInterval: usePollInterval(30000),
   });
   return (
     <section className="flex flex-col gap-2" aria-label="Follow-up issues">

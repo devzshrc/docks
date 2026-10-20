@@ -26,6 +26,7 @@ import { toast } from "@/components/toast";
 import { useReviewDraft, useReviewSession } from "@/hooks/use-review-session";
 import { optimistic } from "@/lib/optimistic";
 import { useTRPC } from "@/trpc/react";
+import { usePollInterval } from "@/hooks/use-live";
 
 type Event = "APPROVE" | "REQUEST_CHANGES" | "COMMENT";
 
@@ -82,7 +83,7 @@ export function ReviewActions({
   const readiness = useQuery({
     ...trpc.review.mergeReadiness.queryOptions({ repo, number }),
     staleTime: 15_000,
-    refetchInterval: 30_000,
+    refetchInterval: usePollInterval(30_000),
   });
   const blocked =
     readiness.data?.state === "blocked"

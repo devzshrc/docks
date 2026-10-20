@@ -21,6 +21,11 @@
     { "binding": "CACHE", "id": "c3dadd4cc77d45779c3c850682978b81" },
   ],
   "triggers": { "crons": ["* * * * *"] },
+  // Live updates: one WorkspaceHub per workspace holds /live sockets (src/live-hub.ts).
+  "durable_objects": {
+    "bindings": [{ "name": "LIVE", "class_name": "WorkspaceHub" }],
+  },
+  "migrations": [{ "tag": "v1-live", "new_sqlite_classes": ["WorkspaceHub"] }],
   // Fill in after `wrangler hyperdrive create docks --connection-string=<supabase direct url>`.
   // For `wrangler dev`, localConnectionString points Hyperdrive at the local Docker Postgres.
   "hyperdrive": [

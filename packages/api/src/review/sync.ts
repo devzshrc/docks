@@ -1,3 +1,5 @@
+import { RetryJobAtError } from "../jobs.js";
+import { installationRateLimit, isLow } from "./github.js";
 import { collectEvidence } from "../delivery/evidence.js";
 import { reconcileDeadlines } from "../delivery/deadlines.js";
 import { db, schema } from "@docks/db";
@@ -11,7 +13,8 @@ import { runApplyRules } from "./apply-rules.js";
 import { getInstallation, installationClient } from "./github.js";
 import { suggestReviewers } from "./reviewers.js";
 import { scheduleUserRepoSync } from "./github-user.js";
-import { tierOf } from "./risk.js";
+import { publishForRepo } from "../live.js";
+import { repoRules, tierWithRules } from "./repo-rules.js";
 
 /** plan.md §7 — keeps the Postgres mirror in step with GitHub. */
 
@@ -117,6 +120,9 @@ async function loadRepo(repoId: number) {
 export async function syncRepo(repoId: number) {
   const repo = await loadRepo(repoId);
   if (!repo?.enabled) return;
+  // Backfills can wait: when the installation's GitHub budget is low, retry after it resets.
+  const budget = await installationRateLimit(repo.installationId);
+  if (isLow(budget)) throw new RetryJobAtError(new Date(budget!.resetAt + 5_000));
   const pulls = await installationClient(repo.installationId).listOpenPulls(repo.fullName);
   for (const p of pulls) await enqueue("sync_pr", { repoId, number: p.number });
 
@@ -163,6 +169,7 @@ export async function syncPr(repoId: number, number: number) {
     gh.listChecks(repo.fullName, pr.head.sha),
     pr.state === "open" ? gh.listFiles(repo.fullName, number) : Promise.resolve([]),
   ]);
+  const rules = files.length ? await repoRules(repoId, gh, repo.fullName) : null;
 
   const mirroredReviews = reviews
     .filter((r) => r.user && r.submitted_at)
@@ -263,7 +270,7 @@ export async function syncPr(repoId: number, number: number) {
           additions: f.additions,
           deletions: f.deletions,
           patch: f.patch ?? null,
-          tier: tierOf(f.filename),
+          tier: tierWithRules(f.filename, rules),
                 })),
       );
     }
@@ -297,6 +304,7 @@ export async function syncPr(repoId: number, number: number) {
   if (state === "open" && !pr.draft && files.length && repo.aiEnabled) {
     await enqueue("generate_guide", { repoId, number, headSha: pr.head.sha });
   }
+  await publishForRepo(repoId, { t: "pr" });
 }
 
 /**

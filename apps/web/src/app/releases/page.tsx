@@ -1,4 +1,5 @@
 "use client";
+import { ButtonLink } from "@/components/base/buttons/button";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -25,6 +26,7 @@ import { QueryError } from "@/components/query-state";
 import { EvidenceExport } from "@/components/review/evidence-export";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useTRPC } from "@/trpc/react";
+import { usePollInterval } from "@/hooks/use-live";
 const panel =
   "overflow-hidden rounded-md border border-separator-border bg-background-primary-default";
 const caption = "text-[13px] text-muted-foreground";
@@ -45,7 +47,7 @@ function Detail({
   const [pick, setPick] = useState("");
   const report = useQuery({
     ...trpc.releases.get.queryOptions({ id }),
-    refetchInterval: 10000,
+    refetchInterval: usePollInterval(10000),
   });
   const candidates = useQuery({
     ...trpc.releases.candidates.queryOptions({ workspaceId }),
@@ -403,6 +405,7 @@ function Releases({
       )}
       {manage && paid && (
         <details
+          id="create-release"
           className={panel}
           open={!list.isPending && list.data?.length === 0 ? true : undefined}
         >
@@ -461,6 +464,23 @@ function Releases({
             icon={RiRocketLine}
             hue="pink"
             title="Your next release starts here"
+            action={
+              <ButtonLink
+                size="small"
+                variant="secondary"
+                href={manage && paid ? "#create-release" : "/settings/billing"}
+                onClick={
+                  manage && paid
+                    ? () =>
+                        document
+                          .getElementById("create-release")
+                          ?.setAttribute("open", "")
+                    : undefined
+                }
+              >
+                {manage && paid ? "Create a release" : "View release plans"}
+              </ButtonLink>
+            }
             description={
               manage && paid
                 ? "Create a release, add its pull requests, and watch readiness fill up as each one is approved and passes its checks."

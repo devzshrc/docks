@@ -13,6 +13,7 @@ import { issueRouter } from "./issue.js";
 import { issuesRouter } from "./issues.js";
 import { peopleRouter } from "./people.js";
 import { reviewRouter } from "./review.js";
+import { setupRouter } from "./setup.js";
 import { userRouter } from "./user.js";
 import { workspaceRouter } from "./workspace.js";
 
@@ -25,6 +26,7 @@ export const appRouter = router({
   user: userRouter,
   workspace: workspaceRouter,
   review: reviewRouter,
+  setup: setupRouter,
   integration: integrationRouter,
   issue: issueRouter,
   issues: issuesRouter,

@@ -1,4 +1,4 @@
-import { integer, jsonb, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+import { integer, jsonb, pgTable, primaryKey, smallint, text } from "drizzle-orm/pg-core";
 import { timestamps } from "./_helpers.js";
 import { user } from "./auth.js";
 
@@ -17,6 +17,26 @@ export const reviewGuide = pgTable(
     ...timestamps,
   },
   (t) => [primaryKey({ columns: [t.repo, t.prNumber, t.headSha] })],
+);
+
+/**
+ * Thumbs up/down on one part of a guide: "summary", "step:<i>" or "check:<i>".
+ * Keyed by head SHA, so a vote belongs to the guide the person actually read.
+ */
+export const guideFeedback = pgTable(
+  "guide_feedback",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    repo: text("repo").notNull(),
+    prNumber: integer("pr_number").notNull(),
+    headSha: text("head_sha").notNull(),
+    item: text("item").notNull(),
+    vote: smallint("vote").notNull(), // 1 or -1
+    ...timestamps,
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.repo, t.prNumber, t.headSha, t.item] })],
 );
 
 /** plan.md §5.3 — per-user viewed state, keyed by file blob SHA. */

@@ -33,7 +33,9 @@ import { LinkedIssues } from "@/components/review/linked-issues";
 import { AskPanel } from "@/components/review/ask-panel";
 import { FixWithAgent, OpenInPx0 } from "@/components/review/agent-handoff";
 import { FileFinder } from "@/components/review/file-finder";
-import { FileDiff, type PendingComment } from "@/components/review/file-diff";
+import { type PendingComment } from "@/components/review/file-diff";
+import { FileDiff } from "@/components/review/lazy-file-diff";
+import { Button as BaseButton } from "@/components/base/buttons/button";
 import { AuthorPreflight } from "@/components/review/author-preflight";
 import { GuidePanel } from "@/components/review/guide-panel";
 import { ReviewActions } from "@/components/review/review-actions";
@@ -49,6 +51,7 @@ import {
 import { commentLabel } from "@/lib/diff";
 import { useSession } from "@/lib/auth-client";
 import { useTRPC } from "@/trpc/react";
+import { useGuideFeedback } from "./guide-vote";
 
 /** One row of the details panel: fixed label column, controls aligned on a shared left edge. */
 const ROW =
@@ -111,7 +114,11 @@ function GuidedReviewContent({
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const queryOptions = trpc.review.get.queryOptions({ repo, number });
+  const queryOptions = trpc.review.get.queryOptions({
+    repo,
+    number,
+    lightweight: true,
+  });
   const data = useQuery(queryOptions);
   const guide = useQuery({
     ...trpc.review.guide.queryOptions({ repo, number }),
@@ -135,6 +142,7 @@ function GuidedReviewContent({
         }),
       ),
     }));
+  const [showAllDiffs, setShowAllDiffs] = useState(false);
   const [sinceOnly, setSinceOnly] = useState(false);
   const sinceDefaulted = useRef(false);
   // Phones: PR details and the file list start folded so the diff is one scroll away.
@@ -339,9 +347,21 @@ function GuidedReviewContent({
     };
   }, []);
 
+  const guideFeedback = useGuideFeedback({
+    repo,
+    number,
+    headSha: data.data?.pr.headSha ?? "",
+    enabled:
+      !!data.data &&
+      guide.data?.status === "ready" &&
+      guide.data.guide.source === "ai",
+  });
+
   if (data.isPending) return <Skeleton className="h-64 w-full" />;
   if (data.error)
-    return <p className="text-destructive text-sm">{errorMessage(data.error)}</p>;
+    return (
+      <p className="text-destructive text-sm">{errorMessage(data.error)}</p>
+    );
 
   const { pr, files, reviewers, checks, me } = data.data;
   const outdatedDrafts = pending.some((c) => c.headSha !== pr.headSha);
@@ -369,6 +389,7 @@ function GuidedReviewContent({
       t.comments[0] &&
       commentLabel(t.comments[0].body) === "blocking",
   ).length;
+  const templateCount = data.data.checklistTemplate.length;
   const checklistItems = [
     ...data.data.checklistTemplate.map((question) => ({
       question,
@@ -421,8 +442,12 @@ function GuidedReviewContent({
                 <span className="text-success-text">+{pr.additions}</span>{" "}
                 <span className="text-danger-text">−{pr.deletions}</span>
                 <span className="text-text-3"> · {files.length} files</span>
-                <span className="text-text-3" title="Estimated from size, file types and skipping generated files">
-                  {" "}· about {reviewMinutes(files)} min to review
+                <span
+                  className="text-text-3"
+                  title="Estimated from size, file types and skipping generated files"
+                >
+                  {" "}
+                  · about {reviewMinutes(files)} min to review
                 </span>
               </span>
               {blocking > 0 && (
@@ -556,18 +581,29 @@ function GuidedReviewContent({
         </div>
       </header>
 
-      {pr.state === "open" && Boolean(me) && pr.author.toLowerCase() === me!.toLowerCase() && (
-        <AuthorPreflight
-          repo={repo}
-          number={number}
-          pr={pr}
-          files={files}
-          checks={checks}
-          guide={ready}
-        />
-      )}
-      <div className={cn("grid gap-6", !focus && "lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_260px]")}>
-        <aside className="order-1 space-y-5 lg:col-start-1 lg:row-span-2 lg:sticky lg:top-20 lg:self-start lg:border-r lg:pr-5 xl:row-span-1" hidden={focus}>
+      {pr.state === "open" &&
+        Boolean(me) &&
+        pr.author.toLowerCase() === me!.toLowerCase() && (
+          <AuthorPreflight
+            repo={repo}
+            number={number}
+            pr={pr}
+            files={files}
+            checks={checks}
+            guide={ready}
+          />
+        )}
+      <div
+        className={cn(
+          "grid gap-6",
+          !focus &&
+            "lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_260px]",
+        )}
+      >
+        <aside
+          className="order-1 space-y-5 lg:col-start-1 lg:row-span-2 lg:sticky lg:top-20 lg:self-start lg:border-r lg:pr-5 xl:row-span-1"
+          hidden={focus}
+        >
           <div>
             <ShadcnButton
               variant="row"
@@ -620,7 +656,10 @@ function GuidedReviewContent({
         >
           <summary className="flex cursor-pointer items-center justify-between gap-2 py-2 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none">
             Review context
-            <RiArrowDownSLine aria-hidden className="size-4 text-subtle transition-transform duration-200 group-open/context:rotate-180" />
+            <RiArrowDownSLine
+              aria-hidden
+              className="size-4 text-subtle transition-transform duration-200 group-open/context:rotate-180"
+            />
           </summary>
           <ScrollFade className="grid gap-4 pb-4 xl:max-h-[calc(100svh-13rem)]">
             {pr.state === "open" && files.length > 0 && (
@@ -631,10 +670,19 @@ function GuidedReviewContent({
                 activeStep={activeStep}
                 onStepChange={setActiveStep}
                 canAct={data.data.canAct}
+                feedback={guideFeedback}
               />
             )}
-            {guide.error && <p className="text-sm text-destructive">{errorMessage(guide.error)}</p>}
-            {files.length === 0 && <p className="text-sm text-muted-foreground">No file changes synced for this commit yet.</p>}
+            {guide.error && (
+              <p className="text-sm text-destructive">
+                {errorMessage(guide.error)}
+              </p>
+            )}
+            {files.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No file changes synced for this commit yet.
+              </p>
+            )}
             <DeadlinePanel repo={repo} number={number} />
             {pr.state === "open" && (
               <div className="border-t pt-4">
@@ -643,7 +691,12 @@ function GuidedReviewContent({
             )}
           </ScrollFade>
         </details>
-        <div className={cn("order-2 min-w-0 space-y-4 lg:order-3 xl:order-2", !focus && "lg:col-start-2 lg:row-start-2 xl:row-start-1")}>
+        <div
+          className={cn(
+            "order-2 min-w-0 space-y-4 lg:order-3 xl:order-2",
+            !focus && "lg:col-start-2 lg:row-start-2 xl:row-start-1",
+          )}
+        >
           {files.length > 0 && (
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <div
@@ -668,7 +721,10 @@ function GuidedReviewContent({
                 ))}
               </div>
               {since.data?.reviewedSha && (
-                <div role="status" className="bg-card basis-full rounded-md border p-3 text-sm">
+                <div
+                  role="status"
+                  className="bg-card basis-full rounded-md border p-3 text-sm"
+                >
                   <p className="font-medium">
                     Welcome back.{" "}
                     {since.data.files?.length
@@ -677,7 +733,8 @@ function GuidedReviewContent({
                   </p>
                   {mine.length > 0 && (
                     <p className="text-muted-foreground">
-                      {addressed.length} of {mine.length} of your comments addressed
+                      {addressed.length} of {mine.length} of your comments
+                      addressed
                       {stillOpen.length > 0 ? ". Still open:" : ". All done."}
                     </p>
                   )}
@@ -685,9 +742,17 @@ function GuidedReviewContent({
                     <ul className="mt-1.5 grid gap-1">
                       {stillOpen.slice(0, 5).map((t) => (
                         <li key={t.id} className="truncate">
-                          <a href={`#file-${t.path}`} className="hover:underline">
-                            <span className="font-mono text-xs">{t.path.split("/").pop()}{t.line ? `:${t.line}` : ""}</span>{" "}
-                            <span className="text-muted-foreground">{t.comments[0]?.body.slice(0, 90)}</span>
+                          <a
+                            href={`#file-${t.path}`}
+                            className="hover:underline"
+                          >
+                            <span className="font-mono text-xs">
+                              {t.path.split("/").pop()}
+                              {t.line ? `:${t.line}` : ""}
+                            </span>{" "}
+                            <span className="text-muted-foreground">
+                              {t.comments[0]?.body.slice(0, 90)}
+                            </span>
                           </a>
                         </li>
                       ))}
@@ -751,7 +816,10 @@ function GuidedReviewContent({
                 </span>
               )}
               {threads.data?.needsGithub && (
-                <Link href="/settings/integrations" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+                <Link
+                  href="/settings/integrations"
+                  className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+                >
                   Connect GitHub to see and add comments →
                 </Link>
               )}
@@ -768,10 +836,33 @@ function GuidedReviewContent({
               </ShadcnButton>
             </div>
           )}
+          {files.length > 100 && (
+            <div
+              role="status"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-border-button-default bg-background-secondary-default p-4 text-body-regular text-text-secondary"
+            >
+              <p>
+                {files.length} files changed.{" "}
+                {showAllDiffs
+                  ? "All diffs are enabled."
+                  : "Large-PR mode shows the file list first. Open a file to load its diff."}
+              </p>
+              <BaseButton
+                size="small"
+                variant="secondary"
+                onClick={() => setShowAllDiffs((v) => !v)}
+              >
+                {showAllDiffs ? "Use large-PR mode" : "Load all diffs"}
+              </BaseButton>
+            </div>
+          )}
           {visible.map((f) => (
             <FileDiff
-              key={`${f.filename}:${f.sha}`}
+              key={`${pr.headSha}:${f.filename}:${f.sha}`}
               file={f}
+              lightweight={files.length > 100 && !showAllDiffs}
+              patchesDeferred={data.data.patchesDeferred}
+              headSha={pr.headSha}
               repo={repo}
               number={number}
               mode={mode}
@@ -794,6 +885,10 @@ function GuidedReviewContent({
             <Checklist
               items={checklistItems}
               storageKey={`checklist:${repo}#${number}@${pr.headSha}`}
+              feedback={guideFeedback}
+              voteItem={(i) =>
+                i >= templateCount ? `check:${i - templateCount}` : null
+              }
             />
           </div>
         </div>
@@ -830,7 +925,11 @@ function GuidedReviewContent({
                   size="xs"
                   variant="outline"
                   type="button"
-                  onClick={() => document.getElementById("review-actions")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                  onClick={() =>
+                    document
+                      .getElementById("review-actions")
+                      ?.scrollIntoView({ behavior: "smooth", block: "center" })
+                  }
                   className="h-7 px-3"
                 >
                   Review

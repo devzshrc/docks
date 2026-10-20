@@ -11,6 +11,10 @@ import { actionEmail, sendEmail } from "../email.js";
 import { enqueue } from "../jobs.js";
 import { assertCanAddMember, assertCanEnableRepo } from "../plans.js";
 import { protectedProcedure, router } from "../trpc.js";
+import { installationClient } from "../review/github.js";
+import { RULES_PATH, parseRepoRules, repoRules, starterRulesYaml, storedRepoRules, tierWithRules } from "../review/repo-rules.js";
+import { githubAs } from "../review/github-user.js";
+import { githubFailure } from "../review/errors.js";
 
 function slugify(name: string) {
   const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -151,6 +155,64 @@ export const workspaceRouter = router({
         .filter((r) => r.accessible || can(member.role, "repos.manage"));
     }),
 
+  /** `.github/docks.yml` state for one repo, plus an optional "which tier is this path?" check. */
+  repoRules: protectedProcedure
+    .input(z.object({ repoId: z.number(), testPath: z.string().trim().max(500).optional() }))
+    .query(async ({ ctx, input }) => {
+      const repo = await repoInWorkspace(input.repoId);
+      await assertMember(ctx.user.id, repo.workspaceId);
+      const row = await storedRepoRules(input.repoId);
+      return {
+        path: RULES_PATH,
+        found: Boolean(row?.fileSha),
+        fileSha: row?.fileSha ?? null,
+        rules: row?.rules ?? null,
+        error: row?.error ?? null,
+        checkedAt: row?.checkedAt ?? null,
+        testTier: input.testPath ? tierWithRules(input.testPath, row?.rules) : null,
+      };
+    }),
+  /** Re-read the rules file now instead of waiting for the next PR sync. */
+  refreshRepoRules: protectedProcedure
+    .input(z.object({ repoId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const repo = await repoInWorkspace(input.repoId);
+      await assertCan(ctx.user.id, repo.workspaceId, "repos.manage");
+      await repoRules(input.repoId, installationClient(repo.installationId), repo.fullName, { force: true });
+    }),
+  /** A suggested `.github/docks.yml` built from the repository's layout. */
+  starterRules: protectedProcedure.input(z.object({ repoId: z.number() })).query(async ({ ctx, input }) => {
+    const repo = await repoInWorkspace(input.repoId);
+    await assertMember(ctx.user.id, repo.workspaceId);
+    const [row] = await db.select({ branch: schema.repository.defaultBranch }).from(schema.repository).where(eq(schema.repository.id, input.repoId));
+    const tree = await installationClient(repo.installationId).tree(repo.fullName, row!.branch);
+    return { path: RULES_PATH, content: starterRulesYaml(tree.paths), truncated: tree.truncated };
+  }),
+  /** Open a pull request adding the rules file, as the signed-in person, so it's reviewed like code. */
+  openRulesPr: protectedProcedure
+    .input(z.object({ repoId: z.number(), content: z.string().min(1).max(20_000) }))
+    .mutation(async ({ ctx, input }) => {
+      const repo = await repoInWorkspace(input.repoId);
+      await assertCan(ctx.user.id, repo.workspaceId, "repos.manage");
+      const parsed = parseRepoRules(input.content);
+      if ("error" in parsed) throw new TRPCError({ code: "BAD_REQUEST", message: `The rules file is invalid: ${parsed.error}` });
+      const [row] = await db.select({ branch: schema.repository.defaultBranch }).from(schema.repository).where(eq(schema.repository.id, input.repoId));
+      try {
+        const pr = await githubAs(ctx.user.id).openFilePr(repo.fullName, {
+          base: row!.branch,
+          branch: `docks/review-rules-${Date.now().toString(36)}`,
+          path: RULES_PATH,
+          content: input.content,
+          message: "Add Docks review rules",
+          title: "Add Docks review rules",
+          body: "Adds `.github/docks.yml`: how Docks ranks files in reviews and which extra checklist questions to ask. Generated from the repository layout; edit before merging.",
+        });
+        await audit(repo.workspaceId, ctx.user.id, "repo.rules_pr", repo.fullName, { number: pr.number });
+        return { url: pr.html_url, number: pr.number };
+      } catch (err) {
+        githubFailure(err);
+      }
+    }),
   setRepo: protectedProcedure
     .input(
       z.object({
@@ -664,4 +726,19 @@ async function reposOf(workspaceId: string) {
       eq(schema.githubInstallation.id, schema.repository.installationId),
     )
     .where(eq(schema.githubInstallation.workspaceId, workspaceId));
+}
+
+async function repoInWorkspace(repoId: number) {
+  const [repo] = await db
+    .select({
+      workspaceId: schema.githubInstallation.workspaceId,
+      installationId: schema.repository.installationId,
+      fullName: schema.repository.fullName,
+    })
+    .from(schema.repository)
+    .innerJoin(schema.githubInstallation, eq(schema.githubInstallation.id, schema.repository.installationId))
+    .where(eq(schema.repository.id, repoId))
+    .limit(1);
+  if (!repo) throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
+  return repo;
 }

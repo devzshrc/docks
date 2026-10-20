@@ -42,6 +42,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTRPC } from "@/trpc/react";
+import { usePollInterval } from "@/hooks/use-live";
 
 type Issue = Outputs["issues"]["get"];
 
@@ -231,7 +232,7 @@ export function IssueDetail({
   const { update } = useIssueActions();
   const q = useQuery({
     ...trpc.issues.get.queryOptions({ repo, number }),
-    refetchInterval: 30_000,
+    refetchInterval: usePollInterval(30_000),
   });
   const account = useQuery({
     ...trpc.integration.githubAccount.queryOptions(),

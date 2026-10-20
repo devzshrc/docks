@@ -64,3 +64,15 @@ test("Cloudflare limiter binding denial is enforced", async () => {
   assert.equal(result.status, 429);
   assert.equal(result.headers.get("retry-after"), "60");
 });
+
+test("/live only upgrades for our origin with a valid session", async () => {
+  const { authorizeLive } = await import("./app.js");
+  const req = (headers: Record<string, string>) =>
+    new Request("http://localhost:4000/live?workspaceId=w", { headers });
+  const plain = await authorizeLive(req({ origin: "http://localhost:3000" }));
+  assert.ok(plain instanceof Response && plain.status === 426);
+  const foreign = await authorizeLive(req({ upgrade: "websocket", origin: "https://evil.example" }));
+  assert.ok(foreign instanceof Response && foreign.status === 403);
+  const anonymous = await authorizeLive(req({ upgrade: "websocket", origin: "http://localhost:3000" }));
+  assert.ok(anonymous instanceof Response && anonymous.status === 401);
+});

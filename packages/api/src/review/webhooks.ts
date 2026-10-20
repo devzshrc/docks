@@ -5,6 +5,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { captureInboxEvents } from "../inbox.js";
 import type { InboxPayload } from "./inbox-events.js";
 import { enqueue } from "../jobs.js";
+import { publishForRepo } from "../live.js";
 import type { GhIssueRest } from "./github.js";
 import { upsertIssue } from "./issues-sync.js";
 import { syncInstallationRepos } from "./sync.js";
@@ -98,6 +99,7 @@ export async function handleGithubEvent(
   // Issue events carry the whole issue; store it without a round trip. (PRs also arrive as `issue_comment`.)
   if ((event === "issues" || event === "issue_comment") && payload.issue && !payload.issue.pull_request) {
     await upsertIssue(repoId, payload.issue);
+    await publishForRepo(repoId, { t: "issues" });
     return;
   }
 

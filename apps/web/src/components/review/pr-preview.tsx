@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useQuery } from "@tanstack/react-query"
-import { HoverCard } from "radix-ui"
-import { useState, type ReactNode } from "react"
+import { useQuery } from "@tanstack/react-query";
+import { HoverCard } from "radix-ui";
+import { useState, type ReactNode } from "react";
 
-import { useTRPC } from "@/trpc/react"
+import { useTRPC } from "@/trpc/react";
 
 const plain = (md: string) =>
   md
@@ -13,19 +13,36 @@ const plain = (md: string) =>
     .replace(/[#>*_`[\]]/g, "")
     .replace(/\(https?:[^)]+\)/g, "")
     .replace(/\s+/g, " ")
-    .trim()
+    .trim();
 
 /** Hover a card for a moment to see what the PR is about before opening it. */
-export function PrPreview({ repo, number, children }: { repo: string; number: number; children: ReactNode }) {
-  const trpc = useTRPC()
-  const [open, setOpen] = useState(false)
-  const q = useQuery({ ...trpc.review.get.queryOptions({ repo, number }), enabled: open, staleTime: 60_000 })
-  const pr = q.data?.pr
-  const files = q.data?.files ?? []
-  const body = pr?.body ? plain(pr.body) : ""
+export function PrPreview({
+  repo,
+  number,
+  children,
+}: {
+  repo: string;
+  number: number;
+  children: ReactNode;
+}) {
+  const trpc = useTRPC();
+  const [open, setOpen] = useState(false);
+  const q = useQuery({
+    ...trpc.review.get.queryOptions({ repo, number, lightweight: true }),
+    enabled: open,
+    staleTime: 60_000,
+  });
+  const pr = q.data?.pr;
+  const files = q.data?.files ?? [];
+  const body = pr?.body ? plain(pr.body) : "";
 
   return (
-    <HoverCard.Root openDelay={450} closeDelay={80} open={open} onOpenChange={setOpen}>
+    <HoverCard.Root
+      openDelay={450}
+      closeDelay={80}
+      open={open}
+      onOpenChange={setOpen}
+    >
       <HoverCard.Trigger asChild>{children}</HoverCard.Trigger>
       <HoverCard.Portal>
         <HoverCard.Content
@@ -44,7 +61,9 @@ export function PrPreview({ repo, number, children }: { repo: string; number: nu
           ) : (
             <div className="space-y-3">
               <p className="leading-snug font-medium">{pr.title}</p>
-              <p className="text-muted-foreground line-clamp-3 text-xs leading-relaxed">{body || "No description."}</p>
+              <p className="text-muted-foreground line-clamp-3 text-xs leading-relaxed">
+                {body || "No description."}
+              </p>
               {files.length > 0 && (
                 <div className="space-y-1">
                   <p className="text-text-3 text-[11px] font-medium tracking-wide uppercase">
@@ -52,14 +71,28 @@ export function PrPreview({ repo, number, children }: { repo: string; number: nu
                   </p>
                   <ul className="space-y-0.5">
                     {files.slice(0, 4).map((f) => (
-                      <li key={f.filename} className="flex items-center justify-between gap-3 text-xs">
-                        <span className="text-muted-foreground min-w-0 truncate font-mono">{f.filename}</span>
+                      <li
+                        key={f.filename}
+                        className="flex items-center justify-between gap-3 text-xs"
+                      >
+                        <span className="text-muted-foreground min-w-0 truncate font-mono">
+                          {f.filename}
+                        </span>
                         <span className="shrink-0 font-mono tabular-nums">
-                          <span className="text-success-text">+{f.additions}</span> <span className="text-danger-text">−{f.deletions}</span>
+                          <span className="text-success-text">
+                            +{f.additions}
+                          </span>{" "}
+                          <span className="text-danger-text">
+                            −{f.deletions}
+                          </span>
                         </span>
                       </li>
                     ))}
-                    {files.length > 4 && <li className="text-text-3 text-xs">and {files.length - 4} more</li>}
+                    {files.length > 4 && (
+                      <li className="text-text-3 text-xs">
+                        and {files.length - 4} more
+                      </li>
+                    )}
                   </ul>
                 </div>
               )}
@@ -68,5 +101,5 @@ export function PrPreview({ repo, number, children }: { repo: string; number: nu
         </HoverCard.Content>
       </HoverCard.Portal>
     </HoverCard.Root>
-  )
+  );
 }

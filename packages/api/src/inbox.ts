@@ -1,3 +1,4 @@
+import { publish } from "./live.js";
 import { db, schema } from "@docks/db";
 import { and, eq, isNull } from "drizzle-orm";
 import { installationClient } from "./review/github.js";
@@ -135,4 +136,5 @@ export async function processInboxEvent(eventId: string) {
       .set({ processedAt: new Date() })
       .where(eq(schema.reviewEvent.id, eventId));
   });
+  for (const m of recipients) await publish(repo.workspaceId, { t: "inbox" }, m.userId);
 }

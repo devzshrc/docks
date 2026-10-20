@@ -2,7 +2,8 @@ import { db, schema } from "@docks/db";
 import { and, eq, gte, inArray, or } from "drizzle-orm";
 import { z } from "zod";
 import { assertMember, can, visibleRepos } from "../access.js";
-import { computeInsights } from "../insights.js";
+import { cached } from "../cache.js";
+import { insightsFromSql } from "../insights-sql.js";
 import { protectedProcedure, router } from "../trpc.js";
 
 /** Load mirrored PRs and reviews for a set of repos since a date. */
@@ -65,25 +66,20 @@ export const insightsRouter = router({
       );
       const to = new Date();
       const from = new Date(to.getTime() - input.days * 24 * 3_600_000);
-      const trendFrom = new Date(Math.min(from.getTime(), to.getTime() - 12 * 7 * 24 * 3_600_000));
-      let { prs, reviews } = await insightRows(repos, trendFrom);
-
-      if (input.teamId) {
-        const logins = new Set(
-          (
+      const teamLogins = input.teamId
+        ? (
             await db
               .select({ login: schema.githubIdentity.githubLogin })
               .from(schema.teamMember)
               .innerJoin(schema.githubIdentity, eq(schema.githubIdentity.userId, schema.teamMember.userId))
               .where(eq(schema.teamMember.teamId, input.teamId))
-          ).map((r) => r.login.toLowerCase()),
-        );
-        prs = prs.filter((p) => logins.has(p.authorLogin.toLowerCase()));
-        reviews = reviews.filter((r) => logins.has(r.reviewerLogin.toLowerCase()));
-      }
+          ).map((r) => r.login)
+        : null;
+      const key = JSON.stringify(["insights", repos.map((r) => r.id), input.days, teamLogins, perPerson]);
+      const insights = await cached(key, 300_000, () => insightsFromSql(repos, { from, to, perPerson, teamLogins }));
 
       return {
-        ...computeInsights(prs, reviews, { from, to, perPerson }),
+        ...insights,
         canSeePeople: can(member.role, "members.manage"),
         repoOptions: repos.map((r) => ({ id: r.id, fullName: r.fullName })),
       };

@@ -1,5 +1,5 @@
 import { db, schema } from "@docks/db";
-import { and, count, gte, inArray } from "drizzle-orm";
+import { and, count, gte, inArray, sql } from "drizzle-orm";
 import { computeMetrics } from "../analytics.js";
 import { router } from "../trpc.js";
 
@@ -13,7 +13,16 @@ export const adminRouter = router({
       .select({ userId: schema.event.userId, name: schema.event.name, at: schema.event.at })
       .from(schema.event)
       .where(gte(schema.event.at, since));
-    return computeMetrics(events);
+    const votes = await db
+      .select({
+        part: sql<string>`split_part(${schema.guideFeedback.item}, ':', 1)`,
+        up: sql<number>`count(*) filter (where ${schema.guideFeedback.vote} > 0)::int`,
+        down: sql<number>`count(*) filter (where ${schema.guideFeedback.vote} < 0)::int`,
+      })
+      .from(schema.guideFeedback)
+      .where(gte(schema.guideFeedback.updatedAt, new Date(Date.now() - 30 * 24 * 3_600_000)))
+      .groupBy(sql`1`);
+    return { ...computeMetrics(events), guideVotes: votes };
   }),
 
   /**

@@ -1,4 +1,5 @@
 "use client";
+import { ButtonLink } from "@/components/base/buttons/button";
 import { errorMessage } from "@/lib/error-message";
 import { timeAgo } from "@/lib/utils";
 import { useState } from "react";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTRPC } from "@/trpc/react";
+import { usePollInterval } from "@/hooks/use-live";
 
 const views = {
   needs_review: "Needs my review",
@@ -24,7 +26,7 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
   const [page, setPage] = useState(0);
   const q = useQuery({
     ...trpc.reviewInbox.list.queryOptions({ workspaceId, view, page }),
-    refetchInterval: 30000,
+    refetchInterval: usePollInterval(30000),
   });
   const snooze = useMutation(
     trpc.reviewInbox.snooze.mutationOptions({
@@ -56,7 +58,11 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
         </div>
       </Tabs>
       {q.isPending && (
-        <div role="status" aria-label="Loading reviews" className="flex flex-col gap-2">
+        <div
+          role="status"
+          aria-label="Loading reviews"
+          className="flex flex-col gap-2"
+        >
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-[76px] rounded-md" />
           ))}
@@ -83,8 +89,15 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
             <RiInbox2Line className="size-4" aria-hidden />
           </span>
           <div className="grid gap-1">
-            <p className="text-sm font-medium text-foreground">You're all caught up</p>
-            <p className="text-sm text-muted-foreground">Nothing in {views[view].toLowerCase()} right now.</p>
+            <p className="text-sm font-medium text-foreground">
+              You're all caught up
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Nothing in {views[view].toLowerCase()} right now.
+            </p>
+            <ButtonLink size="small" variant="secondary" href="/review">
+              Open the team review board
+            </ButtonLink>
           </div>
         </div>
       )}
@@ -104,9 +117,18 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
               </Link>
               <p className="truncate text-xs text-muted-foreground">
                 {pr.repo} #{pr.number} ·{" "}
-                <span className="first-letter:uppercase inline-block">{pr.draft ? "draft" : pr.column.replaceAll("_", " ")}</span> ·{" "}
-                {pr.requestedReviewers.length ? `Reviewers: ${pr.requestedReviewers.join(", ")}` : "No reviewer requested"} ·{" "}
-                <time dateTime={new Date(pr.syncedAt).toISOString()} title={new Date(pr.syncedAt).toLocaleString()}>
+                <span className="first-letter:uppercase inline-block">
+                  {pr.draft ? "draft" : pr.column.replaceAll("_", " ")}
+                </span>{" "}
+                ·{" "}
+                {pr.requestedReviewers.length
+                  ? `Reviewers: ${pr.requestedReviewers.join(", ")}`
+                  : "No reviewer requested"}{" "}
+                ·{" "}
+                <time
+                  dateTime={new Date(pr.syncedAt).toISOString()}
+                  title={new Date(pr.syncedAt).toLocaleString()}
+                >
                   updated {timeAgo(pr.syncedAt)}
                 </time>
               </p>
@@ -148,10 +170,20 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
       </ul>
       {(page > 0 || q.data?.more) && (
         <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm" disabled={!page} onClick={() => setPage((p) => p - 1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!page}
+            onClick={() => setPage((p) => p - 1)}
+          >
             Previous
           </Button>
-          <Button variant="outline" size="sm" disabled={!q.data?.more} onClick={() => setPage((p) => p + 1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!q.data?.more}
+            onClick={() => setPage((p) => p + 1)}
+          >
             Next
           </Button>
         </div>

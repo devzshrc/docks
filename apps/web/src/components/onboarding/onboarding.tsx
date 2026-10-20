@@ -1,4 +1,6 @@
 "use client";
+import { InviteSuggestions } from "@/components/setup/invite-suggestions";
+import { ButtonLink } from "@/components/base/buttons/button";
 import { errorMessage } from "@/lib/error-message";
 import { Button as ShadcnButton } from "@/components/ui/button";
 
@@ -67,8 +69,9 @@ export function OnboardingGate({
   if (shown.current === null) shown.current = readFlag();
   const [finished, setFinished] = useState(false);
 
-  const loading =
-    isPending || (workspace && repos.isPending) || account.isPending;
+  // GitHub identity only changes the "link your account" step. Don't hold a
+  // cached board behind it: the rest of the app can render first.
+  const loading = isPending || (workspace && repos.isPending);
   if (loading) return null;
 
   const showApp = ready && (!shown.current || finished);
@@ -229,9 +232,14 @@ function Onboarding({
       </header>
 
       {(() => {
-        const count = complete ? STEPS.length : STEPS.filter((s) => done[s.id]).length;
+        const count = complete
+          ? STEPS.length
+          : STEPS.filter((s) => done[s.id]).length;
         return (
-          <div className="mt-5 flex items-center gap-3" aria-label={`${count} of ${STEPS.length} steps done`}>
+          <div
+            className="mt-5 flex items-center gap-3"
+            aria-label={`${count} of ${STEPS.length} steps done`}
+          >
             <div className="bg-muted h-1 flex-1 overflow-hidden rounded-sm">
               <div
                 className="bg-primary h-full rounded-sm transition-[width] duration-500 ease-power3-out"
@@ -253,7 +261,8 @@ function Onboarding({
             <li
               key={s.id}
               aria-current={active ? "step" : undefined}
-              className={cn("rounded-md transition-colors duration-300",
+              className={cn(
+                "rounded-md transition-colors duration-300",
                 active && "bg-muted/60",
               )}
             >
@@ -289,7 +298,8 @@ function Onboarding({
                       className="flex"
                     >
                       <CircleIcon
-                        className={cn("size-[18px]",
+                        className={cn(
+                          "size-[18px]",
                           active ? "text-primary-text" : "text-text-3",
                         )}
                         aria-hidden
@@ -354,6 +364,18 @@ function Onboarding({
       </ol>
 
       {syncing && <SyncingAccess />}
+      {workspaceId && can?.["members.manage"] && (
+        <div className="mt-5">
+          <InviteSuggestions workspaceId={workspaceId} />
+        </div>
+      )}
+      {workspaceId && (
+        <div className="mt-4">
+          <ButtonLink size="small" variant="ghost" href="/settings/setup">
+            Check connections and permissions
+          </ButtonLink>
+        </div>
+      )}
     </motion.section>
   );
 }
@@ -665,12 +687,14 @@ function Switch({
         e.preventDefault();
         onChange(!checked);
       }}
-      className={cn("relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring/50",
+      className={cn(
+        "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring/50",
         checked ? "bg-primary" : "bg-border-control",
       )}
     >
       <span
-        className={cn("bg-card size-4 rounded-full shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        className={cn(
+          "bg-card size-4 rounded-full shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
           checked ? "translate-x-[18px]" : "translate-x-0.5",
         )}
       />

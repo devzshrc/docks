@@ -1,4 +1,5 @@
 "use client";
+import { ButtonLink } from "@/components/base/buttons/button";
 import { errorMessage } from "@/lib/error-message";
 import { PersonalReviewInbox } from "@/components/review/personal-inbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import { QueryError } from "@/components/query-state";
 import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useTRPC } from "@/trpc/react";
+import { usePollInterval } from "@/hooks/use-live";
 
 const KINDS = {
   review_requested: "Review requested",
@@ -73,7 +75,7 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
       kind,
       cursor,
     }),
-    refetchInterval: 30_000,
+    refetchInterval: usePollInterval(30_000),
   });
   const refresh = () =>
     Promise.all([
@@ -159,6 +161,11 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
       ) : !q.data.items.length ? (
         <div className="bg-card shadow-card rounded-md">
           <EmptyPreview
+            action={
+              <ButtonLink size="small" variant="secondary" href="/review">
+                Open review board
+              </ButtonLink>
+            }
             icon={view === "snoozed" ? RiAlarmLine : RiInboxLine}
             hue="blue"
             title={
@@ -323,8 +330,13 @@ export default function Page() {
         <div className="flex flex-col gap-8">
           <PersonalReviewInbox key={workspace.id} workspaceId={workspace.id} />
           {/* Everything that needs you lives on this one page; activity is part of it, not hidden behind a toggle. */}
-          <section aria-labelledby="activity-heading" className="flex flex-col gap-3">
-            <h2 id="activity-heading" className="text-sm font-medium">Activity</h2>
+          <section
+            aria-labelledby="activity-heading"
+            className="flex flex-col gap-3"
+          >
+            <h2 id="activity-heading" className="text-sm font-medium">
+              Activity
+            </h2>
             <Inbox key={workspace.id} workspaceId={workspace.id} />
           </section>
         </div>

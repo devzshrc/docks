@@ -63,6 +63,28 @@ export const repository = pgTable("repository", {
   ...timestamps,
 });
 
+/** Parsed `.github/docks.yml` from the default branch (see packages/api/src/review/repo-rules.ts). */
+export interface RepoRules {
+  tiers: Partial<Record<"core" | "config" | "test" | "noise", string[]>>;
+  checklist: { paths: string[]; question: string }[];
+}
+
+/**
+ * Per-repo rules file state. `rules` is the last valid parse (kept when a later
+ * edit breaks the file); `error` explains the current file if it's invalid.
+ */
+export const repositoryRules = pgTable("repository_rules", {
+  repoId: bigint("repo_id", { mode: "number" })
+    .primaryKey()
+    .references(() => repository.id, { onDelete: "cascade" }),
+  /** Blob SHA of the file last read; null when the repo has no rules file. */
+  fileSha: text("file_sha"),
+  rules: jsonb("rules").$type<RepoRules>(),
+  error: text("error"),
+  checkedAt: timestamptz("checked_at").notNull().defaultNow(),
+  ...timestamps,
+});
+
 export const pullRequest = pgTable(
   "pull_request",
   {
@@ -109,6 +131,9 @@ export const pullRequest = pgTable(
     primaryKey({ columns: [t.repoId, t.number] }),
     index("pull_request_column_idx").on(t.repoId, t.reviewColumn),
     index("pull_request_stuck_idx").on(t.repoId, t.stuck),
+    // Insights range scans (packages/api/src/insights-sql.ts).
+    index("pull_request_created_idx").on(t.repoId, t.ghCreatedAt),
+    index("pull_request_merged_idx").on(t.repoId, t.mergedAt),
   ],
 );
 
@@ -124,7 +149,10 @@ export const prReview = pgTable(
     state: text("state").notNull(),
     submittedAt: timestamptz("submitted_at").notNull(),
   },
-  (t) => [index("pr_review_pr_idx").on(t.repoId, t.prNumber)],
+  (t) => [
+    index("pr_review_pr_idx").on(t.repoId, t.prNumber),
+    index("pr_review_submitted_idx").on(t.repoId, t.submittedAt),
+  ],
 );
 
 export const prFile = pgTable(

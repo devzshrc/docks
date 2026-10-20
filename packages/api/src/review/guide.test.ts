@@ -60,3 +60,59 @@ test("mergeGuides concatenates steps and sums tokens", async () => {
   assert.equal(m.inputTokens, 20);
   assert.match(m.guide.summary, /150 files, guided in 2 parts/);
 });
+
+test("fallbackGuide folds a long tail of folders into one step", () => {
+  const many = Array.from({ length: 9 }, (_, i) => ({
+    filename: `pkg${i}/src/f.ts`,
+    tier: "core" as const,
+    additions: 1,
+    deletions: 0,
+  }));
+  const g = fallbackGuide(many, "r");
+  assert.equal(g.steps.length, 6);
+  assert.equal(g.steps.flatMap((s) => s.files).length, 9);
+  assert.match(g.steps[5]!.title, /Other folders \(4\)/);
+});
+
+test("fallbackGuide reads by tier when there are too few folders", () => {
+  const flat = [
+    { filename: "src/a.ts", tier: "core" as const, additions: 1, deletions: 0 },
+    { filename: "src/a.test.ts", tier: "test" as const, additions: 1, deletions: 0 },
+    { filename: "src/config.yml", tier: "config" as const, additions: 1, deletions: 0 },
+  ];
+  const g = fallbackGuide(flat, "r");
+  assert.deepEqual(g.steps.map((s) => s.title), ["Application code", "Configuration", "Tests"]);
+});
+
+test("truncatePatch keeps every hunk header", async () => {
+  const { truncatePatch } = await import("./guide.js");
+  const hunk = (n: number) => [`@@ -${n},50 +${n},50 @@`, ...Array.from({ length: 50 }, (_, i) => `+line ${n}-${i} ${"x".repeat(40)}`)];
+  const patch = [...hunk(1), ...hunk(100), ...hunk(200)].join("\n");
+  const out = truncatePatch(patch, 2000);
+  assert.ok(out.length < patch.length);
+  for (const n of [1, 100, 200]) assert.ok(out.includes(`@@ -${n},50 +${n},50 @@`));
+  assert.match(out, /all 3 hunk headers kept/);
+  assert.equal(truncatePatch("small", 2000), "small");
+});
+
+test("mapLimit keeps order and caps concurrency", async () => {
+  const { mapLimit } = await import("./guide.js");
+  let inFlight = 0;
+  let peak = 0;
+  const out = await mapLimit([5, 1, 3, 2, 4], 2, async (n) => {
+    peak = Math.max(peak, ++inFlight);
+    await new Promise((r) => setTimeout(r, n));
+    inFlight--;
+    return n * 10;
+  });
+  assert.deepEqual(out, [50, 10, 30, 20, 40]);
+  assert.equal(peak, 2);
+});
+
+test("tooLargeForGuide trips on file count or changed lines", async () => {
+  const { tooLargeForGuide } = await import("./guide.js");
+  const f = (n: number, lines = 1) => Array.from({ length: n }, () => ({ additions: lines, deletions: 0 }));
+  assert.equal(tooLargeForGuide(f(500)), false);
+  assert.equal(tooLargeForGuide(f(501)), true);
+  assert.equal(tooLargeForGuide(f(10, 2001)), true);
+});
