@@ -32,6 +32,7 @@ import {
   type GhIssue,
   installationClient,
 } from "../review/github.js";
+import { askQuotaError, askUsageQuery } from "../review/ask-quota.js";
 import { TOO_LARGE_REASON, fallbackGuide, guideKey, tooLargeForGuide } from "../review/guide.js";
 import { githubAs, githubIdentity } from "../review/github-user.js";
 import { loginsToUsers, suggestReviewers } from "../review/reviewers.js";
@@ -1663,21 +1664,9 @@ export const reviewRouter = router({
           await tx.execute(
             sql`SELECT pg_advisory_xact_lock(hashtextextended(${`ask:${ctx.user.id}`}, 0))`,
           );
-          const [usage] = await tx
-            .select({ n: sql<number>`count(*)::int` })
-            .from(schema.reviewQuestion)
-            .where(
-              and(
-                eq(schema.reviewQuestion.userId, ctx.user.id),
-                sql`${schema.reviewQuestion.createdAt} > now() - interval '1 hour'`,
-              ),
-            );
-          if ((usage?.n ?? 0) >= 30)
-            throw new TRPCError({
-              code: "TOO_MANY_REQUESTS",
-              message:
-                "You have reached 30 questions this hour. Try again later.",
-            });
+          const [usage] = await askUsageQuery(tx, ctx.user.id);
+          const overQuota = askQuotaError(usage);
+          if (overQuota) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: overQuota });
           const [row] = await tx
             .insert(schema.reviewQuestion)
             .values({

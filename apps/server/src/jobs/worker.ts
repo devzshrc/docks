@@ -11,6 +11,7 @@ import {
   completeJob,
   failJob,
   purgeOldPatches,
+  expireStaleQuestions,
   purgeDiagnostics,
   processInboxEvent,
   scheduleDigests,
@@ -135,6 +136,7 @@ export async function runSchedules(now: Date = new Date()): Promise<boolean> {
   const tasks: Promise<unknown>[] = [
     scheduleReviewDeadlines(now).catch(failed("review deadline scheduling")),
     scheduleDigests().catch(failed("digest scheduling")),
+    expireStaleQuestions(now).catch(failed("stale question expiry")),
   ];
   if (now.getUTCMinutes() === 0) {
     // Retention: hourly is plenty for a 30-day rule.

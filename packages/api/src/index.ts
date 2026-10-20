@@ -19,6 +19,7 @@ export type RouterOutputs = inferRouterOutputs<_AppRouter>;
 export { claimNextJob, completeJob, enqueue, failJob, PermanentJobError } from "./jobs.js";
 export type { Job, JobType } from "./jobs.js";
 export { handleGithubEvent, verifyGithubSignature } from "./review/webhooks.js";
+export { expireStaleQuestions } from "./review/ask-quota.js";
 export { linkInstallation, purgeOldPatches, runAutoAssign, runRules, syncPr, syncRepo } from "./review/sync.js";
 export { completeAuthorization, scheduleUserRepoSync, syncUserRepos } from "./review/github-user.js";
 export { syncIssue, syncRepoIssues } from "./review/issues-sync.js";
