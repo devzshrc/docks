@@ -63,6 +63,28 @@ export const repository = pgTable("repository", {
   ...timestamps,
 });
 
+/** Parsed `.github/docks.yml` from the default branch (see packages/api/src/review/repo-rules.ts). */
+export interface RepoRules {
+  tiers: Partial<Record<"core" | "config" | "test" | "noise", string[]>>;
+  checklist: { paths: string[]; question: string }[];
+}
+
+/**
+ * Per-repo rules file state. `rules` is the last valid parse (kept when a later
+ * edit breaks the file); `error` explains the current file if it's invalid.
+ */
+export const repositoryRules = pgTable("repository_rules", {
+  repoId: bigint("repo_id", { mode: "number" })
+    .primaryKey()
+    .references(() => repository.id, { onDelete: "cascade" }),
+  /** Blob SHA of the file last read; null when the repo has no rules file. */
+  fileSha: text("file_sha"),
+  rules: jsonb("rules").$type<RepoRules>(),
+  error: text("error"),
+  checkedAt: timestamptz("checked_at").notNull().defaultNow(),
+  ...timestamps,
+});
+
 export const pullRequest = pgTable(
   "pull_request",
   {

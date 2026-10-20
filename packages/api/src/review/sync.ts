@@ -11,7 +11,7 @@ import { runApplyRules } from "./apply-rules.js";
 import { getInstallation, installationClient } from "./github.js";
 import { suggestReviewers } from "./reviewers.js";
 import { scheduleUserRepoSync } from "./github-user.js";
-import { tierOf } from "./risk.js";
+import { repoRules, tierWithRules } from "./repo-rules.js";
 
 /** plan.md §7 — keeps the Postgres mirror in step with GitHub. */
 
@@ -163,6 +163,7 @@ export async function syncPr(repoId: number, number: number) {
     gh.listChecks(repo.fullName, pr.head.sha),
     pr.state === "open" ? gh.listFiles(repo.fullName, number) : Promise.resolve([]),
   ]);
+  const rules = files.length ? await repoRules(repoId, gh, repo.fullName) : null;
 
   const mirroredReviews = reviews
     .filter((r) => r.user && r.submitted_at)
@@ -263,7 +264,7 @@ export async function syncPr(repoId: number, number: number) {
           additions: f.additions,
           deletions: f.deletions,
           patch: f.patch ?? null,
-          tier: tierOf(f.filename),
+          tier: tierWithRules(f.filename, rules),
                 })),
       );
     }

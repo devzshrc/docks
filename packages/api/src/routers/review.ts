@@ -33,6 +33,7 @@ import {
   installationClient,
 } from "../review/github.js";
 import { askQuotaError, askUsageQuery } from "../review/ask-quota.js";
+import { rulesChecklist, storedRepoRules } from "../review/repo-rules.js";
 import { TOO_LARGE_REASON, fallbackGuide, guideKey, tooLargeForGuide } from "../review/guide.js";
 import { githubAs, githubIdentity } from "../review/github-user.js";
 import { loginsToUsers, suggestReviewers } from "../review/reviewers.js";
@@ -658,7 +659,11 @@ export const reviewRouter = router({
         labels: pull.labels,
         mergeableState: pull.mergeableState,
       },
-      checklistTemplate: await checklistTemplateOf(repoRow.id),
+      // Team questions first, then any `.github/docks.yml` questions whose paths this PR touches.
+      checklistTemplate: [
+        ...(await checklistTemplateOf(repoRow.id)),
+        ...rulesChecklist((await storedRepoRules(repoRow.id))?.rules, ranked.map((f) => f.filename)),
+      ],
       advancedReview: (await workspacePlan(repoRow.workspaceId)) === "team",
       canAct: can(repoRow.role, "review.act"),
       files: ranked,

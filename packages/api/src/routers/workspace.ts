@@ -11,6 +11,8 @@ import { actionEmail, sendEmail } from "../email.js";
 import { enqueue } from "../jobs.js";
 import { assertCanAddMember, assertCanEnableRepo } from "../plans.js";
 import { protectedProcedure, router } from "../trpc.js";
+import { installationClient } from "../review/github.js";
+import { RULES_PATH, repoRules, storedRepoRules, tierWithRules } from "../review/repo-rules.js";
 
 function slugify(name: string) {
   const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -151,6 +153,31 @@ export const workspaceRouter = router({
         .filter((r) => r.accessible || can(member.role, "repos.manage"));
     }),
 
+  /** `.github/docks.yml` state for one repo, plus an optional "which tier is this path?" check. */
+  repoRules: protectedProcedure
+    .input(z.object({ repoId: z.number(), testPath: z.string().trim().max(500).optional() }))
+    .query(async ({ ctx, input }) => {
+      const repo = await repoInWorkspace(input.repoId);
+      await assertMember(ctx.user.id, repo.workspaceId);
+      const row = await storedRepoRules(input.repoId);
+      return {
+        path: RULES_PATH,
+        found: Boolean(row?.fileSha),
+        fileSha: row?.fileSha ?? null,
+        rules: row?.rules ?? null,
+        error: row?.error ?? null,
+        checkedAt: row?.checkedAt ?? null,
+        testTier: input.testPath ? tierWithRules(input.testPath, row?.rules) : null,
+      };
+    }),
+  /** Re-read the rules file now instead of waiting for the next PR sync. */
+  refreshRepoRules: protectedProcedure
+    .input(z.object({ repoId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const repo = await repoInWorkspace(input.repoId);
+      await assertCan(ctx.user.id, repo.workspaceId, "repos.manage");
+      await repoRules(input.repoId, installationClient(repo.installationId), repo.fullName, { force: true });
+    }),
   setRepo: protectedProcedure
     .input(
       z.object({
@@ -664,4 +691,19 @@ async function reposOf(workspaceId: string) {
       eq(schema.githubInstallation.id, schema.repository.installationId),
     )
     .where(eq(schema.githubInstallation.workspaceId, workspaceId));
+}
+
+async function repoInWorkspace(repoId: number) {
+  const [repo] = await db
+    .select({
+      workspaceId: schema.githubInstallation.workspaceId,
+      installationId: schema.repository.installationId,
+      fullName: schema.repository.fullName,
+    })
+    .from(schema.repository)
+    .innerJoin(schema.githubInstallation, eq(schema.githubInstallation.id, schema.repository.installationId))
+    .where(eq(schema.repository.id, repoId))
+    .limit(1);
+  if (!repo) throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
+  return repo;
 }

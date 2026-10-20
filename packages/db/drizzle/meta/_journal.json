@@ -218,6 +218,13 @@
       "when": 1792480557291,
       "tag": "0030_amused_riptide",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792480879378,
+      "tag": "0031_fixed_cassandra_nova",
+      "breakpoints": true
     }
   ]
 }
