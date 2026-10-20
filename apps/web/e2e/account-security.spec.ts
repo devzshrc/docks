@@ -78,7 +78,14 @@ test("GitHub-only user creates a password before setting up 2FA", async ({
   const secret = await page.locator("code").textContent();
   await page.getByLabel("Authenticator code").fill(totp(secret!));
   await page.getByRole("button", { name: "Turn on", exact: true }).click();
+  // Enabling 2FA rotates the session, remounting the session-scoped query
+  // provider. Its local success message can disappear; assert saved state.
   await expect(
-    page.getByText("Two-factor authentication is on", { exact: true }),
+    page.getByRole("button", { name: "Turn off", exact: true }),
+  ).toBeVisible();
+  // The enabled state must survive a fresh session read and page load too.
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Turn off", exact: true }),
   ).toBeVisible();
 });
