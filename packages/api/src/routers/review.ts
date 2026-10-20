@@ -718,6 +718,69 @@ export const reviewRouter = router({
           set: { fileSha: input.fileSha },
         });
     }),
+  guideVotes: protectedProcedure
+    .input(pr.extend({ headSha: z.string().regex(/^[a-f0-9]{40}$/) }))
+    .query(async ({ ctx, input }) => {
+      const repoRow = await repoForUser(ctx.user.id, input.repo);
+      const rows = await db
+        .select({ item: schema.guideFeedback.item, vote: schema.guideFeedback.vote })
+        .from(schema.guideFeedback)
+        .where(
+          and(
+            eq(schema.guideFeedback.userId, ctx.user.id),
+            eq(schema.guideFeedback.repo, repoRow.fullName),
+            eq(schema.guideFeedback.prNumber, input.number),
+            eq(schema.guideFeedback.headSha, input.headSha),
+          ),
+        );
+      return Object.fromEntries(rows.map((r) => [r.item, r.vote])) as Record<string, 1 | -1>;
+    }),
+  /** Thumbs up/down on a guide part; vote 0 clears it. Feeds the guide eval with real-use signal. */
+  guideFeedback: protectedProcedure
+    .input(
+      pr.extend({
+        headSha: z.string().regex(/^[a-f0-9]{40}$/),
+        item: z.string().regex(/^(summary|step:\d{1,2}|check:\d{1,2})$/),
+        vote: z.union([z.literal(1), z.literal(-1), z.literal(0)]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const repoRow = await repoForUser(ctx.user.id, input.repo);
+      const key = {
+        userId: ctx.user.id,
+        repo: repoRow.fullName,
+        prNumber: input.number,
+        headSha: input.headSha,
+        item: input.item,
+      };
+      if (input.vote === 0) {
+        await db
+          .delete(schema.guideFeedback)
+          .where(
+            and(
+              eq(schema.guideFeedback.userId, key.userId),
+              eq(schema.guideFeedback.repo, key.repo),
+              eq(schema.guideFeedback.prNumber, key.prNumber),
+              eq(schema.guideFeedback.headSha, key.headSha),
+              eq(schema.guideFeedback.item, key.item),
+            ),
+          );
+        return;
+      }
+      await db
+        .insert(schema.guideFeedback)
+        .values({ ...key, vote: input.vote })
+        .onConflictDoUpdate({
+          target: [
+            schema.guideFeedback.userId,
+            schema.guideFeedback.repo,
+            schema.guideFeedback.prNumber,
+            schema.guideFeedback.headSha,
+            schema.guideFeedback.item,
+          ],
+          set: { vote: input.vote, updatedAt: new Date() },
+        });
+    }),
   submit: protectedProcedure
     .input(
       pr.extend({
