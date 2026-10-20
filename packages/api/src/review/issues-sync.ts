@@ -1,3 +1,4 @@
+import { publishForRepo } from "../live.js";
 import { db, schema } from "@docks/db";
 import { and, eq, notInArray } from "drizzle-orm";
 import { enqueue } from "../jobs.js";
@@ -50,6 +51,7 @@ export async function syncIssue(repoId: number, number: number) {
   try {
     const issue = await installationClient(repo.installationId).getIssueRest(repo.fullName, number);
     await upsertIssue(repoId, issue);
+    await publishForRepo(repoId, { t: "issues" });
   } catch (err) {
     // Deleted or transferred away: drop our copy.
     if (err instanceof GitHubError && (err.status === 404 || err.status === 410)) {
@@ -78,4 +80,5 @@ export async function syncRepoIssues(repoId: number) {
   for (const s of stale) await enqueue("sync_issue", { repoId, number: s.number });
 
   await db.update(schema.repository).set({ issuesSyncedAt: new Date() }).where(eq(schema.repository.id, repoId));
+  await publishForRepo(repoId, { t: "issues" });
 }

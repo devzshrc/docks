@@ -6,6 +6,7 @@ import { db, schema } from "@docks/db";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { PermanentJobError } from "../jobs.js";
+import { publishForRepo } from "../live.js";
 import type { Guide, RiskTier } from "./types.js";
 
 /**
@@ -405,6 +406,7 @@ export async function generateGuideFor(
       outputTokens: result.outputTokens,
     })
     .onConflictDoNothing();
+  await publishForRepo(repoId, { t: "guide" });
 }
 
 /**

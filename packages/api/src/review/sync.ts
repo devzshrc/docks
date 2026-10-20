@@ -11,6 +11,7 @@ import { runApplyRules } from "./apply-rules.js";
 import { getInstallation, installationClient } from "./github.js";
 import { suggestReviewers } from "./reviewers.js";
 import { scheduleUserRepoSync } from "./github-user.js";
+import { publishForRepo } from "../live.js";
 import { repoRules, tierWithRules } from "./repo-rules.js";
 
 /** plan.md §7 — keeps the Postgres mirror in step with GitHub. */
@@ -298,6 +299,7 @@ export async function syncPr(repoId: number, number: number) {
   if (state === "open" && !pr.draft && files.length && repo.aiEnabled) {
     await enqueue("generate_guide", { repoId, number, headSha: pr.head.sha });
   }
+  await publishForRepo(repoId, { t: "pr" });
 }
 
 /**

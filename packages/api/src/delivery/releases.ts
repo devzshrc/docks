@@ -1,3 +1,4 @@
+import { publish } from "../live.js";
 import { db, schema, type ReadinessSnapshot } from "@docks/db";
 import { and, eq } from "drizzle-orm";
 import { repoForUser } from "../access.js";
@@ -50,6 +51,7 @@ export async function refreshReleaseReadiness(input: {
         eq(schema.releasePr.prNumber, input.number),
       ),
     );
+  await publish(row.workspaceId, { t: "release" });
 }
 export function currentReadiness(
   snapshot: ReadinessSnapshot | null,
