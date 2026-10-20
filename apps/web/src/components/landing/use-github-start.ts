@@ -24,7 +24,7 @@ export function useGithubStart() {
     setNotice(null)
     if (config.isLoading) return
     if (!config.data?.githubLogin) {
-      setNotice("GitHub login isn't enabled on this server — continue with email instead.")
+      setNotice("GitHub sign-in is unavailable. Continue with email.")
       router.push("/signup")
       return
     }
@@ -38,7 +38,7 @@ export function useGithubStart() {
     })
     if (error) {
       setPending(false)
-      setNotice("GitHub didn't complete the sign-in. Try again, or use email instead.")
+      setNotice("GitHub sign-in failed. Try again or sign in with email.")
       router.push("/login")
     }
   }, [config.data?.githubLogin, config.isLoading, router])

@@ -34,7 +34,8 @@ export function Landing() {
       <LandingNav onStart={onStart} />
       <main>
         <HeroOrbit
-          headline="Every pull request, reviewed in the right order."
+          headline="Know what to review. Know where to start."
+          description="Docks brings your GitHub pull requests into one inbox and guides you through the code changes."
           actions={
             <>
               <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">

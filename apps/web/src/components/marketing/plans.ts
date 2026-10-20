@@ -5,25 +5,25 @@ export const FREE_REPOS = 3;
 export const PLANS = {
   free: {
     name: "Free",
-    blurb: "A focused review queue for small teams.",
+    blurb: "For teams of up to 5 people.",
     features: [
-      `Up to ${FREE_MEMBERS} workspace members`,
-      `Up to ${FREE_REPOS} enabled repositories`,
-      "Review board and merge blockers",
-      "Guided review order and checklists",
-      "Personal inbox and review progress",
+      `Up to ${FREE_MEMBERS} members`,
+      `Up to ${FREE_REPOS} repositories`,
+      "Pull requests and what blocks merging",
+      "File reading order and review checklists",
+      "Your review inbox and saved progress",
     ],
   },
   team: {
     name: "Team",
-    blurb: "Keep every review moving, up to the release.",
+    blurb: "For larger teams and reviews with deadlines.",
     features: [
       "Unlimited members and repositories",
       "Work-hour deadlines and reminders",
-      "Backup reviewer requests",
-      "Release tracking and readiness",
+      "Requests for a backup reviewer",
+      "Release progress and unfinished reviews",
       "Changes since your last review",
-      "Evidence exports in CSV and JSON",
+      "Download review records as CSV or JSON",
     ],
   },
 } as const;
@@ -45,14 +45,14 @@ export const COMPARE: { group: string; rows: [string, boolean | string, boolean 
     rows: [
       ["Personal inbox", true, true],
       ["Work-hour deadlines and reminders", false, true],
-      ["Backup reviewer requests", false, true],
+      ["Requests for a backup reviewer", false, true],
       ["Slack and Linear", true, true],
     ],
   },
   {
     group: "Releases and records",
     rows: [
-      ["Release tracking and readiness", false, true],
+      ["Release progress and unfinished reviews", false, true],
       ["Review evidence export", false, "CSV and JSON"],
       ["Insights", true, true],
       ["Audit log", true, true],
@@ -71,26 +71,26 @@ export const COMPARE: { group: string; rows: [string, boolean | string, boolean 
 export const FAQ = [
   {
     q: "Does Docks replace GitHub?",
-    a: "No. Docks connects to GitHub. Your repositories, pull requests and review history stay there. Docks gives your team one place to see what is waiting, in what order to read it, and who is next.",
+    a: "Docks works with GitHub. Your code and pull requests stay on GitHub. Use Docks to find reviews, read the changes, and send feedback.",
   },
   {
-    q: "Do reviews post back to GitHub?",
-    a: "Yes. When you link your GitHub account, approvals and comments you make in Docks post to GitHub as you.",
+    q: "Will my comments and approvals appear on GitHub?",
+    a: "Yes. Link your GitHub account, then post comments and approvals from Docks under your GitHub name.",
   },
   {
     q: "Who can see which repositories?",
-    a: "Each person sees only the repositories they can open on GitHub. Docks never widens access.",
+    a: "Your GitHub permissions decide which repositories you can see in Docks.",
   },
   {
     q: "Can we start free?",
-    a: `Yes. Free includes up to ${FREE_MEMBERS} workspace members and ${FREE_REPOS} enabled repositories, with no time limit.`,
+    a: `Yes. Free includes up to ${FREE_MEMBERS} members and ${FREE_REPOS} repositories for as long as you need.`,
   },
   {
     q: "What does Team cost?",
-    a: `$${TEAM_PRICE} USD for each workspace member per month, plus applicable taxes. It adds deadlines, backup reviewers, release tracking and evidence exports.`,
+    a: `$${TEAM_PRICE} USD for each workspace member per month, plus applicable taxes. Team includes unlimited members and repositories. It also adds deadlines, backup reviewer requests, release tracking, and review record downloads.`,
   },
   {
     q: "How do we manage the subscription?",
-    a: "Workspace owners open the billing portal from Settings to change seats, update payment details or cancel.",
+    a: "Workspace owners can open Settings → Billing to change the member count, update payment details, or cancel.",
   },
 ];

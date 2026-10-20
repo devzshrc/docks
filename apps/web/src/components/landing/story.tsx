@@ -21,10 +21,10 @@ const FIRST = LEAD - 5;
 const HEIGHT = LEAD + STEP * VIEWS.length + 40;
 
 const BEATS: { problem: string; fix: string }[] = [
-  { problem: "Reviews hide in notifications.", fix: "Every request lands in one inbox, oldest wait first, so nothing gets buried." },
-  { problem: "Big diffs have no reading order.", fix: "A summary and a guided path through each change, with the deadline right beside it." },
-  { problem: "Pull requests wait for days.", fix: "See how fast reviews really move, week by week, with the slow spots called out." },
-  { problem: "Nobody knows whose turn it is.", fix: "Who is reviewing what, who is at their limit, and who has room for the next one." },
+  { problem: "Find the reviews waiting for you.", fix: "See review requests across your GitHub repositories. Start with the ones that have waited longest." },
+  { problem: "Understand the code before you approve.", fix: "Read a summary, then follow a suggested order through the changed files." },
+  { problem: "See where reviews slow down.", fix: "Track how long pull requests wait for a first review and how long they take to merge." },
+  { problem: "See who can take the next review.", fix: "Check each teammate’s assigned reviews and workload before asking them to review more." },
 ];
 
 export function StorySection() {
@@ -104,7 +104,7 @@ export function StorySection() {
                   {String(k + 1).padStart(2, "0")} / {String(BEATS.length).padStart(2, "0")}
                 </p>
                 <h2 className="font-display text-[22px] leading-7 font-medium text-[var(--l-ink)] md:text-[28px] md:leading-9">
-                  <span className="text-[var(--l-ink-3)] line-through decoration-[var(--l-ink-3)]/50 decoration-1">{b.problem}</span> Fixed.
+                  {b.problem}
                 </h2>
                 <p className="mt-1.5 text-[15px] leading-6 text-pretty text-[var(--l-ink-2)]">{b.fix}</p>
               </div>

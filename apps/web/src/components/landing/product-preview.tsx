@@ -36,10 +36,10 @@ const H = 750;
 
 export type View = "inbox" | "review" | "insights" | "team";
 export const VIEWS: { id: View; label: string; caption: string }[] = [
-  { id: "inbox", label: "Inbox", caption: "Every pull request that needs you, oldest wait first." },
-  { id: "review", label: "Guided review", caption: "A summary and a reading order for each change, with deadlines alongside." },
-  { id: "insights", label: "Insights", caption: "How fast reviews move, with a plain takeaway on every week." },
-  { id: "team", label: "People", caption: "Who is reviewing what, and who has room for more." },
+  { id: "inbox", label: "Inbox", caption: "Find the pull requests waiting for your review." },
+  { id: "review", label: "Guided review", caption: "Read a summary and follow a suggested order through the files." },
+  { id: "insights", label: "Insights", caption: "Track review wait times and merges each week." },
+  { id: "team", label: "People", caption: "See assigned reviews and each teammate’s workload." },
 ];
 
 const NAV: { title?: string; items: { id: View | string; label: string; icon: typeof RiInboxLine; tint: string; count?: number }[] }[] = [
@@ -84,10 +84,10 @@ const useResolved = (step: number) => {
 
 /** What each story step's reviewers say once they land: [face, line], in seat order. */
 export const VOICES: [face: number, says: string][][] = [
-  [[0, "First in everyone’s queue now."], [7, "Found it without digging through CI pings."]],
-  [[5, "Three steps. The limiter first."], [13, "Asked a real question instead of “LGTM”."]],
-  [[3, "First review: 6.8h → 4.2h."], [12, "No PR waits three days anymore."]],
-  [[1, "Leo had room, so it’s his."], [10, "At my limit, and Docks noticed."]],
+  [[0, "The oldest request is at the top."], [7, "My review requests are all here."]],
+  [[5, "Start with the login limit."], [13, "I can comment beside the code."]],
+  [[3, "I can see our review wait times."], [12, "This chart shows the slow weeks."]],
+  [[1, "Leo has room for another review."], [10, "My assigned reviews are visible."]],
 ];
 
 /** A seat for one travelling reviewer (see peep-trail.tsx) and the line they say once they land. */
@@ -206,7 +206,7 @@ const PRS = [
 function InboxView() {
   return (
     <div className="grid gap-4">
-      <p className="text-sm text-muted-foreground">Review requests, replies, and changes that need your attention.</p>
+      <p className="text-sm text-muted-foreground">Your review requests, replies, and updated pull requests.</p>
       <div className="inline-flex h-9 w-fit items-center rounded-full bg-muted/70 p-[3px] text-xs font-medium text-muted-foreground shadow-[inset_0_0_0_1px_var(--border)]">
         {["Needs my review", "Changes since my review", "My PRs", "Overdue", "Snoozed"].map((t, i) => (
           <span key={t} className={cn("rounded-full px-3.5 py-1.5", i === 0 && "bg-secondary text-foreground shadow-control")}>
@@ -306,7 +306,7 @@ function ReviewView() {
             </span>
           }
         >
-          <p className="text-sm leading-relaxed">Adds per-IP rate limiting to login and moves the user lookup to the query builder, with a unit test for the limiter.</p>
+          <p className="text-sm leading-relaxed">Limits login attempts by IP address. Updates the database lookup and adds a test for the limit.</p>
         </SideSection>
         <SideSection label="Review path" action={<span className="text-[11px] text-subtle">3 steps</span>}>
           <ol className="-mx-1 grid gap-0.5">

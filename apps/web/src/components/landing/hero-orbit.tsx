@@ -20,18 +20,18 @@ const TINTS = ["#dbeafe", "#fde68a", "#fbcfe8", "#bbf7d0", "#ddd6fe", "#fed7aa",
 const CELLS = [8, 3, 27, 49, 13, 36, 66, 9, 51, 79, 23, 45, 64, 33, 59, 94];
 export const FACES = CELLS.map((cell, i) => ({ cell, tint: TINTS[(i * 3) % TINTS.length]! }));
 
-const PROBLEM = "Pull requests wait for days, big diffs have no reading order, and nobody knows whose turn it is.";
+const PROBLEM = "A teammate asks for a review. The request gets lost in notifications. Days later, their code is still waiting.";
 // What the scattered reviewers say, and which card says it on wide and narrow layouts.
 const LINES = [
-  "PR dekh lo? It’s been 3 days.",
-  "Wait, who’s reviewing this?",
+  "Can you review this? It’s been 3 days.",
+  "Who is reviewing this?",
   "40 files. Where do I even start?",
-  "Buried under CI pings, sorry.",
-  "Thought you were waiting on me!",
-  "Just approve it, na?",
+  "I missed the review request.",
+  "I thought it was your turn.",
+  "What changed since my last review?",
 ];
 const SPEAKERS = { wide: [0, 1, 5, 7, 10, 13], narrow: [1, 7, 10] };
-const QUEUE_CAPTION = "Your whole team, in one queue.";
+const QUEUE_CAPTION = "Your GitHub reviews, in one place.";
 
 /* Layout. */
 
@@ -172,7 +172,7 @@ function WorksWith({ className }: { className?: string }) {
   );
 }
 
-export function HeroOrbit({ headline, actions }: { headline: ReactNode; actions: ReactNode }) {
+export function HeroOrbit({ headline, description, actions }: { headline: ReactNode; description: string; actions: ReactNode }) {
   const reduce = useReducedMotion() ?? false;
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -520,6 +520,9 @@ export function HeroOrbit({ headline, actions }: { headline: ReactNode; actions:
             <h1 className="font-display text-[clamp(28px,5.4vmin,54px)] leading-[1.1] font-medium tracking-[-0.025em] text-balance text-[var(--l-ink)] max-[820px]:text-[24px]">
               {headline}
             </h1>
+            <p className="mt-4 text-body-regular text-[var(--l-ink-2)] max-[820px]:text-body-2-regular">
+              {description}
+            </p>
             <div className="pointer-events-auto mt-7 max-[820px]:mt-4">{actions}</div>
           </div>
         </div>

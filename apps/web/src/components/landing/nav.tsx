@@ -7,7 +7,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { cx } from "@/utils/cx";
 
 const LINKS = [
-  { label: "The problem", href: "/#problem" },
+  { label: "Why Docks", href: "/#problem" },
   { label: "How it works", href: "/#how" },
   { label: "Pricing", href: "/#pricing" },
   { label: "FAQ", href: "/#faq" },

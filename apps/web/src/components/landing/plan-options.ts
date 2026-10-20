@@ -13,7 +13,7 @@ export const PLAN_OPTIONS = [
     name: PLANS.team.name,
     description: PLANS.team.blurb,
     monthlyPrice: `$${TEAM_PRICE}`,
-    priceNote: "USD / member / month",
+    priceNote: "per member / month (USD)",
     features: [...PLANS.team.features],
     button: { text: "Choose Team", url: "/settings/billing" },
     highlighted: true,

@@ -49,8 +49,8 @@ function ConnectVisual() {
 function QueueVisual() {
   const rows = [
     { t: "Rate-limit login", w: "26h", peep: 0 },
-    { t: "Billing to RSC", w: "4h", peep: 1 },
-    { t: "Pin Postgres", w: "1h", peep: 13 },
+    { t: "Update billing page", w: "4h", peep: 1 },
+    { t: "Update database version", w: "1h", peep: 13 },
   ];
   return (
     <div data-peep-anchor="how" className="flex h-full flex-col justify-center gap-1.5 px-6">
@@ -90,9 +90,9 @@ function PostVisual() {
 }
 
 const STEPS = [
-  { title: "Connect GitHub", body: "Sign in with GitHub and choose repositories. Nothing to install in your code.", visual: <ConnectVisual /> },
-  { title: "Get one queue", body: "Pull requests that need you, sorted by who has waited longest.", visual: <QueueVisual /> },
-  { title: "Review and post back", body: "Follow the guided path. Comments and approvals land on GitHub.", visual: <PostVisual /> },
+  { title: "Connect GitHub", body: "Sign in, connect GitHub, and choose the repositories your team wants to review.", visual: <ConnectVisual /> },
+  { title: "Find your next review", body: "Open your inbox to see pull requests waiting for your review.", visual: <QueueVisual /> },
+  { title: "Send your review to GitHub", body: "Read the changes, then post comments or an approval to GitHub from Docks.", visual: <PostVisual /> },
 ];
 
 /** Adds .is-live while the element is on screen, so its CSS loops only run when seen. */
@@ -113,7 +113,7 @@ export function HowItWorks() {
   return (
     <section id="how" className="scroll-mt-16 bg-[var(--l-soft)] py-20 md:py-32">
       <div className={container}>
-        <SectionHead eyebrow="How it works" title="From sign-in to first review in two minutes." body="Docks sits on top of GitHub. Your history, branches and permissions stay where they are." />
+        <SectionHead eyebrow="How it works" title="Connect GitHub. Open your first review." body="Choose your repositories, find a pull request, and review it in Docks." />
         <ol ref={live} className="hiw relative grid gap-4 md:grid-cols-3 md:gap-5">
           {/* Progress line joining the three numbers on wide screens. */}
           <span aria-hidden className="absolute top-[13px] right-[16.6%] left-[16.6%] hidden h-px bg-[var(--l-line)] md:block">
@@ -179,7 +179,7 @@ function TeamRow() {
           <Peep key={face.cell} i={i} size={36} slot />
         ))}
       </div>
-      <p className="text-[14px] text-[var(--l-ink-2)]">Bring the whole queue. Pay per member only when you grow.</p>
+      <p className="text-[14px] text-[var(--l-ink-2)]">Free includes 5 members and 3 repositories.</p>
     </div>
   );
 }
@@ -188,11 +188,11 @@ export function Pricing({ onStart }: { onStart: () => void }) {
   return (
     <section id="pricing" className="scroll-mt-16 py-20 md:py-32">
       <div className={container}>
-        <SectionHead eyebrow="Pricing" title="Free for small teams. Simple when you grow." body="Start without a card. Upgrade when the whole team reviews in Docks." />
+        <SectionHead eyebrow="Pricing" title="Start free. Upgrade when you need more." body="Use Free for up to 5 members. Team adds unlimited members and repositories, plus review deadlines." />
         <TeamRow />
         <PlanCards onStart={onStart} />
         <p className="mt-8 text-center text-[14px] text-[var(--l-ink-2)]">
-          <a href="/pricing" className="font-medium text-[var(--l-ink)] underline decoration-[var(--l-line)] underline-offset-4 hover:decoration-current">Compare every feature</a>
+          <a href="/pricing" className="font-medium text-[var(--l-ink)] underline decoration-[var(--l-line)] underline-offset-4 hover:decoration-current">Compare plans</a>
         </p>
       </div>
     </section>
@@ -206,7 +206,7 @@ export function Faq({ className }: { className?: string }) {
         <div>
           <h2 className="font-display text-[30px] leading-[36px] font-medium md:text-[40px] md:leading-[44px]">Questions</h2>
           <p className="mt-4 text-[16px] leading-6 text-[var(--l-ink-2)]">
-            Something else? <a href="mailto:devzshrcz@gmail.com" className="font-medium text-[var(--l-ink)] underline decoration-[var(--l-line)] underline-offset-4 hover:decoration-current">Email us</a>.
+            Have another question? <a href="mailto:devzshrcz@gmail.com" className="font-medium text-[var(--l-ink)] underline decoration-[var(--l-line)] underline-offset-4 hover:decoration-current">Email us</a>.
           </p>
         </div>
         <div className="divide-y divide-[var(--l-line)] border-y border-[var(--l-line)]">
@@ -230,9 +230,9 @@ export function FinalCta({ action }: { action: ReactNode }) {
     <section className="px-4 pb-4 sm:px-6 sm:pb-6">
       <div className="landing-sky-reverse mx-auto max-w-[1120px] rounded-3xl px-6 py-20 text-center md:py-28">
         <h2 className="font-display mx-auto max-w-[560px] text-[30px] leading-[36px] font-medium text-balance md:text-[44px] md:leading-[48px]">
-          Give every pull request a next step.
+          See what needs your review.
         </h2>
-        <p className="mx-auto mt-4 max-w-[440px] text-[16px] leading-6 text-[var(--l-ink-2)]">Free for small teams. Set up in two minutes.</p>
+        <p className="mx-auto mt-4 max-w-[440px] text-[16px] leading-6 text-[var(--l-ink-2)]">Connect GitHub and choose your repositories. Free for up to 5 members.</p>
         <div className="mt-8 flex justify-center">{action}</div>
       </div>
     </section>
