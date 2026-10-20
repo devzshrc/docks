@@ -2,7 +2,7 @@ import { workspacePlan } from "../../plans.js";
 import { trackDaily } from "../../analytics.js";
 import { db, schema } from "@docks/db";
 import { TRPCError } from "@trpc/server";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { can, repoForUser } from "../../access.js";
 import { enqueue } from "../../jobs.js";
@@ -12,150 +12,209 @@ import { guideKey } from "../../review/guide.js";
 import { githubIdentity } from "../../review/github-user.js";
 import type { RankedFile } from "../../review/types.js";
 import { protectedProcedure } from "../../trpc.js";
-import { TIER_ORDER, checklistTemplateOf, guideJobPayload, guideState, loadPull, pr } from "./shared.js";
+import {
+  TIER_ORDER,
+  checklistTemplateOf,
+  guideJobPayload,
+  guideState,
+  loadPull,
+  pr,
+} from "./shared.js";
 
 /** The guided review view: PR data, AI guide, viewed state and guide feedback. */
 export const pullProcedures = {
   /** Everything the guided review view needs, from the mirror (plan.md §5.3). */
-  get: protectedProcedure.input(pr).query(async ({ ctx, input }) => {
-    const repoRow = await repoForUser(ctx.user.id, input.repo);
-    void trackDaily(
-      ctx.user.id,
-      repoRow.workspaceId,
-      "pr_opened",
-      `${repoRow.fullName}#${input.number}`,
-    );
-    const [pull] = await db
-      .select()
-      .from(schema.pullRequest)
-      .where(
-        and(
-          eq(schema.pullRequest.repoId, repoRow.id),
-          eq(schema.pullRequest.number, input.number),
-        ),
-      )
-      .limit(1);
-    if (!pull)
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Pull request not synced yet",
-      });
-
-    const [files, reviews, checks, progress, identity] = await Promise.all([
-      db
+  get: protectedProcedure
+    .input(pr.extend({ lightweight: z.boolean().optional() }))
+    .query(async ({ ctx, input }) => {
+      const repoRow = await repoForUser(ctx.user.id, input.repo);
+      void trackDaily(
+        ctx.user.id,
+        repoRow.workspaceId,
+        "pr_opened",
+        `${repoRow.fullName}#${input.number}`,
+      );
+      const [pull] = await db
         .select()
+        .from(schema.pullRequest)
+        .where(
+          and(
+            eq(schema.pullRequest.repoId, repoRow.id),
+            eq(schema.pullRequest.number, input.number),
+          ),
+        )
+        .limit(1);
+      if (!pull)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Pull request not synced yet",
+        });
+
+      const [files, reviews, checks, progress, identity] = await Promise.all([
+        db
+          .select({
+            ...getTableColumns(schema.prFile),
+            // Avoid transferring every patch for a large PR, including from Postgres.
+            patch: input.lightweight
+              ? sql<
+                  string | null
+                >`CASE WHEN count(*) OVER () > 100 THEN NULL ELSE ${schema.prFile.patch} END`
+              : schema.prFile.patch,
+          })
+          .from(schema.prFile)
+          .where(
+            and(
+              eq(schema.prFile.repoId, repoRow.id),
+              eq(schema.prFile.prNumber, input.number),
+              eq(schema.prFile.headSha, pull.headSha),
+            ),
+          ),
+        db
+          .select()
+          .from(schema.prReview)
+          .where(
+            and(
+              eq(schema.prReview.repoId, repoRow.id),
+              eq(schema.prReview.prNumber, input.number),
+            ),
+          )
+          .orderBy(asc(schema.prReview.submittedAt)),
+        db
+          .select()
+          .from(schema.prCheck)
+          .where(
+            and(
+              eq(schema.prCheck.repoId, repoRow.id),
+              eq(schema.prCheck.headSha, pull.headSha),
+            ),
+          )
+          .orderBy(asc(schema.prCheck.name)),
+        db
+          .select({
+            path: schema.reviewProgress.path,
+            fileSha: schema.reviewProgress.fileSha,
+          })
+          .from(schema.reviewProgress)
+          .where(
+            and(
+              eq(schema.reviewProgress.userId, ctx.user.id),
+              eq(schema.reviewProgress.repo, repoRow.fullName),
+              eq(schema.reviewProgress.prNumber, input.number),
+            ),
+          ),
+        githubIdentity(ctx.user.id),
+      ]);
+
+      const seen = new Map(progress.map((p) => [p.path, p.fileSha]));
+      const ranked: RankedFile[] = files
+        .map((f) => ({
+          filename: f.path,
+          sha: f.blobSha,
+          status: f.status,
+          patch: f.patch ?? undefined,
+          additions: f.additions,
+          deletions: f.deletions,
+          tier: f.tier,
+          viewed: seen.get(f.path) === f.blobSha,
+          changedSinceViewed:
+            seen.has(f.path) && seen.get(f.path) !== f.blobSha,
+        }))
+        .sort(
+          (a, b) =>
+            TIER_ORDER[a.tier] - TIER_ORDER[b.tier] ||
+            b.additions + b.deletions - (a.additions + a.deletions) ||
+            a.filename.localeCompare(b.filename),
+        );
+
+      // Latest verdict per reviewer, for the header.
+      const verdictBy = new Map<string, string>();
+      for (const r of reviews) {
+        if (latestVerdicts([r]).length) verdictBy.set(r.reviewerLogin, r.state);
+        else if (r.state === "DISMISSED") verdictBy.delete(r.reviewerLogin);
+      }
+
+      return {
+        pr: {
+          number: pull.number,
+          title: pull.title,
+          body: pull.body,
+          url: `https://github.com/${repoRow.fullName}/pull/${pull.number}`,
+          author: pull.authorLogin,
+          state: pull.state,
+          draft: pull.draft,
+          headRef: pull.headRef,
+          baseRef: pull.baseRef,
+          headSha: pull.headSha,
+          additions: pull.additions,
+          deletions: pull.deletions,
+          column: pull.reviewColumn,
+          labels: pull.labels,
+          mergeableState: pull.mergeableState,
+        },
+        // Team questions first, then any `.github/docks.yml` questions whose paths this PR touches.
+        checklistTemplate: [
+          ...(await checklistTemplateOf(repoRow.id)),
+          ...rulesChecklist(
+            (await storedRepoRules(repoRow.id))?.rules,
+            ranked.map((f) => f.filename),
+          ),
+        ],
+        advancedReview: (await workspacePlan(repoRow.workspaceId)) === "team",
+        canAct: can(repoRow.role, "review.act"),
+        files: ranked,
+        patchesDeferred: Boolean(input.lightweight && files.length > 100),
+        reviewers: [
+          ...pull.requestedReviewers.map((login) => ({
+            login,
+            state: "PENDING",
+          })),
+          ...[...verdictBy].map(([login, state]) => ({ login, state })),
+        ],
+        checks: checks.map((c) => ({
+          name: c.name,
+          status: c.status,
+          conclusion: c.conclusion,
+        })),
+        me: identity?.login ?? null,
+      };
+    }),
+  /** One mirrored patch, pinned to the head and file revision the reviewer opened. */
+  filePatch: protectedProcedure
+    .input(
+      pr.extend({
+        path: z.string().min(1).max(1000),
+        headSha: z.string(),
+        fileSha: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { repoRow, pull } = await loadPull(ctx.user.id, input);
+      if (pull.headSha !== input.headSha)
+        throw new TRPCError({
+          code: "CONFLICT",
+          message:
+            "New commits arrived. Refresh the review before opening this diff.",
+        });
+      const [file] = await db
+        .select({ patch: schema.prFile.patch })
         .from(schema.prFile)
         .where(
           and(
             eq(schema.prFile.repoId, repoRow.id),
             eq(schema.prFile.prNumber, input.number),
-            eq(schema.prFile.headSha, pull.headSha),
-          ),
-        ),
-      db
-        .select()
-        .from(schema.prReview)
-        .where(
-          and(
-            eq(schema.prReview.repoId, repoRow.id),
-            eq(schema.prReview.prNumber, input.number),
+            eq(schema.prFile.headSha, input.headSha),
+            eq(schema.prFile.path, input.path),
+            eq(schema.prFile.blobSha, input.fileSha),
           ),
         )
-        .orderBy(asc(schema.prReview.submittedAt)),
-      db
-        .select()
-        .from(schema.prCheck)
-        .where(
-          and(
-            eq(schema.prCheck.repoId, repoRow.id),
-            eq(schema.prCheck.headSha, pull.headSha),
-          ),
-        )
-        .orderBy(asc(schema.prCheck.name)),
-      db
-        .select({
-          path: schema.reviewProgress.path,
-          fileSha: schema.reviewProgress.fileSha,
-        })
-        .from(schema.reviewProgress)
-        .where(
-          and(
-            eq(schema.reviewProgress.userId, ctx.user.id),
-            eq(schema.reviewProgress.repo, repoRow.fullName),
-            eq(schema.reviewProgress.prNumber, input.number),
-          ),
-        ),
-      githubIdentity(ctx.user.id),
-    ]);
-
-    const seen = new Map(progress.map((p) => [p.path, p.fileSha]));
-    const ranked: RankedFile[] = files
-      .map((f) => ({
-        filename: f.path,
-        sha: f.blobSha,
-        status: f.status,
-        patch: f.patch ?? undefined,
-        additions: f.additions,
-        deletions: f.deletions,
-        tier: f.tier,
-        viewed: seen.get(f.path) === f.blobSha,
-        changedSinceViewed: seen.has(f.path) && seen.get(f.path) !== f.blobSha,
-      }))
-      .sort(
-        (a, b) =>
-          TIER_ORDER[a.tier] - TIER_ORDER[b.tier] ||
-          b.additions + b.deletions - (a.additions + a.deletions) ||
-          a.filename.localeCompare(b.filename),
-      );
-
-    // Latest verdict per reviewer, for the header.
-    const verdictBy = new Map<string, string>();
-    for (const r of reviews) {
-      if (latestVerdicts([r]).length) verdictBy.set(r.reviewerLogin, r.state);
-      else if (r.state === "DISMISSED") verdictBy.delete(r.reviewerLogin);
-    }
-
-    return {
-      pr: {
-        number: pull.number,
-        title: pull.title,
-        body: pull.body,
-        url: `https://github.com/${repoRow.fullName}/pull/${pull.number}`,
-        author: pull.authorLogin,
-        state: pull.state,
-        draft: pull.draft,
-        headRef: pull.headRef,
-        baseRef: pull.baseRef,
-        headSha: pull.headSha,
-        additions: pull.additions,
-        deletions: pull.deletions,
-        column: pull.reviewColumn,
-        labels: pull.labels,
-        mergeableState: pull.mergeableState,
-      },
-      // Team questions first, then any `.github/docks.yml` questions whose paths this PR touches.
-      checklistTemplate: [
-        ...(await checklistTemplateOf(repoRow.id)),
-        ...rulesChecklist((await storedRepoRules(repoRow.id))?.rules, ranked.map((f) => f.filename)),
-      ],
-      advancedReview: (await workspacePlan(repoRow.workspaceId)) === "team",
-      canAct: can(repoRow.role, "review.act"),
-      files: ranked,
-      reviewers: [
-        ...pull.requestedReviewers.map((login) => ({
-          login,
-          state: "PENDING",
-        })),
-        ...[...verdictBy].map(([login, state]) => ({ login, state })),
-      ],
-      checks: checks.map((c) => ({
-        name: c.name,
-        status: c.status,
-        conclusion: c.conclusion,
-      })),
-      me: identity?.login ?? null,
-    };
-  }),
+        .limit(1);
+      if (!file)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "File not found in this pull request revision.",
+        });
+      return file;
+    }),
   /**
    * Guide for the PR's current head commit. Generation runs in the job
    * queue; the client polls while status is "pending" (plan.md §6.3).
@@ -203,7 +262,10 @@ export const pullProcedures = {
     .query(async ({ ctx, input }) => {
       const repoRow = await repoForUser(ctx.user.id, input.repo);
       const rows = await db
-        .select({ item: schema.guideFeedback.item, vote: schema.guideFeedback.vote })
+        .select({
+          item: schema.guideFeedback.item,
+          vote: schema.guideFeedback.vote,
+        })
         .from(schema.guideFeedback)
         .where(
           and(
@@ -213,7 +275,10 @@ export const pullProcedures = {
             eq(schema.guideFeedback.headSha, input.headSha),
           ),
         );
-      return Object.fromEntries(rows.map((r) => [r.item, r.vote])) as Record<string, 1 | -1>;
+      return Object.fromEntries(rows.map((r) => [r.item, r.vote])) as Record<
+        string,
+        1 | -1
+      >;
     }),
   /** Thumbs up/down on a guide part; vote 0 clears it. Feeds the guide eval with real-use signal. */
   guideFeedback: protectedProcedure

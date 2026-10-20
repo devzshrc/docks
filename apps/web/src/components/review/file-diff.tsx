@@ -1,31 +1,62 @@
 "use client";
 
-import { RISK_LABEL, type RiskKind, formattingOnly, riskSummary, riskyLines } from "@/lib/review-signals";
+import {
+  RISK_LABEL,
+  type RiskKind,
+  formattingOnly,
+  riskSummary,
+  riskyLines,
+} from "@/lib/review-signals";
 import { errorMessage } from "@/lib/error-message";
 import { NativeCheckbox as ShadcnCheckbox } from "@/components/ui-compat/native-checkbox";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import type { RankedFile } from "@docks/api";
 import { useQuery } from "@tanstack/react-query";
-import { IconChevronDown, IconChevronRight, IconMessagePlus } from "@tabler/icons-react";
+import {
+  IconChevronDown,
+  IconChevronRight,
+  IconMessagePlus,
+} from "@tabler/icons-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { FixWithAgent } from "@/components/review/agent-handoff";
 import { BlameLine, useBlame } from "@/components/review/blame-popover";
 import { Collapse, flash } from "@/components/motion";
 import { MarkdownPreview } from "@/components/review/markdown-preview";
-import { useDiffHighlight, useFileHighlight } from "@/components/review/use-highlight";
+import {
+  useDiffHighlight,
+  useFileHighlight,
+} from "@/components/review/use-highlight";
 import { VirtualTable } from "@/components/review/virtual-rows";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { addedLines, changedSymbols, languageFor, pairChanges, parsePatch, toSplit, withContext, wordRange, type DiffLine } from "@/lib/diff";
+import {
+  addedLines,
+  changedSymbols,
+  languageFor,
+  pairChanges,
+  parsePatch,
+  toSplit,
+  withContext,
+  wordRange,
+  type DiffLine,
+} from "@/lib/diff";
 import { cx as cn } from "@/utils/cx";
 import { useTRPC } from "@/trpc/react";
-import { type Side, type PendingComment, type Thread, ROW, VIRTUAL_AT, LARGE_DIFF, TIER_LABEL } from "./diff-types";
+import {
+  type Side,
+  type PendingComment,
+  type Thread,
+  ROW,
+  VIRTUAL_AT,
+  LARGE_DIFF,
+  TIER_LABEL,
+} from "./diff-types";
 import { Code } from "./diff-code";
 import { LabelBadge, Composer, ThreadView } from "./diff-thread";
 export type { Side, PendingComment, Thread } from "./diff-types";
 
 /** One file: diff (unified/split) or full file, line comments, threads, Viewed (§5.3, M6). */
-export function FileDiff({
+export function ExpandedFileDiff({
   file,
   onViewedChange,
   repo,
@@ -38,6 +69,7 @@ export function FileDiff({
   onThreadsChanged,
   highlightNew,
   branch,
+  initiallyExpanded,
 }: {
   file: RankedFile;
   onViewedChange: (viewed: boolean) => void;
@@ -51,11 +83,16 @@ export function FileDiff({
   onThreadsChanged: () => void;
   highlightNew?: boolean;
   branch: string;
+  initiallyExpanded?: boolean;
 }) {
   const trpc = useTRPC();
   // Noise and whitespace-only files start folded: they rarely need reading.
   const [open, setOpen] = useState(
-    () => file.tier !== "noise" && !file.viewed && !(file.patch && formattingOnly(parsePatch(file.patch))),
+    () =>
+      initiallyExpanded ||
+      (file.tier !== "noise" &&
+        !file.viewed &&
+        !(file.patch && formattingOnly(parsePatch(file.patch)))),
   );
   const [everOpen, setEverOpen] = useState(open);
   useEffect(() => {
@@ -104,7 +141,10 @@ export function FileDiff({
     [file.patch],
   );
   const symbols = useMemo(() => changedSymbols(lines).slice(0, 12), [lines]);
-  const risky = useMemo(() => riskyLines(file.filename, lines), [file.filename, lines]);
+  const risky = useMemo(
+    () => riskyLines(file.filename, lines),
+    [file.filename, lines],
+  );
   const risks = useMemo(() => riskSummary(risky), [risky]);
   const formatting = useMemo(() => formattingOnly(lines), [lines]);
   const pairs = useMemo(() => pairChanges(lines), [lines]);
@@ -236,7 +276,11 @@ export function FileDiff({
           risk && "font-semibold text-amber-600 dark:text-amber-400",
           selected(side, n) && "bg-sky-500/20",
         )}
-        title={risk ? `Worth a careful look: ${RISK_LABEL[risk].toLowerCase()}` : undefined}
+        title={
+          risk
+            ? `Worth a careful look: ${RISK_LABEL[risk].toLowerCase()}`
+            : undefined
+        }
       >
         {n !== undefined && canAct && !extra ? (
           <ShadcnButton
@@ -854,3 +898,5 @@ export function FileDiff({
     </section>
   );
 }
+
+export { ExpandedFileDiff as FileDiff };
