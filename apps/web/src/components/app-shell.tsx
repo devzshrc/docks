@@ -56,6 +56,7 @@ import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTRPC } from "@/trpc/react";
+import { LiveProvider, usePollInterval } from "@/hooks/use-live";
 
 /* Collapsing the sidebar hands its width to the page: dashboards widen, the board and review fill it. */
 const WIDTH = {
@@ -133,19 +134,26 @@ export function AppShell({
 }) {
   return (
     <RequireAuth>
-      <NewIssueProvider>
-        <ShellFrame
-          title={title}
-          description={description}
-          actions={actions}
-          width={width}
-        >
-          {children}
-        </ShellFrame>
-        <CommandPalette />
-      </NewIssueProvider>
+      <LiveWorkspace>
+        <NewIssueProvider>
+          <ShellFrame
+            title={title}
+            description={description}
+            actions={actions}
+            width={width}
+          >
+            {children}
+          </ShellFrame>
+          <CommandPalette />
+        </NewIssueProvider>
+      </LiveWorkspace>
     </RequireAuth>
   );
+}
+
+function LiveWorkspace({ children }: { children: React.ReactNode }) {
+  const { workspace } = useWorkspace();
+  return <LiveProvider workspaceId={workspace?.id}>{children}</LiveProvider>;
 }
 
 function ShellFrame({
@@ -192,7 +200,7 @@ function ShellFrame({
       workspaceId: workspace?.id ?? "",
     }),
     enabled: Boolean(workspace),
-    refetchInterval: 30_000,
+    refetchInterval: usePollInterval(30_000),
     retry: false,
   });
   const waitingCount = waiting.data?.cards.length ?? 0;

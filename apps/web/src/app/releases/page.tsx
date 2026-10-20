@@ -25,6 +25,7 @@ import { QueryError } from "@/components/query-state";
 import { EvidenceExport } from "@/components/review/evidence-export";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useTRPC } from "@/trpc/react";
+import { usePollInterval } from "@/hooks/use-live";
 const panel =
   "overflow-hidden rounded-md border border-separator-border bg-background-primary-default";
 const caption = "text-[13px] text-muted-foreground";
@@ -45,7 +46,7 @@ function Detail({
   const [pick, setPick] = useState("");
   const report = useQuery({
     ...trpc.releases.get.queryOptions({ id }),
-    refetchInterval: 10000,
+    refetchInterval: usePollInterval(10000),
   });
   const candidates = useQuery({
     ...trpc.releases.candidates.queryOptions({ workspaceId }),

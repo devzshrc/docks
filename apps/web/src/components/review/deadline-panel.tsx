@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { BackupReviewer } from "./backup-reviewer";
 import { EvidenceExport } from "./evidence-export";
 import { SideSection } from "./side-section";
+import { usePollInterval } from "@/hooks/use-live";
 
 /** "in 3h" / "6h ago", short and scannable; the exact time sits in the title. */
 function relative(d: Date) {
@@ -23,7 +24,7 @@ export function DeadlinePanel({ repo, number }: { repo: string; number: number }
   const { workspace } = useWorkspace();
   const cycles = useQuery({
     ...trpc.delivery.prCycles.queryOptions({ repo, number }),
-    refetchInterval: 60000,
+    refetchInterval: usePollInterval(60000),
   });
   const manage = workspace && ["owner", "admin"].includes(workspace.role);
   return (

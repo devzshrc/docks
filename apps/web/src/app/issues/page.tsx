@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace"
 import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/react"
+import { usePollInterval } from "@/hooks/use-live";
 
 const PAGE = 50
 
@@ -48,12 +49,13 @@ function Issues({ workspaceId }: { workspaceId: string }) {
   const search = useRef<HTMLInputElement>(null)
 
   const isList = filters.view !== "board" && filters.view !== "insights"
-  const counts = useQuery({ ...trpc.issues.counts.queryOptions({ workspaceId }), refetchInterval: 60_000 })
+  const issuePoll = usePollInterval(30_000)
+  const counts = useQuery({ ...trpc.issues.counts.queryOptions({ workspaceId }), refetchInterval: usePollInterval(60_000) })
   const facets = useQuery({ ...trpc.issues.facets.queryOptions({ workspaceId }), staleTime: 2 * 60_000 })
   const list = useQuery({
     ...trpc.issues.list.queryOptions({ workspaceId, filters: serverFilters(filters), limit }),
     enabled: isList,
-    refetchInterval: (q) => (q.state.data?.syncing ? 4_000 : 30_000),
+    refetchInterval: (q) => (q.state.data?.syncing ? 4_000 : issuePoll),
   })
   // A first import normally lands within seconds; past this point say it's slow instead of spinning forever.
   const [slowImport, setSlowImport] = useState(false)
@@ -66,7 +68,7 @@ function Issues({ workspaceId }: { workspaceId: string }) {
   const board = useQuery({
     ...trpc.issues.board.queryOptions({ workspaceId, repoIds: filters.repoId ? [filters.repoId] : undefined }),
     enabled: filters.view === "board",
-    refetchInterval: 30_000,
+    refetchInterval: usePollInterval(30_000),
   })
 
   useEffect(() => setLimit(PAGE), [filters.view, filters.repoId, filters.assignee, filters.label, filters.milestone, filters.q, filters.sort])

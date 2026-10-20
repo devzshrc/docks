@@ -33,6 +33,7 @@ import { QueryError } from "@/components/query-state";
 import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useTRPC } from "@/trpc/react";
+import { usePollInterval } from "@/hooks/use-live";
 
 const KINDS = {
   review_requested: "Review requested",
@@ -73,7 +74,7 @@ function Inbox({ workspaceId }: { workspaceId: string }) {
       kind,
       cursor,
     }),
-    refetchInterval: 30_000,
+    refetchInterval: usePollInterval(30_000),
   });
   const refresh = () =>
     Promise.all([

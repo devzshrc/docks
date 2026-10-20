@@ -22,6 +22,7 @@ import { FilterSelect, ToggleChip, ToolbarSearch } from "@/components/toolbar";
 import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
+import { usePollInterval } from "@/hooks/use-live";
 
 function Board({ workspaceId }: { workspaceId: string }) {
   const trpc = useTRPC();
@@ -41,7 +42,7 @@ function Board({ workspaceId }: { workspaceId: string }) {
       workspaceId,
       filters: serverFilters(filters),
     }),
-    refetchInterval: 30_000,
+    refetchInterval: usePollInterval(30_000),
   });
   const views = useQuery(trpc.review.savedViews.queryOptions({ workspaceId }));
   const refreshViews = () =>

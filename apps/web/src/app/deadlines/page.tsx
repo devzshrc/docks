@@ -29,6 +29,7 @@ import { QueryError } from "@/components/query-state";
 import { BackupReviewer } from "@/components/review/backup-reviewer";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useTRPC } from "@/trpc/react";
+import { usePollInterval } from "@/hooks/use-live";
 
 type Rules = {
   hours: number;
@@ -337,7 +338,7 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
   );
   const cycles = useQuery({
     ...trpc.delivery.cycles.queryOptions({ workspaceId, overdueOnly }),
-    refetchInterval: 30000,
+    refetchInterval: usePollInterval(30000),
   });
   return (
     <div className="space-y-6">

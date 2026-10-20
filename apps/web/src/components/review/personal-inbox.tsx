@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTRPC } from "@/trpc/react";
+import { usePollInterval } from "@/hooks/use-live";
 
 const views = {
   needs_review: "Needs my review",
@@ -24,7 +25,7 @@ export function PersonalReviewInbox({ workspaceId }: { workspaceId: string }) {
   const [page, setPage] = useState(0);
   const q = useQuery({
     ...trpc.reviewInbox.list.queryOptions({ workspaceId, view, page }),
-    refetchInterval: 30000,
+    refetchInterval: usePollInterval(30000),
   });
   const snooze = useMutation(
     trpc.reviewInbox.snooze.mutationOptions({
