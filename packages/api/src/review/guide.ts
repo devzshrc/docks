@@ -1,4 +1,4 @@
-import { inSpan } from "../logger.js";
+import { inSpan, logEvent } from "../logger.js";
 import OpenAI from "openai";
 import { recordAiCall, type AiContext, type AiOutcome } from "../telemetry.js";
 import { zodTextFormat } from "openai/helpers/zod";
@@ -21,6 +21,21 @@ export const GUIDE_MODEL = process.env.OPENAI_GUIDE_MODEL ?? "gpt-6-astra";
 const MAX_PATCH_CHARS = 12_000;
 /** Plan §14.4: one call handles up to this many files; beyond that we say so. */
 export const MAX_GUIDE_FILES = 100;
+/** Beyond these, no AI tour at all: cost and quality both fall off a cliff. */
+export const MAX_AI_FILES = 500;
+export const MAX_AI_CHANGED_LINES = 20_000;
+/** Chunks generated at once for big PRs. */
+const CHUNK_CONCURRENCY = 3;
+
+export const TOO_LARGE_REASON =
+  "Too large for a guided tour. Files are grouped by folder, riskiest first.";
+
+export function tooLargeForGuide(
+  files: { additions: number; deletions: number }[],
+): boolean {
+  const lines = files.reduce((n, f) => n + f.additions + f.deletions, 0);
+  return files.length > MAX_AI_FILES || lines > MAX_AI_CHANGED_LINES;
+}
 
 const GuideOutput = z.object({
   summary: z.string().describe("2-3 sentences: what this PR changes and why"),
@@ -85,6 +100,8 @@ export interface GuideOptions {
   telemetry?: AiContext;
   model?: string;
   effort?: "minimal" | "low" | "medium" | "high";
+  /** Big PRs: this call sees one chunk; list the rest so it knows the whole shape. */
+  otherFiles?: string[];
 }
 
 let client: OpenAI | null = null;
@@ -191,6 +208,9 @@ export async function buildGuide(
                 : "No description.",
               omitted > 0
                 ? `Only the first ${MAX_GUIDE_FILES} of ${input.files.length} files are included.`
+                : "",
+              options.otherFiles?.length
+                ? `This is one part of a larger PR. Guide only the files in the diff below. The rest of the PR, for context:\n${options.otherFiles.join("\n")}`
                 : "",
               `Diff:\n\n${renderDiff(input.files)}`,
             ]
@@ -360,22 +380,19 @@ export async function generateGuideFor(
     );
   if (!files.length) return;
 
-  // Big PRs: one guide per folder chunk, then merged (plan M6).
-  const chunks = chunkFiles(files);
-  const parts: GeneratedGuide[] = [];
-  for (const chunk of chunks) {
-    parts.push(
-      await buildGuide(
-        { title: pull.title, body: pull.body, files: chunk },
-        { telemetry: { workspaceId: repo.workspaceId, repoId } },
-      ).catch((err: unknown) => {
-        throw retryable(err)
-          ? err
-          : new PermanentJobError((err as Error).message);
-      }),
+  let result: GeneratedGuide | null;
+  try {
+    result = await generateGuide(
+      { title: pull.title, body: pull.body, files },
+      { telemetry: { workspaceId: repo.workspaceId, repoId } },
     );
+  } catch (err) {
+    throw retryable(err) ? err : new PermanentJobError((err as Error).message);
   }
-  const result = mergeGuides(parts, files.length);
+  if (!result) {
+    logEvent("info", "guide.skipped_too_large", { repoId, number, files: files.length });
+    return;
+  }
   await db
     .insert(schema.reviewGuide)
     .values({
@@ -423,9 +440,133 @@ export function chunkFiles<T extends { filename: string }>(
 }
 
 /**
- * Combine per-chunk guides. ponytail: summary is the first chunk's plus a note,
- * not a separate model call; add one if merged summaries read poorly in the eval.
+ * Whole-PR guide: one call for normal PRs; for big ones, folder chunks in
+ * parallel then one merge call. Null when the PR is too large for any AI tour.
  */
+export async function generateGuide(
+  input: { title: string; body: string | null; files: GuideFile[] },
+  options: Pick<GuideOptions, "telemetry" | "model" | "effort"> = {},
+): Promise<GeneratedGuide | null> {
+  const { files } = input;
+  if (tooLargeForGuide(files)) return null;
+  const chunks = chunkFiles(files);
+  const parts = await mapLimit(chunks, CHUNK_CONCURRENCY, (chunk) => {
+    const inChunk = new Set(chunk.map((f) => f.filename));
+    return buildGuide(
+      { ...input, files: chunk },
+      {
+        ...options,
+        otherFiles:
+          chunks.length > 1
+            ? files.filter((f) => !inChunk.has(f.filename)).map((f) => `${f.filename} (${f.tier})`)
+            : undefined,
+      },
+    );
+  });
+  if (parts.length === 1) return parts[0]!;
+  return reduceGuides(parts, input, options).catch((err: unknown) => {
+    logEvent("warn", "guide.reduce_failed", { error: (err as Error).message });
+    return mergeGuides(parts, files.length);
+  });
+}
+
+/** Run `fn` over `items` with at most `limit` in flight, keeping order. */
+export async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const out = new Array<R>(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i]!);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
+const MergedOutput = GuideOutput.extend({
+  steps: GuideOutput.shape.steps.describe(
+    "3-8 logical steps for the whole PR, in reading order; merge related part-steps",
+  ),
+  checklist: GuideOutput.shape.checklist.describe(
+    "The 3-7 most important questions across all parts",
+  ),
+});
+
+const REDUCE_SYSTEM = `You merge partial review tours of one large GitHub pull request into a single tour.
+Each part covered a different set of files. Write one 2-3 sentence summary of the whole PR, then 3-8 steps in the order a reviewer should read them (merge steps from different parts when they belong together), then the 3-7 most important checklist questions. Keep every file in exactly one step. Use file paths exactly as given. Do not write review comments, praise, or verdicts.`;
+
+/** One extra call over the parts' outputs (not the diffs) to produce a single coherent guide. */
+export async function reduceGuides(
+  parts: GeneratedGuide[],
+  input: { title: string; body: string | null; files: GuideFile[] },
+  options: Pick<GuideOptions, "telemetry" | "model"> = {},
+): Promise<GeneratedGuide> {
+  const started = performance.now();
+  let outcome: AiOutcome = "failed";
+  let usage: { input_tokens: number; output_tokens: number } | undefined;
+  let model = options.model ?? GUIDE_MODEL;
+  try {
+    client ??= new OpenAI();
+    const provider = client;
+    const res = await inSpan("ai.guide_reduce", () =>
+      provider.responses.parse({
+        model,
+        reasoning: { effort: "low" },
+        max_output_tokens: 16000,
+        input: [
+          { role: "system", content: REDUCE_SYSTEM },
+          {
+            role: "user",
+            content: [
+              `Pull request: ${input.title} (${input.files.length} files)`,
+              input.body?.trim() ? `Description:\n${input.body.trim()}` : "No description.",
+              ...parts.map((p, i) => `Part ${i + 1}:\n${JSON.stringify(p.guide)}`),
+            ].join("\n\n"),
+          },
+        ],
+        text: { format: zodTextFormat(MergedOutput, "review_guide") },
+      }),
+    );
+    usage = res.usage;
+    model = res.model;
+    if (res.status === "incomplete" || !res.output_parsed) {
+      outcome = res.status === "incomplete" ? "incomplete" : "unparseable";
+      throw new Error("Merged guide output was unusable");
+    }
+    outcome = "ok";
+    const guide = validateGuide(res.output_parsed, input.files);
+    // Anything the merge dropped goes back in as its own step, so coverage never shrinks.
+    const placed = new Set(guide.steps.flatMap((st) => st.files));
+    const lost = [...new Set(parts.flatMap((p) => p.guide.steps.flatMap((st) => st.files)))].filter(
+      (f) => !placed.has(f),
+    );
+    if (lost.length) guide.steps.push({ title: "Remaining files", why: "", files: lost });
+    return {
+      guide,
+      model: res.model,
+      inputTokens: parts.reduce((n, p) => n + p.inputTokens, 0) + (res.usage?.input_tokens ?? 0),
+      outputTokens: parts.reduce((n, p) => n + p.outputTokens, 0) + (res.usage?.output_tokens ?? 0),
+      invalidPaths: parts.flatMap((p) => p.invalidPaths),
+    };
+  } finally {
+    await recordAiCall({
+      ...options.telemetry,
+      operation: "guide",
+      model,
+      outcome,
+      inputTokens: usage?.input_tokens,
+      outputTokens: usage?.output_tokens,
+      latencyMs: performance.now() - started,
+    });
+  }
+}
+
+/** Combine per-chunk guides without a model call: the fallback when reduceGuides fails. */
 export function mergeGuides(
   parts: GeneratedGuide[],
   totalFiles: number,

@@ -94,3 +94,25 @@ test("truncatePatch keeps every hunk header", async () => {
   assert.match(out, /all 3 hunk headers kept/);
   assert.equal(truncatePatch("small", 2000), "small");
 });
+
+test("mapLimit keeps order and caps concurrency", async () => {
+  const { mapLimit } = await import("./guide.js");
+  let inFlight = 0;
+  let peak = 0;
+  const out = await mapLimit([5, 1, 3, 2, 4], 2, async (n) => {
+    peak = Math.max(peak, ++inFlight);
+    await new Promise((r) => setTimeout(r, n));
+    inFlight--;
+    return n * 10;
+  });
+  assert.deepEqual(out, [50, 10, 30, 20, 40]);
+  assert.equal(peak, 2);
+});
+
+test("tooLargeForGuide trips on file count or changed lines", async () => {
+  const { tooLargeForGuide } = await import("./guide.js");
+  const f = (n: number, lines = 1) => Array.from({ length: n }, () => ({ additions: lines, deletions: 0 }));
+  assert.equal(tooLargeForGuide(f(500)), false);
+  assert.equal(tooLargeForGuide(f(501)), true);
+  assert.equal(tooLargeForGuide(f(10, 2001)), true);
+});

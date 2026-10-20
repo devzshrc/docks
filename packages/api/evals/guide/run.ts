@@ -18,7 +18,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import {
-  buildGuide,
+  generateGuide,
   fallbackGuide,
   GUIDE_MODEL,
   renderDiff,
@@ -115,7 +115,8 @@ async function runCase(fx: EvalFixture): Promise<CaseResult> {
       result.model = "fallback";
       result.checks = runChecks(result.guide, files, []);
     } else {
-      const g = await buildGuide({ title: fx.title, body: fx.body, files }, { model, effort });
+      const g = await generateGuide({ title: fx.title, body: fx.body, files }, { model, effort });
+      if (!g) throw new Error("too large for an AI guide");
       Object.assign(result, {
         guide: g.guide,
         model: g.model,

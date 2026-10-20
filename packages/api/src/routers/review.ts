@@ -32,7 +32,7 @@ import {
   type GhIssue,
   installationClient,
 } from "../review/github.js";
-import { fallbackGuide, guideKey } from "../review/guide.js";
+import { TOO_LARGE_REASON, fallbackGuide, guideKey, tooLargeForGuide } from "../review/guide.js";
 import { githubAs, githubIdentity } from "../review/github-user.js";
 import { loginsToUsers, suggestReviewers } from "../review/reviewers.js";
 import { emptySession, sessionData } from "../review/session.js";
@@ -154,6 +154,8 @@ async function guideState(
       "The AI guide is off for this repository. Files are grouped by folder, riskiest first.",
     );
   }
+
+  if (tooLargeForGuide(files)) return fallback(TOO_LARGE_REASON);
 
   // Lazy path: no job yet (e.g. guide turned on after the last push) -> queue one.
   const payload = guideJobPayload(repoRow.id, input.number, pull.headSha);
