@@ -801,3 +801,23 @@ const MERGE_QUERY = `query($owner:String!,$name:String!,$number:Int!){
     reviewThreads(first:100){ pageInfo{hasNextPage} nodes{ id isResolved comments(first:1){nodes{url}} } }
   } }
 }`;
+
+/** The App's webhook settings and GitHub's record of recent deliveries (app-wide; JWT auth). */
+export interface GhHookDelivery {
+  id: number;
+  guid: string;
+  delivered_at: string;
+  redelivery: boolean;
+  status: string;
+  status_code: number;
+  event: string;
+  action: string | null;
+  installation_id: number | null;
+}
+export const appHooks = {
+  config: async () => (await request<{ url: string; content_type: string; insecure_ssl: string }>("/app/hook/config", appJwt())).body,
+  deliveries: async () => (await request<GhHookDelivery[]>("/app/hook/deliveries?per_page=50", appJwt())).body,
+  redeliver: async (deliveryId: number) => {
+    await request(`/app/hook/deliveries/${deliveryId}/attempts`, appJwt(), { method: "POST" });
+  },
+};
