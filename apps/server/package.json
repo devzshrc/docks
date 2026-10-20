@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "tsx --test src/*.test.ts",
     "clean": "rm -rf dist",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "seed:full": "tsx scripts/seed-demo.ts && tsx scripts/seed-full.ts"
   },
   "dependencies": {
     "@docks/api": "workspace:*",
