@@ -1,4 +1,5 @@
 "use client";
+import { ButtonLink } from "@/components/base/buttons/button";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -404,6 +405,7 @@ function Releases({
       )}
       {manage && paid && (
         <details
+          id="create-release"
           className={panel}
           open={!list.isPending && list.data?.length === 0 ? true : undefined}
         >
@@ -462,6 +464,23 @@ function Releases({
             icon={RiRocketLine}
             hue="pink"
             title="Your next release starts here"
+            action={
+              <ButtonLink
+                size="small"
+                variant="secondary"
+                href={manage && paid ? "#create-release" : "/settings/billing"}
+                onClick={
+                  manage && paid
+                    ? () =>
+                        document
+                          .getElementById("create-release")
+                          ?.setAttribute("open", "")
+                    : undefined
+                }
+              >
+                {manage && paid ? "Create a release" : "View release plans"}
+              </ButtonLink>
+            }
             description={
               manage && paid
                 ? "Create a release, add its pull requests, and watch readiness fill up as each one is approved and passes its checks."

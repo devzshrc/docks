@@ -1,5 +1,6 @@
 "use client";
 
+import { ButtonLink } from "@/components/base/buttons/button";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -360,9 +361,7 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
       <section aria-label="Active review deadlines" className={panel}>
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-separator-border p-5">
           <div className="space-y-1">
-            <h2 className="text-[15px] font-medium">
-              Active reviews
-            </h2>
+            <h2 className="text-[15px] font-medium">Active reviews</h2>
             <p className={caption}>
               Earliest deadlines first. Open a pull request to take action.
             </p>
@@ -393,6 +392,19 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
             hue={overdueOnly ? "green" : "amber"}
             title={
               overdueOnly ? "No overdue reviews" : "No active deadlines yet"
+            }
+            action={
+              <ButtonLink
+                size="small"
+                variant="secondary"
+                href={
+                  policies.data?.canManage ? "#repository-policies" : "/review"
+                }
+              >
+                {policies.data?.canManage
+                  ? "Set a deadline policy"
+                  : "Open review board"}
+              </ButtonLink>
             }
             description={
               overdueOnly
@@ -478,11 +490,13 @@ function Deadlines({ workspaceId }: { workspaceId: string }) {
         )}
       </section>
       {policies.data?.canManage && (
-        <section aria-label="Repository policies" className="space-y-3">
+        <section
+          id="repository-policies"
+          aria-label="Repository policies"
+          className="space-y-3"
+        >
           <div className="space-y-1">
-            <h2 className="text-[15px] font-medium">
-              Repository policies
-            </h2>
+            <h2 className="text-[15px] font-medium">Repository policies</h2>
             <p className={caption}>
               Expand a repository to set its review schedule.
             </p>

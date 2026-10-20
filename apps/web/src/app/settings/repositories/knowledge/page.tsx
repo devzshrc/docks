@@ -76,7 +76,34 @@ function Knowledge() {
             {errorMessage(q.error)}
           </p>
         )}
-        {q.data?.documents.length === 0 && <p>No documents yet.</p>}
+        {q.data?.documents.length === 0 && (
+          <div className="grid gap-3 rounded-3xl border border-border-button-default p-5 text-body-regular text-text-secondary">
+            <p>
+              {search
+                ? "No knowledge documents match your search."
+                : archived
+                  ? "No archived documents. Archived knowledge stays here until restored."
+                  : "Add repository conventions and architecture notes. Ask uses these documents when answering review questions."}
+            </p>
+            <div>
+              {search ? (
+                <Button variant="secondary" onClick={() => setSearch("")}>
+                  Clear search
+                </Button>
+              ) : archived ? (
+                <Button variant="secondary" onClick={() => setArchived(false)}>
+                  Show active documents
+                </Button>
+              ) : q.data.canEdit ? (
+                <Button onClick={() => setDraft({ ...empty })}>
+                  Write the first document
+                </Button>
+              ) : (
+                <p>A workspace owner or admin can add repository knowledge.</p>
+              )}
+            </div>
+          </div>
+        )}
         {q.data?.documents.map((d) => (
           <article
             key={d.id}
@@ -119,7 +146,9 @@ function Knowledge() {
           >
             <h2 className="text-headline-medium">Revision history</h2>
             {revisions.isPending && <p>Loading revisions…</p>}
-            {revisions.error && <p role="alert">{errorMessage(revisions.error)}</p>}
+            {revisions.error && (
+              <p role="alert">{errorMessage(revisions.error)}</p>
+            )}
             {revisions.data?.map((r) => (
               <article key={r.id}>
                 <h3 className="text-body-medium">
