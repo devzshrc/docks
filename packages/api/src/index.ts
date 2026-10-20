@@ -20,7 +20,7 @@ export { claimNextJob, completeJob, enqueue, failJob, PermanentJobError } from "
 export type { Job, JobType } from "./jobs.js";
 export { handleGithubEvent, verifyGithubSignature } from "./review/webhooks.js";
 export { expireStaleQuestions } from "./review/ask-quota.js";
-export { publish, subscribeLocal, useLivePublisher, type LiveEvent, type LivePublisher } from "./live.js";
+export { canJoinLive, publish, subscribeLocal, useLivePublisher, type LiveEvent, type LivePublisher } from "./live.js";
 export { linkInstallation, purgeOldPatches, runAutoAssign, runRules, syncPr, syncRepo } from "./review/sync.js";
 export { completeAuthorization, scheduleUserRepoSync, syncUserRepos } from "./review/github-user.js";
 export { syncIssue, syncRepoIssues } from "./review/issues-sync.js";

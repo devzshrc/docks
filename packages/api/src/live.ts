@@ -1,5 +1,7 @@
 import { db, schema } from "@docks/db";
 import { eq } from "drizzle-orm";
+import { assertMember } from "./access.js";
+import { isSuspended } from "./account-status.js";
 import { logError } from "./logger.js";
 
 /**
@@ -57,4 +59,15 @@ export async function publishForRepo(repoId: number, event: LiveEvent) {
     .where(eq(schema.repository.id, repoId))
     .limit(1);
   if (row?.workspaceId) await publish(row.workspaceId, event);
+}
+
+/** Same bar as protectedProcedure plus workspace membership (and its 2FA rule). */
+export async function canJoinLive(userId: string, workspaceId: string): Promise<boolean> {
+  if (await isSuspended(userId)) return false;
+  try {
+    await assertMember(userId, workspaceId);
+    return true;
+  } catch {
+    return false;
+  }
 }

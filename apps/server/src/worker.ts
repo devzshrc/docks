@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import {
   useKv,
+  useLivePublisher,
   currentRequestId,
   logEvent,
   operationalHealth,
@@ -10,13 +11,16 @@ import {
   type KvLike,
 } from "@docks/api";
 import { withDb } from "@docks/db";
-import { createApp } from "./app.js";
+import { authorizeLive, createApp } from "./app.js";
+import { connectToHub, hubPublisher, type LiveEnv } from "./live-hub.js";
 import { checkReadiness } from "./readiness.js";
 import { sendHeartbeat } from "./heartbeat.js";
 import { drainQueue, runSchedules } from "./jobs/worker.js";
 import type { RateLimitBinding } from "./rate-limit.js";
 
-interface Env {
+export { WorkspaceHub } from "./live-hub.js";
+
+interface Env extends LiveEnv {
   HYPERDRIVE: Hyperdrive;
   CACHE?: KvLike;
   TRPC_LIMITER?: RateLimitBinding;
@@ -52,6 +56,13 @@ function traceRunner(ctx: ExecutionContext) {
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     useKv(env.CACHE);
+    useLivePublisher(hubPublisher(env));
+    if (new URL(request.url).pathname === "/live") {
+      return withDb(env.HYPERDRIVE.connectionString, async () => {
+        const who = await authorizeLive(request);
+        return who instanceof Response ? who : connectToHub(env, request, who);
+      });
+    }
     // Webhooks enqueue jobs; start draining right away instead of waiting for the next cron tick.
     const drain = () =>
       ctx.waitUntil(
@@ -77,6 +88,7 @@ export default {
     ctx: ExecutionContext,
   ): Promise<void> {
     useKv(env.CACHE);
+    useLivePublisher(hubPublisher(env));
     ctx.waitUntil(
       withTraceRunner(traceRunner(ctx), () =>
         withDb(env.HYPERDRIVE.connectionString, async () => {

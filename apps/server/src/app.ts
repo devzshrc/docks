@@ -1,6 +1,7 @@
 import {
   appRouter,
   auth,
+  canJoinLive,
   completeAuthorization,
   connectSlack,
   handleBillingWebhook,
@@ -28,6 +29,15 @@ export type AppEnv = {
 };
 
 const env = (k: string) => process.env[k];
+const clientUrl = () => env("CLIENT_URL") ?? "http://localhost:3000";
+const allowedOrigins = () => [
+  clientUrl(),
+  "http://localhost:3000",
+  ...(env("CORS_ORIGINS") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
+];
 
 /** Session resolution via Better Auth; missing/invalid session -> anonymous. */
 async function createContext(
@@ -51,6 +61,24 @@ async function createContext(
   return { requestId, user: null };
 }
 
+/**
+ * Gate for GET /live (WebSocket). Browsers send cookies on cross-site socket
+ * upgrades, so the Origin must be ours as well as the session valid.
+ */
+export async function authorizeLive(
+  req: Request,
+): Promise<{ userId: string; workspaceId: string } | Response> {
+  if (req.headers.get("upgrade")?.toLowerCase() !== "websocket")
+    return new Response("Expected a WebSocket upgrade", { status: 426 });
+  if (!allowedOrigins().includes(req.headers.get("origin") ?? ""))
+    return new Response("Forbidden", { status: 403 });
+  const workspaceId = new URL(req.url).searchParams.get("workspaceId") ?? "";
+  const ctx = await createContext(req, correlationId(null));
+  if (!ctx.user || !workspaceId || !(await canJoinLive(ctx.user.id, workspaceId)))
+    return new Response("Unauthorized", { status: 401 });
+  return { userId: ctx.user.id, workspaceId };
+}
+
 export function createApp(
   opts: {
     afterWebhook?: () => void;
@@ -63,15 +91,7 @@ export function createApp(
     if (opts.observe) opts.observe(task);
     else void task();
   };
-  const clientUrl = () => env("CLIENT_URL") ?? "http://localhost:3000";
-  const origins = () => [
-    clientUrl(),
-    "http://localhost:3000",
-    ...(env("CORS_ORIGINS") ?? "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean),
-  ];
+  const origins = allowedOrigins;
 
   app.use("*", async (c, next) => {
     const requestId = correlationId(c.req.header("x-request-id") ?? null);
@@ -95,6 +115,7 @@ export function createApp(
                   "/integrations/github/callback",
                   "/integrations/github/oauth/callback",
                   "/integrations/slack/callback",
+                  "/live",
                 ].includes(path)
               ? path
               : "unmatched";
