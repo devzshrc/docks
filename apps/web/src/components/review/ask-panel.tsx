@@ -21,19 +21,42 @@ export function AskPanel({ repo, number }: { repo: string; number: number }) {
   const history = useQuery({
     ...trpc.review.questions.queryOptions({ repo, number }),
     enabled: open,
-    refetchInterval: open ? 10000 : false,
+    // Answers stream in; this only catches questions finished in another tab.
+    refetchInterval: open ? 30_000 : false,
   });
   const knowledge = useQuery({
     ...trpc.knowledge.list.queryOptions({ repo }),
     enabled: open,
   });
+  // The answer being streamed right now, shown in place of "Answer pending".
+  const [streaming, setStreaming] = useState<{ id: string; text: string } | null>(null);
+  const streamRef = useRef<EventSource | null>(null);
+  useEffect(() => () => streamRef.current?.close(), []);
+  const refreshQuestions = () => client.invalidateQueries(trpc.review.questions.queryFilter({ repo, number }));
+  function streamAnswer(id: string) {
+    streamRef.current?.close();
+    setStreaming({ id, text: "" });
+    const base = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:4000";
+    const source = new EventSource(`${base}/ask/${id}/stream`, { withCredentials: true });
+    streamRef.current = source;
+    const finish = () => {
+      source.close();
+      void refreshQuestions().then(() => setStreaming((s) => (s?.id === id ? null : s)));
+    };
+    source.addEventListener("delta", (e) => {
+      const { text } = JSON.parse((e as MessageEvent).data) as { text: string };
+      setStreaming((s) => (s?.id === id ? { id, text: s.text + text } : s));
+    });
+    source.addEventListener("done", finish);
+    // Server-sent "error" events and dropped connections both end here; the saved row has the outcome.
+    source.addEventListener("error", finish);
+  }
   const ask = useMutation(
     trpc.review.ask.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (row) => {
         setQuestion("");
-        await client.invalidateQueries(
-          trpc.review.questions.queryFilter({ repo, number }),
-        );
+        await refreshQuestions();
+        if (row.status === "pending") streamAnswer(row.id);
       },
     }),
   );
@@ -47,7 +70,7 @@ export function AskPanel({ repo, number }: { repo: string; number: number }) {
       setQuestion("");
       setPath(d.path);
       setLine(String(d.line));
-      askRef.current.mutate({ repo, number, question: d.question, path: d.path, line: d.line, knowledgeIds: [] });
+      askRef.current.mutate({ repo, number, question: d.question, path: d.path, line: d.line, knowledgeIds: [], stream: true });
       requestAnimationFrame(() =>
         document.getElementById("ask-panel")?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
       );
@@ -88,7 +111,7 @@ export function AskPanel({ repo, number }: { repo: string; number: number }) {
             </p>
           )}
           <p className="whitespace-pre-wrap text-body-regular text-text-secondary">
-            {q.answer}
+            {streaming?.id === q.id ? streaming.text || "Thinking…" : q.answer}
           </p>
           <div className="flex flex-wrap gap-2">
             {q.citations.map((c) => (
@@ -212,6 +235,7 @@ export function AskPanel({ repo, number }: { repo: string; number: number }) {
               path: path.trim() || undefined,
               line: line ? Number(line) : undefined,
               knowledgeIds,
+              stream: true,
             });
         }}
       >
