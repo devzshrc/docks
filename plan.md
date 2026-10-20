@@ -30,7 +30,8 @@ It sits next to AI bot reviewers (CodeRabbit, Copilot review), not against them.
 - GitLab, Bitbucket, Azure DevOps.
 - IDE plugins.
 - Analytics dashboards (cycle time, per-person metrics).
-- Issue tracking or sprint planning.
+- Issue tracking or sprint planning. (Decided Oct 2026: the existing Issues views are frozen. They stay as follow-up links from reviews; no new tracker features.)
+- A personal notification inbox that copies GitHub's. `/inbox` focuses on review ownership: claimed reviews, deadlines, escalations, and PRs stuck on you.
 
 ## 4. Personas
 
@@ -319,5 +320,6 @@ type RankedFile = {
 3. **Diff rendering.** Building a good diff viewer is real work. Evaluate an existing library (e.g. `react-diff-view`, `@git-diff-view/react`) before writing one.
 4. **Large PRs.** 100+ files exceed one guide call. v1: cap at 100 files and say so; v2: chunk by directory.
 5. **Code privacy objections.** Some teams will refuse to send code to an LLM. The per-repo AI toggle and fallback guide keep the product usable without it.
-6. **Open:** should the checklist state sync to GitHub as a comment? Default no.
-7. **Open:** GitHub OAuth sign-in in v1, or keep email + password until beta?
+6. **Decided:** checklist state stays private and never syncs to GitHub.
+7. **Deferred:** reviewer suggestions from GitHub team membership need the Members read permission; revisit after per-repo rules ship.
+8. **Open:** GitHub OAuth sign-in in v1, or keep email + password until beta?
