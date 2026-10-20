@@ -26,12 +26,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useWorkspace } from "@/hooks/use-workspace";
+import { useWorkspace, useWorkspaceSettings } from "@/hooks/use-workspace";
 import { useTRPC } from "@/trpc/react";
 
 function Repositories({ workspaceId }: { workspaceId: string }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const settings = useWorkspaceSettings(workspaceId);
   const repos = useQuery(trpc.workspace.repos.queryOptions({ workspaceId }));
   const setRepo = useMutation(
     trpc.workspace.setRepo.mutationOptions({
@@ -77,7 +78,9 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="space-y-2">
       {setRepo.error && (
-        <p className="text-destructive text-sm">{errorMessage(setRepo.error)}</p>
+        <p className="text-destructive text-sm">
+          {errorMessage(setRepo.error)}
+        </p>
       )}
       <div className="bg-muted/50 rounded-md border p-0.75">
         <div className="bg-card overflow-hidden rounded-[calc(var(--radius-xl)-4px)] border shadow-xs">
@@ -183,7 +186,12 @@ function Repositories({ workspaceId }: { workspaceId: string }) {
                       <div className="flex items-center gap-1">
                         <RulesEditor workspaceId={workspaceId} repo={r} />
                         {/* The server checks repos.manage on refresh; errors show in the sheet. */}
-                        <RepoRulesSheet repo={r} canManage />
+                        <RepoRulesSheet
+                          repo={r}
+                          canManage={
+                            settings.data?.can["repos.manage"] ?? false
+                          }
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

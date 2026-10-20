@@ -1,11 +1,18 @@
 "use client";
 
+import { InviteSuggestions } from "@/components/setup/invite-suggestions";
 import { errorMessage } from "@/lib/error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconCopy } from "@tabler/icons-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useTRPC } from "@/trpc/react";
 
@@ -53,6 +60,7 @@ export function InvitesCard({ workspaceId }: { workspaceId: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
+        <InviteSuggestions workspaceId={workspaceId} />
         <form
           className="flex max-w-xl gap-2"
           onSubmit={(e) => {
@@ -93,7 +101,9 @@ export function InvitesCard({ workspaceId }: { workspaceId: string }) {
           Create invite link
         </Button>
         {create.error && (
-          <p className="text-destructive text-sm">{errorMessage(create.error)}</p>
+          <p className="text-destructive text-sm">
+            {errorMessage(create.error)}
+          </p>
         )}
         {link && (
           <div className="flex max-w-xl gap-2">

@@ -46,25 +46,121 @@ type IconDef = typeof Search01Icon;
 
 /** `keys` are extra words people type for the same page ("settings", "team", "sla"). */
 const PAGES: { label: string; href: string; icon: IconDef; keys?: string }[] = [
-  { label: "Inbox", href: "/inbox", icon: InboxIcon, keys: "notifications my work todo" },
-  { label: "Reviews", href: "/review", icon: DashboardCircleIcon, keys: "board pull requests prs" },
-  { label: "Waiting on me", href: "/review?waiting=1", icon: Clock01Icon, keys: "my reviews todo" },
-  { label: "My pull requests", href: "/review?mine=1", icon: GitPullRequestIcon, keys: "mine authored prs" },
+  {
+    label: "Inbox",
+    href: "/inbox",
+    icon: InboxIcon,
+    keys: "notifications my work todo",
+  },
+  {
+    label: "Reviews",
+    href: "/review",
+    icon: DashboardCircleIcon,
+    keys: "board pull requests prs",
+  },
+  {
+    label: "Waiting on me",
+    href: "/review?waiting=1",
+    icon: Clock01Icon,
+    keys: "my reviews todo",
+  },
+  {
+    label: "My pull requests",
+    href: "/review?mine=1",
+    icon: GitPullRequestIcon,
+    keys: "mine authored prs",
+  },
   { label: "Issues", href: "/issues", icon: CheckListIcon, keys: "bugs tasks" },
-  { label: "My issues", href: "/issues?view=mine", icon: CheckListIcon, keys: "assigned" },
-  { label: "Issue board", href: "/issues?view=board", icon: CheckListIcon, keys: "kanban" },
-  { label: "Deadlines", href: "/deadlines", icon: Calendar03Icon, keys: "sla due overdue schedule review deadlines" },
-  { label: "Releases", href: "/releases", icon: Rocket01Icon, keys: "ship deploy" },
-  { label: "Insights", href: "/insights", icon: Analytics01Icon, keys: "analytics metrics charts stats" },
-  { label: "People", href: "/team", icon: UserGroupIcon, keys: "team members reviewers workload" },
-  { label: "Settings", href: "/settings/workspace", icon: Settings02Icon, keys: "workspace preferences configure" },
-  { label: "Repositories", href: "/settings/repositories", icon: Folder01Icon, keys: "settings repos checklist rules" },
-  { label: "Integrations", href: "/settings/integrations", icon: ConnectIcon, keys: "settings github slack linear connect" },
-  { label: "Invite people", href: "/settings/workspace#invite", icon: UserMultipleIcon, keys: "add teammate member invite" },
-  { label: "Audit log", href: "/settings/audit", icon: ListViewIcon, keys: "settings history activity" },
-  { label: "Billing", href: "/settings/billing", icon: CreditCardIcon, keys: "settings plan upgrade payment subscription" },
-  { label: "Account", href: "/settings/account", icon: UserCircleIcon, keys: "settings profile password" },
-  { label: "Security", href: "/settings/account#security", icon: Shield01Icon, keys: "settings two-factor 2fa sessions" },
+  {
+    label: "My issues",
+    href: "/issues?view=mine",
+    icon: CheckListIcon,
+    keys: "assigned",
+  },
+  {
+    label: "Issue board",
+    href: "/issues?view=board",
+    icon: CheckListIcon,
+    keys: "kanban",
+  },
+  {
+    label: "Deadlines",
+    href: "/deadlines",
+    icon: Calendar03Icon,
+    keys: "sla due overdue schedule review deadlines",
+  },
+  {
+    label: "Releases",
+    href: "/releases",
+    icon: Rocket01Icon,
+    keys: "ship deploy",
+  },
+  {
+    label: "Insights",
+    href: "/insights",
+    icon: Analytics01Icon,
+    keys: "analytics metrics charts stats",
+  },
+  {
+    label: "People",
+    href: "/team",
+    icon: UserGroupIcon,
+    keys: "team members reviewers workload",
+  },
+  {
+    label: "Settings",
+    href: "/settings/workspace",
+    icon: Settings02Icon,
+    keys: "workspace preferences configure",
+  },
+  {
+    label: "Repositories",
+    href: "/settings/repositories",
+    icon: Folder01Icon,
+    keys: "settings repos checklist rules",
+  },
+  {
+    label: "Setup health",
+    href: "/settings/setup",
+    icon: ConnectIcon,
+    keys: "settings setup health webhooks broken sync status diagnose",
+  },
+  {
+    label: "Integrations",
+    href: "/settings/integrations",
+    icon: ConnectIcon,
+    keys: "settings github slack linear connect",
+  },
+  {
+    label: "Invite people",
+    href: "/settings/workspace#invite",
+    icon: UserMultipleIcon,
+    keys: "add teammate member invite",
+  },
+  {
+    label: "Audit log",
+    href: "/settings/audit",
+    icon: ListViewIcon,
+    keys: "settings history activity",
+  },
+  {
+    label: "Billing",
+    href: "/settings/billing",
+    icon: CreditCardIcon,
+    keys: "settings plan upgrade payment subscription",
+  },
+  {
+    label: "Account",
+    href: "/settings/account",
+    icon: UserCircleIcon,
+    keys: "settings profile password",
+  },
+  {
+    label: "Security",
+    href: "/settings/account#security",
+    icon: Shield01Icon,
+    keys: "settings two-factor 2fa sessions",
+  },
 ];
 
 type Item = {
@@ -144,7 +240,9 @@ export function CommandPalette() {
           },
         ]
       : [];
-  const pages: Item[] = PAGES.filter((p) => match(`${p.label} ${p.keys ?? ""}`)).map((p) => ({
+  const pages: Item[] = PAGES.filter((p) =>
+    match(`${p.label} ${p.keys ?? ""}`),
+  ).map((p) => ({
     key: p.href,
     group: "Pages",
     ...p,

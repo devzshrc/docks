@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
+import { ImportStatus } from "@/components/setup/import-status";
+import { ButtonLink } from "@/components/base/buttons/button";
 import { QueryError } from "@/components/query-state";
 import { AppShell } from "@/components/app-shell";
 import { OnboardingGate } from "@/components/onboarding/onboarding";
@@ -97,18 +99,44 @@ function Board({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="space-y-6">
       <Greeting workspaceId={workspaceId} cards={data?.cards ?? []} />
+      <ImportStatus workspaceId={workspaceId} />
       <ShellFilters>
         {/* Saved views first: the common questions are one click, everything else sits behind Filters. */}
-        <div role="group" aria-label="Views" className="flex items-center gap-1">
+        <div
+          role="group"
+          aria-label="Views"
+          className="flex items-center gap-1"
+        >
           {(
             [
-              ["All", !filters.mine && !filters.waitingOnMe && !filters.priority, { mine: false, waitingOnMe: false, priority: false }],
-              ["Waiting on me", filters.waitingOnMe, { mine: false, waitingOnMe: true, priority: false }],
-              ["Mine", filters.mine, { mine: true, waitingOnMe: false, priority: false }],
-              ["Priority", filters.priority, { mine: false, waitingOnMe: false, priority: true }],
+              [
+                "All",
+                !filters.mine && !filters.waitingOnMe && !filters.priority,
+                { mine: false, waitingOnMe: false, priority: false },
+              ],
+              [
+                "Waiting on me",
+                filters.waitingOnMe,
+                { mine: false, waitingOnMe: true, priority: false },
+              ],
+              [
+                "Mine",
+                filters.mine,
+                { mine: true, waitingOnMe: false, priority: false },
+              ],
+              [
+                "Priority",
+                filters.priority,
+                { mine: false, waitingOnMe: false, priority: true },
+              ],
             ] as const
           ).map(([label, on, next]) => (
-            <ToggleChip key={label} on={on} label={label} onChange={() => set(next)} />
+            <ToggleChip
+              key={label}
+              on={on}
+              label={label}
+              onChange={() => set(next)}
+            />
           ))}
         </div>
         <ToolbarSearch
@@ -147,18 +175,20 @@ function Board({ workspaceId }: { workspaceId: string }) {
             !filtersOpen && "hidden",
           )}
         >
-          {(data?.repos.length ?? 0) > 1 && <FilterSelect
-            label="Repository"
-            value={String(filters.repoIds[0] ?? "")}
-            onChange={(v) => set({ repoIds: v ? [Number(v)] : [] })}
-            options={[
-              { value: "", label: "All" },
-              ...(data?.repos.map((r) => ({
-                value: String(r.id),
-                label: r.fullName,
-              })) ?? []),
-            ]}
-          />}
+          {(data?.repos.length ?? 0) > 1 && (
+            <FilterSelect
+              label="Repository"
+              value={String(filters.repoIds[0] ?? "")}
+              onChange={(v) => set({ repoIds: v ? [Number(v)] : [] })}
+              options={[
+                { value: "", label: "All" },
+                ...(data?.repos.map((r) => ({
+                  value: String(r.id),
+                  label: r.fullName,
+                })) ?? []),
+              ]}
+            />
+          )}
           <FilterSelect
             label="Author"
             value={filters.author ?? ""}
@@ -295,6 +325,9 @@ function Board({ workspaceId }: { workspaceId: string }) {
                 : `${data.repos.length} repositories`}
               . New and existing pull requests show up here within a minute.
             </p>
+            <ButtonLink size="small" variant="secondary" href="/settings/setup">
+              Check setup and import
+            </ButtonLink>
           </div>
         </div>
       )}
