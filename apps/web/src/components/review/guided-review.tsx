@@ -49,6 +49,7 @@ import {
 import { commentLabel } from "@/lib/diff";
 import { useSession } from "@/lib/auth-client";
 import { useTRPC } from "@/trpc/react";
+import { useGuideFeedback } from "./guide-vote";
 
 /** One row of the details panel: fixed label column, controls aligned on a shared left edge. */
 const ROW =
@@ -339,6 +340,13 @@ function GuidedReviewContent({
     };
   }, []);
 
+  const guideFeedback = useGuideFeedback({
+    repo,
+    number,
+    headSha: data.data?.pr.headSha ?? "",
+    enabled: !!data.data && guide.data?.status === "ready" && guide.data.guide.source === "ai",
+  });
+
   if (data.isPending) return <Skeleton className="h-64 w-full" />;
   if (data.error)
     return <p className="text-destructive text-sm">{errorMessage(data.error)}</p>;
@@ -369,6 +377,7 @@ function GuidedReviewContent({
       t.comments[0] &&
       commentLabel(t.comments[0].body) === "blocking",
   ).length;
+  const templateCount = data.data.checklistTemplate.length;
   const checklistItems = [
     ...data.data.checklistTemplate.map((question) => ({
       question,
@@ -631,6 +640,7 @@ function GuidedReviewContent({
                 activeStep={activeStep}
                 onStepChange={setActiveStep}
                 canAct={data.data.canAct}
+                feedback={guideFeedback}
               />
             )}
             {guide.error && <p className="text-sm text-destructive">{errorMessage(guide.error)}</p>}
@@ -794,6 +804,8 @@ function GuidedReviewContent({
             <Checklist
               items={checklistItems}
               storageKey={`checklist:${repo}#${number}@${pr.headSha}`}
+              feedback={guideFeedback}
+              voteItem={(i) => (i >= templateCount ? `check:${i - templateCount}` : null)}
             />
           </div>
         </div>

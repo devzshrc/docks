@@ -66,6 +66,26 @@ function Metrics() {
         </Panel>
       </div>
       <Panel
+        title="AI guide feedback"
+        description="Thumbs from reviewers, last 30 days. Use it alongside the guide eval."
+      >
+        {m.data.guideVotes.length ? (
+          <StatStrip
+            stats={(["summary", "step", "check"] as const).map((part) => {
+              const row = m.data.guideVotes.find((v) => v.part === part);
+              const total = (row?.up ?? 0) + (row?.down ?? 0);
+              return {
+                label: { summary: "Summary", step: "Review path steps", check: "Checklist questions" }[part],
+                value: total ? `${Math.round(((row?.up ?? 0) / total) * 100)}% helpful` : "—",
+                sub: `${total} vote${total === 1 ? "" : "s"}`,
+              };
+            })}
+          />
+        ) : (
+          <p className="text-muted-foreground text-sm">No votes yet.</p>
+        )}
+      </Panel>
+      <Panel
         title="Accounts: estimated plan value vs. retention"
         description="Seat-price estimate, not collected revenue. Size shows seats; color shows paid plan."
       >

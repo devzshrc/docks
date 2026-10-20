@@ -8,6 +8,7 @@ import { useReviewSession } from "@/hooks/use-review-session";
 
 import { Count, DrawTick, useJustBecame } from "@/components/motion";
 import { cn } from "@/lib/utils";
+import { type GuideFeedback, VoteButtons } from "./guide-vote";
 
 /**
  * Reviewer checklist questions linked to files (§5.3). Ticks are a personal
@@ -16,9 +17,14 @@ import { cn } from "@/lib/utils";
 export function Checklist({
   items,
   storageKey,
+  feedback,
+  voteItem,
 }: {
   items: Guide["checklist"];
   storageKey: string;
+  feedback?: GuideFeedback | null;
+  /** Feedback key for row i, or null for rows that didn't come from the AI. */
+  voteItem?: (i: number) => string | null;
 }) {
   const session = useReviewSession();
   const ids = items.map((item) => JSON.stringify([item.question, item.files]));
@@ -117,14 +123,25 @@ export function Checklist({
       <ul className="-mx-2 space-y-0.5">
         {items.map((item, i) => {
           const checked = done.includes(i);
+          const vote = feedback && voteItem?.(i);
           return (
-            <li key={i}>
+            <li key={i} className="group/check relative">
+              {vote && (
+                <span
+                  className={cn(
+                    "absolute top-2 right-1 z-10 transition-opacity",
+                    feedback.votes[vote] ? "opacity-100" : "opacity-0 group-hover/check:opacity-100 group-focus-within/check:opacity-100",
+                  )}
+                >
+                  <VoteButtons feedback={feedback} item={vote} label={item.question} />
+                </span>
+              )}
               {/* The whole row is the hit target; file links inside don't toggle it. */}
               <Checkbox
                 aria-label={item.question}
                 isSelected={checked}
                 onChange={() => toggle(i)}
-                className="hover:bg-muted/70 flex cursor-pointer gap-3 rounded-md px-2 py-2.5 transition-colors"
+                className={cn("hover:bg-muted/70 flex cursor-pointer gap-3 rounded-md px-2 py-2.5 transition-colors", vote && "pr-14")}
               >
                 <span className="min-w-0 flex-1 space-y-1.5">
                   <span
