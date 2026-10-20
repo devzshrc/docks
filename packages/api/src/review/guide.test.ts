@@ -60,3 +60,37 @@ test("mergeGuides concatenates steps and sums tokens", async () => {
   assert.equal(m.inputTokens, 20);
   assert.match(m.guide.summary, /150 files, guided in 2 parts/);
 });
+
+test("fallbackGuide folds a long tail of folders into one step", () => {
+  const many = Array.from({ length: 9 }, (_, i) => ({
+    filename: `pkg${i}/src/f.ts`,
+    tier: "core" as const,
+    additions: 1,
+    deletions: 0,
+  }));
+  const g = fallbackGuide(many, "r");
+  assert.equal(g.steps.length, 6);
+  assert.equal(g.steps.flatMap((s) => s.files).length, 9);
+  assert.match(g.steps[5]!.title, /Other folders \(4\)/);
+});
+
+test("fallbackGuide reads by tier when there are too few folders", () => {
+  const flat = [
+    { filename: "src/a.ts", tier: "core" as const, additions: 1, deletions: 0 },
+    { filename: "src/a.test.ts", tier: "test" as const, additions: 1, deletions: 0 },
+    { filename: "src/config.yml", tier: "config" as const, additions: 1, deletions: 0 },
+  ];
+  const g = fallbackGuide(flat, "r");
+  assert.deepEqual(g.steps.map((s) => s.title), ["Application code", "Configuration", "Tests"]);
+});
+
+test("truncatePatch keeps every hunk header", async () => {
+  const { truncatePatch } = await import("./guide.js");
+  const hunk = (n: number) => [`@@ -${n},50 +${n},50 @@`, ...Array.from({ length: 50 }, (_, i) => `+line ${n}-${i} ${"x".repeat(40)}`)];
+  const patch = [...hunk(1), ...hunk(100), ...hunk(200)].join("\n");
+  const out = truncatePatch(patch, 2000);
+  assert.ok(out.length < patch.length);
+  for (const n of [1, 100, 200]) assert.ok(out.includes(`@@ -${n},50 +${n},50 @@`));
+  assert.match(out, /all 3 hunk headers kept/);
+  assert.equal(truncatePatch("small", 2000), "small");
+});

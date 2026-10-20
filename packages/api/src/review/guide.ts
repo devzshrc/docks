@@ -57,6 +57,11 @@ Group the changed files into a short guided tour of 3-6 logical steps. Order the
 
 Then write 3-7 checklist questions the reviewer must answer themselves. Make them specific to this diff: edge cases, migrations on existing data, auth and permissions, error handling, backwards compatibility, missing tests. Avoid generic advice that would apply to any PR.
 
+Good checklist questions name the code they are about, for example:
+- "Does the backfill in migrations/0042_add_status.sql handle rows where status is NULL?"
+- "routes/admin.ts now accepts a member role: is that intended for every admin endpoint?"
+Bad: "Are there enough tests?" or "Is error handling correct?" Every question must list at least one file.
+
 Use file paths exactly as given. Do not write review comments, praise, or verdicts.`;
 
 export interface GuideFile {
@@ -84,6 +89,36 @@ export interface GuideOptions {
 
 let client: OpenAI | null = null;
 
+/**
+ * Cut a patch to `max` characters without hiding where it changed: every hunk
+ * header survives and each hunk keeps its first lines, up to an equal share.
+ */
+export function truncatePatch(patch: string, max: number): string {
+  if (patch.length <= max) return patch;
+  const hunks: string[][] = [];
+  for (const line of patch.split("\n")) {
+    if (line.startsWith("@@") || !hunks.length) hunks.push([]);
+    hunks[hunks.length - 1]!.push(line);
+  }
+  const share = Math.max(200, Math.floor(max / hunks.length));
+  const out: string[] = [];
+  let omitted = 0;
+  for (const [header, ...body] of hunks) {
+    out.push(header!);
+    let used = header!.length;
+    let i = 0;
+    for (; i < body.length && used + body[i]!.length + 1 <= share; i++) {
+      out.push(body[i]!);
+      used += body[i]!.length + 1;
+    }
+    if (i < body.length) {
+      omitted += body.length - i;
+      out.push(`[… ${body.length - i} lines of this hunk omitted]`);
+    }
+  }
+  return `${out.join("\n")}\n[patch truncated: ${omitted} lines omitted, all ${hunks.length} hunk headers kept]`;
+}
+
 /** Same rendering the guide model sees; the eval judge reuses it. */
 export function renderDiff(files: GuideFile[]) {
   return files
@@ -93,9 +128,7 @@ export function renderDiff(files: GuideFile[]) {
       if (f.tier === "noise")
         return `${head}\n(generated or lockfile, patch omitted)`;
       const patch = f.patch ?? "(binary or too large for GitHub to inline)";
-      return patch.length > MAX_PATCH_CHARS
-        ? `${head}\n${patch.slice(0, MAX_PATCH_CHARS)}\n[patch truncated at ${MAX_PATCH_CHARS} characters]`
-        : `${head}\n${patch}`;
+      return `${head}\n${truncatePatch(patch, MAX_PATCH_CHARS)}`;
     })
     .join("\n\n");
 }
@@ -215,11 +248,11 @@ export async function buildGuide(
   }
 }
 
-/** No-AI guide: one step per top-level folder, riskiest first, no checklist. */
+/** No-AI guide: folder steps, riskiest first, kept to 3-6 steps; no checklist. */
 export function fallbackGuide(files: GuideFile[], reason: string): Guide {
+  const reviewable = files.filter((f) => f.tier !== "noise");
   const groups = new Map<string, string[]>();
-  for (const f of files) {
-    if (f.tier === "noise") continue;
+  for (const f of reviewable) {
     const parts = f.filename.split("/");
     const key =
       parts.length > 2
@@ -229,16 +262,27 @@ export function fallbackGuide(files: GuideFile[], reason: string): Guide {
           : "root";
     groups.set(key, [...(groups.get(key) ?? []), f.filename]);
   }
-  return {
-    source: "fallback",
-    summary: reason,
-    steps: [...groups].map(([dir, paths]) => ({
-      title: dir,
-      why: "",
-      files: paths,
-    })),
-    checklist: [],
-  };
+  let steps = [...groups].map(([dir, paths]) => ({ title: dir, why: "", files: paths }));
+  if (steps.length > 6) {
+    // Biggest five folders keep their own step; the long tail shares one.
+    steps.sort((a, b) => b.files.length - a.files.length);
+    const rest = steps.slice(5);
+    steps = [
+      ...steps.slice(0, 5),
+      { title: `Other folders (${rest.length})`, why: "", files: rest.flatMap((s) => s.files) },
+    ];
+  } else if (steps.length < 3 && reviewable.length >= 3) {
+    // Too few folders to tour: read by risk tier instead (code, config, tests).
+    const byTier = (["core", "config", "test"] as const)
+      .map((tier) => ({
+        title: { core: "Application code", config: "Configuration", test: "Tests" }[tier],
+        why: "",
+        files: reviewable.filter((f) => f.tier === tier).map((f) => f.filename),
+      }))
+      .filter((s) => s.files.length);
+    if (byTier.length > steps.length) steps = byTier;
+  }
+  return { source: "fallback", summary: reason, steps, checklist: [] };
 }
 
 /** Generate and cache the guide for one PR head commit (job handler body). */
