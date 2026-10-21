@@ -1,84 +1,116 @@
-# Docks — production-grade Turborepo + tRPC monorepo
+# Docks
 
-Live: [docks.devzshrc.in](https://docks.devzshrc.in)
+Find the GitHub pull requests waiting for your review, understand the changes, and send your review back to GitHub.
 
-Next.js client (`apps/web`) → Express tRPC server (`apps/server`) sharing routers via `@docks/api` (`packages/api`), auth via Better Auth + Postgres (Drizzle).
+Docks brings review requests into one inbox. Open a pull request to read its diff, follow a review guide, or ask questions about the code. When the author pushes another commit, see what changed since your last review.
 
-## Stack
+[Open Docks](https://docks.devzshrc.in) · [Run locally](#run-locally) · [Deployment guide](docs/DEPLOY.md)
 
-- Turborepo 2 + pnpm workspaces + TypeScript strict
-- tRPC v11 + SuperJSON + Zod validation
-- Next.js 15 (client) with `@trpc/tanstack-react-query` + TanStack Query v5 + BoardUI (with existing Radix adapters)
-- Express 4 + helmet + cors + morgan (server)
-- Better Auth 1.x (email + password) + Drizzle ORM + Postgres 16 (docker compose)
+## From review request to follow-up
 
-## Structure
+### Find your next review
 
-```
-apps/
-  web/        Next.js frontend — imports only `type { AppRouter }`, never server runtime
-  server/     Express + createExpressMiddleware(appRouter) + Better Auth handler at /api/auth
-packages/
-  api/        auth.ts (Better Auth instance), trpc.ts, context.ts, routers/health + user + _app
-  db/         Drizzle client (pg Pool singleton), schema/*, drizzle/ migrations, drizzle.config.ts
-  typescript-config/  shared base/nextjs/node tsconfigs
-turbo.json    build/dev/lint/typecheck/test pipelines with caching
-docker-compose.yml  Postgres 16 (host port 5433 — 5432 is often taken)
-```
+Your inbox separates requests waiting for you, updates since your last review, and your own pull requests. Accept a review, snooze it until later, or check which reviews are overdue. GitHub reviewer requests remain the source of truth.
 
-## tRPC wiring
+### Read the changes with context
 
-1. Define in `packages/api`: `initTRPC.context<Context>()` + `superjson` + Zod error formatter.
-2. `publicProcedure` / `protectedProcedure` (isAuthed middleware → UNAUTHORIZED).
-3. Feature routers (`health`, `user`) merged in `routers/_app.ts` → `export type AppRouter`.
-4. Server builds `Context { user, requestId }` per request via `auth.api.getSession()`, mounts routers at `/trpc`.
-5. Web creates typed hooks in `apps/web/src/trpc/react.tsx` via `createTRPCContext<AppRouter>` + `httpBatchLink({ url: SERVER_URL/trpc, credentials: "include" })`.
+Read changed files and use a review guide to decide where to start. Ask questions about a pull request or a specific file. Docks supplies the current diff and bounded file context to the AI, along with any repository knowledge documents you select. Answers include validated code citations so you can inspect the referenced lines.
 
-Rules: Zod on every input, `TRPCError` with codes (NOT_FOUND/UNAUTHORIZED), never export runtime router to client — type-only.
+Questions and answers are private to the person asking them and tied to the pull request's head commit. Earlier answers are marked outdated after the code changes. Follow-up questions use conversation history from the current commit.
 
-## Auth + database
+### Finish the review in GitHub
 
-- `packages/api/src/auth.ts` — `betterAuth({ database: drizzleAdapter(db, { provider: "pg", schema }), emailAndPassword: { enabled: true } })`.
-- Auth tables (`user`, `session`, `account`, `verification`) are Better Auth–owned: generated with `npx auth generate`, singular names as the adapter requires. Re-run generate after adding plugins.
-- Queries use the `db.select()` builder, never `db.query.*`. `user.list/getById` read the `user` table; sign-up is Better Auth only (no tRPC `create`).
-- Web: `src/lib/auth-client.ts` (`createAuthClient` → `<server>/api/auth`), session cookie flows into tRPC via `credentials: "include"`; `trustedOrigins` + CORS `credentials: true` must match the web origin.
+Post comments or an approval from Docks. Turn a review thread or saved AI answer into a GitHub issue when work needs a follow-up. The issue retains a link to its source pull request; creating it does not resolve the review thread.
 
-## Web routes (shadcn blocks)
+### Coordinate reviews across a team
 
-Blocks installed from the registry (`@shadcn/login-01`, `@shadcn/signup-01`, `@shadcn/dashboard-01`) and wired to real data — no mock users:
+Team plan features include review deadline policies, reminders, and escalation to backup reviewers. Policies follow the repository's configured work schedule and pause for draft pull requests. Release views collect selected pull requests and show their merge readiness, including gaps when GitHub cannot supply complete requirements.
 
-- `/` → redirects to `/dashboard`
-- `/login` — login-01 form → `signIn.email`, lands on `/dashboard`; links to `/signup`
-- `/signup` — signup-01 form → `signUp.email`, lands on `/dashboard`
-- `/dashboard` — dashboard-01 shell (sidebar + header + section cards + chart + users table), wrapped in `RequireAuth` (session cookie lives on the API origin, so the guard runs client-side and redirects to `/login` when anonymous)
-  - Section cards: total users (`user.list`), API status (`health.check`), signed-in account (`user.me`), email verification
-  - Users table: live `user.list` data (name/email/status/joined)
-  - Sidebar user menu + header sign-out both call `signOut` → `/login`
+For workflow details and current limits, see the [review workflow](docs/review-workflow.md) and [deployment notes](docs/DEPLOY.md).
 
-## Run
+## How AI fits into a review
+
+AI features require an OpenAI API key on the server and must be enabled for the repository. Docks uses the pull request description, a bounded diff, and selected file context rather than sending the entire repository. Repository knowledge documents provide additional reference material.
+
+Repository access checks protect AI requests and saved conversations. Answers retain the commit and knowledge revisions used to produce them. Code citations point to the supplied changes; new-side citations open immutable GitHub commit links.
+
+AI answers still need a reviewer's judgment. The [review workflow documentation](docs/review-workflow.md#ai-bounds-and-evidence) explains context limits, quotas, and citation behavior.
+
+## Run locally
+
+Use Node.js 22, pnpm, and Docker for the local Postgres database. The repository pins its pnpm version in `package.json`.
 
 ```bash
 pnpm install
-cp apps/server/.env.example apps/server/.env   # set BETTER_AUTH_SECRET (openssl rand -base64 32)
+cp apps/server/.env.example apps/server/.env
 cp apps/web/.env.example apps/web/.env.local
-
-pnpm db:up        # Postgres via docker compose (localhost:5433)
-pnpm db:migrate   # apply drizzle migrations (or db:push for dev sync)
-
-pnpm dev            # both, prefixed [web] (cyan) / [server] (magenta) via concurrently
-pnpm dev:tmux       # both, each in its own tmux window (docks/server + docks/web) — works in any terminal
-pnpm dev:tabs       # both, each in a native terminal tab (Terminal.app/iTerm2 via ttab; needs Automation permission)
-pnpm dev:server     # Express :4000 — /healthz, /trpc, /api/auth
-pnpm dev:web        # Next.js :3000
-
-pnpm build typecheck lint test
 ```
 
-Verify auth: `GET /api/auth/ok` → `{ok:true}`; sign-up `POST /api/auth/sign-up/email {name,email,password}`.
+In `apps/server/.env`, replace `BETTER_AUTH_SECRET` with a random secret of at least 32 characters. Generate one with:
 
-## Deploy notes
+```bash
+openssl rand -base64 32
+```
 
-- Server: `pnpm --filter @docks/server build && node dist/index.js` (set PORT, CLIENT_URL, CORS_ORIGINS, DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL).
-- Web: set `NEXT_PUBLIC_SERVER_URL=https://api.example.com`, then `pnpm --filter @docks/web build`.
-- DB: run `pnpm db:migrate` with the production `DATABASE_URL` (migrations live in `packages/db/drizzle`).
-- Turbo remote cache: `npx turbo login && npx turbo link`.
+Start Postgres, apply the migrations, and run the web and API servers:
+
+```bash
+pnpm db:up
+pnpm db:migrate
+pnpm dev
+```
+
+The web app runs at `http://localhost:3000`, the API at `http://localhost:4000`, and Postgres at `localhost:5433`. The example environment files use these addresses.
+
+### Connect the services you need
+
+The base app needs the database and auth configuration. To use GitHub review workflows, configure a GitHub App and its OAuth credentials in `apps/server/.env`.
+
+| Service       | Configuration                                                   | Purpose                                                                      |
+| ------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| GitHub        | `GITHUB_APP_*`, `GITHUB_WEBHOOK_SECRET`, `TOKEN_ENCRYPTION_KEY` | Repository access, webhook sync, and reviews performed as the connected user |
+| OpenAI        | `OPENAI_API_KEY`                                                | AI review guides and questions about code                                    |
+| Resend        | `RESEND_API_KEY`, `EMAIL_FROM`                                  | Verification, password reset, and invitation emails                          |
+| Slack         | `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`                        | Team notifications                                                           |
+| Dodo Payments | `DODO_PAYMENTS_*`                                               | Team plan subscriptions                                                      |
+
+The [server environment template](apps/server/.env.example) documents each variable and the GitHub callback URLs. Without a Resend key, development emails are printed to the server log.
+
+## Codebase
+
+Docks uses a Next.js frontend and a Hono API with tRPC. Better Auth manages authentication, and Drizzle connects to Postgres. Shared TypeScript packages keep API contracts consistent between the browser and server.
+
+```text
+apps/
+  web/                 Next.js frontend
+  server/              Hono API, integrations, and background jobs
+packages/
+  api/                 tRPC routers, auth, and application logic
+  db/                  Drizzle schema and migrations
+  typescript-config/   Shared TypeScript configuration
+```
+
+Production runs on Cloudflare Workers. The web app uses OpenNext; the API reaches Postgres through Hyperdrive. A scheduled Worker runs background jobs. See the [deployment guide](docs/DEPLOY.md) for configuration and rollout steps.
+
+## Working on Docks
+
+Choose a concrete bug or workflow improvement and describe the expected behavior in an issue or pull request. For a UI change, include screenshots. For a behavior change, explain how you checked it.
+
+The workspace provides these commands:
+
+```bash
+pnpm build
+pnpm typecheck
+pnpm lint
+pnpm test
+```
+
+Some checks need a configured database or external services. Read the relevant package scripts and [CI documentation](docs/CI-CD.md) before running the full suite. The [AI evaluation guide](packages/api/evals/guide/README.md) covers review-guide evaluations.
+
+## Documentation
+
+- [Review workflow](docs/review-workflow.md): inbox behavior, AI context, knowledge documents, and follow-up issues.
+- [Deployment](docs/DEPLOY.md): local Worker setup, integrations, and production rollout.
+- [CI and releases](docs/CI-CD.md): checks, deployment gates, and environment configuration.
+- [Production observability](docs/production-observability.md): operational telemetry and troubleshooting.
+- [UI guidance](docs/UI.md): interface conventions for contributors.
