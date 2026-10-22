@@ -102,7 +102,7 @@ function Beat({ step, seat, side = "right", className }: { step: number; seat: n
       </span>
       <span
         className={cn(
-          "rounded-2xl bg-card px-3.5 py-2 text-[15px] leading-5 font-medium whitespace-nowrap text-foreground shadow-[0_0_0_1px_var(--border),0_10px_24px_-10px_rgb(15_23_42/0.35)] transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "rounded-2xl bg-card px-3.5 py-2 text-[15px] leading-5 font-medium whitespace-nowrap text-foreground shadow-[0_0_0_1px_var(--border),0_10px_24px_-10px_rgb(15_23_42/0.35)] transition-[opacity,transform] duration-300 ease-ui-out",
           side === "left" ? "origin-right rounded-br-[5px]" : "origin-left rounded-bl-[5px]",
           on ? "scale-100 opacity-100 delay-150" : "scale-90 opacity-0",
         )}
@@ -118,8 +118,8 @@ function Flip({ step, before, after }: { step: number; before: ReactNode; after:
   const on = useResolved(step);
   return (
     <span className="relative inline-grid">
-      <span className={cn("col-start-1 row-start-1 transition-[opacity,transform] duration-300", on ? "-translate-y-1 opacity-0" : "opacity-100")}>{before}</span>
-      <span className={cn("col-start-1 row-start-1 transition-[opacity,transform] duration-300", on ? "opacity-100 delay-300" : "translate-y-1 opacity-0")}>{after}</span>
+      <span className={cn("col-start-1 row-start-1 transition-[opacity,transform] duration-300 ease-ui-out", on ? "-translate-y-1 opacity-0" : "opacity-100")}>{before}</span>
+      <span className={cn("col-start-1 row-start-1 transition-[opacity,transform] duration-300 ease-ui-out", on ? "opacity-100" : "translate-y-1 opacity-0")}>{after}</span>
     </span>
   );
 }
@@ -511,7 +511,7 @@ export function ProductPreview({ view, story, onPick }: { view: View; story: { s
                       key={v.id}
                       className={cn(
                         // Hidden views go `invisible` after fading, so only one is painted; seats still measure.
-                        "absolute inset-0 transition-[opacity,transform,visibility] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                        "absolute inset-0 transition-[opacity,transform,visibility] duration-300 ease-ui-out",
                         v.id === view ? "visible translate-y-0 opacity-100" : "pointer-events-none invisible translate-y-2 opacity-0",
                       )}
                     >

@@ -44,16 +44,21 @@ export function StorySection() {
       return;
     }
     let top = 0;
+    let bottom = 0;
     let vh = 1;
     let pinned: boolean | null = null;
     let lastRise = -1;
     const smooth = (t: number) => t * t * (3 - 2 * t);
     return onFrame({
       read: () => {
-        top = section.getBoundingClientRect().top;
+        const r = section.getBoundingClientRect();
+        top = r.top;
+        bottom = r.bottom;
         vh = window.innerHeight;
       },
       write: () => {
+        // Fully off screen: nothing to show, and the last visible frame already left the right state.
+        if (top > vh || bottom < 0) return;
         // Pinned from top 0 on; until then the hero's own sky shows through.
         const now = top <= 0.5;
         if (now !== pinned) bg.style.opacity = (pinned = now) ? "1" : "0";
@@ -90,13 +95,13 @@ export function StorySection() {
       <div className={cx("h-svh min-h-[560px] w-full overflow-hidden", !reduce && "sticky top-0")}>
         <div ref={bgRef} aria-hidden="true" className="landing-sky absolute inset-0 opacity-0" />
         <div className="relative flex h-full flex-col items-center px-4 sm:px-6">
-          <div className="grid h-[26vh] min-h-[150px] w-full max-w-[680px] max-sm:h-[32vh] items-end pb-5 text-center">
+          <div className="grid h-[26svh] min-h-[150px] w-full max-w-[680px] max-sm:h-[32svh] items-end pb-5 text-center">
             {BEATS.map((b, k) => (
               <div
                 key={b.problem}
                 aria-hidden={k !== story.step}
                 className={cx(
-                  "col-start-1 row-start-1 transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                  "col-start-1 row-start-1 transition-[opacity,transform] duration-300 ease-ui-out",
                   story.shown && k === story.step ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0",
                 )}
               >
@@ -114,7 +119,7 @@ export function StorySection() {
             ref={riseRef}
             data-hero-rise
             className="w-full origin-top"
-            style={{ ...(reduce ? {} : { opacity: 0.001, transform: "translate3d(0, 30vh, 0) scale(0.62)" }), maxWidth: "min(1120px, calc((100svh - max(26vh, 150px) - 76px) * 1.6))" }}>
+            style={{ ...(reduce ? {} : { opacity: 0.001, transform: "translate3d(0, 30vh, 0) scale(0.62)" }), maxWidth: "min(1120px, calc((100svh - max(26svh, 150px) - 76px) * 1.6))" }}>
             <ProductPreview view={view} story={story} onPick={pick} />
           </div>
           {/* Phones: the preview is too small to read, so the reviewers land here with their lines. */}
@@ -123,14 +128,14 @@ export function StorySection() {
               <ul
                 key={k}
                 data-peep-for={`story-${k}`}
-                className={cx("col-start-1 row-start-1 grid gap-2.5 transition-opacity duration-300", k === story.step ? "opacity-100" : "opacity-0")}
+                className={cx("col-start-1 row-start-1 grid gap-2.5 transition-opacity duration-300 ease-ui-out",k === story.step ? "opacity-100" : "opacity-0")}
               >
                 {voices.map(([face, says]) => (
                   <li key={face} className="flex items-center gap-2.5">
                     <Peep i={face} size={40} slot />
                     <span
                       className={cx(
-                        "origin-left rounded-2xl rounded-bl-[5px] bg-[var(--l-raised)] px-3 py-1.5 text-[13px] leading-[18px] font-medium text-[var(--l-ink)] shadow-[0_0_0_1px_var(--l-line)] transition-[opacity,transform] duration-500",
+                        "origin-left rounded-2xl rounded-bl-[5px] bg-[var(--l-raised)] px-3 py-1.5 text-[13px] leading-[18px] font-medium text-[var(--l-ink)] shadow-[0_0_0_1px_var(--l-line)] transition-[opacity,transform] duration-300 ease-ui-out",
                         k === story.step && story.landed ? "scale-100 opacity-100 delay-150" : "scale-90 opacity-0",
                       )}
                     >

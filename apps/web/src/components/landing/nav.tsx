@@ -28,9 +28,9 @@ export function LandingNav({ onStart }: { onStart: () => void }) {
 
   return (
     <header
-      className={cx("fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-200",
+      className={cx("fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-[background-color,box-shadow] duration-200",
         scrolled
-          ? "bg-[color-mix(in_oklab,var(--l-bg)_75%,transparent)] shadow-[0_1px_0_var(--l-line)] backdrop-blur-md"
+          ? "bg-[color-mix(in_oklab,var(--l-bg)_94%,transparent)] shadow-[0_1px_0_var(--l-line)]"
           : "bg-transparent",
       )}
     >
@@ -49,8 +49,8 @@ export function LandingNav({ onStart }: { onStart: () => void }) {
             </li>
           ))}
         </ul>
-        <div className="flex items-center justify-end gap-5">
-          <ThemeToggle className="bg-none bg-transparent text-[var(--l-ink-2)] shadow-none hover:bg-[var(--l-line)] hover:text-[var(--l-ink)]" />
+        <div className="flex items-center justify-end gap-3 sm:gap-5">
+          <ThemeToggle className="size-9 border-transparent bg-none bg-transparent text-[var(--l-ink-2)] shadow-none hover:bg-[var(--l-line)] hover:text-[var(--l-ink)]" />
           {/* Signed-in visitors get a way back into the app, not a sign-up pitch. */}
           {signedIn ? (
             <a href="/review" className="l-btn l-btn-dark h-9 px-4 text-[14px]">
@@ -58,7 +58,7 @@ export function LandingNav({ onStart }: { onStart: () => void }) {
             </a>
           ) : (
             <>
-              <a href="/login" className={link}>Sign in</a>
+              <a href="/login" className={cx(link, "inline-flex min-h-9 items-center px-1")}>Sign in</a>
               <button type="button" onClick={onStart} className="l-btn l-btn-dark h-9 px-4 text-[14px]">
                 Start free
               </button>
