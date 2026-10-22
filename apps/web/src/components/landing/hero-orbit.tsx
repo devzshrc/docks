@@ -114,7 +114,8 @@ const smooth = (t: number) => t * t * (3 - 2 * t);
 const smoother = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
 const backOut = (t: number) => 1 + 2.1 * (t - 1) ** 3 + 1.1 * (t - 1) ** 2;
 const ramp = (p: number, at: number, span: number) => smooth(clamp01((p - at) / span));
-const EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)";
+// Same curve as --ease-ui-out in globals.css; WAAPI needs the literal value.
+const EASE_OUT = "cubic-bezier(0.23, 1, 0.32, 1)";
 
 // Scroll beats as fractions of the pinned scroll.
 const BEATS = {
@@ -453,8 +454,8 @@ export function HeroOrbit({ headline, description, actions }: { headline: ReactN
       if (disposed || !intro) return;
       headAnim = head.animate(
         [
-          { opacity: 0, transform: "translateY(26px)", filter: "blur(10px)" },
-          { opacity: 1, transform: "translateY(0)", filter: "blur(0)" },
+          { opacity: 0, transform: "translateY(26px)" },
+          { opacity: 1, transform: "translateY(0)" },
         ],
         { duration: 1650, delay: 300, easing: EASE_OUT, fill: "forwards" },
       );
@@ -516,7 +517,7 @@ export function HeroOrbit({ headline, description, actions }: { headline: ReactN
         )}
 
         <div className="pointer-events-none absolute top-1/2 left-1/2 z-30 w-[min(62vmin,92vw)] -translate-x-1/2 -translate-y-1/2 text-center max-[820px]:w-[min(60vw,250px)]">
-          <div ref={headRef} className={cx("antialiased [will-change:opacity,transform,filter]", !reduce && "opacity-0")}>
+          <div ref={headRef} className={cx("antialiased [will-change:opacity,transform]", !reduce && "opacity-0")}>
             <h1 className="font-display text-[clamp(28px,5.4vmin,54px)] leading-[1.1] font-medium tracking-[-0.025em] text-balance text-[var(--l-ink)] max-[820px]:text-[24px]">
               {headline}
             </h1>
@@ -544,7 +545,7 @@ export function HeroOrbit({ headline, description, actions }: { headline: ReactN
                     {w === 0 ? null : " "}
                     <span className="inline-block whitespace-pre">
                       {[...word].map((ch, c) => (
-                        <span key={c} data-ch data-on="false" className="opacity-[0.13] transition-opacity duration-[180ms] ease-linear data-[on=true]:opacity-100">
+                        <span key={c} data-ch data-on="false" className="opacity-[0.13] transition-opacity duration-[180ms] ease-ui-out data-[on=true]:opacity-100">
                           {ch}
                         </span>
                       ))}
@@ -576,7 +577,7 @@ export function HeroOrbit({ headline, description, actions }: { headline: ReactN
 export function HeroRise({ children }: { children: ReactNode }) {
   const reduce = useReducedMotion() ?? false;
   return (
-    <div className="relative z-10" style={reduce ? undefined : { marginTop: "-100vh" }}>
+    <div className="relative z-10" style={reduce ? undefined : { marginTop: "-100svh" }}>
       {children}
     </div>
   );
